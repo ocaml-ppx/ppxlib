@@ -22,6 +22,7 @@ let use_color = ref true
 let diff_command = ref Options.diff_command
 let pretty = ref false
 let styler = ref None
+let output_metadata_filename = ref None
 
 module Lint_error = struct
   type t = Location.t * string
@@ -771,27 +772,45 @@ let process_file_hooks = ref []
 let register_process_file_hook f =
   add_to_list process_file_hooks f
 
-let after_process_file_hooks = ref []
+module File_property = struct
+  type 'a t =
+    { name         : string
+    ; mutable data : 'a option
+    ; sexp_of_t    : 'a -> Sexp.t
+    }
 
-let register_after_process_file_hook f =
-  add_to_list after_process_file_hooks f
+  type packed = T : _ t -> packed
 
-module Create_file_property(Name : sig val name : string end)(T : Sexpable.S) = struct
-  let cell = ref None
+  let all = ref []
 
-  let set x = cell := Some x
+  let register t = add_to_list all (T t)
 
-  let () =
-    register_process_file_hook (fun () -> cell := None);
-    register_after_process_file_hook (fun () ->
-      match !cell with
+  let reset_all () =
+    List.iter !all ~f:(fun (T t) -> t.data <- None)
+
+  let dump_and_reset_all () =
+    List.filter_map (List.rev !all) ~f:(fun (T t) ->
+      match t.data with
       | None -> None
       | Some v ->
-        cell := None;
-        Some (Name.name, T.sexp_of_t v))
+        t.data <- None;
+        Some (t.name, t.sexp_of_t v))
+end
+
+module Create_file_property(Name : sig val name : string end)(T : Sexpable.S) = struct
+  let t : _ File_property.t =
+    { name      = Name.name
+    ; data      = None
+    ; sexp_of_t = T.sexp_of_t
+    }
+
+  let () = File_property.register t
+
+  let set x = t.data <- Some x
 end
 
 let process_file (kind : Kind.t) fn ~input_name ~output_mode ~embed_errors ~output =
+  File_property.reset_all ();
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
   corrections := [];
   let replacements = ref [] in
@@ -840,6 +859,14 @@ let process_file (kind : Kind.t) fn ~input_name ~output_mode ~embed_errors ~outp
         | Impl -> Impl (Str ((module Ppxlib_ast.Selected_ast),
                              [ pstr_extension ~loc ext [] ]))
     in
+
+    Option.iter !output_metadata_filename ~f:(fun fn ->
+      let metadata = File_property.dump_and_reset_all () in
+      Out_channel.write_all fn
+        ~data:(
+          List.map metadata ~f:(fun (s, sexp) ->
+            Sexp.to_string_hum (List [Atom s; sexp]) ^ "\n")
+          |> String.concat ~sep:""));
 
     let input_contents = lazy (load_source_file fn) in
     let corrected = fn ^ ".ppx-corrected" in
@@ -1090,6 +1117,8 @@ let standalone_args =
     "NAME=EXPR Set the cookie NAME to EXPR"
   ; "--cookie", Arg.String set_cookie,
     " Same as -cookie"
+  ; "-output-metadata", Arg.String (fun s -> output_metadata_filename := Some s),
+    "FILE Where to store the output metadata"
   ]
 ;;
 
