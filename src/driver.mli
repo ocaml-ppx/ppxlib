@@ -24,7 +24,7 @@ module Cookies : sig
       lookup some cookies and set some global variables.
 
       This API is a temporary hack to allow to migrate from [add_arg] to the use of
-      cookie, until ppxlib_base has been upgraded to pass cookies through. *)
+      cookie, until ppxlib has been upgraded to pass cookies through. *)
   val add_handler : (t -> unit) -> unit
 
   (** Shorthand for: [add_handler (fun t -> f (get t name pattern))] *)
@@ -102,7 +102,7 @@ val register_transformation
     ocaml compiler.
 
     This is not the intended way of using driver. This is only for ppx rewriters that
-    are not written using ppxlib_base but want to export a driver compatible
+    are not written using ppxlib but want to export a driver compatible
     library.
 *)
 val register_transformation_using_ocaml_current_ast

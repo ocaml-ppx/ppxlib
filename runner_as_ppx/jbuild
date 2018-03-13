@@ -5,7 +5,7 @@
   (public_name ppxlib.runner_as_ppx)
   (library_flags (-linkall))
   (flags (:standard -safe-string))
-  (libraries (ppxlib_base))
+  (libraries (ppxlib))
   (preprocess no_preprocessing)))
 
 (jbuild_version 1)

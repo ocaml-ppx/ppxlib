@@ -23,7 +23,7 @@ module Default = struct
 
   let nonrec_type_declaration ~loc:_ ~name:_ ~params:_ ~cstrs:_ ~kind:_ ~private_:_
         ~manifest:_ =
-    failwith "Ppxlib_base.Ast_builder.nonrec_type_declaration: don't use this function"
+    failwith "Ppxlib.Ast_builder.nonrec_type_declaration: don't use this function"
   ;;
 
   let eint ~loc t = pexp_constant ~loc (Pconst_integer (Int.to_string  t, None))

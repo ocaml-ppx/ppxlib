@@ -27,7 +27,7 @@ val signature: Format.formatter -> Parsetree.signature -> unit
 val structure: Format.formatter -> Parsetree.structure -> unit
 val string_of_structure: Parsetree.structure -> string
 
-(* Added in the ppxlib_base copy *)
+(* Added in the ppxlib copy *)
 val class_expr       : Format.formatter -> Parsetree.class_expr       -> unit
 val class_field      : Format.formatter -> Parsetree.class_field      -> unit
 val class_type       : Format.formatter -> Parsetree.class_type       -> unit

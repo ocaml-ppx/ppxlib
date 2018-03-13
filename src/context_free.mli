@@ -24,7 +24,7 @@ module Rule : sig
       should handle both cases.
 
       [expand] must decide whether the expression it receive can be rewritten or not.
-      Especially ppxlib_base makes the assumption that [expand] is idempotent. It will loop
+      Especially ppxlib makes the assumption that [expand] is idempotent. It will loop
       if it is not. *)
   val special_function
     :  string
