@@ -1,4 +1,4 @@
-open Ppxlib_base
+open Ppxlib
 open Ast_builder.Default
 
 let alphabet =

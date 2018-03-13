@@ -1,4 +1,4 @@
-open Ppxlib_base
+open Ppxlib
 open Ppx_core
 
 module N = Ppx_core_private.Name

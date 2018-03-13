@@ -22,14 +22,14 @@ include Comparable.Make(T)
 let rec flat accu = function
     Lident s -> s :: accu
   | Ldot(lid, s) -> flat (s :: accu) lid
-  | Lapply(_, _) -> invalid_arg "Ppxlib_base.Longident.flatten"
+  | Lapply(_, _) -> invalid_arg "Ppxlib.Longident.flatten"
 
 let flatten_exn lid = flat [] lid
 
 let last_exn = function
     Lident s -> s
   | Ldot(_, s) -> s
-  | Lapply(_, _) -> invalid_arg "Ppxlib_base.Longident.flatten"
+  | Lapply(_, _) -> invalid_arg "Ppxlib.Longident.flatten"
 
 let parse s =
   match String.split s ~on:'.' with

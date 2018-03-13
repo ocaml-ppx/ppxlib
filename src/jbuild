@@ -1,6 +1,6 @@
 (library
- ((name ppxlib_base)
-  (public_name ppxlib.base)
+ ((name ppxlib)
+  (public_name ppxlib)
   (libraries (ocaml-compiler-libs.common
               compiler-libs.common
               ocaml-compiler-libs.shadow

@@ -2,7 +2,7 @@
  ((name ppxlib_type_conv_test)
   (flags (:standard -safe-string))
   (libraries (base))
-  (preprocess (pps (ppxlib_base
+  (preprocess (pps (ppxlib
                     ppx_sexp_conv
                     ppx_compare
                     ppx_bin_prot

@@ -1,1 +1,1 @@
-Ppxlib_base.Driver.standalone ()
+Ppxlib.Driver.standalone ()

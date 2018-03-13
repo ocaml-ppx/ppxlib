@@ -13,7 +13,7 @@ ones will only contain synonym definitions to provide backward compatibility.
 The structure of this repository is as follows:
 
 - `ast/` contains the `ppxlib.ast` library, that replaces `ppx_ast`;
-- `base/` contains the `ppxlib.base` library, that replaces `ppx_core`,
+- `src/` contains the `ppxlib` library, that replaces `ppx_core`,
   `ppx_driver`, and `type_conv`;
 - `metaquot/` contains the `ppxlib.metaquot` library, that replaces
   `ppx_metaquot`;
@@ -42,14 +42,14 @@ It also snapshots the corresponding parser and pretty-printer from the OCaml
 compiler, to create a full frontend independent of the version of OCaml.
 
 This AST is used in all Jane Street ppx rewriters, and more generally in all
-ppx rewriters based on Ppxlib_base. Using a different AST allows to "detach"
+ppx rewriters based on Ppxlib. Using a different AST allows to "detach"
 the ppx code from the compiler libraries, and allow to use ppx rewriters with
 new compilers before upgrading the ppx code.
 
 
-Base
-====
-Ppxlib_base is a standard library for OCaml AST transformers, that uses the
+Ppxlib
+======
+Ppxlib is a standard library for OCaml AST transformers, that uses the
 AST from `Ppxlib_ast`. It features:
 
 - various auto-generated AST traversal using an open recursion scheme
@@ -64,11 +64,11 @@ AST from `Ppxlib_ast`. It features:
 Other ASTs
 ----------
 If you want to write code that works with several versions of
-`Ppxlib_base` using different AST versions, you can use the versionned
+`Ppxlib` using different AST versions, you can use the versionned
 alternatives for `Ast_builder` and `Ast_pattern`. For instance:
 
 ```
-open Ppxlib_base
+open Ppxlib
 module Ast_builder = Ast_builder_403
 module Ast_pattern = Ast_pattern_403
 ```
@@ -87,7 +87,7 @@ The aim is to provide a tool that can be used to:
 - improved errors for misspelled/misplaced attributes and extension points.
 
 ### Using driver-based rewriters
-The recommended way to use rewriters based on `Ppxlib_base.Driver` is through
+The recommended way to use rewriters based on `Ppxlib.Driver` is through
 [dune](https://github.com/ocaml/dune). All you need to is add this line to your
 `(library ...)` or `(executables ...)` stanza:
 
@@ -97,7 +97,7 @@ The recommended way to use rewriters based on `Ppxlib_base.Driver` is through
 
 dune will automatically build a static driver including all these rewriters.
 Note the `ppxlib.runner` at the end of the list, it will still work if you
-don't put but some specific features of `ppxlib_base` won't be available.
+don't put but some specific features of `ppxlib` won't be available.
 
 If you are not using dune, you can build a custom driver yourself using
 ocamlfind.
@@ -112,7 +112,7 @@ If using dune, you can just use the following jbuild file:
  ((name        my_ppx)
   (public_name my_ppx)
   (kind ppx_rewriter)
-  (libraries (ppxlib_base))
+  (libraries (ppxlib))
   (ppx_runtime_libraries (<runtime dependencies if any>))
   (preprocess (pps (ppx_metaquot)))))
 ```
@@ -127,13 +127,13 @@ If using dune, you can just use the following jbuild file:
 
 ### Building a custom driver using ocamlfind
 To build a custom driver using ocamlfind, simply link all the AST transformers
-together with the `ppxlib_base.runner` package at the end:
+together with the `ppxlib.runner` package at the end:
 
     ocamlfind ocamlopt -predicates ppx_driver -o ppx -linkpkg \
       -package ppx_sexp_conv -package ppx_bin_prot \
-      -package ppxlib_base.runner
+      -package ppxlib.runner
 
-Normally, `ppxlib_base.driver`-based rewriters should be build with the
+Normally, `ppxlib.driver`-based rewriters should be build with the
 approriate `-linkall` option on individual libraries. If one is missing this
 option, the code rewriter might not get linked in. If this is the case, a
 workaround is to pass `-linkall` when linking the custom driver.
@@ -195,7 +195,7 @@ $ ocamlc -c -ppx "ppx -as-ppx" file.ml
 Note: if using dune, you do not need to read this as dune already does all the
 right things for you.
 
-In normal operation, Ppxlib_base.Driver rewriters are packaged as findlib
+In normal operation, Ppxlib.Driver rewriters are packaged as findlib
 libraries. When using dune everything is simple as preprocessors and normal
 dependencies are separated. However historically, people have been specifying
 both preprocessors and normal library dependencies together. Even worse, many
@@ -213,7 +213,7 @@ It is recommended to split the findlib package into two:
    - the method of calling one executable per rewriter.
 
 In the rest we'll assume we are writing a META file for a `ppx_foo` rewriter,
-that itself uses the `ppxlib_base` and `re` libraries, and produces code using
+that itself uses the `ppxlib` and `re` libraries, and produces code using
 `ppx_foo.runtime-lib`.
 
 We want the META file to support all of these:
@@ -248,7 +248,7 @@ In the end the META file should look like this:
 # Standard package, expect it assumes that the "ppx_driver" predicate is set
 version                     = "42.0"
 description                 = "interprets [%foo ...] extensions"
-requires(ppx_driver)        = "ppxlib_base re"
+requires(ppx_driver)        = "ppxlib re"
 archives(ppx_driver,byte)   = "ppx_foo.cma"
 archives(ppx_driver,native) = "ppx_foo.cmxa"
 plugin(ppx_driver,byte)     = "ppx_foo.cma"
@@ -276,7 +276,7 @@ above.
 
 Derivers
 --------
-The `Ppxlib_base.Type_conv` module factors out functionality needed by
+The `Ppxlib.Type_conv` module factors out functionality needed by
 different preprocessors that generate code from type specifications.  Example
 libraries currently depending on `type_conv`:
 
@@ -288,8 +288,8 @@ libraries currently depending on `type_conv`:
 
 Compatibility with [ppx_deriving](https://github.com/ocaml-ppx/ppx_deriving)
 ----------------------------------------------------------------------------
-`Ppxlib_base.Type_conv`-based code generators are meant to be used with
-`Ppxlib_base.Driver`. However `Type_conv` allows to export a compatible
+`Ppxlib.Type_conv`-based code generators are meant to be used with
+`Ppxlib.Driver`. However `Type_conv` allows to export a compatible
 `ppx_deriving` plugin. By default, when not linked as part of a driver,
 packages using `Type_conv` will just use `ppx_deriving`.
 
@@ -364,7 +364,7 @@ expect that:
 - it uses the version of the OCaml AST defined by Ppxlib_ast rather than the
   one from the current compiler
 - it can be used simultaneously with other rewriters using
-  `Ppxlib_base.Driver`.
+  `Ppxlib.Driver`.
 
 `Ppxlib_metaquot_lifters` provides lifting functions for OCaml predefined
 types (`int`, `string`, `list`, ...).

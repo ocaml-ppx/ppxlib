@@ -1,7 +1,7 @@
 (* -*- tuareg -*- *)
 
 #directory "+compiler-libs";;
-open Ppxlib_base
+open Ppxlib
 open Ppx_core
 
 let x = 1 [@@foo]
