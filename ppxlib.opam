@@ -10,7 +10,6 @@ build: [
 ]
 depends: [
   "base"                    {>= "v0.10.0"}
-  "cinaps"                  {build & >= "v0.10.0"}
   "jbuilder"                {build & >= "1.0+beta19"}
   "ocaml-compiler-libs"     {>= "v0.10.0"}
   "ocaml-migrate-parsetree" {>= "1.0"}
