@@ -12,7 +12,10 @@ uninstall:
 
 reinstall: uninstall reinstall
 
+test:
+	jbuilder runtest --dev
+
 clean:
 	rm -rf _build
 
-.PHONY: default install uninstall reinstall clean
+.PHONY: default install uninstall reinstall clean test
