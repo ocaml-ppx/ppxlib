@@ -1,0 +1,6 @@
+(library
+ ((name ppxlib_traverse_test)
+  (flags (:standard -safe-string))
+  (preprocess (pps (ppx_inline_test ppxlib_traverse -type-conv-keep-w32=impl ppxlib.runner)))))
+
+(jbuild_version 1)

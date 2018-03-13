@@ -1,0 +1,6 @@
+(library
+ ((name ppxlib_driver_test_skip_hash_bang)
+  (flags (:standard -safe-string))
+  (preprocess (pps (ppxlib.runner)))))
+
+(jbuild_version 1)

@@ -1,0 +1,6 @@
+(library
+ ((name ppxlib_driver_omp_test)
+  (flags (:standard -safe-string))
+  (preprocess (pps (ppx_sexp_conv ppx_expect ppxlib_driver_omp_test_ppx -no-check ppxlib.runner)))))
+
+(jbuild_version 1)
