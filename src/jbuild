@@ -14,7 +14,7 @@
   (flags (:standard -open Ocaml_shadow -safe-string))
   (preprocess no_preprocessing)
   (ppx.driver
-   ((main       Ppx_driver.standalone)
+   ((main       Ppxlib.Driver.standalone)
     (replaces   (ocaml-migrate-parsetree))
     (flags      (-corrected-suffix ${corrected-suffix} -diff-cmd - -dump-ast))
     (lint_flags (-corrected-suffix ${corrected-suffix} -diff-cmd - -null    ))))
