@@ -13,7 +13,12 @@
               ppxlib_traverse_builtins))
   (flags (:standard -open Ocaml_shadow -safe-string))
   (preprocess no_preprocessing)
-  ))
+  (ppx.driver
+   ((main       Ppx_driver.standalone)
+    (replaces   (ocaml-migrate-parsetree))
+    (flags      (-corrected-suffix ${corrected-suffix} -diff-cmd - -dump-ast))
+    (lint_flags (-corrected-suffix ${corrected-suffix} -diff-cmd - -null    ))))
+))
 
 (alias
  ((name DEFAULT)
