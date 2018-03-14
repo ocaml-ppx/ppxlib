@@ -1,9 +1,9 @@
-(* Pa_type_conv: Preprocessing Module for Registering Type Conversions *)
 open Import
 open Ast_builder.Default
 
-(* [do_insert_unused_warning_attribute] -- If true, generated code contains compiler
-   attribute to disable unused warnings, instead of inserting [let _ = ... ]. *)
+(* [do_insert_unused_warning_attribute] -- If true, generated code
+   contains compiler attribute to disable unused warnings, instead of
+   inserting [let _ = ... ]. *)
 let do_insert_unused_warning_attribute = ref false
 let keep_w32_impl = ref false
 let keep_w32_intf = ref false
@@ -552,7 +552,7 @@ let remove generators =
    | Main expansion                                                  |
    +-----------------------------------------------------------------+ *)
 
-let types_used_by_type_conv (tds : type_declaration list)
+let types_used_by_deriving (tds : type_declaration list)
   : structure_item list =
   if keep_w32_impl () then
     []
@@ -584,7 +584,7 @@ let expand_str_type_decls ~loc ~path rec_flag tds values =
   (* TODO: instead of disabling the unused warning for types themselves, we
      should add a tag [@@unused]. *)
   let generated =
-    types_used_by_type_conv tds
+    types_used_by_deriving tds
     @ Generator.apply_all ~loc ~path (rec_flag, tds) generators;
   in
   disable_unused_warning_str ~loc generated

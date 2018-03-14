@@ -1,7 +1,8 @@
+open Base
+open Stdio
 open Ppxlib
-open Ppx_core
 
-module N = Ppx_core_private.Name
+module N = Ppxlib_private.Name
 
 let%expect_test _ =
   let dot_suffixes name =

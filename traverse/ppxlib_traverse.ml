@@ -1,3 +1,4 @@
+open Base
 open Ppxlib
 open Ast_builder.Default
 
@@ -545,8 +546,8 @@ let gen_str ~(what:what)~loc ~path:_ (rf, tds) =
 let () =
   let derivers =
     List.map Backends.all ~f:(fun what ->
-      Type_conv.add ("traverse_" ^ what#name)
-        ~str_type_decl:(Type_conv.Generator.make_noarg (gen_str ~what)))
+      Deriving.add ("traverse_" ^ what#name)
+        ~str_type_decl:(Deriving.Generator.make_noarg (gen_str ~what)))
   in
-  Type_conv.add_alias "traverse" (List.rev derivers)
-  |> Type_conv.ignore
+  Deriving.add_alias "traverse" (List.rev derivers)
+  |> Deriving.ignore

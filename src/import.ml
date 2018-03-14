@@ -1,4 +1,3 @@
-open! Glue
 include Base
 include Stdio
 include Ppxlib_ast
