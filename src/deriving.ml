@@ -332,7 +332,8 @@ module Deriver = struct
     List.map derivers_and_args ~f:(fun (name, args) ->
       let named_generators = resolve field name in
       List.iter named_generators ~f:(fun (actual_deriver_name, gen) ->
-        if Hash_set.mem seen actual_deriver_name then
+        if Options.fail_on_duplicate_derivers
+        && Hash_set.mem seen actual_deriver_name then
           Location.raise_errorf ~loc:name.loc
             "Deriver %s appears twice" actual_deriver_name;
         List.iter (Generator.deps gen) ~f:(fun dep ->
