@@ -10,7 +10,7 @@ build: [
 ]
 depends: [
   "base"                    {>= "v0.10.0"}
-  "jbuilder"                {build & >= "1.0+beta19"}
+  "jbuilder"                {build & >= "1.0+beta18.1"}
   "ocaml-compiler-libs"     {>= "v0.10.0"}
   "ocaml-migrate-parsetree" {>= "1.0"}
   "ppx_derivers"            {>= "1.0"}
