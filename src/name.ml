@@ -134,7 +134,7 @@ module Whitelisted = struct
 end
 
 module Reserved_namespaces = struct
-  let tbl : (string, unit) Hashtbl.t = Hashtbl.create (module String) ()
+  let tbl : (string, unit) Hashtbl.t = Hashtbl.create (module String)
 
   let reserve ns = Hashtbl.add_exn tbl ~key:ns ~data:()
 
@@ -257,7 +257,7 @@ module Registrar = struct
           Format.fprintf ppf "@ but@ is@ used@ here@ in@ the@ context@ of@ %s@ %a"
             a_or_an pp_text s
       in
-      match List.sort ~cmp:(fun x y -> - (String.compare x y)) other_contexts with
+      match List.sort ~compare:(fun x y -> - (String.compare x y)) other_contexts with
       | [] -> None
       | [c] ->
         Some

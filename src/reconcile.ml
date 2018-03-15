@@ -101,7 +101,7 @@ module Replacements = struct
            It is too complicated to reconcile it with the source";
       assert (repl.start.pos_cnum <= repl.stop.pos_cnum));
     let repls =
-      List.sort repls ~cmp:(fun  a b ->
+      List.sort repls ~compare:(fun  a b ->
         let d = compare a.start.pos_cnum b.stop.pos_cnum in
         if d = 0 then
           (* Put the largest first, so that the following [filter] functions always picks up

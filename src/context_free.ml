@@ -298,13 +298,13 @@ let rev_concat = function
 ;;
 
 let sort_attr_group_inline l =
-  List.sort l ~cmp:(fun a b ->
+  List.sort l ~compare:(fun a b ->
     String.compare
       (Rule.Attr_group_inline.attr_name a)
       (Rule.Attr_group_inline.attr_name b))
 
 let sort_attr_inline l =
-  List.sort l ~cmp:(fun a b ->
+  List.sort l ~compare:(fun a b ->
     String.compare
       (Rule.Attr_inline.attr_name a)
       (Rule.Attr_inline.attr_name b))
