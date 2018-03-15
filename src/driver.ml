@@ -317,7 +317,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler =
           | None -> None
           | Some x -> Some (ct.name, x))
         (* Sort them to ensure deterministic ordering *)
-        |> List.sort ~cmp:(fun (a, _) (b, _) -> String.compare a b)
+        |> List.sort ~compare:(fun (a, _) (b, _) -> String.compare a b)
         |> List.map ~f:snd
       in
 
@@ -865,7 +865,7 @@ let process_file (kind : Kind.t) fn ~input_name ~output_mode ~embed_errors ~outp
       Out_channel.write_all fn
         ~data:(
           List.map metadata ~f:(fun (s, sexp) ->
-            Sexp.to_string_hum (List [Atom s; sexp]) ^ "\n")
+            Sexp.to_string_hum (Sexp.List [Atom s; sexp]) ^ "\n")
           |> String.concat ~sep:""));
 
     let input_contents = lazy (load_source_file fn) in

@@ -328,7 +328,7 @@ module Deriver = struct
           None)
     in
     (* Set of actual deriver names *)
-    let seen = Hash_set.create (module String) () in
+    let seen = Hash_set.create (module String) in
     List.map derivers_and_args ~f:(fun (name, args) ->
       let named_generators = resolve field name in
       List.iter named_generators ~f:(fun (actual_deriver_name, gen) ->
