@@ -1122,11 +1122,27 @@ let standalone_args =
   ]
 ;;
 
+let get_args ?(standalone_args=standalone_args) () =
+  let args = standalone_args @ List.rev !args in
+  let my_arg_names =
+    List.rev_map args ~f:(fun (name, _, _) -> name)
+    |> Set.of_list (module String)
+  in
+  let omp_args =
+    (* Filter out arguments that we override *)
+    List.filter (Migrate_parsetree.Driver.registered_args ())
+      ~f:(fun (name, _, _) ->
+          not (Set.mem my_arg_names name))
+  in
+  args @ omp_args
+;;
+
 let standalone_main () =
   let usage =
     Printf.sprintf "%s [extra_args] [<files>]" exe_name
   in
-  let args = List.rev_append !args standalone_args in
+  let args = get_args () in
+  Migrate_parsetree.Driver.reset_args ();
   Arg.parse (Arg.align args) set_input usage;
   interpret_mask ();
   if !request_print_transformations then begin
@@ -1178,7 +1194,8 @@ let standalone_run_as_ppx_rewriter () =
     List.map standalone_args ~f:(fun (arg, spec, _doc) ->
       (arg, spec, " Unused with -as-ppx"))
   in
-  let args = List.rev_append !args standalone_args in
+  let args = get_args () ~standalone_args in
+  Migrate_parsetree.Driver.reset_args ();
   match
     Arg.parse_argv argv (Arg.align args)
       (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
