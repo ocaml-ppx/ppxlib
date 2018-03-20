@@ -1,18 +1,17 @@
 open Ppxlib
-open Ppx_core
 
 
 let foo =
-  Type_conv.add "foo"
-    ~str_type_decl:(Type_conv.Generator.make_noarg
+  Deriving.add "foo"
+    ~str_type_decl:(Deriving.Generator.make_noarg
                       (fun ~loc ~path:_ _ -> [%str let x = 42]))
 ;;
 
 let bar =
-  Type_conv.add "bar"
-    ~str_type_decl:(Type_conv.Generator.make_noarg
+  Deriving.add "bar"
+    ~str_type_decl:(Deriving.Generator.make_noarg
                       ~deps:[foo]
-                      (fun ~loc ~path:_ _ -> [%str let () = printf "x = %d\n" x]))
+                      (fun ~loc ~path:_ _ -> [%str let () = Printf.printf "x = %d\n" x]))
 ;;
 
 type t = int [@@deriving bar]

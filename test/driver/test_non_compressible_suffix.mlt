@@ -1,5 +1,4 @@
 open Ppxlib;;
-open Ppx_core;;
 open Ast_builder.Default;;
 
 Driver.register_transformation "blah"

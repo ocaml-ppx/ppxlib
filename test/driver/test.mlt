@@ -2,7 +2,7 @@
 
 #directory "+compiler-libs";;
 open Ppxlib
-open Ppx_core
+open Base
 
 let x = 1 [@@foo]
 [%%expect{|
@@ -116,19 +116,19 @@ let () =
                     | None -> estring ~loc "-"
                     | Some { loc; txt } -> estring ~loc (Longident.name txt)))]
 
-let () = printf "%s\n" [%plop]
+let () = Caml.Printf.printf "%s\n" [%plop]
 
 [%%expect{|
 -
 |}]
 
-let () = printf "%s\n" [%plop.Truc]
+let () = Caml.Printf.printf "%s\n" [%plop.Truc]
 
 [%%expect{|
 Truc
 |}]
 
-let () = printf "%s\n" [%plop.Truc.Bidule]
+let () = Caml.Printf.printf "%s\n" [%plop.Truc.Bidule]
 
 [%%expect{|
 Truc.Bidule
