@@ -1194,7 +1194,7 @@ let standalone_run_as_ppx_rewriter () =
     List.map standalone_args ~f:(fun (arg, spec, _doc) ->
       (arg, spec, " Unused with -as-ppx"))
   in
-  let args = get_args () ~standalone_args in
+  let args = get_args ~standalone_args () in
   Migrate_parsetree.Driver.reset_args ();
   match
     Arg.parse_argv argv (Arg.align args)
