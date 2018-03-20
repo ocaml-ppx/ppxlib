@@ -1,16 +1,16 @@
 This repository contains core libraries and tools used to develop ppx
-rewriters. The code was originally developped and is still maintained
+rewriters. The code was originally developed and is still maintained
 and used by [Jane Street][js].
 
 This repository is not the first piece of open source software
 released by Jane Street, however it is the first to be entirely
-developped on github. We are hopping that opening the development of
+developed on github. We are hoping that opening the development of
 this repository will help collaboration with other open source users.
 
 We welcome contributions and we will be happy to add contributors,
 given that they are motivated to help maintain and grow the
 project. However, given how important this code is to the functioning
-of Jane Street, we do require that at least one Jane Street developper
+of Jane Street, we do require that at least one Jane Street developer
 reads every pull request that modifies the source code.
 
 Additionally, all contributors must sign our [Contributor License
@@ -25,7 +25,7 @@ contributor's machine before a patch is submitted for review.
 
 Note that in addition to the normal dependencies, you need to install
 [cinaps][cinaps] in order to modify the code. This is because some
-part of the code are auto-generated and committed in the repository.
+parts of the code are auto-generated and committed in the repository.
 
 So before submitting a PR, make sure to check all the following
 points:
@@ -37,7 +37,7 @@ points:
 ### Submitting patches and code review
 
 Once a patch is ready according to the criterion stated in the
-previous section, it should be submited via the github website. When
+previous section, it should be submitted via the github website. When
 submitting a pull request, we ask that you tick the `Allow edits from
 maintainers` box. This will allow us to push new commits to your
 PR. We ask this for two reasons; first it is much simpler and quicker
