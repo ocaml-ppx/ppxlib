@@ -1051,8 +1051,8 @@ let set_cookie s =
       ; pos_cnum  = 0
       };
     let expr = Parse.expression lexbuf in
-    Ocaml_common.Ast_mapper.set_cookie name
-      (Ppxlib_ast.Selected_ast.to_ocaml Expression expr)
+    Migrate_parsetree.Driver.set_global_cookie name
+      (module Ppx_ast.Selected_ast) expr
 
 let as_pp () =
   set_output_mode Dump_ast;
