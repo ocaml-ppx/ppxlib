@@ -297,7 +297,7 @@ module Deriver = struct
         ""
     in
     Location.raise_errorf ~loc:name.loc
-      "Ppxlib.Deriving: '%s' is not a supported %s type-conv generator%s"
+      "Ppxlib.Deriving: '%s' is not a supported %s deriving generator%s"
       name.txt field.name spellcheck_msg
   ;;
 

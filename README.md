@@ -305,7 +305,7 @@ it will catch typos and attributes misplacement. For instance:
 Error: Attribute `derivin' was not used
 Hint: Did you mean deriving?
 # type t = int [@@deriving sxp]
-Error: ppxlib_deriving: 'sxp' is not a supported type type-conv generator
+Error: ppxlib_deriving: 'sxp' is not a supported type deriving generator
 Hint: Did you mean sexp?
 # type t = int [@deriving sexp]
 Error: Attribute `deriving' was not used
