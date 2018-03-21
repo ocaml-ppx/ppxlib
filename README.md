@@ -276,9 +276,9 @@ above.
 
 Derivers
 --------
-The `Ppxlib.Type_conv` module factors out functionality needed by
+The `Ppxlib.Deriving` module factors out functionality needed by
 different preprocessors that generate code from type specifications.  Example
-libraries currently depending on `type_conv`:
+libraries currently depending on `Deriving`:
 
 - `ppx_bin_prot`;
 - `ppx_compare`;
@@ -288,16 +288,16 @@ libraries currently depending on `type_conv`:
 
 Compatibility with [ppx_deriving](https://github.com/ocaml-ppx/ppx_deriving)
 ----------------------------------------------------------------------------
-`Ppxlib.Type_conv`-based code generators are meant to be used with
-`Ppxlib.Driver`. However `Type_conv` allows to export a compatible
+`Ppxlib.Deriving`-based code generators are meant to be used with
+`Ppxlib.Driver`. However `Deriving` allows to export a compatible
 `ppx_deriving` plugin. By default, when not linked as part of a driver,
-packages using `Type_conv` will just use `ppx_deriving`.
+packages using `Deriving` will just use `ppx_deriving`.
 
 So for instance this will work as expected using `ppx_deriving`:
 
     ocamlfind ocamlc -c -package ppx_sexp_conv foo.ml
 
-For end users, the main advantage of using `Type_conv`-based generators is that
+For end users, the main advantage of using `Deriving`-based generators is that
 it will catch typos and attributes misplacement. For instance:
 
 ```
@@ -305,7 +305,7 @@ it will catch typos and attributes misplacement. For instance:
 Error: Attribute `derivin' was not used
 Hint: Did you mean deriving?
 # type t = int [@@deriving sxp]
-Error: ppxlib_type_conv: 'sxp' is not a supported type type-conv generator
+Error: ppxlib_deriving: 'sxp' is not a supported type type-conv generator
 Hint: Did you mean sexp?
 # type t = int [@deriving sexp]
 Error: Attribute `deriving' was not used
@@ -318,7 +318,7 @@ Deriving Syntax
 ---------------
 This section is only relevant if you are not using `ppx_deriving`.
 
-`Type_conv` interprets the `[@@deriving ...]` attributes on type declarations,
+`Deriving` interprets the `[@@deriving ...]` attributes on type declarations,
 exception declarations and extension constructor declarations:
 
 ```
@@ -327,7 +327,7 @@ type t = A | B [@@deriving sexp, bin_io]
 
 `sexp` and `bin_io` are called generators. They are functions that generate
 code given the declaration. These functions are implemented by external
-libraries such as `ppx_sexp_conv` or `ppx_bin_prot`. `Type_conv` itself
+libraries such as `ppx_sexp_conv` or `ppx_bin_prot`. `Deriving` itself
 provides no generator, it does only the dispatch.
 
 Generators can take arguments. This is done using the following syntax:
@@ -372,7 +372,7 @@ types (`int`, `string`, `list`, ...).
 
 Traverse (and Traverse_builtins)
 ================================
-`Ppxlib_traverse` is a `type_conv` plugin generating open recursion classes
+`Ppxlib_traverse` is a `Deriving` plugin generating open recursion classes
 from type definition. Users can overwrite a specific method of the generated
 classes in order to specialize the recursion on specific nodes.
 `Ppxlib_traverse` is in particular used to generate the open recursion classes
