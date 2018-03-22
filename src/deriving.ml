@@ -156,11 +156,11 @@ module Generator = struct
     List.iter args ~f:(fun (label, e) ->
       if String.is_empty label then
         Location.raise_errorf ~loc:e.pexp_loc
-          "ppxlib_type_conv: generator arguments must be labelled");
+          "Ppxlib.Deriving: generator arguments must be labelled");
     Option.iter (List.find_a_dup args ~compare:(fun (a, _) (b, _) -> String.compare a b))
       ~f:(fun (label, e) ->
         Location.raise_errorf ~loc:e.pexp_loc
-          "ppxlib_type_conv: argument labelled '%s' appears more than once" label);
+          "Ppxlib.Deriving: argument labelled '%s' appears more than once" label);
     let accepted_args = merge_accepted_args generators in
     List.iter args ~f:(fun (label, e) ->
       if not (Set.mem accepted_args label) then
@@ -170,7 +170,7 @@ module Generator = struct
           | Some s -> ".\n" ^ s
         in
         Location.raise_errorf ~loc:e.pexp_loc
-          "ppxlib_type_conv: generator '%s' doesn't accept argument '%s'%s"
+          "Ppxlib.Deriving: generator '%s' doesn't accept argument '%s'%s"
           name label spellcheck_msg);
   ;;
 
@@ -297,7 +297,7 @@ module Deriver = struct
         ""
     in
     Location.raise_errorf ~loc:name.loc
-      "ppxlib_type_conv: '%s' is not a supported %s type-conv generator%s"
+      "Ppxlib.Deriving: '%s' is not a supported %s deriving generator%s"
       name.txt field.name spellcheck_msg
   ;;
 
@@ -322,7 +322,7 @@ module Deriver = struct
              match args with
              | Args l -> l
              | Unknown_syntax (loc, msg) ->
-               Location.raise_errorf ~loc "ppxlib_type_conv: %s" msg)
+               Location.raise_errorf ~loc "Ppxlib.Deriving: %s" msg)
         | Some _ ->
           (* It's not one of ours, ignore it. *)
           None)
@@ -373,7 +373,7 @@ module Deriver = struct
      | None -> ()
      | Some f ->
        let extension = Extension.declare name Expression Ast_pattern.(ptyp __) f in
-       Driver.register_transformation ("ppxlib_type_conv." ^ name)
+       Driver.register_transformation ("Ppxlib.Deriving." ^ name)
          ~rules:[ Context_free.Rule.extension extension ]);
     name
   ;;
