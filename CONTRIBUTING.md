@@ -38,20 +38,10 @@ points:
 
 Once a patch is ready according to the criterion stated in the
 previous section, it should be submitted via the github website. When
-submitting a pull request, we ask that you tick the `Allow edits from
-maintainers` box. This will allow us to push new commits to your
-PR. We ask this for two reasons; first it is much simpler and quicker
-to fix typos or do simple improvements directly rather than go back
-and forth through the web interface.
-
-The second reason is that when one accepts a patch on their project,
-it is natural to want to rewrite some part of it to match the overall
-style of the project, enforce some invariant the contributor might not
-be aware of, or even just make sure that it matches the personal
-tastes of the maintainer, since they are going to be the one
-maintaining the code moving forward. In any case, when part of a PR is
-rewritten by a maintainer, it doesn't mean that the original code was
-badly written.
+submitting a pull request, we prefer if you tick the `Allow edits from
+maintainers` box as it is much simpler to fix typos or do simple
+improvements directly rather than go back and forth through the web
+interface.
 
 [js]:     https://opensource.janestreet.com/
 [CLA]:    https://janestreet.github.io/contributing.html
