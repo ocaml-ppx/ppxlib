@@ -1052,7 +1052,7 @@ let set_cookie s =
       };
     let expr = Parse.expression lexbuf in
     Migrate_parsetree.Driver.set_global_cookie name
-      (module Ppx_ast.Selected_ast) expr
+      (module Ppxlib_ast.Selected_ast) expr
 
 let as_pp () =
   set_output_mode Dump_ast;
