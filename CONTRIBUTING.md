@@ -36,7 +36,7 @@ points:
 
 ### Submitting patches and code review
 
-Once a patch is ready according to the criterion stated in the
+Once a patch is ready according to the criteria stated in the
 previous section, it should be submitted via the github website. When
 submitting a pull request, we prefer if you tick the `Allow edits from
 maintainers` box as it is much simpler to fix typos or do simple
