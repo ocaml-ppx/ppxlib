@@ -35,7 +35,7 @@ module Context = struct
     | Pstr_extension          : structure_item          t
     | Psig_extension          : signature_item          t
     | Rtag                    : row_field               t
-    | Object_type_field       : (string loc * attributes * core_type) t
+    | Object_type_field       : object_field            t
 
   let label_declaration       = Label_declaration
   let constructor_declaration = Constructor_declaration
@@ -83,7 +83,11 @@ module Context = struct
   let get_rtag : row_field -> _ = function
     | Rtag (lbl, attrs, can_be_constant, params_opts) ->
       (lbl, attrs, can_be_constant, params_opts)
-    | Rinherit _ -> failwith "Attribute.Context.get_rgag"
+    | Rinherit _ -> failwith "Attribute.Context.get_rtag"
+
+  let get_otag : object_field -> _ = function
+    | Otag (lbl, attrs, typ) -> (lbl, attrs, typ)
+    | Oinherit _ -> failwith "Attribute.Context.get_otag"
 
   let get_attributes : type a. a t -> a -> attributes = fun t x ->
     match t with
@@ -113,7 +117,7 @@ module Context = struct
     | Pstr_extension          -> snd (get_pstr_extension x)
     | Psig_extension          -> snd (get_psig_extension x)
     | Rtag                    -> let (_, attrs, _, _) = get_rtag x in attrs
-    | Object_type_field       -> let (_, attrs, _) = x in attrs
+    | Object_type_field       -> let (_, attrs, _) = get_otag x in attrs
 
   let set_attributes : type a. a t -> a -> attributes -> a = fun t x attrs ->
     match t with
@@ -149,8 +153,8 @@ module Context = struct
       let (lbl, _, can_be_constant, params_opts) = get_rtag x in
       Rtag (lbl, attrs, can_be_constant, params_opts)
     | Object_type_field ->
-      let (name, _, typ) = x in
-      (name, attrs, typ)
+      let (lbl, _, typ) = get_otag x in
+      Otag (lbl, attrs, typ)
 
   let desc : type a. a t -> string = function
     | Label_declaration       -> "label declaration"
