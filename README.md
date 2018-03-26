@@ -6,7 +6,7 @@ This repository is the merge of several ppx-related repositories, namely:
 - [ppx_metaquot](https://github.com/janestreet/ppx_metaquot);
 - [ppx_traverse](https://github.com/janestreet/ppx_traverse);
 - [ppx_traverse_builtins](https://github.com/janestreet/ppx_traverse_builtins);
-- [type_conv](https://github.com/janestreet/type_conv).
+- [ppx_type_conv](https://github.com/janestreet/ppx_type_conv).
 
 Future development will happen only in this repository, and the aforementioned
 ones will only contain synonym definitions to provide backward compatibility.
