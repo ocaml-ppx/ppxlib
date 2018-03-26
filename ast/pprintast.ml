@@ -1212,8 +1212,14 @@ and binding ctxt f {pvb_pat=p; pvb_expr=x; _} =
           end
       | {pexp_desc=Pexp_constraint (x, ty)}, _ ->
         (* XXX: this case is janestreet only *)
+        begin match ty with
+        | {ptyp_desc=Ptyp_poly _; ptyp_attributes=[]} ->
           pp f "%a@;:@;%a@;=@;%a" (pattern ctxt) p
             (core_type ctxt) ty (expression ctxt) x
+        | _ ->
+          pp f "(%a@;:@;%a)@;=@;%a" (pattern ctxt) p
+            (core_type ctxt) ty (expression ctxt) x
+        end
       | _, {ppat_desc=Ppat_var _; ppat_attributes=[]} ->
           pp f "%a@ %a" (simple_pattern ctxt) p pp_print_pexp_function x
       | _ ->
