@@ -6,6 +6,6 @@
                     ppx_sexp_conv
                     ppx_compare
                     ppx_bin_prot
-                    -type-conv-keep-w32=both ppxlib.runner)))))
+                    -deriving-keep-w32=both ppxlib.runner)))))
 
 (jbuild_version 1)

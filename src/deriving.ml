@@ -8,25 +8,37 @@ let do_insert_unused_warning_attribute = ref false
 let keep_w32_impl = ref false
 let keep_w32_intf = ref false
 let () =
-  Driver.add_arg "-type-conv-keep-w32"
-    (Symbol
-       (["impl"; "intf"; "both"],
-        (function
-          | "impl" -> keep_w32_impl := true
-          | "intf" -> keep_w32_intf := true
-          | "both" ->
-            keep_w32_impl := true;
-            keep_w32_intf := true
-          | _ -> assert false)))
+  let keep_w32_spec =
+    Caml.Arg.Symbol
+      (["impl"; "intf"; "both"],
+       (function
+         | "impl" -> keep_w32_impl := true
+         | "intf" -> keep_w32_intf := true
+         | "both" ->
+           keep_w32_impl := true;
+           keep_w32_intf := true
+         | _ -> assert false))
+  in
+  let conv_w32_spec =
+    Caml.Arg.Symbol
+      (["code"; "attribute"],
+       (function
+         | "code"      -> do_insert_unused_warning_attribute := false
+         | "attribute" -> do_insert_unused_warning_attribute := true
+         | _           -> assert false))
+  in
+  Driver.add_arg "-deriving-keep-w32"
+    keep_w32_spec
     ~doc:" Do not try to disable warning 32 for the generated code";
+  Driver.add_arg "-deriving-w32"
+    conv_w32_spec
+    ~doc:" How to disable warning 32 for the generated code";
+  Driver.add_arg "-type-conv-keep-w32"
+    keep_w32_spec
+    ~doc:" Deprecated, use -deriving-keep-w32";
   Driver.add_arg "-type-conv-w32"
-    (Symbol
-       (["code"; "attribute"],
-        (function
-          | "code"      -> do_insert_unused_warning_attribute := false
-          | "attribute" -> do_insert_unused_warning_attribute := true
-          | _           -> assert false)))
-    ~doc:" How to disable warning 32 for the generated code"
+    conv_w32_spec
+    ~doc:" Deprecated, use -deriving-w32"
 
 let keep_w32_impl () = !keep_w32_impl || Driver.pretty ()
 let keep_w32_intf () = !keep_w32_intf || Driver.pretty ()
