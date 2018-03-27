@@ -1654,8 +1654,10 @@ lident_list:
   | LIDENT lident_list                { mkrhs $1 1 :: $2 }
 ;
 let_binding_body:
-    val_ident strict_binding
+    val_ident fun_binding
       { (mkpatvar $1 1, $2) }
+  /* Intentionally left out, as part of the fix for PR#7344
+     (commit fd0dc6a0fbf73323c37a73ea7e8ffc150059d6ff)
   | val_ident type_constraint EQUAL seq_expr
       { let v = mkpatvar $1 1 in (* PR#7344 *)
         let t =
@@ -1666,6 +1668,7 @@ let_binding_body:
         in
         (ghpat(Ppat_constraint(v, ghtyp(Ptyp_poly([],t)))),
          mkexp_constraint $4 $2) }
+  */
   | val_ident COLON typevar_list DOT core_type EQUAL seq_expr
       { (ghpat(Ppat_constraint(mkpatvar $1 1,
                                ghtyp(Ptyp_poly(List.rev $3,$5)))),
