@@ -97,9 +97,7 @@ type t =
 
 [%%expect{|
 Line _, characters 0-36:
-Warning 22: Fields are not sorted!
-Line _:
-Error: Some fatal warnings were triggered (1 occurrences)
+Error (Warning 22): Fields are not sorted!
 |}]
 
 (* Extension with a path argument *)
