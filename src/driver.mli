@@ -95,6 +95,7 @@ val register_transformation
   -> ?lint_intf        : (signature -> Lint_error.t list)
   -> ?preprocess_impl  : (structure -> structure)
   -> ?preprocess_intf  : (signature -> signature)
+  -> ?aliases          : string list
   -> string
   -> unit
 
@@ -110,6 +111,7 @@ val register_transformation_using_ocaml_current_ast
               Migrate_parsetree.OCaml_current.Ast.Parsetree.structure)
   -> ?intf : (Migrate_parsetree.OCaml_current.Ast.Parsetree.signature ->
               Migrate_parsetree.OCaml_current.Ast.Parsetree.signature)
+  -> ?aliases : string list
   -> string
   -> unit
 
@@ -125,6 +127,7 @@ val register_transformation_using_ocaml_current_ast
 *)
 val register_code_transformation
   :  name:string
+  -> ?aliases:string list
   -> impl:(structure -> structure)
   -> intf:(signature -> signature)
   -> unit

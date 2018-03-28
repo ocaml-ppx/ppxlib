@@ -468,9 +468,9 @@ let parse_arguments l =
   with Unknown_syntax (loc, msg) ->
     Unknown_syntax (loc, msg)
 
-let mk_deriving_attr context ~suffix =
+let mk_deriving_attr context ~prefix ~suffix =
   Attribute.declare
-    ("type_conv.deriving" ^ suffix)
+    (prefix ^ "deriving" ^ suffix)
     context
     Ast_pattern.(
       let generator_name () =
@@ -491,15 +491,21 @@ let mk_deriving_attr context ~suffix =
 
 module Attr = struct
   let suffix = ""
-  let td = mk_deriving_attr ~suffix Type_declaration
-  let te = mk_deriving_attr ~suffix Type_extension
-  let ec = mk_deriving_attr ~suffix Extension_constructor
+  let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
+  let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
+  let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Extension_constructor
+  let td_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_declaration
+  let te_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_extension
+  let ec_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Extension_constructor
 
   module Expect = struct
     let suffix = "_inline"
-    let td = mk_deriving_attr ~suffix Type_declaration
-    let te = mk_deriving_attr ~suffix Type_extension
-    let ec = mk_deriving_attr ~suffix Extension_constructor
+    let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
+    let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
+    let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Extension_constructor
+    let td_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_declaration
+    let te_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_extension
+    let ec_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Extension_constructor
   end
 end
 
@@ -629,6 +635,7 @@ let expand_sig_type_ext ~loc ~path te generators =
 
 let () =
   Driver.register_transformation "type_conv"
+    ~aliases:["deriving"]
     ~rules:[ Context_free.Rule.attr_str_type_decl
                Attr.td
                expand_str_type_decls
@@ -666,6 +673,44 @@ let () =
                expand_str_exception
            ; Context_free.Rule.attr_sig_exception_expect
                Attr.Expect.ec
+               expand_sig_exception
+
+           (* equivalent but deprecated attributes *)
+           ; Context_free.Rule.attr_str_type_decl
+               Attr.td_depr
+               expand_str_type_decls
+           ; Context_free.Rule.attr_sig_type_decl
+               Attr.td_depr
+               expand_sig_type_decls
+           ; Context_free.Rule.attr_str_type_ext
+               Attr.te_depr
+               expand_str_type_ext
+           ; Context_free.Rule.attr_sig_type_ext
+               Attr.te_depr
+               expand_sig_type_ext
+           ; Context_free.Rule.attr_str_exception
+               Attr.ec_depr
+               expand_str_exception
+           ; Context_free.Rule.attr_sig_exception
+               Attr.ec_depr
+               expand_sig_exception
+           ; Context_free.Rule.attr_str_type_decl_expect
+               Attr.Expect.td_depr
+               expand_str_type_decls
+           ; Context_free.Rule.attr_sig_type_decl_expect
+               Attr.Expect.td_depr
+               expand_sig_type_decls
+           ; Context_free.Rule.attr_str_type_ext_expect
+               Attr.Expect.te_depr
+               expand_str_type_ext
+           ; Context_free.Rule.attr_sig_type_ext_expect
+               Attr.Expect.te_depr
+               expand_sig_type_ext
+           ; Context_free.Rule.attr_str_exception_expect
+               Attr.Expect.ec_depr
+               expand_str_exception
+           ; Context_free.Rule.attr_sig_exception_expect
+               Attr.Expect.ec_depr
                expand_sig_exception
            ]
 ;;
