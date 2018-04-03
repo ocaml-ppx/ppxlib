@@ -30,7 +30,7 @@ let () =
   Driver.add_arg "-deriving-keep-w32"
     keep_w32_spec
     ~doc:" Do not try to disable warning 32 for the generated code";
-  Driver.add_arg "-deriving-w32"
+  Driver.add_arg "-deriving-disable-w32-method"
     conv_w32_spec
     ~doc:" How to disable warning 32 for the generated code";
   Driver.add_arg "-type-conv-keep-w32"
@@ -38,7 +38,7 @@ let () =
     ~doc:" Deprecated, use -deriving-keep-w32";
   Driver.add_arg "-type-conv-w32"
     conv_w32_spec
-    ~doc:" Deprecated, use -deriving-w32"
+    ~doc:" Deprecated, use -deriving-disable-w32-method"
 
 let keep_w32_impl () = !keep_w32_impl || Driver.pretty ()
 let keep_w32_intf () = !keep_w32_intf || Driver.pretty ()
