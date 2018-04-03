@@ -494,18 +494,18 @@ module Attr = struct
   let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
   let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
   let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Extension_constructor
-  let td_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_declaration
-  let te_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_extension
-  let ec_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Extension_constructor
+  let _td_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_declaration
+  let _te_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_extension
+  let _ec_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Extension_constructor
 
   module Expect = struct
     let suffix = "_inline"
     let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
     let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
     let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Extension_constructor
-    let td_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_declaration
-    let te_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_extension
-    let ec_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Extension_constructor
+    let _td_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_declaration
+    let _te_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Type_extension
+    let _ec_depr = mk_deriving_attr ~prefix:"type_conv." ~suffix Extension_constructor
   end
 end
 
