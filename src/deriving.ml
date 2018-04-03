@@ -634,8 +634,8 @@ let expand_sig_type_ext ~loc ~path te generators =
   disable_unused_warning_sig ~loc generated
 
 let () =
-  Driver.register_transformation "type_conv"
-    ~aliases:["deriving"]
+  Driver.register_transformation "deriving"
+    ~aliases:["type_conv"]
     ~rules:[ Context_free.Rule.attr_str_type_decl
                Attr.td
                expand_str_type_decls
