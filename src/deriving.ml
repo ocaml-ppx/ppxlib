@@ -674,43 +674,5 @@ let () =
            ; Context_free.Rule.attr_sig_exception_expect
                Attr.Expect.ec
                expand_sig_exception
-
-           (* equivalent but deprecated attributes *)
-           ; Context_free.Rule.attr_str_type_decl
-               Attr.td_depr
-               expand_str_type_decls
-           ; Context_free.Rule.attr_sig_type_decl
-               Attr.td_depr
-               expand_sig_type_decls
-           ; Context_free.Rule.attr_str_type_ext
-               Attr.te_depr
-               expand_str_type_ext
-           ; Context_free.Rule.attr_sig_type_ext
-               Attr.te_depr
-               expand_sig_type_ext
-           ; Context_free.Rule.attr_str_exception
-               Attr.ec_depr
-               expand_str_exception
-           ; Context_free.Rule.attr_sig_exception
-               Attr.ec_depr
-               expand_sig_exception
-           ; Context_free.Rule.attr_str_type_decl_expect
-               Attr.Expect.td_depr
-               expand_str_type_decls
-           ; Context_free.Rule.attr_sig_type_decl_expect
-               Attr.Expect.td_depr
-               expand_sig_type_decls
-           ; Context_free.Rule.attr_str_type_ext_expect
-               Attr.Expect.te_depr
-               expand_str_type_ext
-           ; Context_free.Rule.attr_sig_type_ext_expect
-               Attr.Expect.te_depr
-               expand_sig_type_ext
-           ; Context_free.Rule.attr_str_exception_expect
-               Attr.Expect.ec_depr
-               expand_str_exception
-           ; Context_free.Rule.attr_sig_exception_expect
-               Attr.Expect.ec_depr
-               expand_sig_exception
            ]
 ;;
