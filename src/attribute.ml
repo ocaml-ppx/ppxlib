@@ -276,17 +276,17 @@ let declare name context pattern k =
   }
 ;;
 
-module Phys_table = Caml.Hashtbl.Make(struct
-    type t = string
-    let hash = Hashtbl.hash
-    let equal = phys_equal
+module Attribute_table = Caml.Hashtbl.Make(struct
+    type t = string loc
+    let hash : t -> int = Hashtbl.hash
+    let equal : t -> t -> bool = Polymorphic_compare.equal
   end)
 
-let not_seen = Phys_table.create 128
+let not_seen = Attribute_table.create 128
 
 let mark_as_seen attr =
-  let name = (fst attr).txt in
-  Phys_table.remove not_seen name
+  let name = fst attr in
+  Attribute_table.remove not_seen name
 ;;
 
 let mark_as_handled_manually = mark_as_seen
@@ -352,8 +352,8 @@ let remove_seen (type a) (context : a Context.t) packeds (x : a) =
           match get_internal t attrs with
           | None      -> loop acc rest
           | Some attr ->
-            let name = (fst attr).txt in
-            if Phys_table.mem not_seen name then
+            let name = fst attr in
+            if Attribute_table.mem not_seen name then
               loop acc rest
             else
               loop (attr :: acc) rest
@@ -417,7 +417,7 @@ end
 let check_attribute registrar context name =
   if not (Name.Whitelisted.is_whitelisted ~kind:`Attribute name.txt
           || Name.Reserved_namespaces.is_in_reserved_namespaces name.txt)
-  && Phys_table.mem not_seen name.txt then
+  && Attribute_table.mem not_seen name then
     let white_list = Name.Whitelisted.get_attribute_list () in
     Name.Registrar.raise_errorf registrar context ~white_list
       "Attribute `%s' was not used" name
@@ -522,7 +522,7 @@ let check_unused = object(self)
     super#signature_item item
 end
 
-let reset_checks () = Phys_table.clear not_seen
+let reset_checks () = Attribute_table.clear not_seen
 
 let freshen_and_collect = object
   inherit Ast_traverse.map as super
@@ -530,19 +530,17 @@ let freshen_and_collect = object
   method! attribute ((name, payload) as attr) =
     let loc = Common.loc_of_attribute attr in
     let payload = super#payload payload in
-    (* This code relies on phys_equal of strings. *)
-    let key = String.copy name.txt in
-    let name = { name with txt = key } in
-    Phys_table.add not_seen key loc;
+    Attribute_table.add not_seen name loc;
     (name, payload)
 end
 
 let check_all_seen () =
   let fail name loc =
-    if not (Name.comes_from_merlin name) then
-      Location.raise_errorf ~loc "Attribute `%s' was silently dropped" name
+    let txt = name.txt in
+    if not (Name.comes_from_merlin txt) then
+      Location.raise_errorf ~loc "Attribute `%s' was silently dropped" txt
   in
-  Phys_table.iter fail not_seen
+  Attribute_table.iter fail not_seen
 ;;
 
 let remove_attributes_present_in table = object
@@ -550,23 +548,23 @@ let remove_attributes_present_in table = object
 
   method! attribute (name, payload) =
     super#payload payload;
-    Phys_table.remove table name.txt
+    Attribute_table.remove table name
 end
 
 let copy_of_not_seen () =
-  let copy = Phys_table.create (Phys_table.length not_seen) in
-  Phys_table.iter (Phys_table.add copy) not_seen;
+  let copy = Attribute_table.create (Attribute_table.length not_seen) in
+  Attribute_table.iter (Attribute_table.add copy) not_seen;
   copy
 ;;
 
 let dropped_so_far_structure st =
   let table = copy_of_not_seen () in
   (remove_attributes_present_in table)#structure st;
-  Phys_table.fold (fun txt loc acc -> { txt; loc } :: acc) table []
+  Attribute_table.fold (fun name loc acc -> { txt = name.txt; loc } :: acc) table []
 ;;
 
 let dropped_so_far_signature sg =
   let table = copy_of_not_seen () in
   (remove_attributes_present_in table)#signature sg;
-  Phys_table.fold (fun txt loc acc -> { txt; loc } :: acc) table []
+  Attribute_table.fold (fun name loc acc -> { txt = name.txt; loc } :: acc) table []
 ;;
