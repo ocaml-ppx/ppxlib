@@ -60,6 +60,7 @@ end
 module Transform = struct
   type t =
     { name            : string
+    ; aliases         : string list
     ; impl            : (Parsetree.structure -> Parsetree.structure) option
     ; intf            : (Parsetree.signature -> Parsetree.signature) option
     ; lint_impl       : (Parsetree.structure -> Lint_error.t list) option
@@ -72,6 +73,9 @@ module Transform = struct
     ; registered_at   : Caller_id.t
     }
 
+  let has_name t name =
+    (String.equal name t.name) || (List.exists ~f:(String.equal name) t.aliases)
+
   let all : t list ref = ref []
 
   let print_caller_id oc (caller_id : Caller_id.t) =
@@ -81,12 +85,13 @@ module Transform = struct
   ;;
 
   let register ?(extensions=[]) ?(rules=[]) ?enclose_impl ?enclose_intf
-        ?impl ?intf ?lint_impl ?lint_intf ?preprocess_impl ?preprocess_intf name =
+        ?impl ?intf ?lint_impl ?lint_intf ?preprocess_impl ?preprocess_intf
+        ?(aliases=[]) name =
     let rules =
       List.map extensions ~f:Context_free.Rule.extension @ rules
     in
     let caller_id = Caller_id.get ~skip:[Caml.__FILE__] in
-    begin match List.filter !all ~f:(fun ct -> String.equal ct.name name) with
+    begin match List.filter !all ~f:(fun ct -> has_name ct name) with
     | [] -> ()
     | ct :: _ ->
       eprintf "Warning: code transformation %s registered twice.\n" name;
@@ -95,6 +100,7 @@ module Transform = struct
     end;
     let ct =
       { name
+      ; aliases
       ; rules
       ; enclose_impl
       ; enclose_intf
@@ -200,6 +206,7 @@ module Transform = struct
   let builtin_of_context_free_rewriters ~hook ~rules ~enclose_impl ~enclose_intf =
     merge_into_generic_mappers ~hook
       { name = "<builtin:context-free>"
+      ; aliases = []
       ; impl = None
       ; intf = None
       ; lint_impl = None
@@ -218,6 +225,7 @@ module Transform = struct
           if Option.is_some t.lint_impl || Option.is_some t.lint_intf then
             Some
               { name = Printf.sprintf "<lint:%s>" t.name
+              ; aliases = []
               ; impl = None
               ; intf = None
               ; lint_impl = t.lint_impl
@@ -237,6 +245,7 @@ module Transform = struct
           then
             Some
               { name = Printf.sprintf "<preprocess:%s>" t.name
+              ; aliases = []
               ; impl = t.preprocess_impl
               ; intf = t.preprocess_intf
               ; lint_impl = None
@@ -262,14 +271,14 @@ end
 
 let register_transformation = Transform.register
 
-let register_code_transformation ~name ~impl ~intf =
-  register_transformation name ~impl ~intf
+let register_code_transformation ~name ?(aliases=[]) ~impl ~intf =
+  register_transformation name ~impl ~intf ~aliases
 ;;
 
-let register_transformation_using_ocaml_current_ast  ?impl ?intf name =
+let register_transformation_using_ocaml_current_ast ?impl ?intf ?aliases name =
   let impl = Option.map impl ~f:(Ppxlib_ast.Selected_ast.of_ocaml_mapper Structure) in
   let intf = Option.map intf ~f:(Ppxlib_ast.Selected_ast.of_ocaml_mapper Signature) in
-  register_transformation ?impl ?intf name
+  register_transformation ?impl ?intf ?aliases name
 
 let debug_dropped_attribute name ~old_dropped ~new_dropped =
   let print_diff what a b =
@@ -296,7 +305,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler =
     | Some names ->
       List.map names ~f:(fun name ->
         List.find_exn !Transform.all ~f:(fun (ct : Transform.t) ->
-          String.equal ct.name name))
+          Transform.has_name ct name))
   in
   let (`Linters linters, `Preprocess preprocess, `Rest cts) =
     Transform.partition_transformations cts in
@@ -973,7 +982,7 @@ let parse_apply_list s =
   let names = if String.equal s "" then [] else String.split s ~on:',' in
   List.iter names ~f:(fun name ->
     if not (List.exists !Transform.all ~f:(fun (ct : Transform.t) ->
-      String.equal ct.name name)) then
+      Transform.has_name ct name)) then
       raise (Caml.Arg.Bad (Printf.sprintf "code transformation '%s' does not exist" name)));
   names
 
@@ -1055,8 +1064,8 @@ let set_cookie s =
       ; pos_cnum  = 0
       };
     let expr = Parse.expression lexbuf in
-    Ocaml_common.Ast_mapper.set_cookie name
-      (Ppxlib_ast.Selected_ast.to_ocaml Expression expr)
+    Migrate_parsetree.Driver.set_global_cookie name
+      (module Ppxlib_ast.Selected_ast) expr
 
 let as_pp () =
   set_output_mode Dump_ast;
@@ -1126,11 +1135,27 @@ let standalone_args =
   ]
 ;;
 
+let get_args ?(standalone_args=standalone_args) () =
+  let args = standalone_args @ List.rev !args in
+  let my_arg_names =
+    List.rev_map args ~f:(fun (name, _, _) -> name)
+    |> Set.of_list (module String)
+  in
+  let omp_args =
+    (* Filter out arguments that we override *)
+    List.filter (Migrate_parsetree.Driver.registered_args ())
+      ~f:(fun (name, _, _) ->
+          not (Set.mem my_arg_names name))
+  in
+  args @ omp_args
+;;
+
 let standalone_main () =
   let usage =
     Printf.sprintf "%s [extra_args] [<files>]" exe_name
   in
-  let args = List.rev_append !args standalone_args in
+  let args = get_args () in
+  Migrate_parsetree.Driver.reset_args ();
   Arg.parse (Arg.align args) set_input usage;
   interpret_mask ();
   if !request_print_transformations then begin
@@ -1182,7 +1207,8 @@ let standalone_run_as_ppx_rewriter () =
     List.map standalone_args ~f:(fun (arg, spec, _doc) ->
       (arg, spec, " Unused with -as-ppx"))
   in
-  let args = List.rev_append !args standalone_args in
+  let args = get_args ~standalone_args () in
+  Migrate_parsetree.Driver.reset_args ();
   match
     Arg.parse_argv argv (Arg.align args)
       (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))

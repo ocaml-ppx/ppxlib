@@ -18,7 +18,7 @@
             ppxlib_ast
             syntaxerr
             warn))
-  (lint (pps (ppxlib_traverse -type-conv-keep-w32=impl)))
+  (lint (pps (ppxlib_traverse -deriving-keep-w32=impl)))
   (preprocess no_preprocessing)))
 
 (ocamllex  (lexer))

@@ -67,7 +67,7 @@ module Generator : sig
     -> 'output_ast
 end with type deriver := t
 
-(** Register a new type-conv generator.
+(** Register a new deriving generator.
 
     The various arguments are for the various items on which derivers
     can be attached in structure and signatures.

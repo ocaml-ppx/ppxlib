@@ -46,7 +46,7 @@ module Rule : sig
 
   (** The rest of this API is for rewriting rules that apply when a certain attribute is
       present. The API is not complete and is currently only enough to implement
-      type_conv. *)
+      deriving. *)
 
   (** Match the attribute on a group of items, such as a group of recursive type
       definitions (Pstr_type, Psig_type). The expander will be triggered if any of the

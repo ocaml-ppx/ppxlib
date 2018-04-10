@@ -1,7 +1,7 @@
 (executable
  ((name test)
   (flags (:standard -safe-string))
-  (preprocess (pps (ppxlib_traverse -type-conv-keep-w32=impl ppxlib.runner)))))
+  (preprocess (pps (ppxlib_traverse -deriving-keep-w32=impl ppxlib.runner)))))
 
 (rule
  (with-stdout-to test.output (run ./test.exe)))

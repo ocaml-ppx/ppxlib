@@ -42,7 +42,7 @@ module Context : sig
     | Pstr_extension          : structure_item          t
     | Psig_extension          : signature_item          t
     | Rtag                    : row_field               t
-    | Object_type_field       : (string loc * attributes * core_type) t
+    | Object_type_field       : object_field            t
 
   val label_declaration       : label_declaration       t
   val constructor_declaration : constructor_declaration t
@@ -70,7 +70,7 @@ module Context : sig
   val pstr_extension          : structure_item          t
   val psig_extension          : signature_item          t
   val rtag                    : row_field               t
-  val object_type_field       : (string loc * attributes * core_type) t
+  val object_type_field       : object_field            t
 end
 
 (** [declare fully_qualified_name context payload_pattern k] declares an attribute. [k] is
