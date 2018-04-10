@@ -15,23 +15,5 @@ Driver.register_transformation "blah"
          ]
 ;;
 
-#verbose true;;
-
-[%foo];;
-
-[%%expect{|
-- : int = 42
-|}];;
-
-[%foo.bar];;
-
-[%%expect{|
-- : int = 42
-|}];;
-
-[%bar];;
-
-[%%expect{|
-Line _, characters 2-5:
-Error: Extension `bar' was not translated
-|}]
+let () =
+  Driver.standalone ()

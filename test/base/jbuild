@@ -1,7 +1,13 @@
-(library
- ((name ppxlib_test)
+(executable
+ ((name test_name)
   (flags (:standard -safe-string))
-  (libraries (ppxlib))
-  (preprocess (pps (ppx_jane ppxlib.runner)))))
+  (libraries (base stdio ppxlib))))
+
+(rule
+ (with-stdout-to test_name.output (run ./test_name.exe)))
+
+(alias
+ ((name runtest)
+  (action (diff test_name.expected test_name.output))))
 
 (jbuild_version 1)

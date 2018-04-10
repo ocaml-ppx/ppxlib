@@ -1,0 +1,5 @@
+type t = int[@@deriving (foo, bar)]
+let _ = fun (_ : t)  -> () 
+let x = 42 
+let _ = x 
+let () = Printf.printf "x = %d\n" x 

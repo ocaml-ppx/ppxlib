@@ -1,0 +1,34 @@
+(executable
+ ((name test)
+  (flags (:standard -safe-string))
+  (modules (test))
+  (libraries (ppxlib))
+  (preprocess (pps (ppxlib_metaquot)))))
+
+(rule
+ ((targets (fail01.output))
+  (deps (test.exe fail01.ml))
+  (action (with-outputs-to fail01.output
+           (progn (bash "./test.exe -check fail01.ml || true"))))))
+
+(rule
+ ((targets (pass01.output))
+  (deps (test.exe pass01.ml))
+  (action (with-outputs-to pass01.output
+           (progn (bash "./test.exe -check pass01.ml || true"))))))
+
+(rule
+ ((targets (pass02.output))
+  (deps (test.exe pass02.ml))
+  (action (with-outputs-to pass02.output
+           (progn (bash "./test.exe -check pass02.ml || true"))))))
+
+(alias
+ ((name runtest)
+  (action (progn
+           (diff fail01.expected fail01.output)
+           (diff pass01.expected pass01.output)
+           (diff pass02.expected pass02.output)
+           ))))
+
+(jbuild_version 1)

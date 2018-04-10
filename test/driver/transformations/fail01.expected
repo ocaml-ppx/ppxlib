@@ -1,0 +1,4 @@
+[@@@ocaml.ppwarning "Fields are not sorted!"]
+type t = {
+  b: int ;
+  a: int }

@@ -1,0 +1,48 @@
+(executable
+ ((name test)
+  (flags (:standard -safe-string))
+  (modules (test))
+  (libraries (ppxlib))
+  (preprocess (pps (ppxlib_metaquot)))))
+
+(rule
+ ((targets (fail01.output))
+  (deps (test.exe fail01.ml))
+  (action (with-outputs-to fail01.output
+           (progn (bash "./test.exe -check fail01.ml || true"))))))
+
+(rule
+ ((targets (fail02.output))
+  (deps (test.exe fail02.ml))
+  (action (with-outputs-to fail02.output
+           (progn (bash "./test.exe -check fail02.ml || true"))))))
+
+(rule
+ ((targets (fail03.output))
+  (deps (test.exe fail03.ml))
+  (action (with-outputs-to fail03.output
+           (progn (bash "./test.exe -check fail03.ml || true"))))))
+
+(rule
+ ((targets (fail04.output))
+  (deps (test.exe fail04.ml))
+  (action (with-outputs-to fail04.output
+           (progn (bash "./test.exe -check fail04.ml || true"))))))
+
+(rule
+ ((targets (fail05.output))
+  (deps (test.exe fail05.ml))
+  (action (with-outputs-to fail05.output
+           (progn (bash "./test.exe -check fail05.ml || true"))))))
+
+(alias
+ ((name runtest)
+  (action (progn
+           (diff fail01.expected fail01.output)
+           (diff fail02.expected fail02.output)
+           (diff fail03.expected fail03.output)
+           (diff fail04.expected fail04.output)
+           (diff fail05.expected fail05.output)
+           ))))
+
+(jbuild_version 1)

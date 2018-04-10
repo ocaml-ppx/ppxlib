@@ -1,0 +1,2 @@
+File "fail01.ml", line 1, characters 25-28:
+Error: Deriver foo is needed for bar, you need to add it before in the list

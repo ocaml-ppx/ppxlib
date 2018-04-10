@@ -81,4 +81,4 @@ class virtual ['res] lift =
   end
 [@@@end]
 
-let%test _ = true
+let () = print_endline "OK"

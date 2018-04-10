@@ -14,22 +14,5 @@ let bar =
                       (fun ~loc ~path:_ _ -> [%str let () = Printf.printf "x = %d\n" x]))
 ;;
 
-type t = int [@@deriving bar]
-
-[%%expect{|
-Line _, characters 25-28:
-Error: Deriver foo is needed for bar, you need to add it before in the list
-|}]
-
-type t = int [@@deriving bar, foo]
-
-[%%expect{|
-Line _, characters 25-33:
-Error: Deriver foo is needed for bar, you need to add it before in the list
-|}]
-
-type t = int [@@deriving foo, bar]
-
-[%%expect{|
-x = 42
-|}]
+let () =
+  Driver.standalone ()

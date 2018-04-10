@@ -1,6 +1,13 @@
-(library
- ((name ppxlib_traverse_test)
+(executable
+ ((name test)
   (flags (:standard -safe-string))
-  (preprocess (pps (ppx_inline_test ppxlib_traverse -type-conv-keep-w32=impl ppxlib.runner)))))
+  (preprocess (pps (ppxlib_traverse -type-conv-keep-w32=impl ppxlib.runner)))))
+
+(rule
+ (with-stdout-to test.output (run ./test.exe)))
+
+(alias
+ ((name runtest)
+  (action (diff test.expected test.output))))
 
 (jbuild_version 1)
