@@ -524,14 +524,13 @@ end
 
 let reset_checks () = Attribute_table.clear not_seen
 
-let freshen_and_collect = object
-  inherit Ast_traverse.map as super
+let collect = object
+  inherit Ast_traverse.iter as super
 
   method! attribute ((name, payload) as attr) =
     let loc = Common.loc_of_attribute attr in
-    let payload = super#payload payload in
-    Attribute_table.add not_seen name loc;
-    (name, payload)
+    super#payload payload;
+    Attribute_table.add not_seen name loc
 end
 
 let check_all_seen () =
