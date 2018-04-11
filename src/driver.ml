@@ -433,13 +433,10 @@ end
 let real_map_structure config cookies st =
   let { C. hook; expect_mismatch_handler } = C.find config in
   Cookies.acknoledge_cookies cookies;
-  let st =
-    if !perform_checks then begin
-      Attribute.reset_checks ();
-      Attribute.freshen_and_collect#structure st
-    end else
-      st
-  in
+  if !perform_checks then begin
+    Attribute.reset_checks ();
+    Attribute.collect#structure st
+  end;
   let st, lint_errors =
     apply_transforms st
       ~field:(fun (ct : Transform.t) -> ct.impl)
@@ -487,13 +484,10 @@ let map_structure st =
 let real_map_signature config cookies sg =
   let { C. hook; expect_mismatch_handler } = C.find config in
   Cookies.acknoledge_cookies cookies;
-  let sg =
-    if !perform_checks then begin
-      Attribute.reset_checks ();
-      Attribute.freshen_and_collect#signature sg
-    end else
-      sg
-  in
+  if !perform_checks then begin
+    Attribute.reset_checks ();
+    Attribute.collect#signature sg
+  end;
   let sg, lint_errors =
     apply_transforms sg
       ~field:(fun (ct : Transform.t) -> ct.intf)
