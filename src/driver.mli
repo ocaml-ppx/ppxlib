@@ -173,3 +173,5 @@ val pretty : unit -> bool
 
 (**/**)
 val map_structure : structure -> Migrate_parsetree.Driver.some_structure
+
+val enable_checks : unit -> unit

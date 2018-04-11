@@ -83,12 +83,17 @@ let main () =
 
     Toploop.initialize_toplevel_env ();
     List.iter
-      [ "src/.ppxlib.objs"
+      [ "ast/.ppxlib_ast.objs"
+      ; "src/.ppxlib.objs"
+      ; "metaquot_lifters/.ppxlib_metaquot_lifters.objs"
+      ; "metaquot/.ppxlib_metaquot.objs"
+      ; "traverse/.ppxlib_traverse.objs"
       ]
       ~f:Topdirs.dir_directory;
 
     let buf = Buffer.create (String.length file_contents + 1024) in
     let ppf = Format.formatter_of_buffer buf in
+    Location.formatter_for_warnings := ppf;
     List.iter chunks ~f:(fun (pos, s) ->
       Format.fprintf ppf "%s[%%%%expect{|@." s;
       let lexbuf = Lexing.from_string s in

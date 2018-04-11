@@ -1,5 +1,0 @@
-File "fail04.ml", line 1, characters 15-19:
-Error: Attribute `bleh' was not used.
-Hint: `bleh' is available for expressions and type declarations but is used
-here in the context of a core type.
-Did you put it at the wrong level?

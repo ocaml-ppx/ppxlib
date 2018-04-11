@@ -1,5 +1,9 @@
-open Ppxlib
+#use "topfind";;
+#require "base";;
+#require "ocaml-migrate-parsetree";;
+
 open Base
+open Ppxlib
 
 
 (* Linters *)
@@ -22,9 +26,22 @@ let lint = object
         acc
     | _ -> acc
 end
-
 let () =
   Driver.register_transformation "lint" ~lint_impl:(fun st -> lint#structure st [])
+[%%expect{|
+val lint : Ppxlib.Driver.Lint_error.t Base.list Ppxlib.Ast_traverse.fold =
+  <obj>
+|}]
+
+type t =
+  { b : int
+  ; a : int
+  }
+[%%expect{|
+File "test/driver/transformations/test.ml", line 36, characters 0-36:
+Warning 22: Fields are not sorted!
+type t = { b : Base.int; a : Base.int; }
+|}]
 
 
 (* Extension with a path argument *)
@@ -40,6 +57,20 @@ let () =
                     match arg with
                     | None -> estring ~loc "-"
                     | Some { loc; txt } -> estring ~loc (Longident.name txt)))]
+[%%expect{|
+|}]
 
-let () =
-  Driver.standalone ()
+let _ = Caml.Printf.sprintf "%s\n" [%plop]
+[%%expect{|
+- : string = "-\n"
+|}]
+
+let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc]
+[%%expect{|
+- : string = "Truc\n"
+|}]
+
+let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
+[%%expect{|
+- : string = "Truc.Bidule\n"
+|}]

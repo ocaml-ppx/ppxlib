@@ -1,3 +1,7 @@
+#use "topfind";;
+#require "base";;
+#require "stdio";;
+
 open Ppxlib;;
 open Ast_builder.Default;;
 
@@ -14,6 +18,22 @@ Driver.register_transformation "blah"
                 (fun ~loc ~path:_ -> eint ~loc 42))
          ]
 ;;
+[%%expect{|
+- : Ppxlib__.Import.unit = ()
+|}]
 
-let () =
-  Driver.standalone ()
+[%foo];;
+[%%expect{|
+- : int = 42
+|}]
+
+[%foo.bar];;
+[%%expect{|
+- : int = 42
+|}]
+
+[%bar];;
+[%%expect{|
+File "test/driver/non-compressible-suffix/test.ml", line 35, characters 2-5:
+Error: Uninterpreted extension 'bar'.
+|}]

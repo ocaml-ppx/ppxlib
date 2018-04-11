@@ -1,13 +1,10 @@
-(executable
- ((name test)
-  (flags (:standard -safe-string))
-  (preprocess (pps (ppxlib_traverse -deriving-keep-w32=impl ppxlib.runner)))))
-
-(rule
- (with-stdout-to test.output (run ./test.exe)))
-
 (alias
  ((name runtest)
-  (action (diff test.expected test.output))))
+  (deps (test.ml
+         (glob_files ${SCOPE_ROOT}/src/.ppxlib.objs/*.cmi)))
+  (action (chdir ${SCOPE_ROOT}
+           (progn
+            (ignore-outputs (run ${exe:../expect/expect_test.exe} ${<}))
+            (diff? ${<} ${<}.corrected))))))
 
 (jbuild_version 1)

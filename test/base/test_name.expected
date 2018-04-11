@@ -1,7 +1,0 @@
-dot_suffixes:
-(baz bar.baz foo.bar.baz)
-(bar.baz foo.bar.baz)
-split_path:
-(a.b.c ())
-(a.b.c (D))
-("" (D))

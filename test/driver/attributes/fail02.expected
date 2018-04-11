@@ -1,3 +1,0 @@
-File "fail02.ml", line 1, characters 15-24:
-Error: Attribute `deprecatd' was not used.
-Hint: Did you mean deprecated?

@@ -1253,3 +1253,7 @@ let () =
        let structure _ st = real_map_structure config cookies st in
        let signature _ sg = real_map_signature config cookies sg in
        { A.default_mapper with structure; signature })
+
+let enable_checks () =
+  perform_checks := true;
+  perform_checks_on_extensions := true
