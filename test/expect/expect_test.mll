@@ -98,7 +98,7 @@ let main () =
     List.iter chunks ~f:(fun (pos, s) ->
       Format.fprintf ppf "%s[%%%%expect{|@." s;
       let lexbuf = Lexing.from_string s in
-      lexbuf.lex_curr_p <- pos;
+      lexbuf.lex_curr_p <- { pos with pos_lnum = 1; };
       let phrases = !Toploop.parse_use_file lexbuf in
       List.iter phrases ~f:(fun phr ->
         try
