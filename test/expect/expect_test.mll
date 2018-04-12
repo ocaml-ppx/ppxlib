@@ -81,6 +81,7 @@ let main () =
   run_expect_test Sys.argv.(1) ~f:(fun file_contents lexbuf ->
     let chunks = code file_contents lexbuf.lex_curr_p lexbuf in
 
+    Clflags.real_paths := false;
     Toploop.initialize_toplevel_env ();
     List.iter
       [ "ast/.ppxlib_ast.objs"
