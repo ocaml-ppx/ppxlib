@@ -1,7 +1,10 @@
-(library
- ((name ppxlib_test)
-  (flags (:standard -safe-string))
-  (libraries (ppxlib))
-  (preprocess (pps (ppx_jane ppxlib.runner)))))
+(alias
+ ((name runtest)
+  (deps (test_name.ml
+         (glob_files ${SCOPE_ROOT}/src/.ppxlib.objs/*.cmi)))
+  (action (chdir ${SCOPE_ROOT}
+           (progn
+            (ignore-outputs (run ${exe:../expect/expect_test.exe} ${<}))
+            (diff? ${<} ${<}.corrected))))))
 
 (jbuild_version 1)

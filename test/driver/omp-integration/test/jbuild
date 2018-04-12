@@ -1,6 +1,13 @@
-(library
- ((name ppxlib_driver_omp_test)
+(executable
+ ((name test)
   (flags (:standard -safe-string))
-  (preprocess (pps (ppx_sexp_conv ppx_expect ppxlib_driver_omp_test_ppx -no-check ppxlib.runner)))))
+  (preprocess (pps (ppxlib_driver_omp_test_ppx -no-check ppxlib.runner)))))
+
+(rule
+ (with-stdout-to test.output (run ./test.exe)))
+
+(alias
+ ((name runtest)
+  (action (diff test.expected test.output))))
 
 (jbuild_version 1)

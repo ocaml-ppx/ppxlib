@@ -1027,8 +1027,12 @@ let shared_args =
     "<string> Mark the given namespace as reserved"
   ; "-no-check", Arg.Clear perform_checks,
     " Disable checks (unsafe)"
+  ; "-check", Arg.Set perform_checks,
+    " Enable checks"
   ; "-no-check-on-extensions", Arg.Clear perform_checks_on_extensions,
     " Disable checks on extension point only"
+  ; "-check-on-extensions", Arg.Set perform_checks_on_extensions,
+    " Enable checks on extension point only"
   ; "-apply", Arg.String handle_apply,
     "<names> Apply these transformations in order (comma-separated list)"
   ; "-dont-apply", Arg.String handle_dont_apply,
@@ -1243,3 +1247,7 @@ let () =
        let structure _ st = real_map_structure config cookies st in
        let signature _ sg = real_map_signature config cookies sg in
        { A.default_mapper with structure; signature })
+
+let enable_checks () =
+  perform_checks := true;
+  perform_checks_on_extensions := true
