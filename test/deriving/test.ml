@@ -25,13 +25,13 @@ val bar : Deriving.t = <abstr>
 
 type t = int [@@deriving bar]
 [%%expect{|
-File "test/deriving/test.ml", line 26, characters 25-28:
+File "test/deriving/test.ml", line 2, characters 25-28:
 Error: Deriver foo is needed for bar, you need to add it before in the list
 |}]
 
 type t = int [@@deriving bar, foo]
 [%%expect{|
-File "test/deriving/test.ml", line 32, characters 25-33:
+File "test/deriving/test.ml", line 2, characters 25-33:
 Error: Deriver foo is needed for bar, you need to add it before in the list
 |}]
 

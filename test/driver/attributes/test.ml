@@ -14,7 +14,7 @@ Error: Attribute `foo' was not used
 
 let f x = 1 [@@deprecatd "..."]
 [%%expect{|
-File "test/driver/attributes/test.ml", line 15, characters 15-24:
+File "test/driver/attributes/test.ml", line 2, characters 15-24:
 Error: Attribute `deprecatd' was not used.
 Hint: Did you mean deprecated?
 |}]
@@ -30,7 +30,7 @@ val attr : (type_declaration, unit) Attribute.t = <abstr>
 
 type t = int [@blah]
 [%%expect{|
-File "test/driver/attributes/test.ml", line 31, characters 15-19:
+File "test/driver/attributes/test.ml", line 2, characters 15-19:
 Error: Attribute `blah' was not used.
 Hint: `blah' is available for type declarations but is used here in the
 context of a core type.
@@ -48,7 +48,7 @@ val attr : (expression, unit) Attribute.t = <abstr>
 
 type t = int [@blah]
 [%%expect{|
-File "test/driver/attributes/test.ml", line 49, characters 15-19:
+File "test/driver/attributes/test.ml", line 2, characters 15-19:
 Error: Attribute `blah' was not used.
 Hint: `blah' is available for expressions and type declarations but is used
 here in the context of a core type.
@@ -75,6 +75,6 @@ let () =
 
 let x = (42 [@foo])
 [%%expect{|
-File "test/driver/attributes/test.ml", line 76, characters 14-17:
+File "test/driver/attributes/test.ml", line 5, characters 14-17:
 Error: Attribute `foo' was silently dropped
 |}]
