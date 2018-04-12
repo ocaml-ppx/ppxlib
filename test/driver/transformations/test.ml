@@ -29,8 +29,7 @@ end
 let () =
   Driver.register_transformation "lint" ~lint_impl:(fun st -> lint#structure st [])
 [%%expect{|
-val lint : Ppxlib.Driver.Lint_error.t Base.list Ppxlib.Ast_traverse.fold =
-  <obj>
+val lint : Driver.Lint_error.t list Ast_traverse.fold = <obj>
 |}]
 
 type t =
@@ -38,9 +37,9 @@ type t =
   ; a : int
   }
 [%%expect{|
-File "test/driver/transformations/test.ml", line 36, characters 0-36:
+File "test/driver/transformations/test.ml", line 35, characters 0-36:
 Warning 22: Fields are not sorted!
-type t = { b : Base.int; a : Base.int; }
+type t = { b : int; a : int; }
 |}]
 
 
