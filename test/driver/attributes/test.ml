@@ -25,13 +25,12 @@ let attr : _ Attribute.t =
     Ast_pattern.(__)
     ignore
 [%%expect{|
-val attr : (Ppxlib__.Import.type_declaration, Base.unit) Ppxlib.Attribute.t =
-  <abstr>
+val attr : (type_declaration, unit) Attribute.t = <abstr>
 |}]
 
 type t = int [@blah]
 [%%expect{|
-File "test/driver/attributes/test.ml", line 32, characters 15-19:
+File "test/driver/attributes/test.ml", line 31, characters 15-19:
 Error: Attribute `blah' was not used.
 Hint: `blah' is available for type declarations but is used here in the
 context of a core type.
@@ -44,13 +43,12 @@ let attr : _ Attribute.t =
     Ast_pattern.(__)
     ignore
 [%%expect{|
-val attr : (Ppxlib__.Import.expression, Base.unit) Ppxlib.Attribute.t =
-  <abstr>
+val attr : (expression, unit) Attribute.t = <abstr>
 |}]
 
 type t = int [@blah]
 [%%expect{|
-File "test/driver/attributes/test.ml", line 51, characters 15-19:
+File "test/driver/attributes/test.ml", line 49, characters 15-19:
 Error: Attribute `blah' was not used.
 Hint: `blah' is available for expressions and type declarations but is used
 here in the context of a core type.
@@ -69,7 +67,7 @@ let faulty_transformation = object
     | _ -> super#expression e
 end
 [%%expect{|
-val faulty_transformation : Ppxlib.Ast_traverse.map = <obj>
+val faulty_transformation : Ast_traverse.map = <obj>
 |}]
 
 let () =
@@ -77,6 +75,6 @@ let () =
 
 let x = (42 [@foo])
 [%%expect{|
-File "test/driver/attributes/test.ml", line 78, characters 14-17:
+File "test/driver/attributes/test.ml", line 76, characters 14-17:
 Error: Attribute `foo' was silently dropped
 |}]

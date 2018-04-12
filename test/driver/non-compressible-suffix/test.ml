@@ -19,7 +19,7 @@ Driver.register_transformation "blah"
          ]
 ;;
 [%%expect{|
-- : Ppxlib__.Import.unit = ()
+- : unit = ()
 |}]
 
 [%foo];;

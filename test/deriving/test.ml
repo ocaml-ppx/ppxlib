@@ -11,7 +11,7 @@ let foo =
     ~str_type_decl:(Deriving.Generator.make_noarg
                       (fun ~loc ~path:_ _ -> [%str let x = 42]))
 [%%expect{|
-val foo : Ppxlib.Deriving.t = <abstr>
+val foo : Deriving.t = <abstr>
 |}]
 
 let bar =
@@ -20,7 +20,7 @@ let bar =
                       ~deps:[foo]
                       (fun ~loc ~path:_ _ -> [%str let () = Printf.printf "x = %d\n" x]))
 [%%expect{|
-val bar : Ppxlib.Deriving.t = <abstr>
+val bar : Deriving.t = <abstr>
 |}]
 
 type t = int [@@deriving bar]

@@ -17,7 +17,7 @@ let dot_suffixes name =
     (Sexp.to_string_hum
        (List.sexp_of_t String.sexp_of_t (N.dot_suffixes name)))
 [%%expect{|
-val dot_suffixes : Ppxlib__.Import.string -> string = <fun>
+val dot_suffixes : string -> string = <fun>
 |}]
 
 let _ = dot_suffixes "foo.bar.baz"
@@ -37,7 +37,7 @@ let split_path name =
       (Sexp.to_string_hum
          (List [sexp_of_string a; Option.sexp_of_t sexp_of_string b]))
 [%%expect{|
-val split_path : Ppxlib__.Import.string -> string = <fun>
+val split_path : string -> string = <fun>
 |}]
 
 let _ = split_path "a.b.c"
