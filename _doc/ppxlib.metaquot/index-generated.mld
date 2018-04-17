@@ -1,0 +1,2 @@
+{1 Library ppxlib.metaquot}
+The entry point for this library is module {!module:Ppxlib_metaquot}.
