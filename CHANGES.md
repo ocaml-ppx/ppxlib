@@ -1,3 +1,8 @@
+0.3.0
+-----
+
+- Allow to set the suffix of corrected files
+
 0.2.0
 -----
 
