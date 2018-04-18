@@ -18,4 +18,8 @@ test:
 clean:
 	rm -rf _build
 
+all-supported-ocaml-versions:
+	jbuilder build --dev @install --workspace jbuild-workspace.dev --root .
+
 .PHONY: default install uninstall reinstall clean test
+.PHONY: all-supported-ocaml-versions
