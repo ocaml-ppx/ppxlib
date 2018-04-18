@@ -98,6 +98,27 @@ let keyword_table =
     "asr", INFIXOP4("asr")
 ]
 
+module Buffer = struct (* Imported for compatibility with 4.04.x *)
+  include Buffer
+  let add_utf_8_uchar b u = match Uchar.to_int u with
+    | u when u < 0 -> assert false
+    | u when u <= 0x007F ->
+      add_char b (Char.unsafe_chr u)
+    | u when u <= 0x07FF ->
+      add_char b (Char.unsafe_chr (0xC0 lor (u lsr 6)));
+      add_char b (Char.unsafe_chr (0x80 lor (u land 0x3F)));
+    | u when u <= 0xFFFF ->
+      add_char b (Char.unsafe_chr (0xE0 lor (u lsr 12)));
+      add_char b (Char.unsafe_chr (0x80 lor ((u lsr 6) land 0x3F)));
+      add_char b (Char.unsafe_chr (0x80 lor (u land 0x3F)));
+    | u when u <= 0x10FFFF ->
+      add_char b (Char.unsafe_chr (0xF0 lor (u lsr 18)));
+      add_char b (Char.unsafe_chr (0x80 lor ((u lsr 12) land 0x3F)));
+      add_char b (Char.unsafe_chr (0x80 lor ((u lsr 6) land 0x3F)));
+      add_char b (Char.unsafe_chr (0x80 lor (u land 0x3F)));
+    | _ -> assert false
+end
+
 (* To buffer string literals *)
 
 let string_buffer = Buffer.create 256
