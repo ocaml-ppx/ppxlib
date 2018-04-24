@@ -8,7 +8,11 @@
 
 - Fix compatibility with `-safe-string` (#10, @hhugo)
 
+- Restore tests (#11, @xclerc)
+
 - Allow to set the suffix of corrected files (#15, @diml)
+
+- Restore compatibility with OCaml 4.04.x (#16, @xclerc)
 
 0.2.0
 -----
