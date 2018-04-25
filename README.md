@@ -146,10 +146,8 @@ right things for you. This section is written having ocamlbuild in mind.
 When developing a new rewriter you are very likely to prepare a few
 tests for it. The compilation line above doesn't suit this task very well
 (because ocamlfind package with your rewriter is not yet installed) 
-and it will be more convenient to specify `.cm[x]a` with your rewriter
-manually. With this approach we sacrifice compilation speed using 
-`-ppx argument` option but it should not be critical because it's very
-likely that few rewriters will be used in the code of tests.
+and it will be more convenient to specify `.cmx[a]` with your rewriter
+manually.
 
 For example, let's suppose that the standalone rewriter (`pp_foo.native`) 
 have this code
