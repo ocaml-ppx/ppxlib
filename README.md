@@ -138,6 +138,44 @@ approriate `-linkall` option on individual libraries. If one is missing this
 option, the code rewriter might not get linked in. If this is the case, a
 workaround is to pass `-linkall` when linking the custom driver.
 
+
+### Building rewriter that you are currently developing
+Note: if using dune, you do not need to read this as dune already does all the
+right things for you. This section is written having ocamlbuild in mind.
+
+When developing a new rewriter you are very likely to prepare a few
+tests for it. The compilation line above doesn't suit this task very well
+(because ocamlfind package with your rewriter is not yet installed) 
+and it will be more convenient to specify `.cm[x]a` with your rewriter
+manually. With this approach we sacrifice compilation speed using 
+`-ppx argument` option but it should not be critical because it's very
+likely that few rewriters will be used in the code of tests.
+
+For example, let's suppose that the standalone rewriter (`pp_foo.native`) 
+have this code
+
+    let () = Ppxlib.Driver.standalone ()
+
+in `pp_foo.ml` and your generator is begin loaded in `ppx_foo.ml`.
+You need a few extra switches to compile standalone rewriter
+(N.B. order matters)
+
+    ocamlfind ... dependecy1_of_ppx_foo.cmx ... ppx_foo.cmx -package ppxlib -o pp_foo.native
+    
+or, if you have already created `ppx_foo.cmxa` using `-linkall` option 
+
+    ocamlfind ... ppx_foo.cmxa -package ppxlib -o pp_foo.native
+
+And now you can specify that your test suite uses your rewriter and
+depends on a few extra `.cma`'s by adding a few lines into your `_tags` file
+
+    <regression/test*.*>: ppx(./pp_foo.native --as-ppx)
+    <regression/test*.*>: depends_on_foo
+    
+and specifing dependencies in your `myocamlbuild.ml` file using
+
+    dep ["compile";"depends_on_foo"] ["ppx_foo.cmxa"; "pp_foo.native"]
+
 ### The driver as a command line tool
 It recognizes the following command-line switches:
 
@@ -273,38 +311,6 @@ package "runtime-lib" ( ... )
 
 You can check that this META works for all the 4 methods described
 above.
-
-### Building rewriter that you are currently developing
-When developing a new rewriter you are very likely to prepare a few
-tests for it. The compilation line above doesn't suit this task very well
-(because ocamlfind package with your rewriter is not yet installed) 
-and it will be more convenient to specify `.cm[x]a` with your rewriter
-manually. With this approach we sacrifice compilation speed using 
-`-ppx argument` option but it should not be critical because it's very
-likely that few rewriters will be used in the code of tests.
-
-For example, the standalone rewriter (`pp_foo.native`) will
-have this code
-
-    let () = Ppxlib.Driver.standalone ()
-
-in `pp_foo.ml` and will require a few extra switches to compile 
-(N.B. order matters)
-
-    ocamlfind ... ppx/ppx_foo.cmxa -package ppxlib
-    
-where `ppx/ppx_foo.cmxa` is a library which loads your custom `foo`
-generator to `ppxlib` runtime. If you use `ocamlbuild` as build system
-you can achieve this by adding a few lines into your `_tags` file
-
-    <regression/test*.*>: ppx(./pp_foo.native --as-ppx)
-    <regression/test*.*>: depends_on_foo
-    
-and specifing dependencies in your `myocamlbuild.ml` file using
-
-    dep ["compile";"depends_on_foo"] ["ppx/ppx_foo.cmxa"; "pp_foo.native"]
-
-
 
 Derivers
 --------
