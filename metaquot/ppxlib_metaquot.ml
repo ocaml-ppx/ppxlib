@@ -39,6 +39,30 @@ module Make(M : sig
       match t.ptyp_desc with
       | Ptyp_extension ({ txt = "t"; _}, _ as ext)-> M.cast ext
       | _ -> super#core_type t
+
+    method! module_expr m =
+      match m.pmod_desc with
+      | Pmod_extension ({ txt = "m"; _}, _ as ext)-> M.cast ext
+      | _ -> super#module_expr m
+
+    method! module_type m =
+      match m.pmty_desc with
+      | Pmty_extension ({ txt = "m"; _ }, _ as ext)-> M.cast ext
+      | _ -> super#module_type m
+
+    method! structure_item i =
+      match i.pstr_desc with
+      | Pstr_extension (({ txt = "i"; _}, _ as ext), attrs) ->
+        assert_no_attributes attrs;
+        M.cast ext
+      | _ -> super#structure_item i
+
+    method! signature_item i =
+      match i.psig_desc with
+      | Psig_extension (({ txt = "i"; _}, _ as ext), attrs) ->
+        assert_no_attributes attrs;
+        M.cast ext
+      | _ -> super#signature_item i
   end
 end
 
