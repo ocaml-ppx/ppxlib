@@ -37,9 +37,8 @@ type t =
   ; a : int
   }
 [%%expect{|
-File "test/driver/transformations/test.ml", line 2, characters 0-36:
-Warning 22: Fields are not sorted!
-type t = { b : int; a : int; }
+Line _, characters 0-36:
+Error (Warning 22): Fields are not sorted!
 |}]
 
 
