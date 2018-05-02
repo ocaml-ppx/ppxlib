@@ -34,6 +34,6 @@ Driver.register_transformation "blah"
 
 [%bar];;
 [%%expect{|
-File "test/driver/non-compressible-suffix/test.ml", line 2, characters 2-5:
+Line _, characters 2-5:
 Error: Uninterpreted extension 'bar'.
 |}]
