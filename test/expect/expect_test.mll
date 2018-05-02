@@ -96,6 +96,11 @@ let main () =
     let ppf = Format.formatter_of_buffer buf in
     Location.formatter_for_warnings := ppf;
     Warnings.parse_options true "+a";
+    Location.printer := (fun ppf loc ->
+      Format.fprintf ppf "Line _, characters %d-%d:\n"
+        (loc.loc_start.pos_cnum - loc.loc_start.pos_bol)
+        (loc.loc_end.pos_cnum - loc.loc_end.pos_bol)
+    );
     List.iter chunks ~f:(fun (pos, s) ->
       Format.fprintf ppf "%s[%%%%expect{|@." s;
       let lexbuf = Lexing.from_string s in
