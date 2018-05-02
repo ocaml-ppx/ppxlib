@@ -81,6 +81,7 @@ let main () =
   run_expect_test Sys.argv.(1) ~f:(fun file_contents lexbuf ->
     let chunks = code file_contents lexbuf.lex_curr_p lexbuf in
 
+    Warnings.parse_options false "@a-4-29-40-41-42-44-45-48-58";
     Clflags.real_paths := false;
     Toploop.initialize_toplevel_env ();
     List.iter
@@ -95,7 +96,6 @@ let main () =
     let buf = Buffer.create (String.length file_contents + 1024) in
     let ppf = Format.formatter_of_buffer buf in
     Location.formatter_for_warnings := ppf;
-    Warnings.parse_options true "+a";
     Location.printer := (fun ppf loc ->
       Format.fprintf ppf "Line _, characters %d-%d:\n"
         (loc.loc_start.pos_cnum - loc.loc_start.pos_bol)
