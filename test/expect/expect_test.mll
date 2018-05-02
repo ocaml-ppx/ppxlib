@@ -95,6 +95,7 @@ let main () =
     let buf = Buffer.create (String.length file_contents + 1024) in
     let ppf = Format.formatter_of_buffer buf in
     Location.formatter_for_warnings := ppf;
+    Warnings.parse_options true "+a";
     List.iter chunks ~f:(fun (pos, s) ->
       Format.fprintf ppf "%s[%%%%expect{|@." s;
       let lexbuf = Lexing.from_string s in
