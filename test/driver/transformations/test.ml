@@ -37,8 +37,8 @@ type t =
   ; a : int
   }
 [%%expect{|
-Line _, characters 0-3:
-Error (warning 22): Fields are not sorted!
+Line _, characters 0-36:
+Error (Warning 22): Fields are not sorted!
 |}]
 
 
