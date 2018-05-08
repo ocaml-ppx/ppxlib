@@ -9,6 +9,9 @@ license: "Apache-2.0"
 build: [
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
+build-test: [
+  ["jbuilder" "runtest" "-p" name "-j" jobs]
+]
 depends: [
   "base"                    {>= "v0.11.0"}
   "jbuilder"                {build & >= "1.0+beta18.1"}
