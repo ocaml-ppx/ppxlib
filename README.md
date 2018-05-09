@@ -6,7 +6,7 @@ This readme is still under construction.
 
 [travis]:         https://travis-ci.org/ocaml-ppx/ppxlib
 [travis-img]:     https://travis-ci.org/ocaml-ppx/ppxlib.svg?branch=master
-[appveyor]:       https://ci.appveyor.com/project/ocaml-ppx/ppxlib/branch/master
+[appveyor]:       https://ci.appveyor.com/project/diml/ppxlib/branch/master
 [appveyor-img]:   https://ci.appveyor.com/api/projects/status/bogbsm33uvh083jx?svg=true
 
 # History
