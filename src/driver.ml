@@ -1006,19 +1006,25 @@ let handle_dont_apply s =
 
 let interpret_mask () =
   if Option.is_some mask.apply || Option.is_some mask.dont_apply then begin
-    let names =
-      match mask.apply with
-      | None -> List.map !Transform.all ~f:(fun (ct : Transform.t) -> ct.name)
-      | Some names -> names
+    let selected_transform_name ct =
+      let is_candidate =
+        match mask.apply with
+        | None -> true
+        | Some names -> List.exists names ~f:(Transform.has_name ct)
+      in
+      let is_selected =
+        match mask.dont_apply with
+        | None -> is_candidate
+        | Some names ->
+          is_candidate
+          && not (List.exists names ~f:(Transform.has_name ct))
+      in
+      if is_selected then
+        Some ct.name
+      else
+        None
     in
-    let forbidden =
-      match mask.dont_apply with
-      | None -> Set.empty (module String)
-      | Some names -> Set.of_list (module String) names
-    in
-    apply_list :=
-      Some (List.filter names ~f:(fun name ->
-        not (Set.mem forbidden name)))
+    apply_list := Some (List.filter_map !Transform.all ~f:selected_transform_name)
   end
 
 let shared_args =
