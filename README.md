@@ -1,3 +1,16 @@
+# Ppxlib - Comprehensive ppx tool set
+
+This readme is still under construction.
+
+[![Travis status][travis-img]][travis] [![AppVeyor status][appveyor-img]][appveyor]
+
+[travis]:         https://travis-ci.org/ocaml-ppx/ppxlib
+[travis-img]:     https://travis-ci.org/ocaml-ppx/ppxlib.svg?branch=master
+[appveyor]:       https://ci.appveyor.com/project/ocaml-ppx/ppxlib/branch/master
+[appveyor-img]:   https://ci.appveyor.com/api/projects/status/bogbsm33uvh083jx?svg=true
+
+# History
+
 This repository is the merge of several ppx-related repositories, namely:
 
 - [ppx_ast](https://github.com/janestreet/ppx_ast);
