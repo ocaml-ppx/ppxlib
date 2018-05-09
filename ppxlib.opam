@@ -10,7 +10,7 @@ build: [
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
 build-test: [
-  ["jbuilder" "runtest" "-p" name "-j" jobs]
+  ["jbuilder" "runtest" "-p" name "-j" jobs] { ocaml-version >= "4.06" }
 ]
 depends: [
   "base"                    {>= "v0.11.0"}
