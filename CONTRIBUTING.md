@@ -14,7 +14,7 @@ of Jane Street, we do require that at least one Jane Street developer
 reads every pull request that modifies the source code.
 
 Additionally, all contributors must sign-off their commits, see
-bellow for details.
+below for details.
 
 ### Developing patches
 
