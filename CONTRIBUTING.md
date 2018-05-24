@@ -4,7 +4,7 @@ and used by [Jane Street][js].
 
 This repository is not the first piece of open source software
 released by Jane Street, however it is the first to be entirely
-developed on github. We are hoping that opening the development of
+developed on GitHub. We are hoping that opening the development of
 this repository will help collaboration with other open source users.
 
 We welcome contributions and we will be happy to add contributors,
@@ -37,7 +37,7 @@ points:
 ### Submitting patches and code review
 
 Once a patch is ready according to the criteria stated in the
-previous section, it should be submitted via the github website. When
+previous section, it should be submitted via the GitHub website. When
 submitting a pull request, we prefer if you tick the `Allow edits from
 maintainers` box as it is much simpler to fix typos or do simple
 improvements directly rather than go back and forth through the web
@@ -102,7 +102,6 @@ If you set your `user.name` and `user.email` git configs, you can sign
 your commit automatically with git commit -s.
 
 [js]:     https://opensource.janestreet.com/
-[CLA]:    https://janestreet.github.io/contributing.html
 [ocpi]:   https://github.com/OCamlPro/ocp-indent
 [cinaps]: https://github.com/janestreet/cinaps
 [dco]:    http://developercertificate.org/
