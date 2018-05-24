@@ -102,7 +102,6 @@ If you set your `user.name` and `user.email` git configs, you can sign
 your commit automatically with git commit -s.
 
 [js]:     https://opensource.janestreet.com/
-[CLA]:    https://janestreet.github.io/contributing.html
 [ocpi]:   https://github.com/OCamlPro/ocp-indent
 [cinaps]: https://github.com/janestreet/cinaps
 [dco]:    http://developercertificate.org/
