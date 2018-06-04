@@ -123,6 +123,15 @@ val declare
   -> 'b
   -> ('a, 'c) t
 
+(** Same as [declare] but the callback receive the location of the name of the
+    attribute. *)
+val declare_with_name_loc
+  :  string
+  -> 'a Context.t
+  -> (payload, 'b, 'c) Ast_pattern.t
+  -> (name_loc:Location.t -> 'b)
+  -> ('a, 'c) t
+
 val name : _ t -> string
 val context : ('a, _) t -> 'a Context.t
 

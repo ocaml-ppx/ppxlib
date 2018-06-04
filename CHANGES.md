@@ -1,3 +1,8 @@
+next
+----
+
+- Add `Attribute.declare_with_name_loc` (#.., @diml)
+
 0.3.0
 -----
 
