@@ -123,7 +123,7 @@ val declare
   -> 'b
   -> ('a, 'c) t
 
-(** Same as [declare] but the callback receive the location of the name of the
+(** Same as [declare] but the callback receives the location of the name of the
     attribute. *)
 val declare_with_name_loc
   :  string
