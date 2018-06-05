@@ -248,10 +248,15 @@ type packed_context =
   | On_item  : _ Context.t          -> packed_context
   | Floating : _ Floating_context.t -> packed_context
 
+type _ payload_parser =
+    Payload_parser
+    : (payload, 'a, 'b) Ast_pattern.t * (name_loc:Location.t -> 'a)
+    -> 'b payload_parser
+
 type ('a, 'b) t =
   { name    : Name.Pattern.t
   ; context : 'a Context.t
-  ; payload : (payload, 'b) Ast_pattern.Packed.t
+  ; payload : 'b payload_parser
   }
 
 type packed = T : (_, _) t -> packed
@@ -268,12 +273,16 @@ let registrar =
       | Floating t -> Some (Floating_context.desc t ^ " (floating)"))
 ;;
 
-let declare name context pattern k =
+let declare_with_name_loc name context pattern k =
   Name.Registrar.register ~kind:`Attribute registrar (On_item context) name;
   { name = Name.Pattern.make name
   ; context
-  ; payload = Ast_pattern.Packed.create pattern k
+  ; payload = Payload_parser (pattern, k)
   }
+;;
+
+let declare name context pattern k =
+  declare_with_name_loc name context pattern (fun ~name_loc:_ -> k)
 ;;
 
 module Attribute_table = Caml.Hashtbl.Make(struct
@@ -322,7 +331,9 @@ let get_internal =
 
 let convert pattern attr =
   mark_as_seen attr;
-  Ast_pattern.Packed.parse pattern (Common.loc_of_payload attr) (snd attr)
+  let (Payload_parser (pattern, k)) = pattern in
+  Ast_pattern.parse pattern (Common.loc_of_payload attr) (snd attr)
+    (k ~name_loc:(fst attr).loc)
 ;;
 
 let get t x =
@@ -384,7 +395,7 @@ module Floating = struct
   type ('a, 'b) t =
     { name    : Name.Pattern.t
     ; context : 'a Context.t
-    ; payload : (payload, 'b) Ast_pattern.Packed.t
+    ; payload : 'b payload_parser
     }
 
   let name t = Name.Pattern.name t.name
@@ -393,7 +404,7 @@ module Floating = struct
     Name.Registrar.register ~kind:`Attribute registrar (Floating context) name;
     { name = Name.Pattern.make name
     ; context
-    ; payload = Ast_pattern.Packed.create pattern k
+    ; payload = Payload_parser (pattern, fun ~name_loc:_ -> k)
     }
   ;;
 
