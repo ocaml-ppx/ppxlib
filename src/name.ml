@@ -110,6 +110,7 @@ module Whitelisted = struct
       ; "ocaml.specialised"
       ; "ocaml.unroll"
       ; "ocaml.immediate"
+      ; "ocaml.remove_aliases"
       ]
 
   (* White list the following extensions.
