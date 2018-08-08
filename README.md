@@ -215,7 +215,7 @@ It recognizes the following command-line switches:
 -debug-attribute-drop       Debug attribute dropping
 -print-transformations      Print linked-in code transformations, in the order they are applied
 -print-passes               Print the actual passes over the whole AST in the order they are applied
--ite-check                  Enforce that "complex" if branches are delimited (disabled if -pp is given)
+-ite-check                  No effect (kept for compatibility)
 -pp <command>               Pipe sources through preprocessor <command> (incompatible with -as-ppx)
 -reconcile                  (WIP) Pretty print the output using a mix of the input source and the generated code
 -reconcile-with-comments    (WIP) same as -reconcile but uses comments to enclose the generated code
