@@ -1110,7 +1110,7 @@ let standalone_args =
   ; "-print-passes", Arg.Set request_print_passes,
     " Print the actual passes over the whole AST in the order they are applied"
   ; "-ite-check", Arg.Set Extra_warnings.care_about_ite_branch,
-    " Enforce that \"complex\" if branches are delimited (disabled if -pp is given)"
+    " (no effect -- kept for compatibility)"
   ; "-pp", Arg.String (fun s -> preprocessor := Some s),
     "<command>  Pipe sources through preprocessor <command> (incompatible with -as-ppx)"
   ; "-reconcile", Arg.Unit (fun () -> set_output_mode (Reconcile Using_line_directives)),
