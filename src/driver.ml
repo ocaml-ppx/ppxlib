@@ -1110,8 +1110,10 @@ let standalone_args =
   ; "-print-passes", Arg.Set request_print_passes,
     " Print the actual passes over the whole AST in the order they are applied"
   ; "-ite-check",
-    Arg.Unit (fun () -> eprintf "warning: -ite-check has no effect\n%!";
-               Extra_warnings.care_about_ite_branch := true),
+    Arg.Unit (fun () ->
+      eprintf "Warning: the -ite-check flag is deprecated \
+               and has no effect.\n%!";
+      Extra_warnings.care_about_ite_branch := true),
     " (no effect -- kept for compatibility)"
   ; "-pp", Arg.String (fun s -> preprocessor := Some s),
     "<command>  Pipe sources through preprocessor <command> (incompatible with -as-ppx)"
