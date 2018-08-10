@@ -1,4 +1,4 @@
-open Import
+open! Import
 
 let default_print_warning _loc = ()
 
