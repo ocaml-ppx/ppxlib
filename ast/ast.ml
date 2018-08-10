@@ -123,7 +123,7 @@ and constant = Parsetree.constant =
      Suffixes are rejected by the typechecker.
   *)
 
-(** {2 Extension points} *)
+(** {1 Extension points} *)
 
 and attribute = string loc * payload
 (* [@id ARG]
@@ -148,7 +148,7 @@ and payload = Parsetree.payload =
   | PTyp of core_type  (* : T *)
   | PPat of pattern * expression option  (* ? P  or  ? P when E *)
 
-(** {2 Core language} *)
+(** {1 Core language} *)
 
 (* Type expressions *)
 
@@ -493,7 +493,6 @@ and type_declaration = Parsetree.type_declaration =
 and type_kind = Parsetree.type_kind =
   | Ptype_abstract
   | Ptype_variant of constructor_declaration list
-  (* Invariant: non-empty list *)
   | Ptype_record of label_declaration list
   (* Invariant: non-empty list *)
   | Ptype_open
@@ -567,7 +566,7 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
      | C = D
   *)
 
-(** {2 Class language} *)
+(** {1 Class language} *)
 
 (* Type expressions for the class language *)
 
@@ -593,7 +592,6 @@ and class_type_desc = Parsetree.class_type_desc =
   (* [%id] *)
   | Pcty_open of override_flag * longident_loc * class_type
   (* let open M in CT *)
-
 
 and class_signature = Parsetree.class_signature =
   {
@@ -734,7 +732,7 @@ and class_field_kind = Parsetree.class_field_kind =
 
 and class_declaration = class_expr class_infos
 
-(** {2 Module language} *)
+(** {1 Module language} *)
 
 (* Type expressions for the module language *)
 
@@ -945,7 +943,7 @@ and module_binding = Parsetree.module_binding =
   }
 (* X = ME *)
 
-(** {2 Toplevel} *)
+(** {1 Toplevel} *)
 
 (* Toplevel phrases *)
 

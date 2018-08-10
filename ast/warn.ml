@@ -1,8 +1,6 @@
-open Import
+open! Import
 
-let default_print_warning loc =
-  Location.print_error Format.err_formatter loc;
-  Format.fprintf Format.err_formatter "this [if] branch is not delimited\n%!"
+let default_print_warning _loc = ()
 
 let about_ite_branch_ref = ref default_print_warning
 
