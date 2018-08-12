@@ -15,6 +15,13 @@ reinstall: uninstall reinstall
 test:
 	dune runtest
 
+doc:
+	cd doc && sphinx-build . _build
+
+livedoc:
+	cd doc && sphinx-autobuild . _build \
+	  -p 8888 -q  --host $(shell hostname) -r '\.#.*'
+
 clean:
 	dune clean
 
