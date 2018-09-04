@@ -3,6 +3,8 @@ next
 
 - Add `Attribute.declare_with_name_loc` (#33, @diml)
 
+- Let the tool name pass throught when used as a -ppx (#41, @diml)
+
 0.3.0
 -----
 
