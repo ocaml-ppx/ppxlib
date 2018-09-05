@@ -439,6 +439,21 @@ module C = struct
     |> Option.value ~default
 end
 
+let config ~hook ~expect_mismatch_handler =
+  Migrate_parsetree.Driver.make_config ()
+    ~tool_name:"ppxlib_driver"
+    ~extras:[C.T { hook
+                 ; expect_mismatch_handler
+                 }]
+
+let as_ppx_config () =
+  Migrate_parsetree.Driver.make_config ()
+    ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
+    ~include_dirs:!Ocaml_common.Clflags.include_dirs
+    ~load_path:!Ocaml_common.Config.load_path
+    ~debug:!Ocaml_common.Clflags.debug
+    ?for_package:!Ocaml_common.Clflags.for_package
+
 (*$*)
 let real_map_structure config cookies st =
   let { C. hook; expect_mismatch_handler } = C.find config in
@@ -472,23 +487,14 @@ let real_map_structure config cookies st =
   st
 ;;
 
-let map_structure_gen st ~hook ~expect_mismatch_handler
-  : Migrate_parsetree.Driver.some_structure =
-  let config =
-    Migrate_parsetree.Driver.make_config ()
-      ~tool_name:"ppxlib_driver"
-      ~extras:[C.T { hook
-                   ; expect_mismatch_handler
-                   }]
-  in
+let map_structure_gen st ~config : Migrate_parsetree.Driver.some_structure =
   Migrate_parsetree.Driver.rewrite_structure
     config
     (module Ppxlib_ast.Selected_ast)
     st
 
 let map_structure st =
-  map_structure_gen st ~hook:Context_free.Generated_code_hook.nop
-    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+  map_structure_gen st ~config:(as_ppx_config ())
 
 (*$ str_to_sig _last_text_block *)
 let real_map_signature config cookies sg =
@@ -523,23 +529,14 @@ let real_map_signature config cookies sg =
   sg
 ;;
 
-let map_signature_gen sg ~hook ~expect_mismatch_handler
-  : Migrate_parsetree.Driver.some_signature =
-  let config =
-    Migrate_parsetree.Driver.make_config ()
-      ~tool_name:"ppxlib_driver"
-      ~extras:[C.T { hook
-                   ; expect_mismatch_handler
-                   }]
-  in
+let map_signature_gen sg ~config : Migrate_parsetree.Driver.some_signature =
   Migrate_parsetree.Driver.rewrite_signature
     config
     (module Ppxlib_ast.Selected_ast)
     sg
 
 let map_signature sg =
-  map_signature_gen sg ~hook:Context_free.Generated_code_hook.nop
-    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+  map_signature_gen sg ~config:(as_ppx_config ())
 
 (*$*)
 
@@ -847,9 +844,10 @@ let process_file (kind : Kind.t) fn ~input_name ~output_mode ~embed_errors ~outp
     try
       let ast = with_preprocessed_input fn ~f:(load_input kind fn input_name) in
       let ast = extract_cookies ast in
+      let config = config ~hook ~expect_mismatch_handler in
       match ast with
-      | Intf x -> Intf (map_signature_gen x ~hook ~expect_mismatch_handler)
-      | Impl x -> Impl (map_structure_gen x ~hook ~expect_mismatch_handler)
+      | Intf x -> Intf (map_signature_gen x ~config)
+      | Impl x -> Impl (map_structure_gen x ~config)
     with exn when embed_errors ->
     match Location.Error.of_exn exn with
     | None -> raise exn
