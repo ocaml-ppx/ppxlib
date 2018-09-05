@@ -1,3 +1,8 @@
+0.2.2
+-----
+
+- Let the tool name pass throught when used as a -ppx (#41, @diml)
+
 0.2.1
 -----
 

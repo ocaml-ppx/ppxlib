@@ -42,7 +42,8 @@
   (deps (cinaps_helpers (glob_files *.ml) (glob_files *.mli)))
   (action (progn
            (bash "${bin:cinaps} -no-color -diff-cmd - *.ml *.mli")
-           (diff? code_matcher.ml code_matcher.ml.cinaps-corrected)))))
+           (diff? code_matcher.ml code_matcher.ml.cinaps-corrected)
+           (diff? driver.ml driver.ml.cinaps-corrected)))))
 
 ;; This is to make the code compatible with different versions of
 ;; OCaml
