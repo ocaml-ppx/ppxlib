@@ -5,7 +5,7 @@ homepage: "https://github.com/ocaml-ppx/ppxlib"
 bug-reports: "https://github.com/ocaml-ppx/ppxlib/issues"
 dev-repo: "https://github.com/ocaml-ppx/ppxlib.git"
 doc: "https://ocaml-ppx.github.io/ppxlib/"
-license: "Apache-2.0"
+license: "MIT"
 build: [
   ["jbuilder" "build" "-p" name "-j" jobs]
 ]
