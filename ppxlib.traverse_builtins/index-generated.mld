@@ -1,2 +1,0 @@
-{1 Library ppxlib.traverse_builtins}
-The entry point for this library is module {!module:Ppxlib_traverse_builtins}.
