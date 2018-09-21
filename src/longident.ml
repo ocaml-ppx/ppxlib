@@ -31,7 +31,27 @@ let last_exn = function
   | Ldot(_, s) -> s
   | Lapply(_, _) -> invalid_arg "Ppxlib.Longident.flatten"
 
+let unflatten ~init l =
+  List.fold_left l ~init ~f:(fun acc s -> Ldot (acc, s))
+
+(* for cases without dotted operators (e.g. [parse "A.B.C"]) *)
 let parse s =
   match String.split s ~on:'.' with
   | [] -> assert false
-  | s :: l -> List.fold_left l ~init:(Lident s) ~f:(fun acc s -> Ldot (acc, s))
+  | s :: l -> unflatten ~init:(Lident s) l
+
+(* handle ["A.B.(+.+)"] or ["Vec.(.%.()<-)"] *)
+let parse_with_operator s =
+  match String.index s '(' with
+  | None -> parse  s
+  | Some l -> match String.rindex s ')' with
+    | None -> invalid_arg "Ppxlib.Longident.parse"
+    | Some r ->
+      if Int.( r <> String.length s - 1) then
+        invalid_arg "Ppxlib.Longident.parse";
+      let group = String.sub s ~pos:(l+1) ~len:(r-l-1) in
+      if Int.(l = 0) then Lident group else
+        let before = String.sub s ~pos:0 ~len:(l-1) in
+        match String.split before ~on:'.' with
+        | [] -> Lident group
+        | s :: l -> Ldot(unflatten ~init:(Lident s) l, group)
