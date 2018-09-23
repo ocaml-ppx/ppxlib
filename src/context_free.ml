@@ -126,7 +126,7 @@ module Rule = struct
 
   let special_function id f =
     T (Special_function, { name   = id
-                         ; ident  = Longident.parse_with_operator id
+                         ; ident  = Longident.parse id
                          ; expand = f
                          })
   ;;

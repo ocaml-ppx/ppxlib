@@ -35,21 +35,22 @@ let unflatten ~init l =
   List.fold_left l ~init ~f:(fun acc s -> Ldot (acc, s))
 
 (* for cases without dotted operators (e.g. [parse "A.B.C"]) *)
-let parse s =
+let parse_simple s =
   match String.split s ~on:'.' with
   | [] -> assert false
   | s :: l -> unflatten ~init:(Lident s) l
 
 (* handle ["A.B.(+.+)"] or ["Vec.(.%.()<-)"] *)
-let parse_with_operator s =
+let parse s =
   match String.index s '(' with
-  | None -> parse  s
+  | None -> parse_simple  s
   | Some l -> match String.rindex s ')' with
     | None -> invalid_arg "Ppxlib.Longident.parse"
     | Some r ->
-      if Int.( r <> String.length s - 1) then
+      if Int.( r <> String.length s - 1 ) then
         invalid_arg "Ppxlib.Longident.parse";
-      let group = String.sub s ~pos:(l+1) ~len:(r-l-1) in
+      let group = if Int.(r = l + 1) then "()" else
+          String.sub s ~pos:(l+1) ~len:(r-l-1) in
       if Int.(l = 0) then Lident group else
         let before = String.sub s ~pos:0 ~len:(l-1) in
         match String.split before ~on:'.' with
