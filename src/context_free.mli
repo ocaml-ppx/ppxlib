@@ -23,6 +23,9 @@ module Rule : sig
       without being applied, [expand] gets only the identifier (Pexp_ident node) so you
       should handle both cases.
 
+      If [id] is an operator identifier and contains dots, it should be parenthesized
+      (e.g. ["(+.+)"]).
+
       [expand] must decide whether the expression it receive can be rewritten or not.
       Especially ppxlib makes the assumption that [expand] is idempotent. It will loop
       if it is not. *)
