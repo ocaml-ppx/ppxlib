@@ -34,12 +34,12 @@
 (rule
  ((targets (parser.ml))
   (deps    (parser0.ml))
-  (action  (bash "( echo \"open Import\"; cat ${<}; ) > ${@}"))))
+  (action  (with-stdout-to ${@} (echo "open Import\n${read:parser0.ml}")))))
 
 (rule
  ((targets (parser.mli))
   (deps    (parser0.mli))
-  (action  (bash "( echo \"open Import\"; cat ${<}; ) > ${@}"))))
+  (action  (with-stdout-to ${@} (echo "open Import\n${read:parser0.mli}")))))
 
 
 
