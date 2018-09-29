@@ -7,14 +7,15 @@ dev-repo: "https://github.com/ocaml-ppx/ppxlib.git"
 doc: "https://ocaml-ppx.github.io/ppxlib/"
 license: "MIT"
 build: [
-  ["jbuilder" "build" "-p" name "-j" jobs]
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
 ]
 build-test: [
-  ["jbuilder" "runtest" "-p" name "-j" jobs] { ocaml-version >= "4.06" }
+  ["dune" "runtest" "-p" name "-j" jobs] { ocaml-version >= "4.06" }
 ]
 depends: [
   "base"                    {>= "v0.11.0"}
-  "jbuilder"                {build & >= "1.0+beta18.1"}
+  "dune"                    {build}
   "ocaml-compiler-libs"     {>= "v0.11.0"}
   "ocaml-migrate-parsetree" {>= "1.0.9"}
   "ppx_derivers"            {>= "1.0"}

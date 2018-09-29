@@ -2,24 +2,24 @@ INSTALL_ARGS := $(if $(PREFIX),--prefix $(PREFIX),)
 
 # Default rule
 default:
-	jbuilder build --dev --auto-promote @cinaps @install
+	dune build --auto-promote @cinaps @install
 
 install:
-	jbuilder install $(INSTALL_ARGS)
+	dune install $(INSTALL_ARGS)
 
 uninstall:
-	jbuilder uninstall $(INSTALL_ARGS)
+	dune uninstall $(INSTALL_ARGS)
 
 reinstall: uninstall reinstall
 
 test:
-	jbuilder runtest --dev
+	dune runtest
 
 clean:
-	rm -rf _build
+	dune clean
 
 all-supported-ocaml-versions:
-	jbuilder build --dev @install --workspace jbuild-workspace.dev --root .
+	dune build @install --workspace dune-workspace.dev --root .
 
 .PHONY: default install uninstall reinstall clean test
 .PHONY: all-supported-ocaml-versions
