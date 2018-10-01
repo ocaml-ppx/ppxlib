@@ -86,4 +86,6 @@ module Reserved_namespaces : sig
   val is_in_reserved_namespaces : string -> bool
 end
 
-val comes_from_merlin : string -> bool
+(** Returns [true] if checks should be ignored for the following name,
+    for instance if it is reserved or starts with an underscore. *)
+val ignore_checks : string -> bool

@@ -134,9 +134,7 @@ let curry_applications expr =
 
 let rec assert_no_attributes = function
   | [] -> ()
-  (* for the moment we allow merlin attributes everywhere, and it's ok
-     if they are just dropped. *)
-  | (name, _) :: rest when Name.comes_from_merlin name.Location.txt ->
+  | (name, _) :: rest when Name.ignore_checks name.Location.txt ->
     assert_no_attributes rest
   | attr :: _ ->
     let loc = loc_of_attribute attr in

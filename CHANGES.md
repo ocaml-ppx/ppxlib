@@ -1,3 +1,9 @@
+next
+----
+
+- Do not report errors about dropped or uninterpreted attributes
+  starting with `_` (#46, fix #40, @diml)
+
 0.3.1
 -----
 
