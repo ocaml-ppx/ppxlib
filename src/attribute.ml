@@ -427,7 +427,7 @@ end
 
 let check_attribute registrar context name =
   if not (Name.Whitelisted.is_whitelisted ~kind:`Attribute name.txt
-          || Name.Reserved_namespaces.is_in_reserved_namespaces name.txt)
+          || Name.ignore_checks name.txt)
   && Attribute_table.mem not_seen name then
     let white_list = Name.Whitelisted.get_attribute_list () in
     Name.Registrar.raise_errorf registrar context ~white_list
@@ -547,7 +547,7 @@ end
 let check_all_seen () =
   let fail name loc =
     let txt = name.txt in
-    if not (Name.comes_from_merlin txt) then
+    if not (Name.ignore_checks txt) then
       Location.raise_errorf ~loc "Attribute `%s' was silently dropped" txt
   in
   Attribute_table.iter fail not_seen

@@ -165,10 +165,9 @@ module Reserved_namespaces = struct
 
 end
 
-let comes_from_merlin name =
-  match get_outer_namespace name with
-  | Some "merlin" -> true
-  | _ -> false
+let ignore_checks name =
+  Reserved_namespaces.is_in_reserved_namespaces name ||
+  String.is_prefix name ~prefix:"_"
 
 module Registrar = struct
   type element =
