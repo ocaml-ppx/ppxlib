@@ -140,6 +140,8 @@ module Reserved_namespaces = struct
   let reserve ns = Hashtbl.add_exn tbl ~key:ns ~data:()
 
   let () = reserve "merlin"
+  let () = reserve "reason"
+  let () = reserve "refmt"
 
   let is_in_reserved_namespaces name =
     match get_outer_namespace name with
