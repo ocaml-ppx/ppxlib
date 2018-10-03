@@ -1,2 +1,2 @@
 let () =
-  Printf.printf "%d\n" [%omp_test]
+  Printf.printf "%s %d\n" [%plop.Foobar] [%omp_test]
