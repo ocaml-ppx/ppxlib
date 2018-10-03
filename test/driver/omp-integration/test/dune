@@ -9,4 +9,4 @@
 (alias
  (name runtest)
  (deps test.expected test.output)
- (action (run diff --strip-trailing-cr test.expected test.output)))
+ (action (diff test.expected test.output)))
