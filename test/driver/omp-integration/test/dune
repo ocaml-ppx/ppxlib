@@ -1,0 +1,12 @@
+(executable
+ (name test)
+ (flags (:standard -safe-string))
+ (preprocess (pps ppxlib_driver_omp_test_ppx ppxlib_ppx)))
+
+(rule
+ (with-stdout-to test.output (run ./test.exe)))
+
+(alias
+ (name runtest)
+ (deps test.expected test.output)
+ (action (run diff --strip-trailing-cr test.expected test.output)))
