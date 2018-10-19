@@ -78,3 +78,13 @@ let x = (42 [@foo])
 Line _, characters 14-17:
 Error: Attribute `foo' was silently dropped
 |}]
+
+type t1 = < >
+type t2 = < t1 >
+type t3 = < (t1[@foo]) >
+[%%expect{|
+type t1 = <  >
+type t2 = <  >
+Line _, characters 17-20:
+Error: Attribute `foo' was not used
+|}]
