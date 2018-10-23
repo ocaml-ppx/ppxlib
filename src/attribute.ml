@@ -152,13 +152,17 @@ module Context = struct
       begin match x with
       | Rtag (lbl, _, can_be_constant, params_opts) ->
         Rtag (lbl, attrs, can_be_constant, params_opts)
-      | Rinherit _ -> x
+      | Rinherit _ ->
+        assert (List.is_empty attrs);
+        x
       end
     | Object_type_field ->
       begin match x with
       | Otag (lbl, _, typ) ->
         Otag (lbl, attrs, typ)
-      | Oinherit _ -> x
+      | Oinherit _ ->
+        assert (List.is_empty attrs);
+        x
       end
 
   let desc : type a. a t -> string = function
