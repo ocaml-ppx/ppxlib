@@ -4,7 +4,7 @@ let poly_equal a b =
   let module Poly = struct
     type t = T : _ -> t
   end in
-  Polymorphic_compare.equal (Poly.T a) (Poly.T b)
+  Base.Poly.equal (Poly.T a) (Poly.T b)
 ;;
 
 module Context = struct
@@ -297,7 +297,7 @@ let declare name context pattern k =
 module Attribute_table = Caml.Hashtbl.Make(struct
     type t = string loc
     let hash : t -> int = Hashtbl.hash
-    let equal : t -> t -> bool = Polymorphic_compare.equal
+    let equal : t -> t -> bool = Poly.equal
   end)
 
 let not_seen = Attribute_table.create 128

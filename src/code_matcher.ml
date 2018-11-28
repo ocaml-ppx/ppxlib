@@ -121,9 +121,9 @@ struct
       let loc = M.get_loc y in
       let x = remove_loc x in
       let y = remove_loc y in
-      if Polymorphic_compare.(<>) x y then begin
+      if Poly.(<>) x y then begin
         let round_trip = remove_loc (parse_string (Format.asprintf "%a@." M.pp x)) in
-        if Polymorphic_compare.(<>) x round_trip then
+        if Poly.(<>) x round_trip then
           Location.raise_errorf ~loc
             "ppxlib: the corrected code doesn't round-trip.\n\
              This is probably a bug in the OCaml printer:\n%s"

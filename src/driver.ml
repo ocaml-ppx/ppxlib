@@ -951,7 +951,7 @@ let set_output_mode mode =
   | _, Pretty_print -> assert false
   | Dump_ast   , Dump_ast
   | Dparsetree , Dparsetree -> ()
-  | Reconcile a, Reconcile b when Polymorphic_compare.equal a b -> ()
+  | Reconcile a, Reconcile b when Poly.equal a b -> ()
   | x, y ->
     let arg_of_output_mode = function
       | Pretty_print -> assert false

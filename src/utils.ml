@@ -23,7 +23,7 @@ module Kind = struct
     | Intf -> "interface"
   ;;
 
-  let equal : t -> t -> bool = Polymorphic_compare.equal
+  let equal : t -> t -> bool = Poly.equal
 end
 
 module Some_intf_or_impl = struct

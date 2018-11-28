@@ -27,7 +27,7 @@ let __' = T (fun ctx loc x k -> incr_matched ctx; k { loc; txt = x })
 
 let drop = T (fun ctx _loc _ k -> incr_matched ctx; k)
 
-let cst ~to_string ?(equal=Polymorphic_compare.equal) v = T (fun ctx loc x k ->
+let cst ~to_string ?(equal=Poly.equal) v = T (fun ctx loc x k ->
   if equal x v then begin
     incr_matched ctx;
     k

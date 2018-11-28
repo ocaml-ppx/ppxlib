@@ -113,7 +113,7 @@ let loc_of_attribute ((name, _) as attr) =
   (* TODO: fix this in the compiler *)
   (* "ocaml.doc" attributes are generated with [Location.none], which is not helpful for
      error messages. *)
-  if Polymorphic_compare.(=) name.loc Location.none then
+  if Poly.(=) name.loc Location.none then
     loc_of_payload attr
   else
     { name.loc with loc_end = (loc_of_payload attr).loc_end }

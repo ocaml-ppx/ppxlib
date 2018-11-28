@@ -272,7 +272,7 @@ let table_of_special_functions special_functions =
       "Context_free.V1.map_top_down: \
        %s present twice in list of special functions"
       (List.find_map_exn special_functions ~f:(fun r ->
-         if Polymorphic_compare.equal r.ident ident then
+         if Poly.equal r.ident ident then
            Some r.name
          else
            None))

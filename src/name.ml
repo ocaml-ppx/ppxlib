@@ -240,7 +240,7 @@ module Registrar = struct
     | None ->
       let other_contexts =
         Hashtbl.fold t.all_by_context ~init:[] ~f:(fun ~key:ctx ~data:{ all } acc ->
-          if Polymorphic_compare.(<>) context ctx && Map.mem all name then
+          if Poly.(<>) context ctx && Map.mem all name then
             match t.string_of_context ctx with
             | None -> acc
             | Some s -> (s ^ "s") :: acc

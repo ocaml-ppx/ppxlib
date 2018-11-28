@@ -57,7 +57,7 @@ module Context = struct
     | Pattern          , Pattern          -> Eq
     | Signature_item   , Signature_item   -> Eq
     | Structure_item   , Structure_item   -> Eq
-    | _ -> assert (Polymorphic_compare.(<>) (T a) (T b)); Ne
+    | _ -> assert (Poly.(<>) (T a) (T b)); Ne
 
   let get_extension : type a. a t -> a -> (extension * attributes) option = fun t x ->
     match t, x with
