@@ -1,4 +1,4 @@
-opam-version: "1.2"
+opam-version: "2.0"
 maintainer: "opensource@janestreet.com"
 authors: ["Jane Street Group, LLC <opensource@janestreet.com>"]
 homepage: "https://github.com/ocaml-ppx/ppxlib"
@@ -14,6 +14,7 @@ build-test: [
   ["dune" "runtest" "-p" name "-j" jobs] { ocaml-version >= "4.06" }
 ]
 depends: [
+  "ocaml"                   {>= "4.04.1"}
   "base"                    {>= "v0.11.0"}
   "dune"                    {build}
   "ocaml-compiler-libs"     {>= "v0.11.0"}
@@ -22,4 +23,4 @@ depends: [
   "stdio"                   {>= "v0.11.0"}
   "ocamlfind"               {test}
 ]
-available: [ ocaml-version >= "4.04.1" ]
+synopsis: "Base library and tools for ppx rewriters"
