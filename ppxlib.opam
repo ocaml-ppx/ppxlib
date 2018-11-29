@@ -1,25 +1,26 @@
-opam-version: "1.2"
+opam-version: "2.0"
 maintainer: "opensource@janestreet.com"
 authors: ["Jane Street Group, LLC <opensource@janestreet.com>"]
 homepage: "https://github.com/ocaml-ppx/ppxlib"
 bug-reports: "https://github.com/ocaml-ppx/ppxlib/issues"
-dev-repo: "https://github.com/ocaml-ppx/ppxlib.git"
+dev-repo: "git+https://github.com/ocaml-ppx/ppxlib.git"
 doc: "https://ocaml-ppx.github.io/ppxlib/"
 license: "MIT"
 build: [
   ["dune" "subst"] {pinned}
   ["dune" "build" "-p" name "-j" jobs]
 ]
-build-test: [
-  ["dune" "runtest" "-p" name "-j" jobs] { ocaml-version >= "4.06" }
+run-test: [
+  ["dune" "runtest" "-p" name "-j" jobs] { ocaml >= "4.06" }
 ]
 depends: [
+  "ocaml"                   {>= "4.04.1"}
   "base"                    {>= "v0.11.0"}
   "dune"                    {build}
   "ocaml-compiler-libs"     {>= "v0.11.0"}
   "ocaml-migrate-parsetree" {>= "1.0.9"}
   "ppx_derivers"            {>= "1.0"}
   "stdio"                   {>= "v0.11.0"}
-  "ocamlfind"               {test}
+  "ocamlfind"               {with-test}
 ]
-available: [ ocaml-version >= "4.04.1" ]
+synopsis: "Base library and tools for ppx rewriters"
