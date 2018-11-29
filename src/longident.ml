@@ -6,7 +6,7 @@ module T = struct
     | Ldot of t * string
     | Lapply of t * t
 
-  let compare : t -> t -> int = Polymorphic_compare.compare
+  let compare : t -> t -> int = Poly.compare
 
   let rec name = function
     | Lident s -> s
