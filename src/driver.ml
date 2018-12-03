@@ -640,7 +640,7 @@ let with_preprocessed_input fn ~f =
       In_channel.with_file fn ~f)
 ;;
 
-let relocate = object
+let relocate_mapper = object
   inherit [string * string] Ast_traverse.map_with_context
 
   method! position (old_fn, new_fn) pos =
@@ -650,7 +650,7 @@ let relocate = object
       pos
 end
 
-let load_input (kind : Kind.t) fn input_name ic =
+let load_input (kind : Kind.t) fn input_name ~relocate ic =
   Ocaml_common.Location.input_name := input_name;
   match Migrate_parsetree.Ast_io.from_channel ic with
   | Ok (ast_input_name, ast) ->
@@ -660,10 +660,11 @@ let load_input (kind : Kind.t) fn input_name ic =
         "File contains a binary %s AST but an %s was expected"
         (Kind.describe (Intf_or_impl.kind ast))
         (Kind.describe kind);
-    if String.equal ast_input_name input_name then
+    if String.equal ast_input_name input_name || not relocate then
       ast
     else
-      Intf_or_impl.map_with_context ast relocate (ast_input_name, input_name)
+      Intf_or_impl.map_with_context ast relocate_mapper (ast_input_name, input_name)
+
   | Error (Unknown_version _) ->
     Location.raise_errorf ~loc:(Location.in_file fn)
       "File is a binary ast for an unknown version of OCaml"
@@ -810,7 +811,7 @@ module Create_file_property(Name : sig val name : string end)(T : Sexpable.S) = 
   let set x = t.data <- Some x
 end
 
-let process_file (kind : Kind.t) fn ~input_name ~output_mode ~embed_errors ~output =
+let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_errors ~output =
   File_property.reset_all ();
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
   corrections := [];
@@ -842,7 +843,7 @@ let process_file (kind : Kind.t) fn ~input_name ~output_mode ~embed_errors ~outp
 
   let ast : Some_intf_or_impl.t =
     try
-      let ast = with_preprocessed_input fn ~f:(load_input kind fn input_name) in
+      let ast = with_preprocessed_input fn ~f:(load_input kind fn input_name ~relocate) in
       let ast = extract_cookies ast in
       let config = config ~hook ~expect_mismatch_handler in
       match ast with
@@ -1187,12 +1188,12 @@ let standalone_main () =
             exe_name fn;
           Caml.exit 2
     in
-    let input_name =
+    let input_name, relocate =
       match !loc_fname with
-      | None    -> fn
-      | Some fn -> fn
+      | None    -> fn, false
+      | Some fn -> fn, true
     in
-    process_file kind fn ~input_name ~output_mode:!output_mode ~output:!output
+    process_file kind fn ~input_name ~relocate ~output_mode:!output_mode ~output:!output
       ~embed_errors:!embed_errors
 ;;
 
