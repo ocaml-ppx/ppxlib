@@ -661,9 +661,9 @@ let load_input (kind : Kind.t) fn input_name ~relocate ic =
         (Kind.describe (Intf_or_impl.kind ast))
         (Kind.describe kind);
     if String.equal ast_input_name input_name || not relocate then
-      ast
+      ast_input_name, ast
     else
-      Intf_or_impl.map_with_context ast relocate_mapper (ast_input_name, input_name)
+      input_name, Intf_or_impl.map_with_context ast relocate_mapper (ast_input_name, input_name)
 
   | Error (Unknown_version _) ->
     Location.raise_errorf ~loc:(Location.in_file fn)
@@ -691,8 +691,8 @@ let load_input (kind : Kind.t) fn input_name ~relocate ic =
       };
     Lexer.skip_hash_bang lexbuf;
     match kind with
-    | Intf -> Intf (Parse.interface      lexbuf)
-    | Impl -> Impl (Parse.implementation lexbuf)
+    | Intf -> input_name, Intf (Parse.interface      lexbuf)
+    | Impl -> input_name, Impl (Parse.implementation lexbuf)
 ;;
 
 let load_source_file fn =
@@ -841,26 +841,34 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
     }
   in
 
-  let ast : Some_intf_or_impl.t =
+  let input_name, ast =
     try
-      let ast = with_preprocessed_input fn ~f:(load_input kind fn input_name ~relocate) in
+      let input_name, ast =
+        with_preprocessed_input fn ~f:(load_input kind fn input_name ~relocate)
+      in
       let ast = extract_cookies ast in
       let config = config ~hook ~expect_mismatch_handler in
       match ast with
-      | Intf x -> Intf (map_signature_gen x ~config)
-      | Impl x -> Impl (map_structure_gen x ~config)
+      | Intf x -> input_name, Some_intf_or_impl.Intf (map_signature_gen x ~config)
+      | Impl x -> input_name, Some_intf_or_impl.Impl (map_structure_gen x ~config)
     with exn when embed_errors ->
     match Location.Error.of_exn exn with
     | None -> raise exn
     | Some error ->
       let loc = Location.none in
       let ext = Location.Error.to_extension error in
-        let open Ast_builder.Default in
-        match kind with
-        | Intf -> Intf (Sig ((module Ppxlib_ast.Selected_ast),
-                             [ psig_extension ~loc ext [] ]))
-        | Impl -> Impl (Str ((module Ppxlib_ast.Selected_ast),
-                             [ pstr_extension ~loc ext [] ]))
+      let open Ast_builder.Default in
+      let ast = match kind with
+        | Intf ->
+           Some_intf_or_impl.Intf
+             (Sig ((module Ppxlib_ast.Selected_ast),
+                   [ psig_extension ~loc ext [] ]))
+        | Impl ->
+           Some_intf_or_impl.Impl
+             (Str ((module Ppxlib_ast.Selected_ast),
+                   [ pstr_extension ~loc ext [] ]))
+      in
+      input_name, ast
     in
 
     Option.iter !output_metadata_filename ~f:(fun fn ->
