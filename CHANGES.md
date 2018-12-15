@@ -1,5 +1,5 @@
-next
-----
+0.4.0
+-----
 
 - Do not report errors about dropped or uninterpreted attributes
   starting with `_` (#46, fix #40, @diml)
