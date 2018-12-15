@@ -4,6 +4,23 @@ next
 - Do not report errors about dropped or uninterpreted attributes
   starting with `_` (#46, fix #40, @diml)
 
+- Fix he `special_function` rule for dotted operators and allow
+  `Longident.parse` to parse dotted operators (#44, @Octachron)
+
+- Port to `dune` and remove use of bash (#45, @rgrinberg)
+
+- Ignore all attribites starting with `_` (#46, @diml)
+
+- Reserve the `reason` and `refmt` namespaces (#46, @diml)
+
+- Reserve the `metaocaml` namespace (#50, @rgrinberg)
+
+- Fix attribute extraction for Otag/Rtag (#51, @xclerc)
+
+- Do not relocate files unless `-loc-filename` is passed (#55, @hhugo)
+
+- Perserve the filename in the output (#56, @hhugo)
+
 0.3.1
 -----
 
