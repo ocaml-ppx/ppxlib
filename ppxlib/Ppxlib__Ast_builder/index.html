@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Ppxlib__Ast_builder (ppxlib.Ppxlib__Ast_builder)</title><link rel="stylesheet" href="../../odoc.css"/><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body><div class="content"><header><nav><a href="../index.html">Up</a> – <a href="../index.html">ppxlib</a> &#x00BB; Ppxlib__Ast_builder</nav><h1>Module <code>Ppxlib__Ast_builder</code></h1><p>Helpers for build OCaml AST fragments</p><nav class="toc"><ul><li><a href="#locations">Locations</a></li><li><a href="#naming">Naming</a></li></ul></nav></header><aside><p>This module is similar to the <code>Ast_helper</code> module distrubuted with OCaml but uses different conventions.</p></aside><section><header><h3 id="locations"><a href="#locations" class="anchor"></a>Locations</h3><p><code>Ast_helper</code> uses a global variable for the default locations, we found that to it makes it quite easy to mess up locations. Instead this modules forces you to provide a location argument.</p><p>For building fragment using the same location everywhere, a functor is provided.</p></header></section><section><header><h3 id="naming"><a href="#naming" class="anchor"></a>Naming</h3><p>The names match the <code>Parsetree</code> names closely, which makes it easy to build AST fragments by just knowing the <code>Parsetree</code>.</p><p>For types of the form a wrapper record with a <code>_desc</code> field, helpers are generated for each constructor constructing the record directly. For instance for the type <code>Parsetree.expression</code>:</p><pre><code class="ml">type expression =
+  { pexp_desc       : expression_desc
+  ; pexp_loc        : Location.t
+  ; pexp_attributes : attributes
+  }
+
+and expression_desc =
+  | Pexp_ident    of Longident.t loc
+  | Pexp_constant of constant
+  | Pexp_let      of rec_flag * value_binding list * expression
+  ...</code></pre><p>The following helpers are created:</p><pre><code class="ml">val pexp_ident    : loc:Location.t -&gt; Longident.t Located.t          -&gt; expression
+val pexp_constant : loc:Location.t -&gt; constant                       -&gt; expression
+val pexp_let      : loc:Location.t -&gt; rec_flag -&gt; value_binding list -&gt; expression
+...</code></pre><p>For other record types, such as type_declaration, we have the following helper:</p><pre><code class="ml">type type_declaration =
+  { ptype_name       : string Located.t
+  ; ptype_params     : (core_type * variance) list
+  ; ptype_cstrs      : (core_type * core_type * Location.t) list
+  ; ptype_kind       : type_kind
+  ; ptype_private    : private_flag
+  ; ptype_manifest   : core_type option
+  ; ptype_attributes : attributes
+  ; ptype_loc        : Location.t
+  }
+
+
+val type_declaration
+  :  loc      : Location.t
+  -&gt; name     : string Located.t
+  -&gt; params   : (core_type * variance) list
+  -&gt; cstrs    : (core_type * core_type * Location.t) list
+  -&gt; kind     : type_kind
+  -&gt; private  : private_flag
+  -&gt; manifest : core_type option
+  -&gt; type_declaration</code></pre><p>Attributes are always set to the empty list. If you want to set them you have to override the field with the <code>{ e with pexp_attributes = ... }</code> notation.</p></header><dl><dt class="spec module" id="module-Default"><a href="#module-Default" class="anchor"></a><code><span class="keyword">module </span><a href="Default/index.html">Default</a> : <span class="keyword">sig</span> ... <span class="keyword">end</span></code></dt><dd><p>Helpers taking a <code>~loc</code> argument. This module is meant to be opened or aliased.</p></dd></dl><div class="spec module-type" id="module-type-Loc"><a href="#module-type-Loc" class="anchor"></a><code><span class="keyword">module type </span><a href="module-type-Loc/index.html">Loc</a> = <a href="../Ppxlib__/Ast_builder_intf/index.html#module-type-Loc">Ppxlib__.Ast_builder_intf.Loc</a></code></div><div class="spec module-type" id="module-type-S"><a href="#module-type-S" class="anchor"></a><code><span class="keyword">module type </span><a href="module-type-S/index.html">S</a> = <a href="../Ppxlib__/Ast_builder_intf/index.html#module-type-S">Ppxlib__.Ast_builder_intf.S</a></code></div><dl><dt class="spec module" id="module-Make"><a href="#module-Make" class="anchor"></a><code><span class="keyword">module </span><a href="Make/index.html">Make</a> : <span class="keyword">functor</span> (<a href="Make/argument-1-Loc/index.html">Loc</a> : <a href="index.html#module-type-Loc">Loc</a>) <span>&#45;&gt;</span> <a href="index.html#module-type-S">S</a></code></dt><dd><p>Build Ast helpers with the location argument factorized.</p></dd></dl><dl><dt class="spec value" id="val-make"><a href="#val-make" class="anchor"></a><code><span class="keyword">val </span>make : <a href="../Ppxlib/Location/index.html#type-t">Ppxlib.Location.t</a> <span>&#45;&gt;</span> (<span class="keyword">module </span><a href="module-type-S/index.html">S</a>)</code></dt><dd><p>Functional version of <code>Make</code>.</p></dd></dl></section></div></body></html>
