@@ -512,6 +512,11 @@ let disable_unused_warning_attribute ~loc =
    PStr [pstr_eval ~loc (estring ~loc "-32") []])
 ;;
 
+let inline_doc_attr ~loc =
+  ({ txt = "ocaml.doc"; loc },
+   PStr [pstr_eval ~loc (estring ~loc "@inline") []])
+;;
+
 let disable_unused_warning_str ~loc st =
   if keep_w32_impl () then
     st
@@ -520,22 +525,26 @@ let disable_unused_warning_str ~loc st =
   else
     (* note: a structure is created because it is not currently possible to
        attach an [@@ocaml.warning] attribute to a single structure item. *)
+    let include_infos =
+      include_infos ~loc
+        (pmod_structure ~loc
+           (pstr_attribute ~loc (disable_unused_warning_attribute ~loc) :: st))
+    in
     [pstr_include ~loc
-       (include_infos ~loc
-          (pmod_structure ~loc
-             (pstr_attribute ~loc (disable_unused_warning_attribute ~loc)
-              :: st)))]
+       {include_infos with pincl_attributes = [inline_doc_attr ~loc]}]
 ;;
 
 let disable_unused_warning_sig ~loc sg =
   if keep_w32_intf () then
     sg
   else
+    let include_infos =
+      include_infos ~loc
+        (pmty_signature ~loc
+           (psig_attribute ~loc (disable_unused_warning_attribute ~loc) :: sg))
+    in
     [psig_include ~loc
-       (include_infos ~loc
-          (pmty_signature ~loc
-             (psig_attribute ~loc (disable_unused_warning_attribute ~loc)
-              :: sg)))]
+       { include_infos with pincl_attributes = [inline_doc_attr ~loc]}]
 ;;
 
 (* +-----------------------------------------------------------------+
