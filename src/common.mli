@@ -51,3 +51,27 @@ val curry_applications : expression -> expression
 (** Encode a warning message into an 'ocaml.ppwarning' attribute which can be inserted in
     a generated Parsetree.  The compiler will be responsible for reporting the warning. *)
 val attribute_of_warning : Location.t -> string -> attribute
+
+val is_polymorphic_variant
+  : type_declaration -> sig_:bool -> [> `Definitely | `Maybe | `Surely_not ]
+
+(** [mk_named_sig ~loc ~sg_name:"Foo" ~handle_polymorphic_variant tds] will
+    generate
+    {[
+      include Foo (* or Foo1, Foo2, Foo3 *)
+        with type (* ('a, 'b, 'c) *) t := (* ('a, 'b, 'c) *) t
+    ]}
+    when:
+    - there is only one type declaration
+    - the type is named t
+    - there are less than 4 type parameters
+    - there are no constraints on the type parameters
+
+    It will take care of giving fresh names to unnamed type parameters.
+*)
+val mk_named_sig
+  : loc:Location.t
+  -> sg_name:string
+  -> handle_polymorphic_variant:bool
+  -> type_declaration list
+  -> include_description option
