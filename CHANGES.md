@@ -4,6 +4,9 @@ next
 - Add an (** @inline *) to the include generated when silencing
   warning 32 (#58, @trefis)
 
+- Add `Ppxlib.mk_named_sig` and `Ppxlib.is_polymorphic_variant` (#57,
+  @trefis)
+
 0.4.0
 -----
 
