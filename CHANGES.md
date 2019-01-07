@@ -1,3 +1,9 @@
+next
+----
+
+- Add an (** @inline *) to the include generated when silencing
+  warning 32 (#58, @trefis)
+
 0.4.0
 -----
 
