@@ -149,3 +149,51 @@ end
 let attribute_of_warning loc s =
   ({ loc; txt = "ocaml.ppwarning" },
    PStr ([pstr_eval ~loc (estring ~loc s) []]))
+
+let is_polymorphic_variant =
+  let rec check = function
+    | { ptyp_desc = Ptyp_variant _; _ } -> `Definitely
+    | { ptyp_desc = Ptyp_alias (typ,_); _ } -> check typ
+    | { ptyp_desc = Ptyp_constr _; _ } -> `Maybe
+    | _ -> `Surely_not (* Type vars go here even though they could be polymorphic
+                          variants, however we don't handle it if they get substituted
+                          by a polymorphic variant that is then included. *)
+  in
+  fun td ~sig_ ->
+    match td.ptype_kind with
+    | Ptype_variant _ | Ptype_record _ | Ptype_open -> `Surely_not
+    | Ptype_abstract ->
+      match td.ptype_manifest with
+      | None -> if sig_ then `Maybe else `Surely_not
+      | Some typ -> check typ
+
+let mk_named_sig ~loc ~sg_name ~handle_polymorphic_variant = function
+  | [ td ] when String.equal td.ptype_name.txt "t" && List.is_empty td.ptype_cstrs ->
+    if not handle_polymorphic_variant &&
+       Poly.(=) (is_polymorphic_variant td ~sig_:true) `Definitely
+    then
+      None
+    else
+      let arity = List.length td.ptype_params in
+      if arity >= 4 then
+        None
+      else
+        let mty =
+          if arity = 0
+          then sg_name
+          else Printf.sprintf "%s%d" sg_name arity
+        in
+        let td = name_type_params_in_td td in
+        let for_subst =
+          Ast_helper.Type.mk ~loc td.ptype_name ~params:td.ptype_params
+            ~manifest:(
+              ptyp_constr ~loc (Located.map_lident td.ptype_name)
+                (List.map ~f:fst td.ptype_params)
+            )
+        in
+        Some (
+          include_infos ~loc
+            (pmty_with ~loc (pmty_ident ~loc (Located.lident mty ~loc))
+               [Pwith_typesubst (Located.lident ~loc "t", for_subst)])
+        )
+  | _ -> None
