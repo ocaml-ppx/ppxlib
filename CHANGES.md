@@ -1,7 +1,7 @@
-next
-----
+0.5.0
+-----
 
-- Add an (** @inline *) to the include generated when silencing
+- Add an `(** @inline *)` to the include generated when silencing
   warning 32 (#58, @trefis)
 
 - Add `Ppxlib.mk_named_sig` and `Ppxlib.is_polymorphic_variant` (#57,
