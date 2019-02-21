@@ -335,6 +335,32 @@ libraries currently depending on `Deriving`:
 - `ppx_sexp_conv`;
 - `ppx_variants_conv`.
 
+### Derivers compatibility with [`ppx_import`](https://github.com/ocaml-ppx/ppx_import)
+
+`ppx_import` is a ppx rewriter that let's you import external type definitions. It will turn
+```ocaml
+type t = [%import A.t]
+```
+into:
+```ocaml
+type t = A.t = <actual A.t definition>
+```
+It spares you the need to copy the type definition and to update it when `A.t` definition changes.
+
+`ppx_import` is thus often used in combination with ppx derivers.
+
+Because `ppx_import` requires extra information from the compiler that aren't available when it is
+initially called with `ocamldep`, it will not completely expand the type definition and instead
+rewrite it as:
+```ocaml
+type t = A.t
+```
+
+That means that if you want your deriver to work with `ppx_import` and to be able to expand the
+copied type definition, it must not fail during this intermediate stage.
+If your deriver doesn't natively handle abstract type definitions, you can always return an empty
+`structure_item` or `signature_item` list.
+
 Compatibility with [ppx_deriving](https://github.com/ocaml-ppx/ppx_deriving)
 ----------------------------------------------------------------------------
 `Ppxlib.Deriving`-based code generators are meant to be used with
