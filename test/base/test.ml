@@ -55,6 +55,7 @@ let _ = split_path ".D"
 - : string = "(\"\" (D))"
 |}]
 
+let convert_longident string =
   let lident = Longident.parse string in
   let name = Longident.name lident in
   (name, lident)
