@@ -54,3 +54,43 @@ let _ = split_path ".D"
 [%%expect{|
 - : string = "(\"\" (D))"
 |}]
+
+  let lident = Longident.parse string in
+  let name = Longident.name lident in
+  (name, lident)
+[%%expect{|
+val convert_longident : string -> string * longident = <fun>
+|}]
+
+let _ = convert_longident "x"
+[%%expect{|
+- : string * longident = ("x", Ppxlib.Longident.Lident "x")
+|}]
+
+let _ = convert_longident "(+)"
+[%%expect{|
+- : string * longident = ("( + )", Ppxlib.Longident.Lident "+")
+|}]
+
+let _ = convert_longident "( + )"
+[%%expect{|
+- : string * longident = ("( + )", Ppxlib.Longident.Lident " + ")
+|}]
+
+let _ = convert_longident "Base.x"
+[%%expect{|
+- : string * longident =
+("Base.x", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", "x"))
+|}]
+
+let _ = convert_longident "Base.(+)"
+[%%expect{|
+- : string * longident =
+("Base.( + )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", "+"))
+|}]
+
+let _ = convert_longident "Base.( + )"
+[%%expect{|
+- : string * longident =
+("Base.( + )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", " + "))
+|}]

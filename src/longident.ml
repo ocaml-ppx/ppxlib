@@ -8,9 +8,21 @@ module T = struct
 
   let compare : t -> t -> int = Poly.compare
 
+  let is_normal_ident_char = function
+    | 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' -> true
+    | _ -> false
+
+  let is_normal_ident string =
+    String.for_all string ~f:is_normal_ident_char
+
+  let short_name string =
+    if is_normal_ident string
+    then string
+    else "( " ^ string ^ " )"
+
   let rec name = function
-    | Lident s -> s
-    | Ldot (a, b) -> name a ^ "." ^ b
+    | Lident s -> short_name s
+    | Ldot (a, b) -> name a ^ "." ^ short_name b
     | Lapply (a, b) -> Printf.sprintf "%s(%s)" (name a) (name b)
 
   let sexp_of_t t = Sexp.Atom (name t)
@@ -50,7 +62,7 @@ let parse s =
       if Int.( r <> String.length s - 1 ) then
         invalid_arg "Ppxlib.Longident.parse";
       let group = if Int.(r = l + 1) then "()" else
-          String.sub s ~pos:(l+1) ~len:(r-l-1) in
+          String.strip (String.sub s ~pos:(l+1) ~len:(r-l-1)) in
       if Int.(l = 0) then Lident group else
         let before = String.sub s ~pos:0 ~len:(l-1) in
         match String.split before ~on:'.' with
