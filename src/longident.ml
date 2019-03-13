@@ -12,8 +12,11 @@ module T = struct
     | 'A' .. 'Z' | 'a' .. 'z' | '0' .. '9' | '_' | '\'' -> true
     | _ -> false
 
-  let is_normal_ident string =
-    String.for_all string ~f:is_normal_ident_char
+  let is_normal_ident = function
+    | "asr" | "land" | "lor" | "lsl" | "lsr" | "lxor" | "mod" | "or" ->
+      false
+    | string ->
+      String.for_all string ~f:is_normal_ident_char
 
   let short_name string =
     if is_normal_ident string
