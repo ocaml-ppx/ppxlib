@@ -77,12 +77,12 @@ reasons:
   incompatible ways. This means that a ppx rewriter using the compiler
   hook directly is likely to work only with a single version of the
   OCaml compiler
-- the compiler does not provide a good composition semantic, which
+- the compiler does not provide a good composition semantics, which
   means that input files will not always be transformed as
   expected. It is hard to predict what the final result will be, and
   for end users it is hard to understand what is happening when things
   go wrong
-- the compiler doesn't handle hygiene: if an attribute is mystyped or
+- the compiler doesn't handle hygiene: if an attribute is mistyped or
   misplaced, it is silently ignored by the compiler. If two ppx
   rewriters want to interpret the same attribute or extension point in
   incompatible ways, the result is not specificed
@@ -95,9 +95,9 @@ Current state of the ppx ecosystem
 ----------------------------------
 
 Ppxlib was developed after the introduction of the ppx system. As a
-result many ppx rewriters do not currently use ppxlib and are using
-the compiler hooks directly. Ppxlib can acknowledge such rewriter so
-that they can be used in conjunction with more moderm rewriters,
+result, many ppx rewriters do not currently use ppxlib and are using
+the compiler hooks directly. Ppxlib can acknowledge such rewriters so
+that they can be used in conjunction with more modern rewriters,
 however it cannot provide a good composition or hygiene story when
 using such ppx rewriters.
 

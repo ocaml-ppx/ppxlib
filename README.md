@@ -16,3 +16,8 @@ OCaml projects.
 
 Ppxlib comes with a [user manual](http://ppxlib.readthedocs.io/) aimed
 at both users and authors of ppx rewriters.
+
+# History
+
+This repository was created by merging several older projects. See
+[the history](HISTORY.md) for more details.

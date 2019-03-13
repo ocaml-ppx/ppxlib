@@ -5,7 +5,7 @@ Overview
 --------
 
 This is the user manual for ppxlib, the core of the ppx
-metaprogramming system for OCaml_ and its derivatives such as
+meta-programming system for OCaml_ and its derivatives such as
 Reason_. This manual is aimed at both users and authors of ppx
 rewriters and contains everything one should know in order to use or
 write ppx rewriters.

@@ -7,8 +7,8 @@ This section describes how to use ppx rewriters for end users.
 Using a ppx rewriter in your project
 ------------------------------------
 
-To use one or more ppx rewriters written by your or someone else,
-simply list it in the ``preprocess`` field of your ``dune`` file. For
+To use one or more ppx rewriters written by you or someone else,
+simply list them in the ``preprocess`` field of your ``dune`` file. For
 instance:
 
 .. code:: scheme
@@ -78,8 +78,8 @@ You might notice that the resulting file when using
 ``[@@deriving_inline]`` needs no special treatment to be compiled. In
 particular, you can build it without the ppx rewriter or even
 ppxlib. You only need them while developping the project, in order to
-automatically the generated code but that's it. End users of your
-project do not need to install ppxlib and other ppx rewriters
+automatically produce the generated code but that's it. End users of
+your project do not need to install ppxlib and other ppx rewriters
 themselves.
 
 Dune_ gracefully supports this workflow: simply replace ``preprocess``
@@ -99,11 +99,3 @@ Then to regenerate the parts between ``[@@deriving_inline]`` and
           $ dune build @lint --auto-promote
 
 .. _Dune:   https://dune.build/
-
-
-
-
-
-
-
-
