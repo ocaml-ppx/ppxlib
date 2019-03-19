@@ -650,8 +650,13 @@ let relocate_mapper = object
       pos
 end
 
+(* Set the input name globally. This is used by some ppx rewriters
+   such as bisect_ppx. *)
+let set_input_name name =
+  Ocaml_common.Location.input_name := name
+
 let load_input (kind : Kind.t) fn input_name ~relocate ic =
-  Ocaml_common.Location.input_name := input_name;
+  set_input_name input_name;
   match Migrate_parsetree.Ast_io.from_channel ic with
   | Ok (ast_input_name, ast) ->
     let ast = Intf_or_impl.of_ast_io ast in
@@ -660,10 +665,13 @@ let load_input (kind : Kind.t) fn input_name ~relocate ic =
         "File contains a binary %s AST but an %s was expected"
         (Kind.describe (Intf_or_impl.kind ast))
         (Kind.describe kind);
-    if String.equal ast_input_name input_name || not relocate then
-      ast_input_name, ast
-    else
-      input_name, Intf_or_impl.map_with_context ast relocate_mapper (ast_input_name, input_name)
+    if String.equal ast_input_name input_name || not relocate then begin
+      set_input_name ast_input_name;
+      (ast_input_name, ast)
+    end else
+      (input_name,
+       Intf_or_impl.map_with_context ast relocate_mapper
+         (ast_input_name, input_name))
 
   | Error (Unknown_version _) ->
     Location.raise_errorf ~loc:(Location.in_file fn)
