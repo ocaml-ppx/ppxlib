@@ -1,3 +1,9 @@
+next
+----
+
+- Set `Location.input_name` to the original filename when reading a
+  binary AST (#.., @diml)
+
 0.5.0
 -----
 
