@@ -32,3 +32,5 @@ let to_string_path t =
     List.filter ~f:is_module_name val_path
   in
   String.concat ~sep:"." (t.file_path :: sub_module_path)
+
+let with_string_path f ~loc ~path = f ~loc ~path:(to_string_path path)

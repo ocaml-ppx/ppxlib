@@ -29,3 +29,8 @@ val enter : string -> t -> t
     Used for compatibility with path from version 0.5.0 and lower.
 *)
 val to_string_path : t -> string
+
+(** Wrap a [fun ~loc ~path] expecting a string path into one expecting a [t]. *)
+val with_string_path :
+  (loc:Location.t -> path:string -> 'a) ->
+  (loc:Location.t -> path:t -> 'a)
