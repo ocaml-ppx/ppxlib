@@ -31,6 +31,7 @@ module Ast_builder         = Ast_builder
 module Ast_pattern         = Ast_pattern
 module Ast_traverse        = Ast_traverse
 module Attribute           = Attribute
+module Code_path           = Code_path
 module Caller_id           = Caller_id
 module Context_free        = Context_free
 module Deriving            = Deriving
