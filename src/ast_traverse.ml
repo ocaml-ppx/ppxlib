@@ -85,7 +85,9 @@ class map_with_code_path = object
     super#value_description (Code_path.enter vd.pval_name.txt path) vd
 
   method! value_binding path vb =
-    super#value_binding path vb
+    match vb.pvb_pat.ppat_desc with
+    | Ppat_var v -> super#value_binding (Code_path.enter v.txt path) vb
+    | _ -> super#value_binding path vb
 end
 
 class sexp_of = object
