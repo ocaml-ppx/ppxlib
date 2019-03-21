@@ -99,14 +99,14 @@ module For_context : sig
   val convert
     :  'a t list
     -> loc:Location.t
-    -> path:string
+    -> path:Code_path.t
     -> extension
     -> 'a option
 
   val convert_inline
     :  'a t list
     -> loc:Location.t
-    -> path:string
+    -> path:Code_path.t
     -> extension
     -> 'a list option
 end
@@ -151,13 +151,13 @@ module V2 : sig
     :  string
     -> 'context Context.t
     -> (payload, 'a, 'context) Ast_pattern.t
-    -> (loc:Location.t -> path:string -> 'a)
+    -> (loc:Location.t -> path:Code_path.t -> 'a)
     -> t
   val declare_inline
     :  string
     -> 'context Context.t
     -> (payload, 'a, 'context list) Ast_pattern.t
-    -> (loc:Location.t -> path:string -> 'a)
+    -> (loc:Location.t -> path:Code_path.t -> 'a)
     -> t
 end
 

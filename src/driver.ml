@@ -172,7 +172,8 @@ module Transform = struct
             let whole_loc = loc_of_list st ~get_loc:(fun st -> st.Parsetree.pstr_loc) in
             gen_header_and_footer Structure_item whole_loc f
         in
-        let st = map#structure (File_path.get_default_path_str st) st in
+        let file_path = File_path.get_default_path_str st in
+        let st = map#structure (Code_path.top_level ~file_path) st in
         match header, footer with
         | [], [] -> st
         | _      -> List.concat [ header; st; footer ]
@@ -190,7 +191,8 @@ module Transform = struct
             let whole_loc = loc_of_list sg ~get_loc:(fun sg -> sg.Parsetree.psig_loc) in
             gen_header_and_footer Signature_item whole_loc f
         in
-        let sg = map#signature (File_path.get_default_path_sig sg) sg in
+        let file_path = File_path.get_default_path_sig sg in
+        let sg = map#signature (Code_path.top_level ~file_path) sg in
         match header, footer with
         | [], [] -> sg
         | _      -> List.concat [ header; sg; footer ]

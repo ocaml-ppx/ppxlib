@@ -187,7 +187,7 @@ module Generator = struct
   ;;
 
   let apply (T t) ~name:_ ~loc ~path x args =
-    Args.apply t.spec args (t.gen ~loc ~path x)
+    Args.apply t.spec args (t.gen ~loc ~path:(Code_path.to_string_path path) x)
   ;;
 
   let apply_all ~loc ~path entry (name, generators, args) =

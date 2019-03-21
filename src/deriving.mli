@@ -61,7 +61,7 @@ module Generator : sig
     :  ('output_ast, 'input_ast) t
     -> name:string
     -> loc:Location.t
-    -> path:string
+    -> path:Code_path.t
     -> 'input_ast
     -> (string * expression) list
     -> 'output_ast

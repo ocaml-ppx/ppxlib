@@ -163,7 +163,7 @@ module Expert = struct
 end
 
 module M = Make(struct
-    type 'a t = loc:Location.t -> path:string -> arg:Longident.t Loc.t option -> 'a
+    type 'a t = loc:Location.t -> path:Code_path.t -> arg:Longident.t Loc.t option -> 'a
   end)
 
 type 'a expander_result =
@@ -194,17 +194,6 @@ end
 
 type t = T : _ For_context.t -> t
 
-let declare name context pattern k =
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
-  T (M.declare ~with_arg:false name context pattern
-       (fun ~loc ~path ~arg:_ -> k ~loc ~path))
-;;
-
-let declare_with_path_arg name context pattern k =
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
-  T (M.declare ~with_arg:true  name context pattern k)
-;;
-
 let check_context_for_inline : type a. func:string -> a Context.t -> unit =
   fun ~func ctx ->
     match ctx with
@@ -216,19 +205,6 @@ let check_context_for_inline : type a. func:string -> a Context.t -> unit =
       Printf.ksprintf invalid_arg "%s: %s can't be inlined"
         func
         (Context.desc context)
-;;
-
-let declare_inline name context pattern k =
-  check_context_for_inline context ~func:"Extension.declare_inline";
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
-  T (M.declare ~with_arg:false name context pattern
-       (fun ~loc ~path ~arg:_ -> k ~loc ~path))
-;;
-
-let declare_inline_with_path_arg name context pattern k =
-  check_context_for_inline context ~func:"Extension.declare_inline_with_path_arg";
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
-  T (M.declare ~with_arg:true name context pattern k)
 ;;
 
 let rec filter_by_context
@@ -303,6 +279,36 @@ end
 
 module V2 = struct
   type nonrec t = t
-  let declare = declare
-  let declare_inline = declare_inline
+
+  let declare name context pattern k =
+    let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
+    T (M.declare ~with_arg:false name context pattern
+         (fun ~loc ~path ~arg:_ -> k ~loc ~path))
+
+  let declare_inline name context pattern k =
+    check_context_for_inline context ~func:"Extension.declare_inline";
+    let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
+    T (M.declare ~with_arg:false name context pattern
+         (fun ~loc ~path ~arg:_ -> k ~loc ~path))
 end
+
+let with_string_path f ~loc ~path = f ~loc ~path:(Code_path.to_string_path path)
+
+let declare name context pattern f =
+  V2.declare name context pattern (with_string_path f)
+
+let declare_inline name context pattern f =
+  V2.declare_inline name context pattern (with_string_path f)
+
+let declare_with_path_arg name context pattern k =
+  let k' = with_string_path k in
+  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
+  T (M.declare ~with_arg:true  name context pattern k')
+;;
+
+let declare_inline_with_path_arg name context pattern k =
+  let k' = with_string_path k in
+  check_context_for_inline context ~func:"Extension.declare_inline_with_path_arg";
+  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
+  T (M.declare ~with_arg:true name context pattern k')
+;;

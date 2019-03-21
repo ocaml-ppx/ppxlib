@@ -69,6 +69,25 @@ class map_with_path = object
     super#module_type_declaration (enter mtd.pmtd_name.txt path) mtd
 end
 
+class map_with_code_path = object
+  inherit [Code_path.t] map_with_context as super
+
+  method! module_binding path mb =
+       super#module_binding (Code_path.enter mb.pmb_name.txt path) mb
+
+  method! module_declaration path md =
+    super#module_declaration (Code_path.enter md.pmd_name.txt path) md
+
+  method! module_type_declaration path mtd =
+    super#module_type_declaration (Code_path.enter mtd.pmtd_name.txt path) mtd
+
+  method! value_description path vd =
+    super#value_description (Code_path.enter vd.pval_name.txt path) vd
+
+  method! value_binding path vb =
+    super#value_binding path vb
+end
+
 class sexp_of = object
   inherit [Sexp.t] Ast.lift
 

@@ -13,7 +13,7 @@ module Rule = struct
       { attribute : ('b, 'c) Attribute.t
       ; expect    : bool
       ; expand    : (loc:Location.t
-                     -> path:string
+                     -> path:Code_path.t
                      -> Asttypes.rec_flag
                      -> 'b list
                      -> 'c option list
@@ -32,7 +32,7 @@ module Rule = struct
       { attribute : ('b, 'c) Attribute.t
       ; expect    : bool
       ; expand    : (loc:Location.t
-                     -> path:string
+                     -> path:Code_path.t
                      -> 'b
                      -> 'c
                      -> 'a list)
@@ -97,7 +97,7 @@ module Rule = struct
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t
     -> (loc:Location.t
-        -> path:string
+        -> path:Code_path.t
         -> Asttypes.rec_flag
         -> 'b list
         -> 'c option list
@@ -107,7 +107,7 @@ module Rule = struct
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t
     -> (loc:Location.t
-        -> path:string
+        -> path:Code_path.t
         -> 'b
         -> 'c
         -> 'a list)
@@ -404,7 +404,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
   let map_nodes = map_nodes ~hook in
 
   object(self)
-    inherit Ast_traverse.map_with_path as super
+    inherit Ast_traverse.map_with_code_path as super
 
     (* No point recursing into every location *)
     method! location _ x = x
