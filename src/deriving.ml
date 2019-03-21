@@ -137,7 +137,7 @@ module Generator = struct
   type deriver = t
   type ('a, 'b) t =
     | T : { spec           : ('c, 'a) Args.t
-          ; gen            : loc:Location.t -> path:string -> 'b -> 'c
+          ; gen            : loc:Location.t -> path:Code_path.t -> 'b -> 'c
           ; arg_names      : Set.M(String).t
           ; attributes     : Attribute.packed list
           ; deps           : deriver list
@@ -145,15 +145,22 @@ module Generator = struct
 
   let deps (T t) = t.deps
 
-  let make ?(attributes=[]) ?(deps=[]) spec gen =
-    let arg_names = Set.of_list (module String) (Args.names spec) in
-    T { spec
-      ; gen
-      ; arg_names
-      ; attributes
-      ; deps
-      }
-  ;;
+  module V2 = struct
+    let make ?(attributes=[]) ?(deps=[]) spec gen =
+      let arg_names = Set.of_list (module String) (Args.names spec) in
+      T { spec
+        ; gen
+        ; arg_names
+        ; attributes
+        ; deps
+        }
+    ;;
+
+    let make_noarg ?attributes ?deps gen = make ?attributes ?deps Args.empty gen
+  end
+
+  let make ?attributes ?deps spec gen =
+    V2.make ?attributes ?deps spec (Code_path.with_string_path gen)
 
   let make_noarg ?attributes ?deps gen = make ?attributes ?deps Args.empty gen
 
@@ -187,7 +194,7 @@ module Generator = struct
   ;;
 
   let apply (T t) ~name:_ ~loc ~path x args =
-    Args.apply t.spec args (t.gen ~loc ~path:(Code_path.to_string_path path) x)
+    Args.apply t.spec args (t.gen ~loc ~path x)
   ;;
 
   let apply_all ~loc ~path entry (name, generators, args) =
