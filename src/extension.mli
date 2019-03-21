@@ -151,6 +151,22 @@ module V2 : sig
     :  string
     -> 'context Context.t
     -> (payload, 'a, 'context) Ast_pattern.t
+    -> (loc:Location.t -> path:string -> 'a)
+    -> t
+  val declare_inline
+    :  string
+    -> 'context Context.t
+    -> (payload, 'a, 'context list) Ast_pattern.t
+    -> (loc:Location.t -> path:string -> 'a)
+    -> t
+end
+
+module V3 : sig
+  type nonrec t = t
+  val declare
+    :  string
+    -> 'context Context.t
+    -> (payload, 'a, 'context) Ast_pattern.t
     -> (loc:Location.t -> path:Code_path.t -> 'a)
     -> t
   val declare_inline

@@ -277,7 +277,7 @@ let check_unused = object
     | x -> super#structure_item_desc x
 end
 
-module V2 = struct
+module V3 = struct
   type nonrec t = t
 
   let declare name context pattern k =
@@ -293,10 +293,10 @@ module V2 = struct
 end
 
 let declare name context pattern f =
-  V2.declare name context pattern (Code_path.with_string_path f)
+  V3.declare name context pattern (Code_path.with_string_path f)
 
 let declare_inline name context pattern f =
-  V2.declare_inline name context pattern (Code_path.with_string_path f)
+  V3.declare_inline name context pattern (Code_path.with_string_path f)
 
 let declare_with_path_arg name context pattern k =
   let k' = Code_path.with_string_path k in
@@ -310,3 +310,10 @@ let declare_inline_with_path_arg name context pattern k =
   let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
   T (M.declare ~with_arg:true name context pattern k')
 ;;
+
+module V2 = struct
+  type nonrec t = t
+
+  let declare = declare
+  let declare_inline = declare_inline
+end
