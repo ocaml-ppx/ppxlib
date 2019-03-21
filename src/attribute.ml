@@ -338,18 +338,18 @@ let get_internal =
     find_best_match t attributes None
 ;;
 
-let convert pattern attr =
-  mark_as_seen attr;
+let convert ?(do_mark_as_seen = true) pattern attr =
+  if do_mark_as_seen then mark_as_seen attr;
   let (Payload_parser (pattern, k)) = pattern in
   Ast_pattern.parse pattern (Common.loc_of_payload attr) (snd attr)
     (k ~name_loc:(fst attr).loc)
 ;;
 
-let get t x =
+let get t ?mark_as_seen:do_mark_as_seen x =
   let attrs = Context.get_attributes t.context x in
   match get_internal t attrs with
   | None -> None
-  | Some attr -> Some (convert t.payload attr)
+  | Some attr -> Some (convert t.payload attr ?do_mark_as_seen)
 ;;
 
 let consume t x =

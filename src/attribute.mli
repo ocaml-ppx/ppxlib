@@ -135,7 +135,13 @@ val declare_with_name_loc
 val name : _ t -> string
 val context : ('a, _) t -> 'a Context.t
 
-val get : ('a, 'b) t -> 'a -> 'b option
+(** Gets the associated attribute value. Marks the attribute as seen unless
+    [mark_as_seen=false]. *)
+val get
+  :  ('a, 'b) t
+  -> ?mark_as_seen:bool (** default [true] *)
+  -> 'a
+  -> 'b option
 
 (** [consume t x] returns the value associated to attribute [t] on [x] if present as well
     as [x] with [t] removed. *)
