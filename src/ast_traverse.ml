@@ -69,6 +69,16 @@ class map_with_path = object
     super#module_type_declaration (enter mtd.pmtd_name.txt path) mtd
 end
 
+let var_names_of = object
+  inherit [string list] fold as super
+
+  method! pattern p acc =
+    let acc = super#pattern p acc in
+    match p.ppat_desc with
+    | Ppat_var {txt; _} -> txt :: acc
+    | _ -> acc
+end
+
 class map_with_code_path = object (self)
   inherit [Code_path.t] map_with_context as super
 
@@ -84,16 +94,17 @@ class map_with_code_path = object (self)
   method! value_description path vd =
     super#value_description (Code_path.enter vd.pval_name.txt path) vd
 
-  method! value_binding path ({pvb_pat; pvb_expr; pvb_attributes; pvb_loc} as vb) =
-    match pvb_pat.ppat_desc with
-    | Ppat_var v ->
-      let new_path = Code_path.enter v.txt path in
-      let pvb_pat = self#pattern path pvb_pat in
-      let pvb_expr = self#expression new_path pvb_expr in
-      let pvb_attributes = self#attributes new_path pvb_attributes in
-      let pvb_loc = self#location path pvb_loc in
-      { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
-    | _ -> super#value_binding path vb
+  method! value_binding path {pvb_pat; pvb_expr; pvb_attributes; pvb_loc} =
+    let all_var_names = var_names_of#pattern pvb_pat [] in
+    let var_name = Base.List.last all_var_names in
+    let in_binding_path =
+      Base.Option.fold var_name ~init:path ~f:(fun path var_name -> Code_path.enter var_name path)
+    in
+    let pvb_pat = self#pattern path pvb_pat in
+    let pvb_expr = self#expression in_binding_path pvb_expr in
+    let pvb_attributes = self#attributes in_binding_path pvb_attributes in
+    let pvb_loc = self#location path pvb_loc in
+    { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
 end
 
 class sexp_of = object
