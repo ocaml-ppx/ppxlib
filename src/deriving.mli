@@ -62,21 +62,20 @@ module Generator : sig
       :  ?attributes:Attribute.packed list
       -> ?deps:deriver list
       -> ('f, 'output_ast) Args.t
-      -> (loc:Location.t -> path:Code_path.t -> 'input_ast -> 'f)
+      -> (ctxt:Expansion_context.t -> 'input_ast -> 'f)
       -> ('output_ast, 'input_ast) t
 
     val make_noarg
       :  ?attributes:Attribute.packed list
       -> ?deps:deriver list
-      -> (loc:Location.t -> path:Code_path.t -> 'input_ast -> 'output_ast)
+      -> (ctxt:Expansion_context.t -> 'input_ast -> 'output_ast)
       -> ('output_ast, 'input_ast) t
   end
 
   val apply
     :  ('output_ast, 'input_ast) t
     -> name:string
-    -> loc:Location.t
-    -> path:Code_path.t
+    -> ctxt:Expansion_context.t
     -> 'input_ast
     -> (string * expression) list
     -> 'output_ast

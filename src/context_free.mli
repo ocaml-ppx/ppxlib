@@ -63,8 +63,7 @@ module Rule : sig
   *)
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t
-    -> (loc:Location.t
-        -> path:Code_path.t
+    -> (ctxt:Expansion_context.t
         -> Asttypes.rec_flag
         -> 'b list
         -> 'c option list
@@ -83,8 +82,7 @@ module Rule : sig
       exceptions and type extensions *)
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t
-    -> (loc:Location.t
-        -> path:Code_path.t
+    -> (ctxt:Expansion_context.t
         -> 'b
         -> 'c
         -> 'a list)
