@@ -115,7 +115,7 @@ let main () =
       ; "metaquot/.ppxlib_metaquot.objs"
       ; "traverse/.ppxlib_traverse.objs"
       ]
-      ~f:Topdirs.dir_directory;
+      ~f:(fun d -> Topdirs.dir_directory (d ^ "/byte"));
 
     let buf = Buffer.create (String.length file_contents + 1024) in
     let ppf = Format.formatter_of_buffer buf in

@@ -75,7 +75,7 @@ let _ = convert_longident "(+)"
 
 let _ = convert_longident "( + )"
 [%%expect{|
-- : string * longident = ("( + )", Ppxlib.Longident.Lident " + ")
+- : string * longident = ("( + )", Ppxlib.Longident.Lident "+")
 |}]
 
 let _ = convert_longident "Base.x"
@@ -93,11 +93,12 @@ let _ = convert_longident "Base.(+)"
 let _ = convert_longident "Base.( + )"
 [%%expect{|
 - : string * longident =
-("Base.( + )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", " + "))
+("Base.( + )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", "+"))
 |}]
 
 let _ = convert_longident "Base.( land )"
 [%%expect{|
 - : string * longident =
-("Base.( land )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", " land "))
+("Base.( land )",
+ Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", "land"))
 |}]
