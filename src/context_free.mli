@@ -134,4 +134,4 @@ class map_top_down
     -> ?generated_code_hook:Generated_code_hook.t
     (* default: Generated_code_hook.nop *)
     -> Rule.t list
-    -> Ast_traverse.map_with_code_path
+    -> Ast_traverse.map_with_expansion_context

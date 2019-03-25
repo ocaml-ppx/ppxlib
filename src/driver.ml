@@ -132,7 +132,7 @@ module Transform = struct
       Some { first with loc_end = last.loc_end }
   ;;
 
-  let merge_into_generic_mappers t ~hook ~expect_mismatch_handler =
+  let merge_into_generic_mappers t ~hook ~expect_mismatch_handler ~omp_config =
     let { rules; enclose_impl; enclose_intf; impl; intf; _ } = t in
     let map =
       new Context_free.map_top_down rules
@@ -173,7 +173,8 @@ module Transform = struct
             gen_header_and_footer Structure_item whole_loc f
         in
         let file_path = File_path.get_default_path_str st in
-        let st = map#structure (Code_path.top_level ~file_path) st in
+        let base_ctxt = Expansion_context.Base.top_level ~omp_config ~file_path in
+        let st = map#structure base_ctxt st in
         match header, footer with
         | [], [] -> st
         | _      -> List.concat [ header; st; footer ]
@@ -192,7 +193,8 @@ module Transform = struct
             gen_header_and_footer Signature_item whole_loc f
         in
         let file_path = File_path.get_default_path_sig sg in
-        let sg = map#signature (Code_path.top_level ~file_path) sg in
+        let base_ctxt = Expansion_context.Base.top_level ~omp_config ~file_path in
+        let sg = map#signature base_ctxt sg in
         match header, footer with
         | [], [] -> sg
         | _      -> List.concat [ header; sg; footer ]
@@ -301,7 +303,7 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
   print_diff "reappeared"  old_dropped new_dropped
 ;;
 
-let get_whole_ast_passes ~hook ~expect_mismatch_handler =
+let get_whole_ast_passes ~hook ~expect_mismatch_handler ~omp_config =
   let cts =
     match !apply_list with
     | None -> List.rev !Transform.all
@@ -320,7 +322,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler =
   end;
   let cts =
     if !no_merge then
-      List.map cts ~f:(Transform.merge_into_generic_mappers ~hook
+      List.map cts ~f:(Transform.merge_into_generic_mappers ~hook ~omp_config
                          ~expect_mismatch_handler)
     else begin
       let get_enclosers ~f =
@@ -357,6 +359,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler =
         Transform.builtin_of_context_free_rewriters ~rules ~hook ~expect_mismatch_handler
           ~enclose_impl:(merge_encloser impl_enclosers)
           ~enclose_intf:(merge_encloser intf_enclosers)
+          ~omp_config
         :: cts
     end
   in linters @ preprocess @ List.filter cts ~f:(fun (ct : Transform.t) ->
@@ -365,24 +368,9 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler =
     | _          -> true)
 ;;
 
-let print_passes () =
-  let cts =
-    get_whole_ast_passes ~hook:Context_free.Generated_code_hook.nop
-      ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-  in
-  if !perform_checks then
-    printf "<builtin:freshen-and-collect-attributes>\n";
-  List.iter cts ~f:(fun ct -> printf "%s\n" ct.Transform.name);
-  if !perform_checks then
-    begin
-      printf "<builtin:check-unused-attributes>\n";
-      if !perform_checks_on_extensions
-      then printf "<builtin:check-unused-extensions>\n"
-    end
-;;
-
-let apply_transforms ~field ~lint_field ~dropped_so_far ~hook ~expect_mismatch_handler x =
-  let cts = get_whole_ast_passes ~hook ~expect_mismatch_handler in
+let apply_transforms
+      ~omp_config ~field ~lint_field ~dropped_so_far ~hook ~expect_mismatch_handler x =
+  let cts = get_whole_ast_passes ~omp_config ~hook ~expect_mismatch_handler in
   let x, _dropped, lint_errors =
   List.fold_left cts ~init:(x, [], [])
     ~f:(fun (x, dropped, lint_errors) (ct : Transform.t) ->
@@ -456,6 +444,22 @@ let as_ppx_config () =
     ~debug:!Ocaml_common.Clflags.debug
     ?for_package:!Ocaml_common.Clflags.for_package
 
+let print_passes () =
+  let hook = Context_free.Generated_code_hook.nop in
+  let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
+  let omp_config = config ~hook ~expect_mismatch_handler in
+  let cts = get_whole_ast_passes ~hook ~expect_mismatch_handler ~omp_config in
+  if !perform_checks then
+    printf "<builtin:freshen-and-collect-attributes>\n";
+  List.iter cts ~f:(fun ct -> printf "%s\n" ct.Transform.name);
+  if !perform_checks then
+    begin
+      printf "<builtin:check-unused-attributes>\n";
+      if !perform_checks_on_extensions
+      then printf "<builtin:check-unused-extensions>\n"
+    end
+;;
+
 (*$*)
 let real_map_structure config cookies st =
   let { C. hook; expect_mismatch_handler } = C.find config in
@@ -466,6 +470,7 @@ let real_map_structure config cookies st =
   end;
   let st, lint_errors =
     apply_transforms st
+      ~omp_config:config
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook ~expect_mismatch_handler
@@ -508,6 +513,7 @@ let real_map_signature config cookies sg =
   end;
   let sg, lint_errors =
     apply_transforms sg
+      ~omp_config:config
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook ~expect_mismatch_handler

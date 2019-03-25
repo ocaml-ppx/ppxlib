@@ -197,33 +197,33 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let rec map_node_rec context ts super_call loc path x =
-  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~code_path:path in
+let rec map_node_rec context ts super_call loc base_ctxt x =
+  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt in
   match EC.get_extension context x with
-  | None -> super_call path x
+  | None -> super_call base_ctxt x
   | Some (ext, attrs) ->
     match E.For_context.convert ts ~ctxt ext with
-    | None -> super_call path x
+    | None -> super_call base_ctxt x
     | Some x ->
-      map_node_rec context ts super_call loc path (EC.merge_attributes context x attrs)
+      map_node_rec context ts super_call loc base_ctxt (EC.merge_attributes context x attrs)
 ;;
 
-let map_node context ts super_call loc path x ~hook =
-  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~code_path:path in
+let map_node context ts super_call loc base_ctxt x ~hook =
+  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt in
   match EC.get_extension context x with
-  | None -> super_call path x
+  | None -> super_call base_ctxt x
   | Some (ext, attrs) ->
     match E.For_context.convert ts ~ctxt ext with
-    | None -> super_call path x
+    | None -> super_call base_ctxt x
     | Some x ->
       let generated_code =
-        map_node_rec context ts super_call loc path (EC.merge_attributes context x attrs)
+        map_node_rec context ts super_call loc base_ctxt (EC.merge_attributes context x attrs)
       in
       Generated_code_hook.replace hook context loc (Single generated_code);
       generated_code
 ;;
 
-let rec map_nodes context ts super_call get_loc path l ~hook ~in_generated_code =
+let rec map_nodes context ts super_call get_loc base_ctxt l ~hook ~in_generated_code =
   match l with
   | [] -> []
   | x :: l ->
@@ -231,29 +231,29 @@ let rec map_nodes context ts super_call get_loc path l ~hook ~in_generated_code 
     | None ->
       (* These two lets force the evaluation order, so that errors are reported in the
          same order as they appear in the source file. *)
-      let x = super_call path x in
-      let l = map_nodes context ts super_call get_loc path l ~hook ~in_generated_code in
+      let x = super_call base_ctxt x in
+      let l = map_nodes context ts super_call get_loc base_ctxt l ~hook ~in_generated_code in
       x :: l
     | Some (ext, attrs) ->
       let extension_point_loc = get_loc x in
-      let ctxt = Expansion_context.Extension.make ~extension_point_loc ~code_path:path in
+      let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt in
       match E.For_context.convert_inline ts ~ctxt ext with
       | None ->
-        let x = super_call path x in
+        let x = super_call base_ctxt x in
         let l =
-          map_nodes context ts super_call get_loc path l ~hook ~in_generated_code
+          map_nodes context ts super_call get_loc base_ctxt l ~hook ~in_generated_code
         in
         x :: l
       | Some x ->
         assert_no_attributes attrs;
         let generated_code =
-          map_nodes context ts super_call get_loc path x ~hook
+          map_nodes context ts super_call get_loc base_ctxt x ~hook
             ~in_generated_code:true
         in
         if not in_generated_code then
           Generated_code_hook.replace hook context extension_point_loc (Many generated_code);
         generated_code
-        @ map_nodes context ts super_call get_loc path l ~hook ~in_generated_code
+        @ map_nodes context ts super_call get_loc base_ctxt l ~hook ~in_generated_code
 
 let map_nodes = map_nodes ~in_generated_code:false
 
@@ -315,23 +315,23 @@ let sort_attr_inline l =
    This complexity is horrible, but in practice we don't care as [attrs] is always a list
    of one element; it only has [@@deriving].
 *)
-let handle_attr_group_inline attrs rf items ~loc ~path =
+let handle_attr_group_inline attrs rf items ~loc ~base_ctxt =
   List.fold_left attrs ~init:[]
     ~f:(fun acc (Rule.Attr_group_inline.T group) ->
       match get_group group.attribute items with
       | None -> acc
       | Some values ->
-        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~code_path:path in
+        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt in
         let expect_items = group.expand ~ctxt rf items values in
         expect_items :: acc)
 
-let handle_attr_inline attrs item ~loc ~path =
+let handle_attr_inline attrs item ~loc ~base_ctxt =
   List.fold_left attrs ~init:[]
     ~f:(fun acc (Rule.Attr_inline.T a) ->
       match Attribute.get a.attribute item with
       | None -> acc
       | Some value ->
-        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~code_path:path in
+        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt in
         let expect_items = a.expand ~ctxt item value in
         expect_items :: acc)
 
@@ -405,124 +405,124 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
   let map_nodes = map_nodes ~hook in
 
   object(self)
-    inherit Ast_traverse.map_with_code_path as super
+    inherit Ast_traverse.map_with_expansion_context as super
 
     (* No point recursing into every location *)
     method! location _ x = x
 
-    method! core_type path x =
-      map_node EC.core_type core_type super#core_type x.ptyp_loc path x
+    method! core_type base_ctxt x =
+      map_node EC.core_type core_type super#core_type x.ptyp_loc base_ctxt x
 
-    method! pattern path x =
-      map_node EC.pattern pattern super#pattern x.ppat_loc path x
+    method! pattern base_ctxt x =
+      map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
 
-    method! expression path e =
+    method! expression base_ctxt e =
       let e =
         match e.pexp_desc with
         | Pexp_extension _ ->
-          map_node EC.expression expression (fun _ e -> e) e.pexp_loc path e
+          map_node EC.expression expression (fun _ e -> e) e.pexp_loc base_ctxt e
         | _ -> e
       in
       let expand_constant kind char text =
         match Hashtbl.find constants (char,kind) with
-        | None -> super#expression path e
-        | Some expand -> self#expression path (expand e.pexp_loc text)
+        | None -> super#expression base_ctxt e
+        | Some expand -> self#expression base_ctxt (expand e.pexp_loc text)
       in
       match e.pexp_desc with
       | Pexp_apply ({ pexp_desc = Pexp_ident id; _ } as func, args) -> begin
           match Hashtbl.find special_functions id.txt with
           | None ->
-            self#pexp_apply_without_traversing_function path e func args
+            self#pexp_apply_without_traversing_function base_ctxt e func args
           | Some pattern ->
             match pattern e with
             | None ->
-              self#pexp_apply_without_traversing_function path e func args
+              self#pexp_apply_without_traversing_function base_ctxt e func args
             | Some e ->
-              self#expression path e
+              self#expression base_ctxt e
         end
       | Pexp_ident id -> begin
           match Hashtbl.find special_functions id.txt with
           | None ->
-            super#expression path e
+            super#expression base_ctxt e
           | Some pattern ->
             match pattern e with
             | None ->
-              super#expression path e
+              super#expression base_ctxt e
             | Some e ->
-              self#expression path e
+              self#expression base_ctxt e
         end
       | Pexp_constant (Pconst_integer (s, Some c)) -> expand_constant Integer c s
       | Pexp_constant (Pconst_float   (s, Some c)) -> expand_constant Float   c s
       | _ ->
-        super#expression path e
+        super#expression base_ctxt e
 
     (* Pre-conditions:
        - e.pexp_desc = Pexp_apply(func, args)
        - func.pexp_desc = Pexp_ident _
     *)
-    method private pexp_apply_without_traversing_function path e func args =
+    method private pexp_apply_without_traversing_function base_ctxt e func args =
       let { pexp_desc = _; pexp_loc; pexp_attributes } = e in
       let func =
         let { pexp_desc; pexp_loc; pexp_attributes } = func in
-        let pexp_attributes = self#attributes path pexp_attributes in
+        let pexp_attributes = self#attributes base_ctxt pexp_attributes in
         { pexp_desc
         ; pexp_loc (* location doesn't need to be traversed *)
         ; pexp_attributes
         }
       in
-      let args = List.map args ~f:(fun (lab, exp) -> (lab, self#expression path exp)) in
-      let pexp_attributes = self#attributes path pexp_attributes in
+      let args = List.map args ~f:(fun (lab, exp) -> (lab, self#expression base_ctxt exp)) in
+      let pexp_attributes = self#attributes base_ctxt pexp_attributes in
       { pexp_loc
       ; pexp_attributes
       ; pexp_desc = Pexp_apply (func, args)
       }
 
-    method! class_type path x =
-      map_node EC.class_type class_type super#class_type x.pcty_loc path x
+    method! class_type base_ctxt x =
+      map_node EC.class_type class_type super#class_type x.pcty_loc base_ctxt x
 
-    method! class_type_field path x =
+    method! class_type_field base_ctxt x =
       map_node EC.class_type_field class_type_field super#class_type_field
-        x.pctf_loc path x
+        x.pctf_loc base_ctxt x
 
-    method! class_expr path x =
-      map_node EC.class_expr class_expr super#class_expr x.pcl_loc path x
+    method! class_expr base_ctxt x =
+      map_node EC.class_expr class_expr super#class_expr x.pcl_loc base_ctxt x
 
-    method! class_field path x =
-      map_node EC.class_field class_field super#class_field x.pcf_loc path x
+    method! class_field base_ctxt x =
+      map_node EC.class_field class_field super#class_field x.pcf_loc base_ctxt x
 
-    method! module_type path x =
-      map_node EC.module_type module_type super#module_type x.pmty_loc path x
+    method! module_type base_ctxt x =
+      map_node EC.module_type module_type super#module_type x.pmty_loc base_ctxt x
 
-    method! module_expr path x =
-      map_node EC.module_expr module_expr super#module_expr x.pmod_loc path x
+    method! module_expr base_ctxt x =
+      map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt x
 
-    method! structure_item path x =
-      map_node EC.structure_item structure_item super#structure_item x.pstr_loc path x
+    method! structure_item base_ctxt x =
+      map_node EC.structure_item structure_item super#structure_item x.pstr_loc base_ctxt x
 
-    method! signature_item path x =
-      map_node EC.signature_item signature_item super#signature_item x.psig_loc path x
+    method! signature_item base_ctxt x =
+      map_node EC.signature_item signature_item super#signature_item x.psig_loc base_ctxt x
 
-    method! class_structure path { pcstr_self; pcstr_fields } =
-      let pcstr_self = self#pattern path pcstr_self in
+    method! class_structure base_ctxt { pcstr_self; pcstr_fields } =
+      let pcstr_self = self#pattern base_ctxt pcstr_self in
       let pcstr_fields =
         map_nodes EC.class_field class_field super#class_field
-          (fun x -> x.pcf_loc) path pcstr_fields
+          (fun x -> x.pcf_loc) base_ctxt pcstr_fields
       in
       { pcstr_self; pcstr_fields }
 
-    method! class_signature path { pcsig_self; pcsig_fields } =
-      let pcsig_self = self#core_type path pcsig_self in
+    method! class_signature base_ctxt { pcsig_self; pcsig_fields } =
+      let pcsig_self = self#core_type base_ctxt pcsig_self in
       let pcsig_fields =
         map_nodes EC.class_type_field class_type_field super#class_type_field
-          (fun x -> x.pctf_loc) path pcsig_fields
+          (fun x -> x.pctf_loc) base_ctxt pcsig_fields
       in
       { pcsig_self; pcsig_fields }
 
     (* TODO: try to factorize #structure and #signature without meta-programming *)
     (*$*)
-    method! structure path st =
+    method! structure base_ctxt st =
       let rec with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code =
-        let item = super#structure_item path item in
+        let item = super#structure_item base_ctxt item in
         let extra_items = loop (rev_concat extra_items) ~in_generated_code:true in
         if not in_generated_code then
           Generated_code_hook.insert_after hook Structure_item item.pstr_loc
@@ -545,11 +545,11 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
           match item.pstr_desc with
           | Pstr_extension (ext, attrs) -> begin
               let extension_point_loc = item.pstr_loc in
-              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~code_path:path in
+              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt in
               match E.For_context.convert_inline structure_item ~ctxt ext with
               | None ->
-                let item = super#structure_item path item in
-                let rest = self#structure path rest in
+                let item = super#structure_item base_ctxt item in
+                let rest = self#structure base_ctxt rest in
                 item :: rest
               | Some items ->
                 assert_no_attributes attrs;
@@ -562,38 +562,38 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
 
           | Pstr_type(rf, tds) ->
             let extra_items =
-              handle_attr_group_inline attr_str_type_decls rf tds ~loc ~path
+              handle_attr_group_inline attr_str_type_decls rf tds ~loc ~base_ctxt
             in
             let expect_items =
-              handle_attr_group_inline attr_str_type_decls_expect rf tds ~loc ~path
+              handle_attr_group_inline attr_str_type_decls_expect rf tds ~loc ~base_ctxt
             in
             with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code
 
           | Pstr_typext te ->
-            let extra_items = handle_attr_inline attr_str_type_exts te ~loc ~path in
+            let extra_items = handle_attr_inline attr_str_type_exts te ~loc ~base_ctxt in
             let expect_items =
-              handle_attr_inline attr_str_type_exts_expect te ~loc ~path
+              handle_attr_inline attr_str_type_exts_expect te ~loc ~base_ctxt
             in
             with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code
 
           | Pstr_exception ec ->
-            let extra_items = handle_attr_inline attr_str_exceptions ec ~loc ~path in
+            let extra_items = handle_attr_inline attr_str_exceptions ec ~loc ~base_ctxt in
             let expect_items =
-              handle_attr_inline attr_str_exceptions_expect ec ~loc ~path
+              handle_attr_inline attr_str_exceptions_expect ec ~loc ~base_ctxt
             in
             with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code
 
           | _ ->
-            let item = self#structure_item path item in
-            let rest = self#structure path rest in
+            let item = self#structure_item base_ctxt item in
+            let rest = self#structure base_ctxt rest in
             item :: rest
       in
       loop st ~in_generated_code:false
 
     (*$ str_to_sig _last_text_block *)
-    method! signature path sg =
+    method! signature base_ctxt sg =
       let rec with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code =
-        let item = super#signature_item path item in
+        let item = super#signature_item base_ctxt item in
         let extra_items = loop (rev_concat extra_items) ~in_generated_code:true in
         if not in_generated_code then
           Generated_code_hook.insert_after hook Signature_item item.psig_loc
@@ -616,11 +616,11 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
           match item.psig_desc with
           | Psig_extension (ext, attrs) -> begin
               let extension_point_loc = item.psig_loc in
-              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~code_path:path in
+              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt in
               match E.For_context.convert_inline signature_item ~ctxt ext with
               | None ->
-                let item = super#signature_item path item in
-                let rest = self#signature path rest in
+                let item = super#signature_item base_ctxt item in
+                let rest = self#signature base_ctxt rest in
                 item :: rest
               | Some items ->
                 assert_no_attributes attrs;
@@ -633,30 +633,30 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
 
           | Psig_type(rf, tds) ->
             let extra_items =
-              handle_attr_group_inline attr_sig_type_decls rf tds ~loc ~path
+              handle_attr_group_inline attr_sig_type_decls rf tds ~loc ~base_ctxt
             in
             let expect_items =
-              handle_attr_group_inline attr_sig_type_decls_expect rf tds ~loc ~path
+              handle_attr_group_inline attr_sig_type_decls_expect rf tds ~loc ~base_ctxt
             in
             with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code
 
           | Psig_typext te ->
-            let extra_items = handle_attr_inline attr_sig_type_exts te ~loc ~path in
+            let extra_items = handle_attr_inline attr_sig_type_exts te ~loc ~base_ctxt in
             let expect_items =
-              handle_attr_inline attr_sig_type_exts_expect te ~loc ~path
+              handle_attr_inline attr_sig_type_exts_expect te ~loc ~base_ctxt
             in
             with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code
 
           | Psig_exception ec ->
-            let extra_items = handle_attr_inline attr_sig_exceptions ec ~loc ~path in
+            let extra_items = handle_attr_inline attr_sig_exceptions ec ~loc ~base_ctxt in
             let expect_items =
-              handle_attr_inline attr_sig_exceptions_expect ec ~loc ~path
+              handle_attr_inline attr_sig_exceptions_expect ec ~loc ~base_ctxt
             in
             with_extra_items item ~extra_items ~expect_items ~rest ~in_generated_code
 
           | _ ->
-            let item = self#signature_item path item in
-            let rest = self#signature path rest in
+            let item = self#signature_item base_ctxt item in
+            let rest = self#signature base_ctxt rest in
             item :: rest
       in
       loop sg ~in_generated_code:false
