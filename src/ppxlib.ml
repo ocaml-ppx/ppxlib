@@ -36,6 +36,7 @@ module Caller_id           = Caller_id
 module Context_free        = Context_free
 module Deriving            = Deriving
 module Driver              = Driver
+module Expansion_context   = Expansion_context
 module Extension           = Extension
 module File_path           = File_path
 module Loc                 = Loc
