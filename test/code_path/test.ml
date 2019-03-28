@@ -38,5 +38,5 @@ let s =
   end
   in A.A'.a
 [%%expect{|
-val s : string = "Test.s.A'.a.B'.b.C'.c"
+val s : string = "Test.s"
 |}]

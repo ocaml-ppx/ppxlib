@@ -3,7 +3,8 @@ open! Import
 type t =
   { file_path : string
   ; main_module_name : string
-  ; val_path : string loc list
+  ; submodule_path : string loc list
+  ; value : string loc option
   }
 
 let top_level ~file_path =
@@ -13,24 +14,30 @@ let top_level ~file_path =
     |> Caml.Filename.remove_extension
     |> String.capitalize
   in
-  {file_path; main_module_name; val_path = []}
+  {file_path; main_module_name; submodule_path = []; value = None}
 
 let file_path t = t.file_path
 let main_module_name t = t.main_module_name
-let val_path t = List.rev_map ~f:(fun located -> located.txt) t.val_path
+let submodule_path t = List.rev_map ~f:(fun located -> located.txt) t.submodule_path
+let value t = Option.map ~f:(fun located -> located.txt) t.value
 
 let fully_qualified_path t = 
-  String.concat ~sep:"." (t.main_module_name :: (val_path t))
+  let value = value t in
+  let submodule_path = List.rev_map ~f:(fun located -> Some located.txt) t.submodule_path in
+  let names = (Some t.main_module_name)::submodule_path @ [value] in
+  String.concat ~sep:"." @@ List.filter_opt names
 
-let enter ~loc mod_or_val_name t =
-  {t with val_path = {txt = mod_or_val_name; loc} :: t.val_path}
+let enter_module ~loc module_name t =
+  match t.value with
+  | Some _ -> t
+  | None -> {t with submodule_path = {txt = module_name; loc} :: t.submodule_path}
+
+let enter_value ~loc value_name t =
+  match t.value with
+  | Some _ -> t
+  | None -> {t with value = Some {txt = value_name; loc}}
 
 let to_string_path t =
-  let val_path = val_path t in
-  let sub_module_path =
-    let is_module_name s = String.(s <> "") && Char.is_uppercase (String.get s 0) in
-    List.filter ~f:is_module_name val_path
-  in
-  String.concat ~sep:"." (t.file_path :: sub_module_path)
+  String.concat ~sep:"." (t.file_path :: (submodule_path t))
 
 let with_string_path f ~loc ~path = f ~loc ~path:(to_string_path path)
