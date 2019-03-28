@@ -3,7 +3,7 @@ open! Import
 type t =
   { file_path : string
   ; main_module_name : string
-  ; val_path : string list
+  ; val_path : string loc list
   }
 
 let top_level ~file_path =
@@ -17,13 +17,13 @@ let top_level ~file_path =
 
 let file_path t = t.file_path
 let main_module_name t = t.main_module_name
-let val_path t = List.rev t.val_path
+let val_path t = List.rev_map ~f:(fun located -> located.txt) t.val_path
 
 let fully_qualified_path t = 
   String.concat ~sep:"." (t.main_module_name :: (val_path t))
 
-let enter mod_or_val_name t =
-  {t with val_path = mod_or_val_name :: t.val_path}
+let enter ~loc mod_or_val_name t =
+  {t with val_path = {txt = mod_or_val_name; loc} :: t.val_path}
 
 let to_string_path t =
   let val_path = val_path t in

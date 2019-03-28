@@ -115,10 +115,11 @@ let _ = Ppxlib.Code_path.(fully_qualified_path @@ top_level ~file_path:"dir/main
 
 let complex_path =
   let open Ppxlib.Code_path in
+  let loc = Ppxlib.Location.none in
   top_level ~file_path:"dir/main.ml"
-  |> enter "Sub"
-  |> enter "Sub_sub"
-  |> enter "some_val"
+  |> enter ~loc "Sub"
+  |> enter ~loc "Sub_sub"
+  |> enter ~loc "some_val"
 [%%expect{|
 val complex_path : Code_path.t = <abstr>
 |}]

@@ -22,8 +22,8 @@ val val_path : t -> string list
 *)
 val fully_qualified_path : t -> string
 
-(** [enter val_or_module_name t] returns *)
-val enter : string -> t -> t
+(** [enter val_or_module_name t] returns a new code path updated with the given name and location *)
+val enter : loc:Location.t -> string -> t -> t
 
 (** Return the string version of this code path as built by [Ast_traverse.map_with_path].
     Used for compatibility with path from version 0.5.0 and lower.

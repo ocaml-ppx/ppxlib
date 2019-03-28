@@ -83,22 +83,24 @@ class map_with_code_path = object (self)
   inherit [Code_path.t] map_with_context as super
 
   method! module_binding path mb =
-       super#module_binding (Code_path.enter mb.pmb_name.txt path) mb
+       super#module_binding (Code_path.enter ~loc:mb.pmb_loc mb.pmb_name.txt path) mb
 
   method! module_declaration path md =
-    super#module_declaration (Code_path.enter md.pmd_name.txt path) md
+    super#module_declaration (Code_path.enter ~loc:md.pmd_loc md.pmd_name.txt path) md
 
   method! module_type_declaration path mtd =
-    super#module_type_declaration (Code_path.enter mtd.pmtd_name.txt path) mtd
+    super#module_type_declaration (Code_path.enter ~loc:mtd.pmtd_loc mtd.pmtd_name.txt path) mtd
 
   method! value_description path vd =
-    super#value_description (Code_path.enter vd.pval_name.txt path) vd
+    super#value_description (Code_path.enter ~loc:vd.pval_loc vd.pval_name.txt path) vd
 
   method! value_binding path {pvb_pat; pvb_expr; pvb_attributes; pvb_loc} =
     let all_var_names = var_names_of#pattern pvb_pat [] in
     let var_name = Base.List.last all_var_names in
     let in_binding_path =
-      Base.Option.fold var_name ~init:path ~f:(fun path var_name -> Code_path.enter var_name path)
+      Base.Option.fold var_name
+        ~init:path
+        ~f:(fun path var_name -> Code_path.enter ~loc:pvb_loc var_name path)
     in
     let pvb_pat = self#pattern path pvb_pat in
     let pvb_expr = self#expression in_binding_path pvb_expr in
