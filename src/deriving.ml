@@ -137,7 +137,7 @@ module Generator = struct
   type deriver = t
   type ('a, 'b) t =
     | T : { spec           : ('c, 'a) Args.t
-          ; gen            : ctxt:Expansion_context.t -> 'b -> 'c
+          ; gen            : ctxt:Expansion_context.Deriver.t -> 'b -> 'c
           ; arg_names      : Set.M(String).t
           ; attributes     : Attribute.packed list
           ; deps           : deriver list
@@ -160,7 +160,7 @@ module Generator = struct
   end
 
   let make ?attributes ?deps spec gen =
-    V2.make ?attributes ?deps spec (Expansion_context.with_loc_and_path gen)
+    V2.make ?attributes ?deps spec (Expansion_context.Deriver.with_loc_and_path gen)
 
   let make_noarg ?attributes ?deps gen = make ?attributes ?deps Args.empty gen
 
@@ -616,32 +616,32 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
     types_used_by_deriving tds
     @ Generator.apply_all ~ctxt (rec_flag, tds) generators;
   in
-  disable_unused_warning_str ~loc:(Expansion_context.loc ctxt) generated
+  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
 let expand_sig_type_decls ~ctxt rec_flag tds values =
   let generators = merge_generators Deriver.Field.sig_type_decl values in
   let generated = Generator.apply_all ~ctxt (rec_flag, tds) generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.loc ctxt) generated
+  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
 let expand_str_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.str_exception generators in
   let generated = Generator.apply_all ~ctxt ec generators in
-  disable_unused_warning_str ~loc:(Expansion_context.loc ctxt) generated
+  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
 let expand_sig_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_exception generators in
   let generated = Generator.apply_all ~ctxt ec generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.loc ctxt) generated
+  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
 let expand_str_type_ext ~ctxt te generators =
   let generators = Deriver.resolve_all Deriver.Field.str_type_ext generators in
   let generated = Generator.apply_all ~ctxt te generators in
-  disable_unused_warning_str ~loc:(Expansion_context.loc ctxt) generated
+  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
 let expand_sig_type_ext ~ctxt te generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_type_ext generators in
   let generated = Generator.apply_all ~ctxt te generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.loc ctxt) generated
+  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
 let () =
   Driver.register_transformation "deriving"

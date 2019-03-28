@@ -98,13 +98,13 @@ module For_context : sig
 
   val convert
     :  'a t list
-    -> ctxt:Expansion_context.t
+    -> ctxt:Expansion_context.Extension.t
     -> extension
     -> 'a option
 
   val convert_inline
     :  'a t list
-    -> ctxt:Expansion_context.t
+    -> ctxt:Expansion_context.Extension.t
     -> extension
     -> 'a list option
 end
@@ -165,13 +165,13 @@ module V3 : sig
     :  string
     -> 'context Context.t
     -> (payload, 'a, 'context) Ast_pattern.t
-    -> (ctxt:Expansion_context.t -> 'a)
+    -> (ctxt:Expansion_context.Extension.t -> 'a)
     -> t
   val declare_inline
     :  string
     -> 'context Context.t
     -> (payload, 'a, 'context list) Ast_pattern.t
-    -> (ctxt:Expansion_context.t -> 'a)
+    -> (ctxt:Expansion_context.Extension.t -> 'a)
     -> t
 end
 
