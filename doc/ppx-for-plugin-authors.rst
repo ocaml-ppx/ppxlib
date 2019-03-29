@@ -64,7 +64,7 @@ produced AST node value and every other nodes within it will be located to ``loc
 sure ``loc`` is the location you want for your generated code when using metaquot.
 
 Using only these extensions you can only produce constant/static AST nodes. Metaquot as a solution
-for that as well: quasi-quotation. You can use quasi-quotation to insert any expression representing
+for that as well: anti-quotation. You can use anti-quotation to insert any expression representing
 an AST node, including dynamically generated nodes inside a metaquot extension point.
 
 Consider the following example:
@@ -79,21 +79,21 @@ The ``with_suffix_expr`` function will create an ``expression`` which is the con
 ``s`` argument and the fixed suffix. Ie ``with_suffix_expr "some_dynamic_stem"`` is equivalent to
 ``[%expr "some_dynamic_steme" ^ "some_fixed_suffix"]``.
 
-The syntax for quasi-quotation depends on the type of the node you wish to insert:
-- ``e`` to quasi-quote values of type ``Parsetree.expression``: ``[%expr 1 + [%e some_expr_node]]``
-- ``p`` to quasi-quote values of type ``Parsetree.pattern``:
+The syntax for anti-quotation depends on the type of the node you wish to insert:
+- ``e`` to anti-quote values of type ``Parsetree.expression``: ``[%expr 1 + [%e some_expr_node]]``
+- ``p`` to anti-quote values of type ``Parsetree.pattern``:
   ``[%pat? (1, [%p some_pat_node]]``
-- ``t`` to quasi-quote values of type ``Parsetree.core_type``:
+- ``t`` to anti-quote values of type ``Parsetree.core_type``:
   ``[%type: int -> [%t some_core_type_node]]``
-- ``m`` to quasi-quote values of type ``Parsetree.module_expr`` or ``module_type``:
+- ``m`` to anti-quote values of type ``Parsetree.module_expr`` or ``module_type``:
   ``[%expr let module M = [%m some_module_expr_node]]`` or
   ``[%sigi: module M : [%m some_module_type_node]]``
-- ``i`` to quasi-quote values of type ``Parsetree.structure_item`` or ``signature_item``:
+- ``i`` to anti-quote values of type ``Parsetree.structure_item`` or ``signature_item``:
   ``[%str let a = 1 [%%i some_structure_item_node]]`` or
   ``[%sig: val a : int [%%i some_signature_item_node]]``
 
-As you may have noticed, you can quasi-quote expressions which type differs from the type of whole
-metaquot extension point. Eg you can write:
+As you may have noticed, you can anti-quote expressions which type differs from the type of the
+whole metaquot extension point. Eg you can write:
 
 .. code:: ocaml
           let structure_item = [%stri let [%p some_pat] : [%t some_type] = [%e some_expr]]
