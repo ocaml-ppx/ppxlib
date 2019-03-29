@@ -3,9 +3,6 @@ open !Import
 (** Type for path to AST nodes *)
 type t
 
-(** [top_level ~file_path] returns the code path for any toplevel item in the file at [file_path]. *)
-val top_level : file_path: string -> t
-
 (** Return the path to the .ml or .mli file for this code path. *)
 val file_path : t -> string
 
@@ -28,6 +25,17 @@ val value : t -> string option
 *)
 val fully_qualified_path : t -> string
 
+(** Return the string version of this code path as built by [Ast_traverse.map_with_path].
+    Used for compatibility with path from version 0.5.0 and lower.
+*)
+val to_string_path : t -> string
+
+(**/**)
+(** Undocumented section *)
+
+(** [top_level ~file_path] returns the code path for any toplevel item in the file at [file_path]. *)
+val top_level : file_path: string -> t
+
 (** Return a new code path that now descends into an expression.
     This is used to delimit the "toplevel" path. It's required because of first class modules
     and toplevel expressions [Pstr_eval ...].
@@ -39,11 +47,6 @@ val enter_module : loc:Location.t -> string -> t -> t
 
 (** Return a new code path updated with the given variable name and location. *)
 val enter_value : loc:Location.t -> string -> t -> t
-
-(** Return the string version of this code path as built by [Ast_traverse.map_with_path].
-    Used for compatibility with path from version 0.5.0 and lower.
-*)
-val to_string_path : t -> string
 
 (** Wrap a [fun ~loc ~path] expecting a string path into one expecting a [t]. *)
 val with_string_path :
