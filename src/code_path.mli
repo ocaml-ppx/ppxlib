@@ -28,6 +28,12 @@ val value : t -> string option
 *)
 val fully_qualified_path : t -> string
 
+(** Return a new code path that now descends into an expression.
+    This is used to delimit the "toplevel" path. It's required because of first class modules
+    and toplevel expressions [Pstr_eval ...].
+*)
+val enter_expr : t -> t
+
 (** Return a new code path updated with the given module name and location. *)
 val enter_module : loc:Location.t -> string -> t -> t
 

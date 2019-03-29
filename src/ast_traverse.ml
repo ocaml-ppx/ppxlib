@@ -82,6 +82,9 @@ end
 class map_with_code_path = object (self)
   inherit [Code_path.t] map_with_context as super
 
+  method! expression path expr =
+    super#expression (Code_path.enter_expr path) expr
+
   method! module_binding path mb =
        super#module_binding (Code_path.enter_module ~loc:mb.pmb_loc mb.pmb_name.txt path) mb
 

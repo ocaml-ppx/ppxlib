@@ -37,6 +37,16 @@ let s =
     end
   end
   in A.A'.a
+;;
 [%%expect{|
 val s : string = "Test.s"
+|}]
+
+let module M = struct
+  let m = [%code_path]
+  end
+  in
+  M.m
+[%%expect{|
+- : string = "Test"
 |}]
