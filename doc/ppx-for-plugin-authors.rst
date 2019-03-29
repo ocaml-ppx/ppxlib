@@ -5,7 +5,7 @@ PPX for plugin authors
 This section describes how to use ``ppxlib`` for PPX plugin authors.
 
 Metaquot
-------------
+--------
 
 ``metaquot`` is a PPX plugin to help you write PPX plugins. It lets you write AST node values
 using the actual OCaml syntax instead of building them with the more verbose AST types or
