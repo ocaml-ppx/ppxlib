@@ -26,6 +26,7 @@ however this is not covered by this manual.
 
    what-is-ppx
    ppx-for-end-users
+   ppx-for-plugin-authors
 
 Indices and tables
 ------------------
