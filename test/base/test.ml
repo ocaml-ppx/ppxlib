@@ -102,3 +102,34 @@ let _ = convert_longident "Base.( land )"
 ("Base.( land )",
  Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", "land"))
 |}]
+
+let _ = Ppxlib.Code_path.(file_path @@ top_level ~file_path:"dir/main.ml")
+[%%expect{|
+- : string = "dir/main.ml"
+|}]
+
+let _ = Ppxlib.Code_path.(fully_qualified_path @@ top_level ~file_path:"dir/main.ml")
+[%%expect{|
+- : string = "Main"
+|}]
+
+let complex_path =
+  let open Ppxlib.Code_path in
+  let loc = Ppxlib.Location.none in
+  top_level ~file_path:"dir/main.ml"
+  |> enter_module ~loc "Sub"
+  |> enter_module ~loc "Sub_sub"
+  |> enter_value ~loc "some_val"
+[%%expect{|
+val complex_path : Code_path.t = <abstr>
+|}]
+
+let _ = Ppxlib.Code_path.fully_qualified_path complex_path
+[%%expect{|
+- : string = "Main.Sub.Sub_sub.some_val"
+|}]
+
+let _ = Ppxlib.Code_path.to_string_path complex_path
+[%%expect{|
+- : string = "dir/main.ml.Sub.Sub_sub"
+|}]

@@ -63,8 +63,7 @@ module Rule : sig
   *)
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t
-    -> (loc:Location.t
-        -> path:string
+    -> (ctxt:Expansion_context.Deriver.t
         -> Asttypes.rec_flag
         -> 'b list
         -> 'c option list
@@ -83,8 +82,7 @@ module Rule : sig
       exceptions and type extensions *)
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t
-    -> (loc:Location.t
-        -> path:string
+    -> (ctxt:Expansion_context.Deriver.t
         -> 'b
         -> 'c
         -> 'a list)
@@ -136,4 +134,4 @@ class map_top_down
     -> ?generated_code_hook:Generated_code_hook.t
     (* default: Generated_code_hook.nop *)
     -> Rule.t list
-    -> Ast_traverse.map_with_path
+    -> Ast_traverse.map_with_code_path

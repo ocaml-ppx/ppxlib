@@ -12,8 +12,7 @@ module Rule = struct
     type ('a, 'b, 'c) unpacked =
       { attribute : ('b, 'c) Attribute.t
       ; expect    : bool
-      ; expand    : (loc:Location.t
-                     -> path:string
+      ; expand    : (ctxt:Expansion_context.Deriver.t
                      -> Asttypes.rec_flag
                      -> 'b list
                      -> 'c option list
@@ -31,8 +30,7 @@ module Rule = struct
     type ('a, 'b, 'c) unpacked =
       { attribute : ('b, 'c) Attribute.t
       ; expect    : bool
-      ; expand    : (loc:Location.t
-                     -> path:string
+      ; expand    : (ctxt:Expansion_context.Deriver.t
                      -> 'b
                      -> 'c
                      -> 'a list)
@@ -96,8 +94,7 @@ module Rule = struct
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t
-    -> (loc:Location.t
-        -> path:string
+    -> (ctxt:Expansion_context.Deriver.t
         -> Asttypes.rec_flag
         -> 'b list
         -> 'c option list
@@ -106,8 +103,7 @@ module Rule = struct
 
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t
-    -> (loc:Location.t
-        -> path:string
+    -> (ctxt:Expansion_context.Deriver.t
         -> 'b
         -> 'c
         -> 'a list)
@@ -202,20 +198,22 @@ module Generated_code_hook = struct
 end
 
 let rec map_node_rec context ts super_call loc path x =
+  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~code_path:path in
   match EC.get_extension context x with
   | None -> super_call path x
   | Some (ext, attrs) ->
-    match E.For_context.convert ts ~loc ~path ext with
+    match E.For_context.convert ts ~ctxt ext with
     | None -> super_call path x
     | Some x ->
       map_node_rec context ts super_call loc path (EC.merge_attributes context x attrs)
 ;;
 
 let map_node context ts super_call loc path x ~hook =
+  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~code_path:path in
   match EC.get_extension context x with
   | None -> super_call path x
   | Some (ext, attrs) ->
-    match E.For_context.convert ts ~loc ~path ext with
+    match E.For_context.convert ts ~ctxt ext with
     | None -> super_call path x
     | Some x ->
       let generated_code =
@@ -237,8 +235,9 @@ let rec map_nodes context ts super_call get_loc path l ~hook ~in_generated_code 
       let l = map_nodes context ts super_call get_loc path l ~hook ~in_generated_code in
       x :: l
     | Some (ext, attrs) ->
-      let loc = get_loc x in
-      match E.For_context.convert_inline ts ~loc ~path ext with
+      let extension_point_loc = get_loc x in
+      let ctxt = Expansion_context.Extension.make ~extension_point_loc ~code_path:path in
+      match E.For_context.convert_inline ts ~ctxt ext with
       | None ->
         let x = super_call path x in
         let l =
@@ -252,7 +251,7 @@ let rec map_nodes context ts super_call get_loc path l ~hook ~in_generated_code 
             ~in_generated_code:true
         in
         if not in_generated_code then
-          Generated_code_hook.replace hook context loc (Many generated_code);
+          Generated_code_hook.replace hook context extension_point_loc (Many generated_code);
         generated_code
         @ map_nodes context ts super_call get_loc path l ~hook ~in_generated_code
 
@@ -322,7 +321,8 @@ let handle_attr_group_inline attrs rf items ~loc ~path =
       match get_group group.attribute items with
       | None -> acc
       | Some values ->
-        let expect_items = group.expand ~loc ~path rf items values in
+        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~code_path:path in
+        let expect_items = group.expand ~ctxt rf items values in
         expect_items :: acc)
 
 let handle_attr_inline attrs item ~loc ~path =
@@ -331,7 +331,8 @@ let handle_attr_inline attrs item ~loc ~path =
       match Attribute.get a.attribute item with
       | None -> acc
       | Some value ->
-        let expect_items = a.expand ~loc ~path item value in
+        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~code_path:path in
+        let expect_items = a.expand ~ctxt item value in
         expect_items :: acc)
 
 module Expect_mismatch_handler = struct
@@ -404,7 +405,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
   let map_nodes = map_nodes ~hook in
 
   object(self)
-    inherit Ast_traverse.map_with_path as super
+    inherit Ast_traverse.map_with_code_path as super
 
     (* No point recursing into every location *)
     method! location _ x = x
@@ -543,8 +544,9 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
           let loc = item.pstr_loc in
           match item.pstr_desc with
           | Pstr_extension (ext, attrs) -> begin
-              let loc = item.pstr_loc in
-              match E.For_context.convert_inline structure_item ~loc ~path ext with
+              let extension_point_loc = item.pstr_loc in
+              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~code_path:path in
+              match E.For_context.convert_inline structure_item ~ctxt ext with
               | None ->
                 let item = super#structure_item path item in
                 let rest = self#structure path rest in
@@ -613,8 +615,9 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
           let loc = item.psig_loc in
           match item.psig_desc with
           | Psig_extension (ext, attrs) -> begin
-              let loc = item.psig_loc in
-              match E.For_context.convert_inline signature_item ~loc ~path ext with
+              let extension_point_loc = item.psig_loc in
+              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~code_path:path in
+              match E.For_context.convert_inline signature_item ~ctxt ext with
               | None ->
                 let item = super#signature_item path item in
                 let rest = self#signature path rest in

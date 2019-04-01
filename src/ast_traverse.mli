@@ -54,6 +54,8 @@ end
 
 class map_with_path : [string] map_with_context
 
+class map_with_code_path : [Code_path.t] map_with_context
+
 class virtual ['res] lift : object
   inherit ['res] Ppxlib_traverse_builtins.lift
   inherit ['res] Ast.lift

@@ -163,7 +163,7 @@ module Expert = struct
 end
 
 module M = Make(struct
-    type 'a t = loc:Location.t -> path:string -> arg:Longident.t Loc.t option -> 'a
+    type 'a t = ctxt:Expansion_context.Extension.t -> arg:Longident.t Loc.t option -> 'a
   end)
 
 type 'a expander_result =
@@ -173,37 +173,28 @@ type 'a expander_result =
 module For_context = struct
   type 'a t = ('a, 'a expander_result) M.t
 
-  let convert ts ~loc ~path ext =
+  let convert ts ~ctxt ext =
+    let loc = Expansion_context.Extension.extension_point_loc ctxt in
     match M.find ts ext with
     | None -> None
     | Some ({ payload = M.Payload_parser (pattern, f); _  }, arg) ->
-      match Ast_pattern.parse pattern loc (snd ext) (f ~loc ~path ~arg) with
+      match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
       | Simple x -> Some x
       | Inline _ -> failwith "Extension.convert"
   ;;
 
-  let convert_inline ts ~loc ~path ext =
+  let convert_inline ts ~ctxt ext =
+    let loc = Expansion_context.Extension.extension_point_loc ctxt in
     match M.find ts ext with
     | None -> None
     | Some ({ payload = M.Payload_parser (pattern, f); _  }, arg) ->
-      match Ast_pattern.parse pattern loc (snd ext) (f ~loc ~path ~arg) with
+      match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
       | Simple x -> Some [x]
       | Inline l -> Some l
   ;;
 end
 
 type t = T : _ For_context.t -> t
-
-let declare name context pattern k =
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
-  T (M.declare ~with_arg:false name context pattern
-       (fun ~loc ~path ~arg:_ -> k ~loc ~path))
-;;
-
-let declare_with_path_arg name context pattern k =
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
-  T (M.declare ~with_arg:true  name context pattern k)
-;;
 
 let check_context_for_inline : type a. func:string -> a Context.t -> unit =
   fun ~func ctx ->
@@ -216,19 +207,6 @@ let check_context_for_inline : type a. func:string -> a Context.t -> unit =
       Printf.ksprintf invalid_arg "%s: %s can't be inlined"
         func
         (Context.desc context)
-;;
-
-let declare_inline name context pattern k =
-  check_context_for_inline context ~func:"Extension.declare_inline";
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
-  T (M.declare ~with_arg:false name context pattern
-       (fun ~loc ~path ~arg:_ -> k ~loc ~path))
-;;
-
-let declare_inline_with_path_arg name context pattern k =
-  check_context_for_inline context ~func:"Extension.declare_inline_with_path_arg";
-  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
-  T (M.declare ~with_arg:true name context pattern k)
 ;;
 
 let rec filter_by_context
@@ -301,8 +279,43 @@ let check_unused = object
     | x -> super#structure_item_desc x
 end
 
+module V3 = struct
+  type nonrec t = t
+
+  let declare name context pattern k =
+    let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
+    T (M.declare ~with_arg:false name context pattern
+         (fun ~ctxt ~arg:_ -> k ~ctxt))
+
+  let declare_inline name context pattern k =
+    check_context_for_inline context ~func:"Extension.declare_inline";
+    let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
+    T (M.declare ~with_arg:false name context pattern
+         (fun ~ctxt ~arg:_ -> k ~ctxt))
+end
+
+let declare name context pattern f =
+  V3.declare name context pattern (Expansion_context.Extension.with_loc_and_path f)
+
+let declare_inline name context pattern f =
+  V3.declare_inline name context pattern (Expansion_context.Extension.with_loc_and_path f)
+
+let declare_with_path_arg name context pattern k =
+  let k' = Expansion_context.Extension.with_loc_and_path k in
+  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
+  T (M.declare ~with_arg:true  name context pattern k')
+;;
+
+let declare_inline_with_path_arg name context pattern k =
+  let k' = Expansion_context.Extension.with_loc_and_path k in
+  check_context_for_inline context ~func:"Extension.declare_inline_with_path_arg";
+  let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
+  T (M.declare ~with_arg:true name context pattern k')
+;;
+
 module V2 = struct
   type nonrec t = t
+
   let declare = declare
   let declare_inline = declare_inline
 end
