@@ -39,7 +39,7 @@ module Extension : sig
   (** Undocumented section *)
 
   (** Build a new expansion context with the given extension point location and base context *)
-  val make : extension_point_loc:Location.t -> base:Base.t -> t
+  val make : extension_point_loc:Location.t -> base:Base.t -> unit -> t
 end
 
 module Deriver : sig
@@ -62,5 +62,5 @@ module Deriver : sig
   (** Undocumented section *)
 
   (** Build a new expansion context with the given item location and code path *)
-  val make : derived_item_loc:Location.t -> base:Base.t -> t
+  val make : derived_item_loc:Location.t -> base:Base.t -> unit -> t
 end

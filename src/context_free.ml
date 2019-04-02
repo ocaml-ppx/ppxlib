@@ -198,7 +198,7 @@ module Generated_code_hook = struct
 end
 
 let rec map_node_rec context ts super_call loc base_ctxt x =
-  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt in
+  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt () in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) ->
@@ -209,7 +209,7 @@ let rec map_node_rec context ts super_call loc base_ctxt x =
 ;;
 
 let map_node context ts super_call loc base_ctxt x ~hook =
-  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt in
+  let ctxt = Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt () in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) ->
@@ -236,7 +236,7 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook ~in_generated_
       x :: l
     | Some (ext, attrs) ->
       let extension_point_loc = get_loc x in
-      let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt in
+      let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt () in
       match E.For_context.convert_inline ts ~ctxt ext with
       | None ->
         let x = super_call base_ctxt x in
@@ -321,7 +321,7 @@ let handle_attr_group_inline attrs rf items ~loc ~base_ctxt =
       match get_group group.attribute items with
       | None -> acc
       | Some values ->
-        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt in
+        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt () in
         let expect_items = group.expand ~ctxt rf items values in
         expect_items :: acc)
 
@@ -331,7 +331,7 @@ let handle_attr_inline attrs item ~loc ~base_ctxt =
       match Attribute.get a.attribute item with
       | None -> acc
       | Some value ->
-        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt in
+        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt () in
         let expect_items = a.expand ~ctxt item value in
         expect_items :: acc)
 
@@ -545,7 +545,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
           match item.pstr_desc with
           | Pstr_extension (ext, attrs) -> begin
               let extension_point_loc = item.pstr_loc in
-              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt in
+              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt () in
               match E.For_context.convert_inline structure_item ~ctxt ext with
               | None ->
                 let item = super#structure_item base_ctxt item in
@@ -616,7 +616,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
           match item.psig_desc with
           | Psig_extension (ext, attrs) -> begin
               let extension_point_loc = item.psig_loc in
-              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt in
+              let ctxt = Expansion_context.Extension.make ~extension_point_loc ~base:base_ctxt () in
               match E.For_context.convert_inline signature_item ~ctxt ext with
               | None ->
                 let item = super#signature_item base_ctxt item in

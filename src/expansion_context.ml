@@ -19,7 +19,7 @@ module Extension = struct
     ; base : Base.t
     }
 
-  let make ~extension_point_loc ~base = {extension_point_loc; base}
+  let make ~extension_point_loc ~base () = {extension_point_loc; base}
 
   let extension_point_loc t = t.extension_point_loc
   let code_path t = t.base.code_path
@@ -36,7 +36,7 @@ module Deriver = struct
     ; base : Base.t
     }
 
-  let make ~derived_item_loc ~base = {derived_item_loc; base}
+  let make ~derived_item_loc ~base () = {derived_item_loc; base}
 
   let derived_item_loc t = t.derived_item_loc
   let code_path t = t.base.code_path
