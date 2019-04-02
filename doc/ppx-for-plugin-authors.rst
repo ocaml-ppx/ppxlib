@@ -149,5 +149,6 @@ whole ``metaquot`` extension point. Eg you can write:
 
 .. code:: ocaml
 
-          let structure_item = [%stri let [%p some_pat] : [%t some_type] = [%e some_expr]]
+          let structure_item =
+            [%stri let [%p some_pat] : [%t some_type] = [%e some_expr]]
 
