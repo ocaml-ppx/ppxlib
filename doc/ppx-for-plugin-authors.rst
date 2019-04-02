@@ -25,6 +25,7 @@ expressions or patterns.
 
 The extension you should use depends on the type of AST node you're trying to write or to
 pattern-match over. You can use the following extensions with the following syntax:
+
 - ``expr`` for ``Parsetree.expression``: ``[%expr 1 + 1]``
 - ``pat`` for ``Parsetree.pattern``: ``[%pat? ("", _)]``
 - ``type`` for ``Parsetree.core_type``: ``[%type: int -> string]``
@@ -126,6 +127,7 @@ pattern-matching over them, you can use anti-quotation:
           | [%expr 1 + [%e? _] + [%e? third]] -> do_something_with third
 
 The syntax for anti-quotation depends on the type of the node you wish to insert:
+
 - ``e`` to anti-quote values of type ``Parsetree.expression``: ``[%expr 1 + [%e some_expr_node]]``
 - ``p`` to anti-quote values of type ``Parsetree.pattern``:
   ``[%pat? (1, [%p some_pat_node]]``
@@ -146,5 +148,6 @@ As you may have noticed, you can anti-quote expressions which type differs from 
 whole ``metaquot`` extension point. Eg you can write:
 
 .. code:: ocaml
+
           let structure_item = [%stri let [%p some_pat] : [%t some_type] = [%e some_expr]]
 
