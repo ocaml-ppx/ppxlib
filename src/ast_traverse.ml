@@ -79,38 +79,44 @@ let var_names_of = object
     | _ -> acc
 end
 
-class map_with_code_path = object (self)
-  inherit [Code_path.t] map_with_context as super
+class map_with_expansion_context = object (self)
+  inherit [Expansion_context.Base.t] map_with_context as super
 
-  method! expression path expr =
-    super#expression (Code_path.enter_expr path) expr
+  method! expression ctxt expr =
+    super#expression (Expansion_context.Base.enter_expr ctxt) expr
 
-  method! module_binding path mb =
-       super#module_binding (Code_path.enter_module ~loc:mb.pmb_loc mb.pmb_name.txt path) mb
+  method! module_binding ctxt mb =
+    super#module_binding
+      (Expansion_context.Base.enter_module ~loc:mb.pmb_loc mb.pmb_name.txt ctxt)
+      mb
 
-  method! module_declaration path md =
-    super#module_declaration (Code_path.enter_module ~loc:md.pmd_loc md.pmd_name.txt path) md
+  method! module_declaration ctxt md =
+    super#module_declaration
+      (Expansion_context.Base.enter_module ~loc:md.pmd_loc md.pmd_name.txt ctxt)
+      md
 
-  method! module_type_declaration path mtd =
+  method! module_type_declaration ctxt mtd =
     super#module_type_declaration
-      (Code_path.enter_module ~loc:mtd.pmtd_loc mtd.pmtd_name.txt path)
+      (Expansion_context.Base.enter_module ~loc:mtd.pmtd_loc mtd.pmtd_name.txt ctxt)
       mtd
 
-  method! value_description path vd =
-    super#value_description (Code_path.enter_value ~loc:vd.pval_loc vd.pval_name.txt path) vd
+  method! value_description ctxt vd =
+    super#value_description
+      (Expansion_context.Base.enter_value ~loc:vd.pval_loc vd.pval_name.txt ctxt)
+      vd
 
-  method! value_binding path {pvb_pat; pvb_expr; pvb_attributes; pvb_loc} =
+  method! value_binding ctxt {pvb_pat; pvb_expr; pvb_attributes; pvb_loc} =
     let all_var_names = var_names_of#pattern pvb_pat [] in
     let var_name = Base.List.last all_var_names in
-    let in_binding_path =
+    let in_binding_ctxt =
       Base.Option.fold var_name
-        ~init:path
-        ~f:(fun path var_name -> Code_path.enter_value ~loc:pvb_loc var_name path)
+        ~init:ctxt
+        ~f:(fun ctxt var_name -> Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt)
     in
-    let pvb_pat = self#pattern path pvb_pat in
-    let pvb_expr = self#expression in_binding_path pvb_expr in
-    let pvb_attributes = self#attributes in_binding_path pvb_attributes in
-    let pvb_loc = self#location path pvb_loc in
+    let pvb_pat = self#pattern ctxt pvb_pat in
+    let pvb_expr = self#expression in_binding_ctxt pvb_expr in
+    let pvb_attributes = self#attributes in_binding_ctxt pvb_attributes in
+    let pvb_loc = self#location ctxt pvb_loc in
     { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
 end
 
