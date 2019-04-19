@@ -30,38 +30,37 @@ type error =
 exception Error of error
 exception Escape_error
 
+let make_error ~loc ?(sub = []) msg =
+  Selected_ast.Ast.Ast_mapper.make_error_of_message ~loc msg ~sub
+
 let prepare_error = function
   | Unclosed(opening_loc, opening, closing_loc, closing) ->
-      Location.errorf ~loc:closing_loc
-        ~sub:[
-          Location.errorf ~loc:opening_loc
-            "This '%s' might be unmatched" opening
-        ]
-        ~if_highlight:
-          (Printf.sprintf "Syntax error: '%s' expected, \
-                           the highlighted '%s' might be unmatched"
-             closing opening)
-        "Syntax error: '%s' expected" closing
-
+    make_error
+      ~loc:closing_loc
+      ~sub:[
+        opening_loc, (Printf.sprintf
+          "This '%s' might be unmatched" opening)
+      ]
+      (Printf.sprintf "Syntax error: '%s' expected" closing)
   | Expecting (loc, nonterm) ->
-      Location.errorf ~loc "Syntax error: %s expected." nonterm
+      make_error ~loc (Printf.sprintf "Syntax error: %s expected." nonterm)
   | Not_expecting (loc, nonterm) ->
-      Location.errorf ~loc "Syntax error: %s not expected." nonterm
+      make_error ~loc (Printf.sprintf "Syntax error: %s not expected." nonterm)
   | Applicative_path loc ->
-      Location.errorf ~loc
+      make_error ~loc
         "Syntax error: applicative paths of the form F(X).t \
          are not supported when the option -no-app-func is set."
   | Variable_in_scope (loc, var) ->
-      Location.errorf ~loc
-        "In this scoped type, variable '%s \
+      make_error ~loc
+        (Printf.sprintf "In this scoped type, variable '%s \
          is reserved for the local type %s."
-         var var
+         var var)
   | Other loc ->
-      Location.errorf ~loc "Syntax error"
+      make_error ~loc "Syntax error"
   | Ill_formed_ast (loc, s) ->
-      Location.errorf ~loc "broken invariant in parsetree: %s" s
+      make_error ~loc (Printf.sprintf "broken invariant in parsetree: %s" s)
   | Invalid_package_type (loc, s) ->
-      Location.errorf ~loc "invalid package type: %s" s
+      make_error ~loc (Printf.sprintf "invalid package type: %s" s)
 
 let () =
   Location.register_error_of_exn
@@ -72,7 +71,7 @@ let () =
 
 
 let report_error ppf err =
-  Location.report_error ppf (prepare_error err)
+  Selected_ast.Ast.Ast_mapper.print_error ppf (prepare_error err)
 
 let location_of_error = function
   | Unclosed(l,_,_,_)

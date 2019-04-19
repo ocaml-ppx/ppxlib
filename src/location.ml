@@ -45,36 +45,20 @@ type nonrec 'a loc = 'a loc =
   }
 
 module Error = struct
-  type t = L.error
+  module Helpers = Selected_ast.Ast.Ast_mapper
 
-  let createf ~loc fmt = L.errorf ~loc fmt
+  type t = Helpers.location_error
 
-  let message (t : t) = t.msg
-  let set_message (t : t) msg = { t with msg }
+  let make = Helpers.make_error_of_message
 
-  let register_error_of_exn = L.register_error_of_exn
+  let message = Helpers.get_error_message
+  let set_message = Helpers.set_error_message
 
-  let of_exn = Compiler_specifics.error_of_exn
+  let register_error_of_exn = Helpers.register_error_of_exn
 
-  let rec to_extension (t : t) =
-    let loc = t.loc in
-    let str s =
-      { pstr_loc  = loc
-      ; pstr_desc =
-          Pstr_eval
-            ({ pexp_loc = loc
-             ; pexp_attributes = []
-             ; pexp_desc = Pexp_constant (Pconst_string (s, None))
-             }, [])
-      }
-    in
-    ({ loc = t.loc; txt = "ocaml.error" },
-     PStr (str t.msg          ::
-           str t.if_highlight ::
-           List.map t.sub ~f:(fun t ->
-             { pstr_loc = loc
-             ; pstr_desc = Pstr_extension (to_extension t, [])
-             })))
+  let of_exn = Helpers.error_of_exn
+
+  let to_extension = Helpers.extension_of_error
 end
 
 exception Error of Error.t

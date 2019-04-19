@@ -1,6 +1,6 @@
 (** Helpers for build OCaml AST fragments *)
 
-open! Import
+open! Import[@@ocaml.warning "-66"]
 
 (** This module is similar to the [Ast_helper] module distrubuted with OCaml but uses
     different conventions.

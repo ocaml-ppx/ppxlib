@@ -107,8 +107,12 @@ module Location   = struct
   include Location_helper
 end
 
+module Clflags    = struct
+  include Ocaml_common.Clflags
+  include Clflags_helper
+end
+
 (* Modules imported directly from the compiler *)
-module Clflags    = Ocaml_common.Clflags
 module Longident  = Ocaml_common.Longident
 module Misc       = Ocaml_common.Misc
 module Warnings   = Ocaml_common.Warnings
