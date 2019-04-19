@@ -96,21 +96,30 @@ module Whitelisted = struct
 
  let attributes =
    create_set
-      [ "ocaml.warning"
-      ; "ocaml.ppwarning"
+      [ "ocaml.alert"
+      ; "ocaml.boxed"
       ; "ocaml.deprecated"
+      ; "ocaml.deprecated_mutable"
       ; "ocaml.doc"
-      ; "ocaml.text"
-      ; "ocaml.noalloc"
-      ; "ocaml.unboxed"
-      ; "ocaml.untagged"
+      ; "ocaml.extension_constructor"
+      ; "ocaml.immediate"
       ; "ocaml.inline"
       ; "ocaml.inlined"
+      ; "ocaml.local"
+      ; "ocaml.noalloc"
+      ; "ocaml.ppwarning"
+      ; "ocaml.remove_aliases"
       ; "ocaml.specialise"
       ; "ocaml.specialised"
+      ; "ocaml.tailcall"
+      ; "ocaml.text"
+      ; "ocaml.unboxed"
       ; "ocaml.unroll"
-      ; "ocaml.immediate"
-      ; "ocaml.remove_aliases"
+      ; "ocaml.unrolled"
+      ; "ocaml.untagged"
+      ; "ocaml.warn_on_literal_pattern"
+      ; "ocaml.warnerror"
+      ; "ocaml.warning"
       ]
 
   (* White list the following extensions.
