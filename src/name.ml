@@ -143,11 +143,12 @@ module Reserved_namespaces = struct
   let () = reserve "reason"
   let () = reserve "refmt"
   let () = reserve "metaocaml"
+  let () = reserve "ocamlformat"
 
   let is_in_reserved_namespaces name =
     match get_outer_namespace name with
     | Some ns -> Hashtbl.mem tbl ns
-    | _ -> false
+    | None -> Hashtbl.mem tbl name
 
   let check_not_reserved ~kind name =
     let kind, list =
