@@ -40,6 +40,7 @@ module Error : sig
   type t
 
   val make : loc:location -> string -> sub:(location * string) list -> t
+  val createf : loc:location -> ('a, unit, string, t) format4 -> 'a
 
   val message : t -> string
   val set_message : t -> string -> t

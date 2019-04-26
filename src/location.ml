@@ -50,6 +50,9 @@ module Error = struct
   type t = Helpers.location_error
 
   let make = Helpers.make_error_of_message
+  let createf ~loc fmt =
+    Printf.ksprintf
+      (fun str -> Helpers.make_error_of_message ~loc ~sub:[] str) fmt
 
   let message = Helpers.get_error_message
   let set_message = Helpers.set_error_message
