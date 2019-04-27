@@ -6,16 +6,16 @@ Overview
 --------
 
 Ppx is a meta-programming system for the OCaml programming
-language. It allows developpers to generate code at compile time in a
+language. It allows developers to generate code at compile time in a
 principled way. The distinguishing feature of ppx is that it is
 tightly integrated with the OCaml parser and instead of operating at
-the text level it operates on the internal strcutured representation
+the text level it operates on the internal structured representation
 of the language in the compiler, called the Abstract Syntax Tree or
 AST for short.
 
 A few years ago, the OCaml language was extended with two new
 constructions: annotations and extension points. Annotations are
-abritrary pieces of information that can be attached to most parts of
+arbitrary pieces of information that can be attached to most parts of
 the OCaml language. They can be used to control the behavior of the
 OCaml compiler, or in some specific cases to generate code at compile
 time.
@@ -37,7 +37,7 @@ The ppx system is composed of 3 parts:
 - ppxlib
 - a hook in the compiler
 
-Inidividual ppx rewriters are those implemented by various developpers
+Inidividual ppx rewriters are those implemented by various developers
 to provide features to end users, such as ppx_expect_ which provides a
 good inline testing framework.
 
@@ -85,7 +85,7 @@ reasons:
 - the compiler doesn't handle hygiene: if an attribute is mistyped or
   misplaced, it is silently ignored by the compiler. If two ppx
   rewriters want to interpret the same attribute or extension point in
-  incompatible ways, the result is not specificed
+  incompatible ways, the result is not specified
 
 In summary, ppxlib abstracts away from all the low-level details of
 the ppx system and exposes a consistent model to authors of ppx
@@ -110,7 +110,7 @@ rewriter written against ppxlib today can be broken by a future
 release of the OCaml compiler and a new release of the ppx rewriter
 will be necessary to support the new compiler.
 
-However the following is true: everytime this might happen, it will be
+However the following is true: every time this might happen, it will be
 possible to extend ppxlib to provide a greater protection, so that
 eventually the whole ppx ecosystem is completely shielded from
 breaking compiler changes.
