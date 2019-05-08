@@ -101,10 +101,30 @@ module Selected_ast = Select_ast(Ocaml)
 (* Modules from migrate_parsetree *)
 module Parsetree  = Selected_ast.Ast.Parsetree
 module Asttypes   = Selected_ast.Ast.Asttypes
+module Ast_helper = Selected_ast.Ast.Ast_helper
+module Docstrings = Selected_ast.Ast.Docstrings
+
 
 module Location   = struct
   include Ocaml_common.Location
   include Location_helper
+end
+
+module Lexer      = struct
+  include Ocaml_common.Lexer
+  include Lexer_helper
+end
+
+module Parse      = struct
+  include Ocaml_common.Parse
+end
+
+module Parser     = struct
+  include Ocaml_common.Parser
+end
+
+module Syntaxerr  = struct
+  include Ocaml_common.Syntaxerr
 end
 
 (* Modules imported directly from the compiler *)

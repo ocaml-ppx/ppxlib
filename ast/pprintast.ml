@@ -256,11 +256,8 @@ and core_type ctxt f x =
           (type_with_label ctxt) (l,ct1) (core_type ctxt) ct2
     | Ptyp_alias (ct, s) ->
         pp f "@[<2>%a@;as@;'%s@]" (core_type1 ctxt) ct s
-    (* Intentionally left out, as part of the fix for PR#7344
-       (commit c15ad73e56c54663c9cb6f7cac4241bb3c4e3cb8)
     | Ptyp_poly ([], ct) ->
         core_type ctxt f ct
-    *)
     | Ptyp_poly (sl, ct) ->
         pp f "@[<2>%a%a@]"
           (fun f l ->
@@ -1176,20 +1173,17 @@ and binding ctxt f {pvb_pat=p; pvb_expr=x; _} =
   if x.pexp_attributes <> []
   then pp f "%a@;=@;%a" (pattern ctxt) p (expression ctxt) x else
   match is_desugared_gadt p x with
-  (* Intentionally left out, as part of the fix for PR#7344
-       (commit c15ad73e56c54663c9cb6f7cac4241bb3c4e3cb8)
   | Some (p, [], ct, e) ->
       pp f "%a@;: %a@;=@;%a"
         (simple_pattern ctxt) p (core_type ctxt) ct (expression ctxt) e
-  *)
   | Some (p, tyvars, ct, e) -> begin
     pp f "%a@;: type@;%a.@;%a@;=@;%a"
     (simple_pattern ctxt) p (list pp_print_string ~sep:"@;")
     (tyvars_str tyvars) (core_type ctxt) ct (expression ctxt) e
     end
   | None -> begin
-      match x, p with
-      | _, {ppat_desc=Ppat_constraint(p ,ty);
+      match p with
+      | {ppat_desc=Ppat_constraint(p ,ty);
          ppat_attributes=[]} -> (* special case for the first*)
           begin match ty with
           | {ptyp_desc=Ptyp_poly _; ptyp_attributes=[]} ->
@@ -1199,10 +1193,7 @@ and binding ctxt f {pvb_pat=p; pvb_expr=x; _} =
               pp f "(%a@;:@;%a)@;=@;%a" (simple_pattern ctxt) p
                 (core_type ctxt) ty (expression ctxt) x
           end
-      | {pexp_desc=Pexp_constraint (x, ty)}, _ -> (* XXX: this case is janestreet only *)
-          pp f "%a@;:@;%a@;=@;%a" (pattern ctxt) p
-            (core_type ctxt) ty (expression ctxt) x
-      | _, {ppat_desc=Ppat_var _; ppat_attributes=[]} ->
+      | {ppat_desc=Ppat_var _; ppat_attributes=[]} ->
           pp f "%a@ %a" (simple_pattern ctxt) p pp_print_pexp_function x
       | _ ->
           pp f "%a@;=@;%a" (pattern ctxt) p (expression ctxt) x
