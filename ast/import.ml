@@ -101,46 +101,15 @@ module Selected_ast = Select_ast(Ocaml)
 (* Modules from migrate_parsetree *)
 module Parsetree  = Selected_ast.Ast.Parsetree
 module Asttypes   = Selected_ast.Ast.Asttypes
-module Ast_helper = Selected_ast.Ast.Ast_helper
-module Docstrings = Selected_ast.Ast.Docstrings
-
 
 module Location   = struct
   include Ocaml_common.Location
   include Location_helper
 end
 
-module Lexer      = struct
-  include Ocaml_common.Lexer
-  include Lexer_helper
-end
-
-module Syntaxerr  = struct
-  include Ocaml_common.Syntaxerr
-end
-
-module Parse = struct
-  include Ocaml_common.Parse
-  module Of_ocaml = Migrate_parsetree.Versions.Convert(Ocaml)(Js)
-  let implementation lexbuf = implementation lexbuf |> Of_ocaml.copy_structure
-  let interface lexbuf = interface lexbuf |> Of_ocaml.copy_signature
-  let toplevel_phrase lexbuf = toplevel_phrase lexbuf |> Of_ocaml.copy_toplevel_phrase
-  let use_file lexbuf = use_file lexbuf |> List.map Of_ocaml.copy_toplevel_phrase
-  let core_type lexbuf = core_type lexbuf |> Of_ocaml.copy_core_type
-  let expression lexbuf = expression lexbuf |> Of_ocaml.copy_expression
-  let pattern lexbuf = pattern lexbuf |> Of_ocaml.copy_pattern
-end
-
-module Parser = struct
-  include Ocaml_common.Parser
-  module Of_ocaml = Migrate_parsetree.Versions.Convert(Ocaml)(Js)
-  let use_file lexer lexbuf = use_file lexer lexbuf |> List.map Of_ocaml.copy_toplevel_phrase
-  let toplevel_phrase lexer lexbuf = toplevel_phrase lexer lexbuf |> Of_ocaml.copy_toplevel_phrase
-  let parse_pattern lexer lexbuf = parse_pattern lexer lexbuf |> Of_ocaml.copy_pattern
-  let parse_expression lexer lexbuf = parse_expression lexer lexbuf |> Of_ocaml.copy_expression
-  let parse_core_type lexer lexbuf = parse_core_type lexer lexbuf |> Of_ocaml.copy_core_type
-  let interface lexer lexbuf = interface lexer lexbuf |> Of_ocaml.copy_signature
-  let implementation lexer lexbuf = implementation lexer lexbuf |> Of_ocaml.copy_structure
+module Clflags    = struct
+  include Ocaml_common.Clflags
+  include Clflags_helper
 end
 
 (* Modules imported directly from the compiler *)
