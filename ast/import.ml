@@ -4,7 +4,7 @@
    It must be opened in all modules, especially the ones coming from the compiler.
 *)
 
-module Js    = Migrate_parsetree.OCaml_407
+module Js    = Migrate_parsetree.OCaml_408
 module Ocaml = Migrate_parsetree.Versions.OCaml_current
 
 module Select_ast(Ocaml : Migrate_parsetree.Versions.OCaml_version) = struct

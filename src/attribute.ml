@@ -12,6 +12,7 @@ module Context = struct
     | Label_declaration       : label_declaration       t
     | Constructor_declaration : constructor_declaration t
     | Type_declaration        : type_declaration        t
+    | Type_exception          : type_exception          t
     | Type_extension          : type_extension          t
     | Extension_constructor   : extension_constructor   t
     | Pattern                 : pattern                 t
@@ -26,7 +27,9 @@ module Context = struct
     | Module_type             : module_type             t
     | Module_declaration      : module_declaration      t
     | Module_type_declaration : module_type_declaration t
+    | Module_substitution     : module_substitution     t
     | Open_description        : open_description        t
+    | Open_declaration        : open_declaration        t
     | Include_infos           : _ include_infos         t
     | Module_expr             : module_expr             t
     | Value_binding           : value_binding           t
@@ -41,6 +44,7 @@ module Context = struct
   let constructor_declaration = Constructor_declaration
   let type_declaration        = Type_declaration
   let type_extension          = Type_extension
+  let type_exception          = Type_exception
   let extension_constructor   = Extension_constructor
   let pattern                 = Pattern
   let core_type               = Core_type
@@ -86,6 +90,7 @@ module Context = struct
     | Constructor_declaration -> x.pcd_attributes
     | Type_declaration        -> x.ptype_attributes
     | Type_extension          -> x.ptyext_attributes
+    | Type_exception          -> x.ptyexn_attributes
     | Extension_constructor   -> x.pext_attributes
     | Pattern                 -> x.ppat_attributes
     | Core_type               -> x.ptyp_attributes
@@ -99,7 +104,9 @@ module Context = struct
     | Module_type             -> x.pmty_attributes
     | Module_declaration      -> x.pmd_attributes
     | Module_type_declaration -> x.pmtd_attributes
+    | Module_substitution     -> x.pms_attributes
     | Open_description        -> x.popen_attributes
+    | Open_declaration        -> x.popen_attributes
     | Include_infos           -> x.pincl_attributes
     | Module_expr             -> x.pmod_attributes
     | Value_binding           -> x.pvb_attributes
@@ -107,16 +114,8 @@ module Context = struct
     | Pstr_eval               -> snd (get_pstr_eval      x)
     | Pstr_extension          -> snd (get_pstr_extension x)
     | Psig_extension          -> snd (get_psig_extension x)
-    | Rtag                    ->
-      begin match x with
-      | Rtag (_, attrs, _, _) -> attrs
-      | Rinherit _ -> []
-      end
-    | Object_type_field       ->
-      begin match x with
-      | Otag (_, attrs, _) -> attrs
-      | Oinherit _ -> []
-      end
+    | Rtag                    -> x.prf_attributes
+    | Object_type_field       -> x.pof_attributes
 
   let set_attributes : type a. a t -> a -> attributes -> a = fun t x attrs ->
     match t with
@@ -124,6 +123,7 @@ module Context = struct
     | Constructor_declaration -> { x with pcd_attributes    = attrs }
     | Type_declaration        -> { x with ptype_attributes  = attrs }
     | Type_extension          -> { x with ptyext_attributes = attrs }
+    | Type_exception          -> { x with ptyexn_attributes = attrs }
     | Extension_constructor   -> { x with pext_attributes   = attrs }
     | Pattern                 -> { x with ppat_attributes   = attrs }
     | Core_type               -> { x with ptyp_attributes   = attrs }
@@ -137,7 +137,9 @@ module Context = struct
     | Module_type             -> { x with pmty_attributes   = attrs }
     | Module_declaration      -> { x with pmd_attributes    = attrs }
     | Module_type_declaration -> { x with pmtd_attributes   = attrs }
+    | Module_substitution     -> { x with pms_attributes   = attrs }
     | Open_description        -> { x with popen_attributes  = attrs }
+    | Open_declaration        -> { x with popen_attributes  = attrs }
     | Include_infos           -> { x with pincl_attributes  = attrs }
     | Module_expr             -> { x with pmod_attributes   = attrs }
     | Value_binding           -> { x with pvb_attributes    = attrs }
@@ -148,28 +150,15 @@ module Context = struct
       { x with pstr_desc = Pstr_extension (get_pstr_extension x |> fst, attrs) }
     | Psig_extension ->
       { x with psig_desc = Psig_extension (get_psig_extension x |> fst, attrs) }
-    | Rtag                   ->
-      begin match x with
-      | Rtag (lbl, _, can_be_constant, params_opts) ->
-        Rtag (lbl, attrs, can_be_constant, params_opts)
-      | Rinherit _ ->
-        assert (List.is_empty attrs);
-        x
-      end
-    | Object_type_field ->
-      begin match x with
-      | Otag (lbl, _, typ) ->
-        Otag (lbl, attrs, typ)
-      | Oinherit _ ->
-        assert (List.is_empty attrs);
-        x
-      end
+    | Rtag                    -> { x with prf_attributes    = attrs}
+    | Object_type_field       -> { x with pof_attributes    = attrs}
 
   let desc : type a. a t -> string = function
     | Label_declaration       -> "label declaration"
     | Constructor_declaration -> "constructor declaration"
     | Type_declaration        -> "type declaration"
     | Type_extension          -> "type extension"
+    | Type_exception          -> "type exception"
     | Extension_constructor   -> "extension constructor"
     | Pattern                 -> "pattern"
     | Core_type               -> "core type"
@@ -183,7 +172,9 @@ module Context = struct
     | Module_type             -> "module type"
     | Module_declaration      -> "module declaration"
     | Module_type_declaration -> "module type declaration"
+    | Module_substitution     -> "module substitution"
     | Open_description        -> "open"
+    | Open_declaration        -> "open"
     | Include_infos           -> "include"
     | Module_expr             -> "module expression"
     | Value_binding           -> "value binding"
@@ -302,9 +293,8 @@ module Attribute_table = Caml.Hashtbl.Make(struct
 
 let not_seen = Attribute_table.create 128
 
-let mark_as_seen attr =
-  let name = fst attr in
-  Attribute_table.remove not_seen name
+let mark_as_seen { attr_name; _ } =
+  Attribute_table.remove not_seen attr_name
 ;;
 
 let mark_as_handled_manually = mark_as_seen
@@ -318,11 +308,11 @@ let get_internal =
   let rec find_best_match t attributes longest_match =
     match attributes with
     | [] -> longest_match
-    | (name, _) as attr :: rest ->
+    | { attr_name = name; _ } as attr :: rest ->
       if Name.Pattern.matches t.name name.txt then begin
         match longest_match with
         | None -> find_best_match t rest (Some attr)
-        | Some (name', _) ->
+        | Some { attr_name = name'; _ } ->
           let len = String.length name.txt in
           let len' = String.length name'.txt in
           if len > len' then
@@ -341,8 +331,8 @@ let get_internal =
 let convert ?(do_mark_as_seen = true) pattern attr =
   if do_mark_as_seen then mark_as_seen attr;
   let (Payload_parser (pattern, k)) = pattern in
-  Ast_pattern.parse pattern (Common.loc_of_payload attr) (snd attr)
-    (k ~name_loc:(fst attr).loc)
+  Ast_pattern.parse pattern (Common.loc_of_payload attr) attr.attr_payload
+    (k ~name_loc:attr.attr_name.loc)
 ;;
 
 let get t ?mark_as_seen:do_mark_as_seen x =
@@ -372,7 +362,7 @@ let remove_seen (type a) (context : a Context.t) packeds (x : a) =
           match get_internal t attrs with
           | None      -> loop acc rest
           | Some attr ->
-            let name = fst attr in
+            let name = attr.attr_name in
             if Attribute_table.mem not_seen name then
               loop acc rest
             else
@@ -423,7 +413,7 @@ module Floating = struct
     | { context; _ } :: _ ->
       assert (List.for_all ts ~f:(fun t -> Context.equal t.context context));
       let attr = Context.get_attribute context x in
-      let name = fst attr in
+      let name = attr.attr_name in
       match List.filter ts ~f:(fun t -> Name.Pattern.matches t.name name.txt) with
       | [] -> None
       | [t] -> Some (convert t.payload attr)
@@ -447,7 +437,7 @@ let check_attribute registrar context name =
 let check_unused = object(self)
   inherit Ast_traverse.iter as super
 
-  method! attribute (name, _) =
+  method! attribute { attr_name = name; _ } =
     Location.raise_errorf ~loc:name.loc
       "attribute not expected here, Ppxlib.Attribute needs updating!"
 
@@ -456,7 +446,7 @@ let check_unused = object(self)
     match attrs with
     | [] -> node
     | _  ->
-      List.iter attrs ~f:(fun ((name, payload) as attr) ->
+      List.iter attrs ~f:(fun ({ attr_name = name; attr_payload = payload; _ } as attr) ->
         self#payload payload;
         check_attribute registrar (On_item context) name;
         (* If we allow the attribute to pass through, mark it as seen *)
@@ -467,7 +457,7 @@ let check_unused = object(self)
     = fun context node ->
       match Floating.Context.get_attribute_if_is_floating_node context node with
       | None -> node
-      | Some  ((name, payload) as attr) ->
+      | Some  ({ attr_name = name; attr_payload = payload; _ } as attr) ->
         self#payload payload;
         check_attribute registrar (Floating context) name;
         mark_as_seen attr;
@@ -477,6 +467,7 @@ let check_unused = object(self)
   method! constructor_declaration x = super#constructor_declaration (self#check_node Constructor_declaration x)
   method! type_declaration        x = super#type_declaration        (self#check_node Type_declaration        x)
   method! type_extension          x = super#type_extension          (self#check_node Type_extension          x)
+  method! type_exception          x = super#type_exception          (self#check_node Type_exception          x)
   method! extension_constructor   x = super#extension_constructor   (self#check_node Extension_constructor   x)
   method! pattern                 x = super#pattern                 (self#check_node Pattern                 x)
   method! core_type               x = super#core_type               (self#check_node Core_type               x)
@@ -489,6 +480,7 @@ let check_unused = object(self)
   method! module_declaration      x = super#module_declaration      (self#check_node Module_declaration      x)
   method! module_type_declaration x = super#module_type_declaration (self#check_node Module_type_declaration x)
   method! open_description        x = super#open_description        (self#check_node Open_description        x)
+  method! open_declaration        x = super#open_declaration        (self#check_node Open_declaration        x)
   method! include_infos f         x = super#include_infos f         (self#check_node Include_infos           x)
   method! module_expr             x = super#module_expr             (self#check_node Module_expr             x)
   method! value_binding           x = super#value_binding           (self#check_node Value_binding           x)
@@ -506,7 +498,7 @@ let check_unused = object(self)
 
   method! row_field x =
     let x =
-      match x with
+      match x.prf_desc with
       | Rtag _ -> self#check_node Rtag x
       | _      -> x
     in
@@ -547,7 +539,7 @@ let reset_checks () = Attribute_table.clear not_seen
 let collect = object
   inherit Ast_traverse.iter as super
 
-  method! attribute ((name, payload) as attr) =
+  method! attribute ({ attr_name = name; attr_payload = payload; _ } as attr) =
     let loc = Common.loc_of_attribute attr in
     super#payload payload;
     Attribute_table.add not_seen name loc
@@ -565,7 +557,7 @@ let check_all_seen () =
 let remove_attributes_present_in table = object
   inherit Ast_traverse.iter as super
 
-  method! attribute (name, payload) =
+  method!  attribute { attr_name = name; attr_payload = payload; _ } =
     super#payload payload;
     Attribute_table.remove table name
 end

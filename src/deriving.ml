@@ -213,10 +213,10 @@ module Deriver = struct
       { name          : string
       ; str_type_decl : (structure, rec_flag * type_declaration list) Generator.t option
       ; str_type_ext  : (structure, type_extension                  ) Generator.t option
-      ; str_exception : (structure, extension_constructor           ) Generator.t option
+      ; str_exception : (structure, type_exception                  ) Generator.t option
       ; sig_type_decl : (signature, rec_flag * type_declaration list) Generator.t option
       ; sig_type_ext  : (signature, type_extension                  ) Generator.t option
-      ; sig_exception : (signature, extension_constructor           ) Generator.t option
+      ; sig_exception : (signature, type_exception                  ) Generator.t option
       ; extension     : (loc:Location.t -> path:string -> core_type -> expression) option
       }
   end
@@ -500,13 +500,13 @@ module Attr = struct
   let suffix = ""
   let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
   let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
-  let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Extension_constructor
+  let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_exception
 
   module Expect = struct
     let suffix = "_inline"
     let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
     let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
-    let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Extension_constructor
+    let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_exception
   end
 end
 
@@ -515,13 +515,15 @@ end
    +-----------------------------------------------------------------+ *)
 
 let disable_unused_warning_attribute ~loc =
-  ({ txt = "ocaml.warning"; loc },
-   PStr [pstr_eval ~loc (estring ~loc "-32") []])
+  { attr_name = { txt = "ocaml.warning"; loc };
+    attr_payload = PStr [pstr_eval ~loc (estring ~loc "-32") []];
+    attr_loc = loc; }
 ;;
 
 let inline_doc_attr ~loc =
-  ({ txt = "ocaml.doc"; loc },
-   PStr [pstr_eval ~loc (estring ~loc "@inline") []])
+  { attr_name = { txt = "ocaml.doc"; loc };
+    attr_payload = PStr [pstr_eval ~loc (estring ~loc "@inline") []];
+    attr_loc = loc; }
 ;;
 
 let disable_unused_warning_str ~loc st =

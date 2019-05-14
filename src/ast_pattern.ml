@@ -191,13 +191,11 @@ let single_expr_payload t = pstr (pstr_eval t nil ^:: nil)
 
 let no_label t = (cst Asttypes.Nolabel ~to_string:(fun _ -> "Nolabel")) ** t
 
-let attribute (T f1) (T f2) = T (fun ctx loc ((name : _ Loc.t), payload) k ->
+let extension (T f1) (T f2) = T (fun ctx loc ((name : _ Loc.t), payload) k ->
   let k = f1 ctx name.loc name.txt k in
   let k = f2 ctx loc payload k in
   k
 )
-
-let extension = attribute
 
 let rec parse_elist (e : Parsetree.expression) acc =
   Common.assert_no_attributes e.pexp_attributes;
