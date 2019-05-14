@@ -479,7 +479,7 @@ let real_map_structure config cookies st =
     match lint_errors with
     | [] -> st
     | _  ->
-      List.map lint_errors ~f:(fun (({ loc; _ }, _) as attr) ->
+      List.map lint_errors ~f:(fun ({ attr_name = { loc; _ }; _} as attr) ->
         Ast_builder.Default.pstr_attribute ~loc attr)
       @ st
   in
@@ -522,7 +522,7 @@ let real_map_signature config cookies sg =
     match lint_errors with
     | [] -> sg
     | _  ->
-      List.map lint_errors ~f:(fun (({ loc; _ }, _) as attr) ->
+      List.map lint_errors ~f:(fun ({ attr_name = { loc; _ }; _} as attr) ->
         Ast_builder.Default.psig_attribute ~loc attr)
       @ sg
   in
@@ -733,7 +733,7 @@ type output_mode =
 (*$*)
 let extract_cookies_str st =
   match st with
-  | { pstr_desc = Pstr_attribute({txt = "ocaml.ppx.context"; _}, _); _ } as prefix
+  | { pstr_desc = Pstr_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: st ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Structure [prefix] in
     assert (List.is_empty
@@ -751,7 +751,7 @@ let add_cookies_str st =
 (*$ str_to_sig _last_text_block *)
 let extract_cookies_sig sg =
   match sg with
-  | { psig_desc = Psig_attribute({txt = "ocaml.ppx.context"; _}, _); _ } as prefix
+  | { psig_desc = Psig_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: sg ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Signature [prefix] in
     assert (List.is_empty

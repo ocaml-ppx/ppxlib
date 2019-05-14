@@ -71,8 +71,8 @@ module Rule = struct
       | Attr_sig_type_decl : (signature_item, type_declaration) Attr_group_inline.t t
       | Attr_str_type_ext  : (structure_item, type_extension) Attr_inline.t         t
       | Attr_sig_type_ext  : (signature_item, type_extension) Attr_inline.t         t
-      | Attr_str_exception : (structure_item, extension_constructor) Attr_inline.t  t
-      | Attr_sig_exception : (signature_item, extension_constructor) Attr_inline.t  t
+      | Attr_str_exception : (structure_item, type_exception) Attr_inline.t         t
+      | Attr_sig_exception : (signature_item, type_exception) Attr_inline.t         t
 
     type (_, _) equality = Eq : ('a, 'a) equality | Ne : (_, _) equality
 
@@ -461,13 +461,14 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
        - func.pexp_desc = Pexp_ident _
     *)
     method private pexp_apply_without_traversing_function base_ctxt e func args =
-      let { pexp_desc = _; pexp_loc; pexp_attributes } = e in
+      let { pexp_desc = _; pexp_loc; pexp_attributes; pexp_loc_stack = _ } = e in
       let func =
-        let { pexp_desc; pexp_loc; pexp_attributes } = func in
+        let { pexp_desc; pexp_loc; pexp_attributes; pexp_loc_stack } = func in
         let pexp_attributes = self#attributes base_ctxt pexp_attributes in
         { pexp_desc
         ; pexp_loc (* location doesn't need to be traversed *)
         ; pexp_attributes
+        ; pexp_loc_stack
         }
       in
       let args = List.map args ~f:(fun (lab, exp) -> (lab, self#expression base_ctxt exp)) in
@@ -475,6 +476,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
       { pexp_loc
       ; pexp_attributes
       ; pexp_desc = Pexp_apply (func, args)
+      ; pexp_loc_stack = []
       }
 
     method! class_type base_ctxt x =

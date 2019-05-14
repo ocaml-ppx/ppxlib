@@ -51,10 +51,32 @@ struct
     in
     loop [] l
 
-  let remove_loc = object
+  let remove_loc = object (self)
     inherit Ast_traverse.map
 
     method! location _ = Location.none
+
+    method! core_type { ptyp_desc; ptyp_loc; ptyp_loc_stack = _; ptyp_attributes; } =
+      let ptyp_desc = self#core_type_desc ptyp_desc in
+      let ptyp_loc = self#location ptyp_loc in
+      let ptyp_loc_stack = [] in
+      let ptyp_attributes = self#attributes ptyp_attributes in
+      { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes; }
+
+    method! pattern { ppat_desc; ppat_loc; ppat_loc_stack = _; ppat_attributes; } =
+      let ppat_desc = self#pattern_desc ppat_desc in
+      let ppat_loc = self#location ppat_loc in
+      let ppat_loc_stack = [] in
+      let ppat_attributes = self#attributes ppat_attributes in
+      { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes; }
+
+    method! expression { pexp_desc; pexp_loc; pexp_loc_stack = _; pexp_attributes; } =
+     let pexp_desc = self#expression_desc pexp_desc in
+     let pexp_loc = self#location pexp_loc in
+     let pexp_loc_stack = [] in
+     let pexp_attributes = self#attributes pexp_attributes in
+     { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes; }
+
   end
 
   module M_map = M.Transform(struct type 'a t = 'a -> 'a end)

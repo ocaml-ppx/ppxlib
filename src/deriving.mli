@@ -98,10 +98,10 @@ end with type deriver := t
 val add
   :  ?str_type_decl:(structure, rec_flag * type_declaration list) Generator.t
   -> ?str_type_ext :(structure, type_extension                  ) Generator.t
-  -> ?str_exception:(structure, extension_constructor           ) Generator.t
+  -> ?str_exception:(structure, type_exception                  ) Generator.t
   -> ?sig_type_decl:(signature, rec_flag * type_declaration list) Generator.t
   -> ?sig_type_ext :(signature, type_extension                  ) Generator.t
-  -> ?sig_exception:(signature, extension_constructor           ) Generator.t
+  -> ?sig_exception:(signature, type_exception                  ) Generator.t
   -> ?extension:(loc:Location.t -> path:string -> core_type -> expression)
   -> string
   -> t
