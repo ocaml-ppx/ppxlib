@@ -44,6 +44,7 @@ val really_recursive : rec_flag -> type_declaration list -> rec_flag
 
 val loc_of_payload   : attribute -> Location.t
 val loc_of_attribute : attribute -> Location.t
+val loc_of_extension : extension -> Location.t
 
 (** convert multi-arg function applications into a cascade of 1-arg applications *)
 val curry_applications : expression -> expression

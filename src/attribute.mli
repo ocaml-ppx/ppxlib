@@ -19,6 +19,7 @@ module Context : sig
     | Label_declaration       : label_declaration       t
     | Constructor_declaration : constructor_declaration t
     | Type_declaration        : type_declaration        t
+    | Type_exception          : type_exception          t
     | Type_extension          : type_extension          t
     | Extension_constructor   : extension_constructor   t
     | Pattern                 : pattern                 t
@@ -33,7 +34,9 @@ module Context : sig
     | Module_type             : module_type             t
     | Module_declaration      : module_declaration      t
     | Module_type_declaration : module_type_declaration t
+    | Module_substitution     : module_substitution     t
     | Open_description        : open_description        t
+    | Open_declaration        : open_declaration        t
     | Include_infos           : _ include_infos         t
     | Module_expr             : module_expr             t
     | Value_binding           : value_binding           t
@@ -48,6 +51,7 @@ module Context : sig
   val constructor_declaration : constructor_declaration t
   val type_declaration        : type_declaration        t
   val type_extension          : type_extension          t
+  val type_exception          : type_exception          t
   val extension_constructor   : extension_constructor   t
   val pattern                 : pattern                 t
   val core_type               : core_type               t

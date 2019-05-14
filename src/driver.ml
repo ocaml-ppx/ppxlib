@@ -440,7 +440,7 @@ let as_ppx_config () =
   Migrate_parsetree.Driver.make_config ()
     ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
     ~include_dirs:!Ocaml_common.Clflags.include_dirs
-    ~load_path:!Ocaml_common.Config.load_path
+    ~load_path:(Compiler_specifics.get_load_path ())
     ~debug:!Ocaml_common.Clflags.debug
     ?for_package:!Ocaml_common.Clflags.for_package
 
@@ -479,7 +479,7 @@ let real_map_structure config cookies st =
     match lint_errors with
     | [] -> st
     | _  ->
-      List.map lint_errors ~f:(fun (({ loc; _ }, _) as attr) ->
+      List.map lint_errors ~f:(fun ({ attr_name = { loc; _ }; _} as attr) ->
         Ast_builder.Default.pstr_attribute ~loc attr)
       @ st
   in
@@ -522,7 +522,7 @@ let real_map_signature config cookies sg =
     match lint_errors with
     | [] -> sg
     | _  ->
-      List.map lint_errors ~f:(fun (({ loc; _ }, _) as attr) ->
+      List.map lint_errors ~f:(fun ({ attr_name = { loc; _ }; _} as attr) ->
         Ast_builder.Default.psig_attribute ~loc attr)
       @ sg
   in
@@ -601,16 +601,20 @@ let string_contains_binary_ast s =
 type pp_error = { filename : string; command_line : string }
 exception Pp_error of pp_error
 
-let report_pp_error ppf e =
+let report_pp_error e =
+  let buff = Buffer.create 128 in
+  let ppf = Caml.Format.formatter_of_buffer buff in
   Caml.Format.fprintf ppf "Error while running external preprocessor@.\
-                           Command line: %s@." e.command_line
+                           Command line: %s@." e.command_line;
+  Caml.Format.pp_print_flush ppf ();
+  Buffer.contents buff
 
 let () =
   Location.Error.register_error_of_exn
     (function
       | Pp_error e ->
-        Some (Location.Error.createf ~loc:(Location.in_file e.filename) "%a"
-                report_pp_error e)
+        Some (Location.Error.make ~loc:(Location.in_file e.filename) ~sub:[]
+                (report_pp_error e))
       | _ -> None)
 
 let remove_no_error fn =
@@ -729,7 +733,7 @@ type output_mode =
 (*$*)
 let extract_cookies_str st =
   match st with
-  | { pstr_desc = Pstr_attribute({txt = "ocaml.ppx.context"; _}, _); _ } as prefix
+  | { pstr_desc = Pstr_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: st ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Structure [prefix] in
     assert (List.is_empty
@@ -747,7 +751,7 @@ let add_cookies_str st =
 (*$ str_to_sig _last_text_block *)
 let extract_cookies_sig sg =
   match sg with
-  | { psig_desc = Psig_attribute({txt = "ocaml.ppx.context"; _}, _); _ } as prefix
+  | { psig_desc = Psig_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: sg ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Signature [prefix] in
     assert (List.is_empty

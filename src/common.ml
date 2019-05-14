@@ -98,7 +98,7 @@ let rec last x l =
   | x :: l -> last x l
 ;;
 
-let loc_of_payload (name, payload) =
+let loc_of_name_and_payload name payload =
   match payload with
   | PStr []          -> name.loc
   | PStr (x :: l)    -> { x.pstr_loc with loc_end = (last x l).pstr_loc.loc_end }
@@ -109,14 +109,24 @@ let loc_of_payload (name, payload) =
   | PPat (x, Some e) -> { x.ppat_loc with loc_end = e.pexp_loc.loc_end }
 ;;
 
-let loc_of_attribute ((name, _) as attr) =
+let loc_of_payload { attr_name; attr_payload; attr_loc = _; } =
+  loc_of_name_and_payload attr_name attr_payload
+
+let loc_of_attribute { attr_name; attr_payload; attr_loc = _; } =
   (* TODO: fix this in the compiler *)
   (* "ocaml.doc" attributes are generated with [Location.none], which is not helpful for
      error messages. *)
-  if Poly.(=) name.loc Location.none then
-    loc_of_payload attr
+  if Poly.(=) attr_name.loc Location.none then
+    loc_of_name_and_payload attr_name attr_payload
   else
-    { name.loc with loc_end = (loc_of_payload attr).loc_end }
+    { attr_name.loc with loc_end = (loc_of_name_and_payload attr_name attr_payload).loc_end }
+;;
+
+let loc_of_extension (name, payload) =
+  if Poly.(=) name.loc Location.none then
+    loc_of_name_and_payload name payload
+  else
+    { name.loc with loc_end = (loc_of_name_and_payload name payload).loc_end }
 ;;
 
 let curry_applications expr =
@@ -134,7 +144,7 @@ let curry_applications expr =
 
 let rec assert_no_attributes = function
   | [] -> ()
-  | (name, _) :: rest when Name.ignore_checks name.Location.txt ->
+  | { attr_name = name; attr_loc = _; attr_payload = _; } :: rest when Name.ignore_checks name.Location.txt ->
     assert_no_attributes rest
   | attr :: _ ->
     let loc = loc_of_attribute attr in
@@ -147,8 +157,9 @@ let assert_no_attributes_in = object
 end
 
 let attribute_of_warning loc s =
-  ({ loc; txt = "ocaml.ppwarning" },
-   PStr ([pstr_eval ~loc (estring ~loc s) []]))
+  { attr_name = { loc; txt = "ocaml.ppwarning" };
+    attr_payload = PStr ([pstr_eval ~loc (estring ~loc s) []]);
+    attr_loc = loc; }
 
 let is_polymorphic_variant =
   let rec check = function

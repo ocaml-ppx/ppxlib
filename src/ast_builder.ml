@@ -167,14 +167,16 @@ module Default = struct
             Pexp_fun (label, None (* no default expression *), subpat, body)
         ; pexp_attributes = []
         ; pexp_loc = _
+        ; pexp_loc_stack = _
         } ->
         begin match subpat with
-        | { ppat_desc = Ppat_var name; ppat_attributes = []; ppat_loc = _ } ->
+        | { ppat_desc = Ppat_var name; ppat_attributes = []; ppat_loc = _; ppat_loc_stack = _ } ->
           gather_params ((label, name, None) :: acc) body
         | { ppat_desc = Ppat_constraint ({ ppat_desc = Ppat_var name
                                          ; ppat_attributes = []
-                                         ; ppat_loc = _ }, ty)
-          ; ppat_attributes = []; ppat_loc = _ } ->
+                                         ; ppat_loc = _
+                                         ; ppat_loc_stack = _ }, ty)
+          ; ppat_attributes = []; ppat_loc = _; ppat_loc_stack = _ } ->
           (* We reduce [fun (x : ty) -> f x] by rewriting it [(f : ty -> _)]. *)
           gather_params ((label, name, Some ty) :: acc) body
         | _ -> List.rev acc, expr
@@ -202,7 +204,7 @@ module Default = struct
       if n = 0 then Some (x, [])
       else match x with
         | { pexp_desc = Pexp_apply (body, args)
-          ; pexp_attributes = []; pexp_loc = _ } ->
+          ; pexp_attributes = []; pexp_loc = _; pexp_loc_stack = _ } ->
           if List.length args <= n then
             match gather_args (n - List.length args) body with
             | None -> None
@@ -222,7 +224,7 @@ module Default = struct
             List.for_all2 args params ~f:(fun (arg_label, arg) (param_label, param, _) ->
               Poly.(=) (arg_label : arg_label) param_label
               && match arg with
-              | { pexp_desc = Pexp_ident { txt = Lident name'; _ }; pexp_attributes = []; pexp_loc = _ }
+              | { pexp_desc = Pexp_ident { txt = Lident name'; _ }; pexp_attributes = []; pexp_loc = _; pexp_loc_stack = _ }
                 -> String.(=) name' param.txt
               | _ -> false)
           with

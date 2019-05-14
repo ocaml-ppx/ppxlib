@@ -108,7 +108,10 @@ let gen_combinator_for_record path ~prefix ~has_attrs lds =
     else
       body
   in
-  let body = M.expr "T (fun ctx loc x k -> %a)" A.expr body in
+  let body =
+    M.expr "T (fun ctx loc x k -> let _ = loc in %a)"
+      A.expr body
+  in
   let body =
     List.fold_right funcs ~init:body ~f:(fun func acc ->
       Exp.fun_ (Labelled func) None (M.patt "T %a" A.patt (pvar func)) acc)
@@ -123,7 +126,7 @@ let prefix_of_record lds = common_prefix (List.map lds ~f:(fun ld -> ld.pld_name
 let filter_labels ~prefix lds =
   List.filter lds ~f:(fun ld ->
     match without_prefix ~prefix ld.pld_name.txt with
-    | "loc" | "attributes" -> false
+    | "loc" | "loc_stack" | "attributes" -> false
     | _ -> true)
 ;;
 
@@ -270,8 +273,8 @@ let generate filename =
     |> List.flatten
   in
   let st =
-    Str.open_ (Opn.mk (Loc.lident "Import"))
-    :: Str.open_ (Opn.mk (Loc.lident "Ast_pattern0"))
+    Str.open_ (Opn.mk (Mod.ident (Loc.lident "Import")))
+    :: Str.open_ (Opn.mk (Mod.ident (Loc.lident "Ast_pattern0")))
     :: items
   in
   dump "ast_pattern_generated" Pprintast.structure st ~ext:".ml"
