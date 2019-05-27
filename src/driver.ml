@@ -440,7 +440,7 @@ let as_ppx_config () =
   Migrate_parsetree.Driver.make_config ()
     ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
     ~include_dirs:!Ocaml_common.Clflags.include_dirs
-    ~load_path:!Ocaml_common.Config.load_path
+    ~load_path:(Compiler_specifics.get_load_path ())
     ~debug:!Ocaml_common.Clflags.debug
     ?for_package:!Ocaml_common.Clflags.for_package
 
@@ -601,16 +601,20 @@ let string_contains_binary_ast s =
 type pp_error = { filename : string; command_line : string }
 exception Pp_error of pp_error
 
-let report_pp_error ppf e =
+let report_pp_error e =
+  let buff = Buffer.create 128 in
+  let ppf = Caml.Format.formatter_of_buffer buff in
   Caml.Format.fprintf ppf "Error while running external preprocessor@.\
-                           Command line: %s@." e.command_line
+                           Command line: %s@." e.command_line;
+  Caml.Format.pp_print_flush ppf ();
+  Buffer.contents buff
 
 let () =
   Location.Error.register_error_of_exn
     (function
       | Pp_error e ->
-        Some (Location.Error.createf ~loc:(Location.in_file e.filename) "%a"
-                report_pp_error e)
+        Some (Location.Error.make ~loc:(Location.in_file e.filename) ~sub:[]
+                (report_pp_error e))
       | _ -> None)
 
 let remove_no_error fn =

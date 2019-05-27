@@ -10,6 +10,7 @@
  (modules
   ast_helper
   ast
+  clflags_helper
   docstrings
   import
   lexer
@@ -28,7 +29,7 @@
 ;; This is to make the code compatible with different versions of
 ;; OCaml
 (rule
- (targets location_helper.ml)
+ (targets location_helper.ml clflags_helper.ml)
  (deps    gen-compiler_specifics)
  (action  (run %{ocaml} %{deps} %{ocaml_version} %{targets})))
 
