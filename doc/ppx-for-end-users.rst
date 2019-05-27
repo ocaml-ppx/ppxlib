@@ -77,7 +77,7 @@ Dropping ppx dependencies with [@@deriving_inline]
 You might notice that the resulting file when using
 ``[@@deriving_inline]`` needs no special treatment to be compiled. In
 particular, you can build it without the ppx rewriter or even
-ppxlib. You only need them while developping the project, in order to
+ppxlib. You only need them while developing the project, in order to
 automatically produce the generated code but that's it. End users of
 your project do not need to install ppxlib and other ppx rewriters
 themselves.

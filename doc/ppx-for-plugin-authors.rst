@@ -115,7 +115,7 @@ Consider the following example:
             [%expr [%e dynamic_node] ^ "some_fixed_suffix"]
 
 The ``with_suffix_expr`` function will create an ``expression`` which is the concatenation of the
-``s`` argument and the fixed suffix. Ie ``with_suffix_expr "some_dynamic_stem"`` is equivalent to
+``s`` argument and the fixed suffix. I.e. ``with_suffix_expr "some_dynamic_stem"`` is equivalent to
 ``[%expr "some_dynamic_steme" ^ "some_fixed_suffix"]``.
 
 Similarly if you want to ignore some parts of AST nodes and extract some others when
@@ -145,7 +145,7 @@ extension as its payload should always be a pattern the same way it must always 
 in an expression context.
 
 As you may have noticed, you can anti-quote expressions which type differs from the type of the
-whole ``metaquot`` extension point. Eg you can write:
+whole ``metaquot`` extension point. E.g. you can write:
 
 .. code:: ocaml
 
