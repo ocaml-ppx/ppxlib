@@ -8,23 +8,14 @@
   ocaml-migrate-parsetree)
  (flags (:standard -open Ocaml_shadow -safe-string) -w -9-27-32)
  (modules
-  ast_helper
   ast
-  clflags_helper
-  docstrings
   import
-  lexer
+  lexer_helper
   location_helper
-  parse
-  parser
   pprintast
   ppxlib_ast
-  syntaxerr
   warn)
  (lint (pps ppxlib_traverse -deriving-keep-w32=impl)))
-
-(ocamllex  lexer)
-(ocamlyacc parser0)
 
 ;; This is to make the code compatible with different versions of
 ;; OCaml
@@ -32,13 +23,3 @@
  (targets location_helper.ml clflags_helper.ml)
  (deps    gen-compiler_specifics)
  (action  (run %{ocaml} %{deps} %{ocaml_version} %{targets})))
-
-(rule
- (targets parser.ml)
- (deps    parser0.ml)
- (action  (with-stdout-to %{targets} (echo "open Import\n%{read:parser0.ml}"))))
-
-(rule
- (targets parser.mli)
- (deps    parser0.mli)
- (action  (with-stdout-to %{targets} (echo "open Import\n%{read:parser0.mli}"))))
