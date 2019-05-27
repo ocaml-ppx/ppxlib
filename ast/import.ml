@@ -144,7 +144,6 @@ module Parser = struct
 end
 
 (* Modules imported directly from the compiler *)
-module Clflags    = Ocaml_common.Clflags
 module Longident  = Ocaml_common.Longident
 module Misc       = Ocaml_common.Misc
 module Warnings   = Ocaml_common.Warnings

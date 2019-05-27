@@ -7,13 +7,8 @@ let () =
   let oc = open_out_bin Sys.argv.(2) in
   let pr fmt = fprintf oc (fmt ^^ "\n") in
   pr "module O = Ocaml_common";
-  if ver < (4, 06) then
-    pr "let error_of_exn = O.Location.error_of_exn"
+  if ver < (4, 08) then
+    pr "let get_load_path () = !Ocaml_common.Config.load_path"
   else
-    pr "\
-let error_of_exn exn =
-  match O.Location.error_of_exn exn with
-  | None -> None
-  | Some `Already_displayed -> None
-  | Some (`Ok t) -> Some t";
+    pr "let get_load_path () = Ocaml_common.Load_path.get_paths ()";
   close_out oc
