@@ -1,4 +1,4 @@
-open! Import
+open! Import[@@ocaml.warning "-66"]
 
 let default_print_warning _loc = ()
 
