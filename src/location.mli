@@ -37,9 +37,10 @@ type nonrec 'a loc = 'a loc =
 
 module Error : sig
   type location = t
-  type t = Ocaml_common.Location.error
+  type t
 
-  val createf : loc:location -> ('a, Caml.Format.formatter, unit, t) format4 -> 'a
+  val make : loc:location -> string -> sub:(location * string) list -> t
+  val createf : loc:location -> ('a, unit, string, t) format4 -> 'a
 
   val message : t -> string
   val set_message : t -> string -> t
