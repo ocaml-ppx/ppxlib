@@ -38,7 +38,7 @@ type t =
   }
 [%%expect{|
 Line _, characters 0-36:
-Error (Warning 22): Fields are not sorted!
+Error (warning 22): Fields are not sorted!
 |}]
 
 
