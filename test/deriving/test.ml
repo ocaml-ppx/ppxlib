@@ -35,8 +35,8 @@ Line _, characters 25-33:
 Error: Deriver foo is needed for bar, you need to add it before in the list
 |}]
 
-type t = int [@@deriving foo, bar]
+type nonrec int = int [@@deriving foo, bar]
 [%%expect{|
-type t = int
+type nonrec int = int
 val x : int = 42
 |}]
