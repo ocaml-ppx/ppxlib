@@ -51,6 +51,8 @@ and location = Location.t = {
   loc_ghost: bool;
 }
 
+and location_stack = location list
+
 (* Note on the use of Lexing.position in this module.
    If [pos_fname = ""], then use [!input_name] instead.
    If [pos_lnum = -1], then [pos_bol = 0]. Use [pos_cnum] and
@@ -160,7 +162,7 @@ and core_type = Parsetree.core_type =
   {
     ptyp_desc: core_type_desc;
     ptyp_loc: location;
-    ptyp_loc_stack: location list;
+    ptyp_loc_stack: location_stack;
     ptyp_attributes: attributes; (* ... [@id1] [@id2] *)
   }
 
@@ -271,7 +273,7 @@ and pattern = Parsetree.pattern =
   {
     ppat_desc: pattern_desc;
     ppat_loc: location;
-    ppat_loc_stack: location list;
+    ppat_loc_stack: location_stack;
     ppat_attributes: attributes; (* ... [@id1] [@id2] *)
   }
 
@@ -337,7 +339,7 @@ and expression = Parsetree.expression =
   {
     pexp_desc: expression_desc;
     pexp_loc: location;
-    pexp_loc_stack: location list;
+    pexp_loc_stack: location_stack;
     pexp_attributes: attributes; (* ... [@id1] [@id2] *)
   }
 
@@ -1046,6 +1048,8 @@ class virtual map =
       let loc_end = self#position loc_end in
       let loc_ghost = self#bool loc_ghost in
       { loc_start; loc_end; loc_ghost }
+    method location_stack : location_stack -> location_stack =
+      fun l -> self#list self#location l
     method loc : 'a . ('a -> 'a) -> 'a loc -> 'a loc=
       fun _a ->
       fun { txt; loc } ->
@@ -1112,7 +1116,7 @@ class virtual map =
       fun { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes } ->
       let ptyp_desc = self#core_type_desc ptyp_desc in
       let ptyp_loc = self#location ptyp_loc in
-      let ptyp_loc_stack = self#list self#location ptyp_loc_stack in
+      let ptyp_loc_stack = self#location_stack ptyp_loc_stack in
       let ptyp_attributes = self#attributes ptyp_attributes in
       { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes }
     method core_type_desc : core_type_desc -> core_type_desc=
@@ -1187,7 +1191,7 @@ class virtual map =
       fun { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes } ->
       let ppat_desc = self#pattern_desc ppat_desc in
       let ppat_loc = self#location ppat_loc in
-      let ppat_loc_stack = self#list self#location ppat_loc_stack in
+      let ppat_loc_stack = self#location_stack ppat_loc_stack in
       let ppat_attributes = self#attributes ppat_attributes in
       { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes }
     method pattern_desc : pattern_desc -> pattern_desc=
@@ -1235,7 +1239,7 @@ class virtual map =
       fun { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } ->
       let pexp_desc = self#expression_desc pexp_desc in
       let pexp_loc = self#location pexp_loc in
-      let pexp_loc_stack = self#list self#location pexp_loc_stack in
+      let pexp_loc_stack = self#location_stack pexp_loc_stack in
       let pexp_attributes = self#attributes pexp_attributes in
       { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes }
     method expression_desc : expression_desc -> expression_desc=
@@ -1900,6 +1904,8 @@ class virtual iter =
     method location : location -> unit=
       fun { loc_start; loc_end; loc_ghost } ->
       self#position loc_start; self#position loc_end; self#bool loc_ghost
+    method location_stack : location_stack -> unit=
+      fun l -> self#list self#location l
     method loc : 'a . ('a -> unit) -> 'a loc -> unit=
       fun _a -> fun { txt; loc } -> _a txt; self#location loc
     method longident : longident -> unit=
@@ -1950,7 +1956,7 @@ class virtual iter =
       fun { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes } ->
       self#core_type_desc ptyp_desc;
       self#location ptyp_loc;
-      self#list self#location ptyp_loc_stack;
+      self#location_stack ptyp_loc_stack;
       self#attributes ptyp_attributes
     method core_type_desc : core_type_desc -> unit=
       fun x ->
@@ -2004,7 +2010,7 @@ class virtual iter =
       fun { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes } ->
       self#pattern_desc ppat_desc;
       self#location ppat_loc;
-      self#list self#location ppat_loc_stack;
+      self#location_stack ppat_loc_stack;
       self#attributes ppat_attributes
     method pattern_desc : pattern_desc -> unit=
       fun x ->
@@ -2034,7 +2040,7 @@ class virtual iter =
       fun { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } ->
       self#expression_desc pexp_desc;
       self#location pexp_loc;
-      self#list self#location pexp_loc_stack;
+      self#location_stack pexp_loc_stack;
       self#attributes pexp_attributes
     method expression_desc : expression_desc -> unit=
       fun x ->
@@ -2515,6 +2521,8 @@ class virtual ['acc] fold =
       let acc = self#position loc_start acc in
       let acc = self#position loc_end acc in
       let acc = self#bool loc_ghost acc in acc
+    method location_stack : location_stack -> 'acc -> 'acc=
+      fun l acc -> self#list self#location l acc
     method loc : 'a . ('a -> 'acc -> 'acc) -> 'a loc -> 'acc -> 'acc=
       fun _a ->
       fun { txt; loc } ->
@@ -2595,7 +2603,7 @@ class virtual ['acc] fold =
       fun acc ->
       let acc = self#core_type_desc ptyp_desc acc in
       let acc = self#location ptyp_loc acc in
-      let acc = self#list self#location ptyp_loc_stack acc in
+      let acc = self#location_stack ptyp_loc_stack acc in
       let acc = self#attributes ptyp_attributes acc in acc
     method core_type_desc : core_type_desc -> 'acc -> 'acc=
       fun x ->
@@ -2674,7 +2682,7 @@ class virtual ['acc] fold =
       fun acc ->
       let acc = self#pattern_desc ppat_desc acc in
       let acc = self#location ppat_loc acc in
-      let acc = self#list self#location ppat_loc_stack acc in
+      let acc = self#location_stack ppat_loc_stack acc in
       let acc = self#attributes ppat_attributes acc in acc
     method pattern_desc : pattern_desc -> 'acc -> 'acc=
       fun x ->
@@ -2724,7 +2732,7 @@ class virtual ['acc] fold =
       fun acc ->
       let acc = self#expression_desc pexp_desc acc in
       let acc = self#location pexp_loc acc in
-      let acc = self#list self#location pexp_loc_stack acc in
+      let acc = self#location_stack pexp_loc_stack acc in
       let acc = self#attributes pexp_attributes acc in acc
     method expression_desc : expression_desc -> 'acc -> 'acc=
       fun x ->
@@ -3372,6 +3380,9 @@ class virtual ['acc] fold_map =
       let (loc_end, acc) = self#position loc_end acc in
       let (loc_ghost, acc) = self#bool loc_ghost acc in
       ({ loc_start; loc_end; loc_ghost }, acc)
+    method location_stack : location_stack -> 'acc -> (location_stack * 'acc)=
+      fun l acc ->
+      self#list self#location l acc
     method loc :
       'a . ('a -> 'acc -> ('a * 'acc)) -> 'a loc -> 'acc -> ('a loc * 'acc)=
       fun _a ->
@@ -3468,7 +3479,7 @@ class virtual ['acc] fold_map =
       let (ptyp_desc, acc) = self#core_type_desc ptyp_desc acc in
       let (ptyp_loc, acc) = self#location ptyp_loc acc in
       let (ptyp_loc_stack, acc) =
-        self#list self#location ptyp_loc_stack acc in
+        self#location_stack ptyp_loc_stack acc in
       let (ptyp_attributes, acc) = self#attributes ptyp_attributes acc in
       ({ ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes }, acc)
     method core_type_desc :
@@ -3571,7 +3582,7 @@ class virtual ['acc] fold_map =
       let (ppat_desc, acc) = self#pattern_desc ppat_desc acc in
       let (ppat_loc, acc) = self#location ppat_loc acc in
       let (ppat_loc_stack, acc) =
-        self#list self#location ppat_loc_stack acc in
+        self#location_stack ppat_loc_stack acc in
       let (ppat_attributes, acc) = self#attributes ppat_attributes acc in
       ({ ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes }, acc)
     method pattern_desc : pattern_desc -> 'acc -> (pattern_desc * 'acc)=
@@ -3644,7 +3655,7 @@ class virtual ['acc] fold_map =
       let (pexp_desc, acc) = self#expression_desc pexp_desc acc in
       let (pexp_loc, acc) = self#location pexp_loc acc in
       let (pexp_loc_stack, acc) =
-        self#list self#location pexp_loc_stack acc in
+        self#location_stack pexp_loc_stack acc in
       let (pexp_attributes, acc) = self#attributes pexp_attributes acc in
       ({ pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes }, acc)
     method expression_desc :
@@ -4594,6 +4605,8 @@ class virtual ['ctx] map_with_context =
       let loc_end = self#position ctx loc_end in
       let loc_ghost = self#bool ctx loc_ghost in
       { loc_start; loc_end; loc_ghost }
+    method location_stack : 'ctx -> location_stack -> location_stack=
+      fun ctx l -> self#list self#location ctx l
     method loc : 'a . ('ctx -> 'a -> 'a) -> 'ctx -> 'a loc -> 'a loc=
       fun _a ->
       fun ctx ->
@@ -4678,7 +4691,7 @@ class virtual ['ctx] map_with_context =
       fun { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes } ->
       let ptyp_desc = self#core_type_desc ctx ptyp_desc in
       let ptyp_loc = self#location ctx ptyp_loc in
-      let ptyp_loc_stack = self#list self#location ctx ptyp_loc_stack in
+      let ptyp_loc_stack = self#location_stack ctx ptyp_loc_stack in
       let ptyp_attributes = self#attributes ctx ptyp_attributes in
       { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes }
     method core_type_desc : 'ctx -> core_type_desc -> core_type_desc=
@@ -4765,7 +4778,7 @@ class virtual ['ctx] map_with_context =
       fun { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes } ->
       let ppat_desc = self#pattern_desc ctx ppat_desc in
       let ppat_loc = self#location ctx ppat_loc in
-      let ppat_loc_stack = self#list self#location ctx ppat_loc_stack in
+      let ppat_loc_stack = self#location_stack ctx ppat_loc_stack in
       let ppat_attributes = self#attributes ctx ppat_attributes in
       { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes }
     method pattern_desc : 'ctx -> pattern_desc -> pattern_desc=
@@ -4821,7 +4834,7 @@ class virtual ['ctx] map_with_context =
       fun { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } ->
       let pexp_desc = self#expression_desc ctx pexp_desc in
       let pexp_loc = self#location ctx pexp_loc in
-      let pexp_loc_stack = self#list self#location ctx pexp_loc_stack in
+      let pexp_loc_stack = self#location_stack ctx pexp_loc_stack in
       let pexp_attributes = self#attributes ctx pexp_attributes in
       { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes }
     method expression_desc : 'ctx -> expression_desc -> expression_desc=
@@ -5619,6 +5632,8 @@ class virtual ['res] lift =
         [("loc_start", loc_start);
          ("loc_end", loc_end);
          ("loc_ghost", loc_ghost)]
+    method location_stack : location_stack -> 'res=
+      fun l -> self#list self#location l
     method loc : 'a . ('a -> 'res) -> 'a loc -> 'res=
       fun _a ->
       fun { txt; loc } ->
@@ -5729,7 +5744,7 @@ class virtual ['res] lift =
       fun { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes } ->
       let ptyp_desc = self#core_type_desc ptyp_desc in
       let ptyp_loc = self#location ptyp_loc in
-      let ptyp_loc_stack = self#list self#location ptyp_loc_stack in
+      let ptyp_loc_stack = self#location_stack ptyp_loc_stack in
       let ptyp_attributes = self#attributes ptyp_attributes in
       self#record
         [("ptyp_desc", ptyp_desc);
@@ -5823,7 +5838,7 @@ class virtual ['res] lift =
       fun { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes } ->
       let ppat_desc = self#pattern_desc ppat_desc in
       let ppat_loc = self#location ppat_loc in
-      let ppat_loc_stack = self#list self#location ppat_loc_stack in
+      let ppat_loc_stack = self#location_stack ppat_loc_stack in
       let ppat_attributes = self#attributes ppat_attributes in
       self#record
         [("ppat_desc", ppat_desc);
@@ -5886,7 +5901,7 @@ class virtual ['res] lift =
       fun { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } ->
       let pexp_desc = self#expression_desc pexp_desc in
       let pexp_loc = self#location pexp_loc in
-      let pexp_loc_stack = self#list self#location pexp_loc_stack in
+      let pexp_loc_stack = self#location_stack pexp_loc_stack in
       let pexp_attributes = self#attributes pexp_attributes in
       self#record
         [("pexp_desc", pexp_desc);
