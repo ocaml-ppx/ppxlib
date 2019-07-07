@@ -8,38 +8,28 @@ module Make(M : sig
     type result
     val cast : extension -> result
     val location : location -> result
-    val location_stacks : ((string list) * (location -> result)) option
+    val location_stack : (location -> result) option
     val attributes : (location -> result) option
     class std_lifters : location -> [result] Ppxlib_traverse_builtins.std_lifters
   end) = struct
   let lift loc = object
     inherit [M.result] Ast_traverse.lift as super
-    inherit! M.std_lifters loc as std_super
+    inherit! M.std_lifters loc
 
     method! attribute x =
       Attribute.mark_as_handled_manually x;
       super#attribute x
-
-    method! record x =
-      let x =
-        match M.location_stacks with
-        | None -> x
-        | Some (stack_field, make_result) ->
-          List.map
-            (fun ((field_name, _) as field) ->
-               if List.mem field_name stack_field then
-                 field_name, make_result loc
-               else
-                 field)
-            x
-      in
-      std_super#record x
 
     method! location _ = M.location loc
     method! attributes x =
       match M.attributes with
       | None -> super#attributes x
       | Some f -> assert_no_attributes x; f loc
+
+    method! location_stack x =
+      match M.location_stack with
+      | None -> super#location_stack x
+      | Some f -> f loc
 
     method! expression e =
       match e.pexp_desc with
@@ -85,7 +75,7 @@ end
 module Expr = Make(struct
     type result = expression
     let location loc = evar ~loc "loc"
-    let location_stacks = None
+    let location_stack = None
     let attributes = None
     class std_lifters = Ppxlib_metaquot_lifters.expression_lifters
     let cast ext =
@@ -101,11 +91,7 @@ module Expr = Make(struct
 module Patt = Make(struct
     type result = pattern
     let location loc = ppat_any ~loc
-    let location_stacks =
-      Some (
-        ["ptyp_loc_stack"; "ppat_loc_stack"; "pexp_loc_stack"],
-        fun loc -> ppat_any ~loc
-      )
+    let location_stack = Some (fun loc -> ppat_any ~loc)
     let attributes = Some (fun loc -> ppat_any ~loc)
     class std_lifters = Ppxlib_metaquot_lifters.pattern_lifters
     let cast ext =
