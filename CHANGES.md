@@ -1,6 +1,14 @@
 next
 ----
 
+### Fixed
+
+- Report errors according to the value of `OCAML_ERROR_STYLE` and
+  `OCAML_COLOR` in the standalone driver (#83, @NathanReb)
+
+0.6.0
+-----
+
 - Set `Location.input_name` to the original filename when reading a
   binary AST (#.., @diml)
 
