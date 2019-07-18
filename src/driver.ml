@@ -1257,6 +1257,7 @@ let standalone_run_as_ppx_rewriter () =
 ;;
 
 let standalone () =
+  Compiler_specifics.read_clflags_from_env ();
   try
     if Array.length Caml.Sys.argv >= 2 &&
        match Caml.Sys.argv.(1) with
