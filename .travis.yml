@@ -5,7 +5,6 @@ services:
 - docker
 env:
   global:
-  - PINS="ppxlib:."
   - DISTRO="debian-stable"
   - PACKAGE="ppxlib"
   matrix:
