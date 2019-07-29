@@ -1049,7 +1049,7 @@ class virtual map =
       let loc_ghost = self#bool loc_ghost in
       { loc_start; loc_end; loc_ghost }
     method location_stack : location_stack -> location_stack =
-      fun l -> self#list self#location l
+      self#list self#location
     method loc : 'a . ('a -> 'a) -> 'a loc -> 'a loc=
       fun _a ->
       fun { txt; loc } ->
@@ -1905,7 +1905,7 @@ class virtual iter =
       fun { loc_start; loc_end; loc_ghost } ->
       self#position loc_start; self#position loc_end; self#bool loc_ghost
     method location_stack : location_stack -> unit=
-      fun l -> self#list self#location l
+      self#list self#location
     method loc : 'a . ('a -> unit) -> 'a loc -> unit=
       fun _a -> fun { txt; loc } -> _a txt; self#location loc
     method longident : longident -> unit=
@@ -2522,7 +2522,7 @@ class virtual ['acc] fold =
       let acc = self#position loc_end acc in
       let acc = self#bool loc_ghost acc in acc
     method location_stack : location_stack -> 'acc -> 'acc=
-      fun l acc -> self#list self#location l acc
+      self#list self#location
     method loc : 'a . ('a -> 'acc -> 'acc) -> 'a loc -> 'acc -> 'acc=
       fun _a ->
       fun { txt; loc } ->
@@ -3381,8 +3381,7 @@ class virtual ['acc] fold_map =
       let (loc_ghost, acc) = self#bool loc_ghost acc in
       ({ loc_start; loc_end; loc_ghost }, acc)
     method location_stack : location_stack -> 'acc -> (location_stack * 'acc)=
-      fun l acc ->
-      self#list self#location l acc
+      self#list self#location
     method loc :
       'a . ('a -> 'acc -> ('a * 'acc)) -> 'a loc -> 'acc -> ('a loc * 'acc)=
       fun _a ->
@@ -4606,7 +4605,7 @@ class virtual ['ctx] map_with_context =
       let loc_ghost = self#bool ctx loc_ghost in
       { loc_start; loc_end; loc_ghost }
     method location_stack : 'ctx -> location_stack -> location_stack=
-      fun ctx l -> self#list self#location ctx l
+      self#list self#location
     method loc : 'a . ('ctx -> 'a -> 'a) -> 'ctx -> 'a loc -> 'a loc=
       fun _a ->
       fun ctx ->
@@ -5633,7 +5632,7 @@ class virtual ['res] lift =
          ("loc_end", loc_end);
          ("loc_ghost", loc_ghost)]
     method location_stack : location_stack -> 'res=
-      fun l -> self#list self#location l
+      self#list self#location
     method loc : 'a . ('a -> 'res) -> 'a loc -> 'res=
       fun _a ->
       fun { txt; loc } ->

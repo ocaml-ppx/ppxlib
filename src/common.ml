@@ -113,7 +113,8 @@ let loc_of_payload { attr_name; attr_payload; attr_loc = _; } =
   loc_of_name_and_payload attr_name attr_payload
 
 let loc_of_attribute { attr_name; attr_payload; attr_loc = _; } =
-  (* TODO: fix this in the compiler *)
+  (* TODO: fix this in the compiler, and move the logic to omp when converting
+     from older asts. *)
   (* "ocaml.doc" attributes are generated with [Location.none], which is not helpful for
      error messages. *)
   if Poly.(=) attr_name.loc Location.none then
