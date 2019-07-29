@@ -599,13 +599,14 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
         if not in_generated_code then
           Generated_code_hook.insert_after hook Signature_item item.psig_loc
             (Many extra_items);
+        let original_rest = rest in
         let rest = loop rest ~in_generated_code in
         (match expect_items with
         | [] -> ()
         | _ ->
           let expected = rev_concat expect_items in
           let pos = item.psig_loc.loc_end in
-          Code_matcher.match_signature rest ~pos ~expected
+          Code_matcher.match_signature original_rest ~pos ~expected
             ~mismatch_handler:(fun loc repl ->
               expect_mismatch_handler.f Signature_item loc repl));
         item :: (extra_items @ rest)
