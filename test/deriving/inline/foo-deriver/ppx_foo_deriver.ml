@@ -17,6 +17,7 @@ let add_deriver () =
           { pexp_desc = desc;
             pexp_loc = loc;
             pexp_attributes = [];
+            pexp_loc_stack = [];
           }
         in
         [
@@ -27,6 +28,7 @@ let add_deriver () =
                   { ppat_desc = Ppat_any;
                     ppat_loc = loc;
                     ppat_attributes = [];
+                    ppat_loc_stack = [];
                   }
               ;
                 pvb_expr = expr (
@@ -63,6 +65,7 @@ let () =
               { pexp_desc = Pexp_constant (Pconst_string ("foo", None));
                 pexp_loc = loc;
                 pexp_attributes = [];
+                pexp_loc_stack = [];
               }))
     ]
 

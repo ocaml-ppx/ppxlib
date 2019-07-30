@@ -461,7 +461,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
        - func.pexp_desc = Pexp_ident _
     *)
     method private pexp_apply_without_traversing_function base_ctxt e func args =
-      let { pexp_desc = _; pexp_loc; pexp_attributes; pexp_loc_stack = _ } = e in
+      let { pexp_desc = _; pexp_loc; pexp_attributes; pexp_loc_stack; } = e in
       let func =
         let { pexp_desc; pexp_loc; pexp_attributes; pexp_loc_stack } = func in
         let pexp_attributes = self#attributes base_ctxt pexp_attributes in
@@ -476,7 +476,7 @@ class map_top_down ?(expect_mismatch_handler=Expect_mismatch_handler.nop)
       { pexp_loc
       ; pexp_attributes
       ; pexp_desc = Pexp_apply (func, args)
-      ; pexp_loc_stack = []
+      ; pexp_loc_stack
       }
 
     method! class_type base_ctxt x =
