@@ -108,8 +108,15 @@ let gen_combinator_for_record path ~prefix ~has_attrs lds =
     else
       body
   in
+  let uses_loc =
+    List.exists lds ~f:(fun ld ->
+      match ld.pld_type.ptyp_desc with
+      | Ptyp_constr (path, _) when is_loc path.txt -> false
+      | _ -> true)
+  in
   let body =
-    M.expr "T (fun ctx loc x k -> let _ = loc in %a)"
+    M.expr "T (fun ctx %s x k -> %a)"
+      (if uses_loc then "loc" else "_loc")
       A.expr body
   in
   let body =
