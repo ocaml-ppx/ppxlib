@@ -1,3 +1,10 @@
+Unreleased
+----------
+
+- Do not produce a suprious empty correction when deriving_inline
+  expands into an extension that undergoes further expansion (#86,
+  @aalekseyev)
+
 0.8.1
 -----
 
