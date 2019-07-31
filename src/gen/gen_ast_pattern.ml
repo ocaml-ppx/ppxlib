@@ -3,20 +3,22 @@ open Ast_helper
 open Printf
 
 let apply_parsers funcs args types =
-  List.fold_right2 (List.combine funcs args) types ~init:(M.expr "k")
-    ~f:(fun (func, arg) typ acc ->
+  List.fold_right2 (List.combine funcs args) types ~init:(M.expr "k", false)
+    ~f:(fun (func, arg) typ (acc, needs_loc) ->
       match typ.ptyp_desc with
       | Ptyp_constr (path, _) when is_loc path.txt ->
         M.expr "let k = %a ctx %a.loc %a.txt k in %a"
           A.expr (evar func)
           A.expr arg
           A.expr arg
-          A.expr acc
+          A.expr acc,
+        needs_loc
       | _ ->
         M.expr "let k = %a ctx loc %a k in %a"
           A.expr (evar func)
           A.expr arg
-          A.expr acc)
+          A.expr acc,
+        true)
 ;;
 
 let assert_no_attributes ~path ~prefix =
@@ -40,7 +42,7 @@ let gen_combinator_for_constructor ?wrapper path ~prefix cd =
          | [x] -> Some (pvar x)
          | _   -> Some (Pat.tuple (List.map args ~f:pvar)))
     in
-    let exp =
+    let exp, _ =
       apply_parsers funcs (List.map args ~f:evar) cd_args
     in
     let expected = without_prefix ~prefix cd.pcd_name.txt in
@@ -97,7 +99,7 @@ let gen_combinator_for_record path ~prefix ~has_attrs lds =
   let funcs =
     List.map lds ~f:(fun ld -> map_keyword (without_prefix ~prefix ld.pld_name.txt))
   in
-  let body =
+  let body, needs_loc =
     apply_parsers funcs
       (List.map fields ~f:(fun field -> Exp.field (evar "x") (Loc.mk field)))
       (List.map lds ~f:(fun ld -> ld.pld_type))
@@ -108,15 +110,9 @@ let gen_combinator_for_record path ~prefix ~has_attrs lds =
     else
       body
   in
-  let uses_loc =
-    List.exists lds ~f:(fun ld ->
-      match ld.pld_type.ptyp_desc with
-      | Ptyp_constr (path, _) when is_loc path.txt -> false
-      | _ -> true)
-  in
   let body =
     M.expr "T (fun ctx %s x k -> %a)"
-      (if uses_loc then "loc" else "_loc")
+      (if needs_loc then "loc" else "_loc")
       A.expr body
   in
   let body =
