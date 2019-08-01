@@ -8,6 +8,7 @@ module Make(M : sig
     type result
     val cast : extension -> result
     val location : location -> result
+    val location_stack : (location -> result) option
     val attributes : (location -> result) option
     class std_lifters : location -> [result] Ppxlib_traverse_builtins.std_lifters
   end) = struct
@@ -24,6 +25,11 @@ module Make(M : sig
       match M.attributes with
       | None -> super#attributes x
       | Some f -> assert_no_attributes x; f loc
+
+    method! location_stack x =
+      match M.location_stack with
+      | None -> super#location_stack x
+      | Some f -> f loc
 
     method! expression e =
       match e.pexp_desc with
@@ -69,6 +75,7 @@ end
 module Expr = Make(struct
     type result = expression
     let location loc = evar ~loc "loc"
+    let location_stack = None
     let attributes = None
     class std_lifters = Ppxlib_metaquot_lifters.expression_lifters
     let cast ext =
@@ -77,13 +84,14 @@ module Expr = Make(struct
         assert_no_attributes attrs;
         e
       | _ ->
-        Location.raise_errorf ~loc:(loc_of_attribute ext)
+        Location.raise_errorf ~loc:(loc_of_extension ext)
           "expression expected"
   end)
 
 module Patt = Make(struct
     type result = pattern
     let location loc = ppat_any ~loc
+    let location_stack = Some (fun loc -> ppat_any ~loc)
     let attributes = Some (fun loc -> ppat_any ~loc)
     class std_lifters = Ppxlib_metaquot_lifters.pattern_lifters
     let cast ext =
@@ -93,7 +101,7 @@ module Patt = Make(struct
         Location.raise_errorf ~loc:e.pexp_loc
           "guard not expected here"
       | _ ->
-        Location.raise_errorf ~loc:(loc_of_attribute ext)
+        Location.raise_errorf ~loc:(loc_of_extension ext)
           "pattern expected"
   end)
 

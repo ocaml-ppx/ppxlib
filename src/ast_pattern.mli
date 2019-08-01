@@ -215,8 +215,8 @@ val single_expr_payload : (expression, 'a, 'b) t -> (payload, 'a, 'b) t
 
 val no_label : (expression, 'a, 'b) t -> (Asttypes.arg_label * expression, 'a, 'b) t
 
-val attribute : (string, 'a, 'b) t -> (payload, 'b, 'c) t -> (attribute, 'a, 'c) t
-val extension : (string, 'a, 'b) t -> (payload, 'b, 'c) t -> (attribute, 'a, 'c) t
+val attribute : name:(string, 'a, 'b) t -> payload:(payload, 'b, 'c) t -> (attribute, 'a, 'c) t
+val extension : (string, 'a, 'b) t -> (payload, 'b, 'c) t -> (extension, 'a, 'c) t
 
 val elist : (expression, 'a -> 'a, 'b) t -> (expression, 'b list -> 'c, 'c) t
 

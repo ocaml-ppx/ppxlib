@@ -55,6 +55,9 @@ struct
     inherit Ast_traverse.map
 
     method! location _ = Location.none
+
+    method! location_stack _ = []
+
   end
 
   module M_map = M.Transform(struct type 'a t = 'a -> 'a end)

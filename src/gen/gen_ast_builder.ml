@@ -8,7 +8,7 @@ let prefix_of_record lds =
 module Gen(Fixed_loc : sig val fixed_loc : bool end) = struct
   open Fixed_loc
 
-  let gen_combinator_for_constructor ~wrapper:(wpath, wprefix, has_attrs) path ~prefix cd =
+  let gen_combinator_for_constructor ~wrapper:(wpath, wprefix, has_attrs, has_loc_stack) path ~prefix cd =
     match cd.pcd_args with
     | Pcstr_record _ ->
       (* TODO. *)
@@ -37,6 +37,15 @@ module Gen(Fixed_loc : sig val fixed_loc : bool end) = struct
         let fields =
           if has_attrs then
             ( Loc.mk (fqn_longident' wpath (wprefix ^ "attributes"))
+            , M.expr "[]"
+            )
+            :: fields
+          else
+            fields
+        in
+        let fields =
+          if has_loc_stack then
+            ( Loc.mk (fqn_longident' wpath (wprefix ^ "loc_stack"))
             , M.expr "[]"
             )
             :: fields
@@ -132,7 +141,7 @@ end
 let filter_labels ~prefix lds =
   List.filter lds ~f:(fun ld ->
     match without_prefix ~prefix ld.pld_name.txt with
-    | "loc" | "attributes" -> false
+    | "loc" | "loc_stack" | "attributes" -> false
     | _ -> true)
 ;;
 
@@ -163,14 +172,17 @@ let generate filename =
            let has_attrs = List.exists lds ~f:(fun ld ->
              ld.pld_name.txt = prefix ^ "attributes")
            in
-           (path, td, Some (prefix, has_attrs, p.txt)))
+           let has_loc_stack = List.exists lds ~f:(fun ld ->
+             ld.pld_name.txt = prefix ^ "loc_stack")
+           in
+           (path, td, Some (prefix, has_attrs, has_loc_stack, p.txt)))
       | _ -> (path, td, None))
   in
   let wrapped =
     List.filter_map types_with_wrapped ~f:(fun (_, _, x) ->
       match x with
       | None -> None
-      | Some (_, _, p) -> Some p)
+      | Some (_, _, _, p) -> Some p)
   in
   let types =
     List.filter types_with_wrapped ~f:(fun (path, _, _) ->
@@ -178,8 +190,8 @@ let generate filename =
     |> List.map ~f:(fun (path, td, wrapped) ->
       match wrapped with
       | None -> (path, td, None)
-      | Some (prefix, has_attrs, p) ->
-        (path, td, Some (prefix, has_attrs, p, List.assoc p types)))
+      | Some (prefix, has_attrs, has_loc_stack, p) ->
+        (path, td, Some (prefix, has_attrs, has_loc_stack, p, List.assoc p types)))
   in
   (*  let all_types = List.map fst types in*)
   let types =
@@ -194,13 +206,13 @@ let generate filename =
       else
         match wrapped with
         | None -> G.gen_td path td
-        | Some (prefix, has_attrs, path', td') ->
-          G.gen_td ~wrapper:(path, prefix, has_attrs) path' td'
+        | Some (prefix, has_attrs, has_loc_stack, path', td') ->
+          G.gen_td ~wrapper:(path, prefix, has_attrs, has_loc_stack) path' td'
     )
     |> List.flatten
   in
   let st =
-    [ Str.open_ (Opn.mk (Loc.lident "Import"))
+    [ Str.open_ (Opn.mk (Mod.ident (Loc.lident "Import")))
     ; Str.module_ (Mb.mk (Loc.mk "M") (Mod.structure (items false)))
     ; Str.module_ (Mb.mk (Loc.mk "Make")
                      (Mod.functor_ (Loc.mk "Loc") (Some (Mty.signature [
