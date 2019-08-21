@@ -496,20 +496,6 @@ let mk_deriving_attr context ~prefix ~suffix =
     (fun x -> x)
 ;;
 
-module Attr = struct
-  let suffix = ""
-  let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
-  let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
-  let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_exception
-
-  module Expect = struct
-    let suffix = "_inline"
-    let td = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_declaration
-    let te = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_extension
-    let ec = mk_deriving_attr ~prefix:"ppxlib." ~suffix Type_exception
-  end
-end
-
 (* +-----------------------------------------------------------------+
    | Unused warning stuff                                            |
    +-----------------------------------------------------------------+ *)
@@ -645,46 +631,51 @@ let expand_sig_type_ext ~ctxt te generators =
   let generated = Generator.apply_all ~ctxt te generators in
   disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
-let () =
-  Driver.register_transformation "deriving"
-    ~aliases:["type_conv"]
-    ~rules:[ Context_free.Rule.attr_str_type_decl
-               Attr.td
-               expand_str_type_decls
-           ; Context_free.Rule.attr_sig_type_decl
-               Attr.td
-               expand_sig_type_decls
-           ; Context_free.Rule.attr_str_type_ext
-               Attr.te
-               expand_str_type_ext
-           ; Context_free.Rule.attr_sig_type_ext
-               Attr.te
-               expand_sig_type_ext
-           ; Context_free.Rule.attr_str_exception
-               Attr.ec
-               expand_str_exception
-           ; Context_free.Rule.attr_sig_exception
-               Attr.ec
-               expand_sig_exception
+let rules ~typ ~expand_sig ~expand_str ~rule_str ~rule_sig ~rule_str_expect
+      ~rule_sig_expect =
+  let prefix = "ppxlib." in
+  let deriving_attr = mk_deriving_attr ~suffix:"" ~prefix typ in
+  let deriving_attr_expect = mk_deriving_attr ~suffix:"_inline" ~prefix typ in
+  [ rule_sig deriving_attr expand_sig
+  ; rule_str deriving_attr expand_str
+  ; rule_str_expect deriving_attr_expect expand_str
+  ; rule_sig_expect deriving_attr_expect expand_sig
+  ]
 
-           (* [@@deriving_inline] *)
-           ; Context_free.Rule.attr_str_type_decl_expect
-               Attr.Expect.td
-               expand_str_type_decls
-           ; Context_free.Rule.attr_sig_type_decl_expect
-               Attr.Expect.td
-               expand_sig_type_decls
-           ; Context_free.Rule.attr_str_type_ext_expect
-               Attr.Expect.te
-               expand_str_type_ext
-           ; Context_free.Rule.attr_sig_type_ext_expect
-               Attr.Expect.te
-               expand_sig_type_ext
-           ; Context_free.Rule.attr_str_exception_expect
-               Attr.Expect.ec
-               expand_str_exception
-           ; Context_free.Rule.attr_sig_exception_expect
-               Attr.Expect.ec
-               expand_sig_exception
-           ]
+let rules_type_decl =
+  rules ~typ:Type_declaration
+    ~expand_str:expand_str_type_decls
+    ~expand_sig:expand_sig_type_decls
+    ~rule_str:Context_free.Rule.attr_str_type_decl
+    ~rule_sig:Context_free.Rule.attr_sig_type_decl_expect
+    ~rule_str_expect:Context_free.Rule.attr_str_type_decl
+    ~rule_sig_expect:Context_free.Rule.attr_sig_type_decl_expect
+
+let rules_type_ext =
+  rules ~typ:Type_extension
+    ~expand_str:expand_str_type_ext
+    ~expand_sig:expand_sig_type_ext
+    ~rule_str:Context_free.Rule.attr_str_type_ext
+    ~rule_sig:Context_free.Rule.attr_sig_type_ext_expect
+    ~rule_str_expect:Context_free.Rule.attr_str_type_ext
+    ~rule_sig_expect:Context_free.Rule.attr_sig_type_ext_expect
+
+let rules_exception =
+  rules ~typ:Type_exception
+    ~expand_str:expand_str_exception
+    ~expand_sig:expand_sig_exception
+    ~rule_str:Context_free.Rule.attr_str_exception
+    ~rule_sig:Context_free.Rule.attr_sig_exception_expect
+    ~rule_str_expect:Context_free.Rule.attr_str_exception
+    ~rule_sig_expect:Context_free.Rule.attr_sig_exception_expect
+
+let () =
+  let rules =
+    [ rules_type_decl
+    ; rules_type_ext
+    ; rules_exception
+    ]
+    |> List.concat
+  in
+  Driver.register_transformation "deriving" ~aliases:["type_conv"] ~rules
 ;;
