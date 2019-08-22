@@ -25,6 +25,9 @@ val bar : Deriving.t = <abstr>
 
 let mtd =
   Deriving.add "mtd"
+    ~sig_module_type_decl:(
+      Deriving.Generator.make_noarg
+        (fun ~loc ~path:_ _ -> [%sig: val y : int]))
     ~str_module_type_decl:(
       Deriving.Generator.make_noarg
         (fun ~loc ~path:_ _ -> [%str let y = 42]))
@@ -54,4 +57,15 @@ module type X = sig end [@@deriving mtd]
 [%%expect{|
 module type X = sig  end
 val y : int = 42
+|}]
+
+module Y : sig
+  module type X = sig end [@@deriving mtd]
+end = struct
+  module type X = sig end
+  let y = 42
+end
+[%%expect{|
+Line _, characters 42-42:
+Error: ppxlib: [@@@deriving.end] attribute missing
 |}]
