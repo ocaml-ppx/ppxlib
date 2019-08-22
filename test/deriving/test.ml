@@ -10,6 +10,8 @@ let foo =
   Deriving.add "foo"
     ~str_type_decl:(Deriving.Generator.make_noarg
                       (fun ~loc ~path:_ _ -> [%str let x = 42]))
+    ~sig_type_decl:(Deriving.Generator.make_noarg
+                      (fun ~loc ~path:_ _ -> [%sig: val y : int]))
 [%%expect{|
 val foo : Deriving.t = <abstr>
 |}]
@@ -51,6 +53,16 @@ type nonrec int = int [@@deriving foo, bar]
 [%%expect{|
 type nonrec int = int
 val x : int = 42
+|}]
+
+module Foo_sig : sig
+  type t [@@deriving foo]
+end = struct
+  type t
+end
+[%%expect{|
+Line _, characters 25-25:
+Error: ppxlib: [@@@deriving.end] attribute missing
 |}]
 
 module type X = sig end [@@deriving mtd]
