@@ -23,6 +23,15 @@ let bar =
 val bar : Deriving.t = <abstr>
 |}]
 
+let mtd =
+  Deriving.add "mtd"
+    ~str_module_type_decl:(
+      Deriving.Generator.make_noarg
+        (fun ~loc ~path:_ _ -> [%str let y = 42]))
+[%%expect{|
+val mtd : Deriving.t = <abstr>
+|}]
+
 type t = int [@@deriving bar]
 [%%expect{|
 Line _, characters 25-28:
@@ -39,4 +48,10 @@ type nonrec int = int [@@deriving foo, bar]
 [%%expect{|
 type nonrec int = int
 val x : int = 42
+|}]
+
+module type X = sig end [@@deriving mtd]
+[%%expect{|
+module type X = sig  end
+val y : int = 42
 |}]

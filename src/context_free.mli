@@ -88,6 +88,12 @@ module Rule : sig
         -> 'a list)
     -> t
 
+  val attr_str_module_type_decl : (structure_item, module_type_declaration, _) attr_inline
+  val attr_sig_module_type_decl : (signature_item, module_type_declaration, _) attr_inline
+
+  val attr_str_module_type_decl_expect : (structure_item, module_type_declaration, _) attr_inline
+  val attr_sig_module_type_decl_expect : (signature_item, module_type_declaration, _) attr_inline
+
   val attr_str_type_ext : (structure_item, type_extension, _) attr_inline
   val attr_sig_type_ext : (signature_item, type_extension, _) attr_inline
 

@@ -214,9 +214,11 @@ module Deriver = struct
       ; str_type_decl : (structure, rec_flag * type_declaration list) Generator.t option
       ; str_type_ext  : (structure, type_extension                  ) Generator.t option
       ; str_exception : (structure, type_exception                  ) Generator.t option
+      ; str_module_type_decl : (structure, module_type_declaration  ) Generator.t option
       ; sig_type_decl : (signature, rec_flag * type_declaration list) Generator.t option
       ; sig_type_ext  : (signature, type_extension                  ) Generator.t option
       ; sig_exception : (signature, type_exception                  ) Generator.t option
+      ; sig_module_type_decl : (signature, module_type_declaration  ) Generator.t option
       ; extension     : (loc:Location.t -> path:string -> core_type -> expression) option
       }
   end
@@ -226,9 +228,11 @@ module Deriver = struct
       { str_type_decl : string list
       ; str_type_ext  : string list
       ; str_exception : string list
+      ; str_module_type_decl : string list
       ; sig_type_decl : string list
       ; sig_type_ext  : string list
       ; sig_exception : string list
+      ; sig_module_type_decl : string list
       }
   end
 
@@ -251,6 +255,10 @@ module Deriver = struct
     let str_exception = { kind = Str; name = "exception"
                         ; get     = (fun t -> t.str_exception)
                         ; get_set = (fun t -> t.str_exception) }
+    let str_module_type_decl =
+      { kind = Str; name = "module type"
+      ; get     = (fun t -> t.str_module_type_decl)
+      ; get_set = (fun t -> t.str_module_type_decl) }
     let sig_type_decl = { kind = Sig; name = "signature type"
                         ; get     = (fun t -> t.sig_type_decl)
                         ; get_set = (fun t -> t.sig_type_decl) }
@@ -260,6 +268,10 @@ module Deriver = struct
     let sig_exception = { kind = Sig; name = "signature exception"
                         ; get     = (fun t -> t.sig_exception)
                         ; get_set = (fun t -> t.sig_exception) }
+    let sig_module_type_decl =
+      { kind = Sig; name = "signature module type"
+      ; get     = (fun t -> t.sig_module_type_decl)
+      ; get_set = (fun t -> t.sig_module_type_decl) }
   end
 
   type t =
@@ -370,9 +382,11 @@ module Deriver = struct
         ?str_type_decl
         ?str_type_ext
         ?str_exception
+        ?str_module_type_decl
         ?sig_type_decl
         ?sig_type_ext
         ?sig_exception
+        ?sig_module_type_decl
         ?extension
         name
     =
@@ -381,9 +395,11 @@ module Deriver = struct
       ; str_type_decl
       ; str_type_ext
       ; str_exception
+      ; str_module_type_decl
       ; sig_type_decl
       ; sig_type_ext
       ; sig_exception
+      ; sig_module_type_decl
       ; extension
       }
     in
@@ -402,9 +418,11 @@ module Deriver = struct
         ?str_type_decl
         ?str_type_ext
         ?str_exception
+        ?str_module_type_decl
         ?sig_type_decl
         ?sig_type_ext
         ?sig_exception
+        ?sig_module_type_decl
         set
     =
     let alias : Alias.t =
@@ -415,9 +433,11 @@ module Deriver = struct
       { str_type_decl = get str_type_decl
       ; str_type_ext  = get str_type_ext
       ; str_exception = get str_exception
+      ; str_module_type_decl = get str_module_type_decl
       ; sig_type_decl = get sig_type_decl
       ; sig_type_ext  = get sig_type_ext
       ; sig_exception = get sig_exception
+      ; sig_module_type_decl = get sig_module_type_decl
       }
     in
     Ppx_derivers.register name (T (Alias alias));
@@ -611,6 +631,16 @@ let expand_sig_type_decls ~ctxt rec_flag tds values =
   let generated = Generator.apply_all ~ctxt (rec_flag, tds) generators in
   disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
 
+let expand_str_module_type_decl ~ctxt mtd generators =
+  let generators = Deriver.resolve_all Deriver.Field.str_module_type_decl generators in
+  let generated = Generator.apply_all ~ctxt mtd generators in
+  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+
+let expand_sig_module_type_decl ~ctxt mtd generators =
+  let generators = Deriver.resolve_all Deriver.Field.sig_module_type_decl generators in
+  let generated = Generator.apply_all ~ctxt mtd generators in
+  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+
 let expand_str_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.str_exception generators in
   let generated = Generator.apply_all ~ctxt ec generators in
@@ -669,11 +699,21 @@ let rules_exception =
     ~rule_str_expect:Context_free.Rule.attr_str_exception
     ~rule_sig_expect:Context_free.Rule.attr_sig_exception_expect
 
+let rules_module_type_decl =
+  rules ~typ:Module_type_declaration
+    ~expand_str:expand_str_module_type_decl
+    ~expand_sig:expand_sig_module_type_decl
+    ~rule_str:Context_free.Rule.attr_str_module_type_decl
+    ~rule_sig:Context_free.Rule.attr_sig_module_type_decl_expect
+    ~rule_str_expect:Context_free.Rule.attr_str_module_type_decl
+    ~rule_sig_expect:Context_free.Rule.attr_sig_module_type_decl_expect
+
 let () =
   let rules =
     [ rules_type_decl
     ; rules_type_ext
     ; rules_exception
+    ; rules_module_type_decl
     ]
     |> List.concat
   in
