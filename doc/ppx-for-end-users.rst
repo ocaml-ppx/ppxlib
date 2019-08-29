@@ -89,7 +89,7 @@ in your ``dune`` file by ``lint``. For instance:
 
           (library
            (name my_lib)
-           (lint (pps (ppx_sexp_conv))))
+           (lint (pps ppx_sexp_conv)))
 
 Then to regenerate the parts between ``[@@deriving_inline]`` and
 ``[@@@end]``, run the following command:
