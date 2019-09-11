@@ -10,16 +10,16 @@ module Ast = Ast_builder.Default
 module Ast = Ppxlib.Ast_builder.Default
 |}]
 
-let quoter = Quote.create ();;
+let quoter = Quoter.create ();;
 [%%expect{|
-val quoter : Quote.t = <abstr>
+val quoter : Quoter.t = <abstr>
 |}]
 
 #install_printer Pprintast.expression;;
 
 let expr1 =
   Ast.evar "foo" ~loc:Location.none
-  |> Quote.quote quoter
+  |> Quoter.quote quoter
 [%%expect{|
 val expr1 : expression =
   {Ppxlib__.Import.pexp_desc =
@@ -51,7 +51,7 @@ Pprintast.string_of_expression expr1;;
 
 let expr2 =
   Ast_builder.Default.evar ~loc:Location.none "bar"
-  |> Quote.quote quoter
+  |> Quoter.quote quoter
 [%%expect{|
 val expr2 : expression =
   {Ppxlib__.Import.pexp_desc =
@@ -78,7 +78,7 @@ val expr2 : expression =
 
 let quoted =
   let expr = Ast.elist ~loc:Location.none [expr1; expr2] in
-  Quote.sanitize quoter expr
+  Quoter.sanitize quoter expr
 [%%expect{|
 val quoted : expression =
   {Ppxlib__.Import.pexp_desc =
