@@ -103,6 +103,20 @@ let _ = convert_longident "Base.( land )"
  Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Base", "land"))
 |}]
 
+let _ = convert_longident "A(B)"
+[%%expect{|
+- : string * longident =
+(".B", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "", "B"))
+|}]
+
+let _ = convert_longident "A.B(C)"
+[%%expect{|
+- : string * longident =
+("A..C",
+ Ppxlib.Longident.Ldot
+  (Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "A", ""), "C"))
+|}]
+
 let _ = Ppxlib.Code_path.(file_path @@ top_level ~file_path:"dir/main.ml")
 [%%expect{|
 - : string = "dir/main.ml"
