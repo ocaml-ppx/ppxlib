@@ -105,7 +105,7 @@ let _ = convert_longident "Base.( land )"
 
 let _ = convert_longident "A(B)"
 [%%expect{|
-Exception: Invalid_argument "Ppxlib.Longident.parse".
+Exception: Invalid_argument "Ppxlib.Longident.parse: \"A(B)\"".
 Raised at file "stdlib.ml", line 34, characters 25-45
 Called from file "test/base/test.ml", line 3, characters 15-37
 Called from file "toplevel/toploop.ml", line 180, characters 17-56
@@ -113,7 +113,7 @@ Called from file "toplevel/toploop.ml", line 180, characters 17-56
 
 let _ = convert_longident "A.B(C)"
 [%%expect{|
-Exception: Invalid_argument "Ppxlib.Longident.parse".
+Exception: Invalid_argument "Ppxlib.Longident.parse: \"A.B(C)\"".
 Raised at file "stdlib.ml", line 34, characters 25-45
 Called from file "test/base/test.ml", line 3, characters 15-37
 Called from file "toplevel/toploop.ml", line 180, characters 17-56
