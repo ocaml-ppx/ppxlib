@@ -5,6 +5,9 @@ Unreleased
   expands into an extension that undergoes further expansion (#86,
   @aalekseyev)
 
+- Add `Ppxlib.Quoter`. This module allows to generate hygienic code fragments in
+  the spirit of ppx_deriving. (#92, @rgrinberg)
+
 0.8.1
 -----
 
