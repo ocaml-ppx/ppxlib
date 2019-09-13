@@ -8,6 +8,9 @@ Unreleased
 - Add `Ppxlib.Quoter`. This module allows to generate hygienic code fragments in
   the spirit of ppx_deriving. (#92, @rgrinberg)
 
+- Allow for registering derivers on module type declarations. (#94, fix #83,
+  @rgrinberg)
+
 0.8.1
 -----
 
