@@ -105,16 +105,18 @@ let _ = convert_longident "Base.( land )"
 
 let _ = convert_longident "A(B)"
 [%%expect{|
-- : string * longident =
-(".B", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "", "B"))
+Exception: Invalid_argument "Ppxlib.Longident.parse".
+Raised at file "stdlib.ml", line 34, characters 25-45
+Called from file "test/base/test.ml", line 3, characters 15-37
+Called from file "toplevel/toploop.ml", line 180, characters 17-56
 |}]
 
 let _ = convert_longident "A.B(C)"
 [%%expect{|
-- : string * longident =
-("A..C",
- Ppxlib.Longident.Ldot
-  (Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "A", ""), "C"))
+Exception: Invalid_argument "Ppxlib.Longident.parse".
+Raised at file "stdlib.ml", line 34, characters 25-45
+Called from file "test/base/test.ml", line 3, characters 15-37
+Called from file "toplevel/toploop.ml", line 180, characters 17-56
 |}]
 
 let _ = Ppxlib.Code_path.(file_path @@ top_level ~file_path:"dir/main.ml")
