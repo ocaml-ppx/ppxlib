@@ -78,6 +78,5 @@ end = struct
   let y = 42
 end
 [%%expect{|
-Line _, characters 42-42:
-Error: ppxlib: [@@@deriving.end] attribute missing
+module Y : sig module type X = sig  end val y : int end
 |}]

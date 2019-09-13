@@ -704,8 +704,8 @@ let rules_module_type_decl =
     ~expand_str:expand_str_module_type_decl
     ~expand_sig:expand_sig_module_type_decl
     ~rule_str:Context_free.Rule.attr_str_module_type_decl
-    ~rule_sig:Context_free.Rule.attr_sig_module_type_decl_expect
-    ~rule_str_expect:Context_free.Rule.attr_str_module_type_decl
+    ~rule_sig:Context_free.Rule.attr_sig_module_type_decl
+    ~rule_str_expect:Context_free.Rule.attr_str_module_type_decl_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_module_type_decl_expect
 
 let () =
