@@ -2,6 +2,8 @@
 #require "base";;
 #require "stdio";;
 
+let () = Printexc.record_backtrace false
+
 open Base
 open Stdio
 open Ppxlib
