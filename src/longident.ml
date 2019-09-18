@@ -60,11 +60,10 @@ let parse s =
   let invalid () =
     invalid_arg (Printf.sprintf "Ppxlib.Longident.parse: %S" s)
   in
-  match String.index s '(' with
-  | None -> parse_simple  s
-  | Some l -> match String.rindex s ')' with
-    | None -> invalid ()
-    | Some r ->
+  match String.index s '(', String.rindex s ')' with
+  | None, None -> parse_simple  s
+  | None, _ | _, None -> invalid ()
+  | Some l, Some r ->
       if Int.( r <> String.length s - 1 ) then invalid ();
       let group = if Int.(r = l + 1) then "()" else
           String.strip (String.sub s ~pos:(l+1) ~len:(r-l-1))

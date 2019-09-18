@@ -115,7 +115,7 @@ Exception: Invalid_argument "Ppxlib.Longident.parse: \"A.B(C)\"".
 
 let _ = convert_longident ")"
 [%%expect{|
-- : string * longident = ("( ) )", Ppxlib.Longident.Lident ")")
+Exception: Invalid_argument "Ppxlib.Longident.parse: \")\"".
 |}]
 
 let _ = Ppxlib.Code_path.(file_path @@ top_level ~file_path:"dir/main.ml")
