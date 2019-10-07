@@ -1,4 +1,4 @@
-(*$ #use "cinaps_helpers" $*)
+(*$ open Ppxlib_cinaps_helpers $*)
 open! Import
 
 module Format = Caml.Format

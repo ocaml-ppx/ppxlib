@@ -1,4 +1,4 @@
-(* -*- tuareg -*- *)
+open Re
 
 let str_to_sig =
   let re = Str.regexp {|\(_?[sS]tructure\|impl\(ementation\)?\|str_\|_str\|\b\(st\|Str\)\b\)|} in
