@@ -1,4 +1,3 @@
 (library
  (name ppxlib_cinaps_helpers)
- (public_name ppxlib.cinaps_helpers)
  (libraries re))

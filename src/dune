@@ -21,7 +21,7 @@
 
 (cinaps
  (files *.ml *.mli)
- (libraries ppxlib.cinaps_helpers))
+ (libraries ppxlib_cinaps_helpers))
 
 (rule
  (targets ast_pattern_generated.ml)
