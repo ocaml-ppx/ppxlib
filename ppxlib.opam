@@ -22,6 +22,7 @@ depends: [
   "ppx_derivers"            {>= "1.0"}
   "stdio"                   {>= "v0.11.0"}
   "ocamlfind"               {with-test}
+  "cinaps"                  {with-test & >= "v0.12.1"}
 ]
 synopsis: "Base library and tools for ppx rewriters"
 description: """
