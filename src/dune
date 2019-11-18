@@ -19,10 +19,9 @@
   (flags      (-corrected-suffix %{corrected-suffix} -diff-cmd - -dump-ast))
   (lint_flags (-corrected-suffix %{corrected-suffix} -diff-cmd - -null    ))))
 
-(alias
- (name DEFAULT)
- (deps cinaps_helpers (:ml (glob_files *.ml)) (:mli (glob_files *.mli)))
- (action (run %{bin:cinaps} %{ml} %{mli})))
+(cinaps
+ (files *.ml *.mli)
+ (libraries ppxlib_cinaps_helpers))
 
 (rule
  (targets ast_pattern_generated.ml)
@@ -33,16 +32,6 @@
  (targets ast_builder_generated.ml)
  (deps gen/gen_ast_builder.exe)
  (action  (run ./gen/gen_ast_builder.exe %{lib:ppxlib.ast:ast.ml})))
-
-(alias
- (name cinaps)
- (deps cinaps_helpers (:ml (glob_files *.ml)) (:mli (glob_files *.mli)))
- (action (progn
-          (run %{bin:cinaps} -no-color -diff-cmd - %{ml} %{mli})
-          (diff? code_matcher.ml code_matcher.ml.cinaps-corrected)
-          (diff? driver.ml driver.ml.cinaps-corrected)
-          (diff? context_free.ml context_free.ml.cinaps-corrected)
-          )))
 
 ;; This is to make the code compatible with different versions of
 ;; OCaml

@@ -9,7 +9,10 @@ env:
   - PACKAGE="ppxlib"
   matrix:
   - OCAML_VERSION="4.04"
+    TESTS=false
   - OCAML_VERSION="4.05"
+    TESTS=false
   - OCAML_VERSION="4.06"
+    TESTS=false
   - OCAML_VERSION="4.07"
   - OCAML_VERSION="4.08"
