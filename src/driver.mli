@@ -84,7 +84,7 @@ end
     Rewritings are applied in the following order:
     - linters ([lint_impl], [lint_intf])
     - preprocessing ([preprocess_impl], [preprocess_intf])
-    - contest-independent rules ([rules], [extensions])
+    - context-independent rules ([rules], [extensions])
     - whole-file transformations ([impl], [intf], [enclose_impl], [enclose_intf])
 *)
 val register_transformation
