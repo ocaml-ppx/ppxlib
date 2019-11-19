@@ -81,8 +81,11 @@ end
     [lint_impl] and [lint_intf] are applied to the unprocessed source. Errors they return
     will be reported to the user as preprocessor warnings.
 
-    [preprocess_impl] and [preprocess_intf] are applied after linters,
-    but before other transformations.
+    Rewritings are applied in the following order:
+    - linters ([lint_impl], [lint_intf])
+    - preprocessing ([preprocess_impl], [preprocess_intf])
+    - contest-independent rules ([rules], [extensions])
+    - whole-file transformations ([impl], [intf], [enclose_impl], [enclose_intf])
 *)
 val register_transformation
   :  ?extensions       : Extension.t list (* deprecated, use ~rules instead *)
