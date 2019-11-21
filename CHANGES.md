@@ -11,6 +11,13 @@ Unreleased
 - Allow for registering derivers on module type declarations. (#94, fix #83,
   @rgrinberg)
 
+- Fix parsing long idenitifiers. (#98, @NathanReb)
+
+0.9.0
+-----
+
+- Bump AST to 4.08 (#80, @xclerc)
+
 0.8.1
 -----
 
