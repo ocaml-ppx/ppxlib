@@ -3,6 +3,7 @@
     differences. *)
 val print
   :  ?diff_command:string
+  -> ?extra_patdiff_args:string list (** default: [] *)
   -> ?use_color:bool (** default: false *)
   -> file1:string
   -> file2:string
