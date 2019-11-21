@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.10.0 (11/21/2019)
+-------------------
 
 - Do not produce a suprious empty correction when deriving_inline
   expands into an extension that undergoes further expansion (#86,
