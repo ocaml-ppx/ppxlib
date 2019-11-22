@@ -163,8 +163,13 @@ module Transform = struct
           hook.f context loc (Many l));
       (header, footer)
     in
-    let map_impl st =
+    let map_impl st_with_attrs =
       let st =
+        let attrs, st =
+          List.split_while st_with_attrs ~f:(function
+            | { pstr_desc = Pstr_attribute _; _ } -> true
+            | _ -> false)
+        in
         let header, footer =
           match enclose_impl with
           | None   -> ([], [])
@@ -174,17 +179,23 @@ module Transform = struct
         in
         let file_path = File_path.get_default_path_str st in
         let base_ctxt = Expansion_context.Base.top_level ~omp_config ~file_path in
+        let attrs = map#structure base_ctxt attrs in
         let st = map#structure base_ctxt st in
         match header, footer with
-        | [], [] -> st
-        | _      -> List.concat [ header; st; footer ]
+        | [], [] -> attrs @ st
+        | _      -> List.concat [ attrs; header; st; footer ]
       in
       match impl with
       | None -> st
       | Some f -> f st
     in
-    let map_intf sg =
+    let map_intf sg_with_attrs =
       let sg =
+        let attrs, sg =
+          List.split_while sg_with_attrs ~f:(function
+            | { psig_desc = Psig_attribute _; _ } -> true
+            | _ -> false)
+        in
         let header, footer =
           match enclose_intf with
           | None   -> ([], [])
@@ -194,10 +205,11 @@ module Transform = struct
         in
         let file_path = File_path.get_default_path_sig sg in
         let base_ctxt = Expansion_context.Base.top_level ~omp_config ~file_path in
+        let attrs = map#signature base_ctxt attrs in
         let sg = map#signature base_ctxt sg in
         match header, footer with
-        | [], [] -> sg
-        | _      -> List.concat [ header; sg; footer ]
+        | [], [] -> attrs @ sg
+        | _      -> List.concat [ attrs; header; sg; footer ]
       in
       match intf with
       | None -> sg
