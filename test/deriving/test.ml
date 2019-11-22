@@ -61,8 +61,15 @@ end = struct
   type t
 end
 [%%expect{|
-Line _, characters 25-25:
-Error: ppxlib: [@@@deriving.end] attribute missing
+Line _, characters 6-25:
+Error: Signature mismatch:
+       Modules do not match:
+         sig type t end
+       is not included in
+         sig type t val y : int end
+       The value `y' is required but not provided
+       File "test/deriving/test.ml", line 3, characters 2-25:
+         Expected declaration
 |}]
 
 module type X = sig end [@@deriving mtd]

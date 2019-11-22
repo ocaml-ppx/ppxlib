@@ -677,8 +677,8 @@ let rules_type_decl =
     ~expand_str:expand_str_type_decls
     ~expand_sig:expand_sig_type_decls
     ~rule_str:Context_free.Rule.attr_str_type_decl
-    ~rule_sig:Context_free.Rule.attr_sig_type_decl_expect
-    ~rule_str_expect:Context_free.Rule.attr_str_type_decl
+    ~rule_sig:Context_free.Rule.attr_sig_type_decl
+    ~rule_str_expect:Context_free.Rule.attr_str_type_decl_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_type_decl_expect
 
 let rules_type_ext =
@@ -686,8 +686,8 @@ let rules_type_ext =
     ~expand_str:expand_str_type_ext
     ~expand_sig:expand_sig_type_ext
     ~rule_str:Context_free.Rule.attr_str_type_ext
-    ~rule_sig:Context_free.Rule.attr_sig_type_ext_expect
-    ~rule_str_expect:Context_free.Rule.attr_str_type_ext
+    ~rule_sig:Context_free.Rule.attr_sig_type_ext
+    ~rule_str_expect:Context_free.Rule.attr_str_type_ext_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_type_ext_expect
 
 let rules_exception =
@@ -695,8 +695,8 @@ let rules_exception =
     ~expand_str:expand_str_exception
     ~expand_sig:expand_sig_exception
     ~rule_str:Context_free.Rule.attr_str_exception
-    ~rule_sig:Context_free.Rule.attr_sig_exception_expect
-    ~rule_str_expect:Context_free.Rule.attr_str_exception
+    ~rule_sig:Context_free.Rule.attr_sig_exception
+    ~rule_str_expect:Context_free.Rule.attr_str_exception_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_exception_expect
 
 let rules_module_type_decl =
