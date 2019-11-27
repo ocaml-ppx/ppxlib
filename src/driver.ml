@@ -181,9 +181,7 @@ module Transform = struct
         let base_ctxt = Expansion_context.Base.top_level ~omp_config ~file_path in
         let attrs = map#structure base_ctxt attrs in
         let st = map#structure base_ctxt st in
-        match header, footer with
-        | [], [] -> attrs @ st
-        | _      -> List.concat [ attrs; header; st; footer ]
+        List.concat [ attrs; header; st; footer ]
       in
       match impl with
       | None -> st
@@ -207,9 +205,7 @@ module Transform = struct
         let base_ctxt = Expansion_context.Base.top_level ~omp_config ~file_path in
         let attrs = map#signature base_ctxt attrs in
         let sg = map#signature base_ctxt sg in
-        match header, footer with
-        | [], [] -> attrs @ sg
-        | _      -> List.concat [ attrs; header; sg; footer ]
+        List.concat [ attrs; header; sg; footer ]
       in
       match intf with
       | None -> sg
