@@ -63,9 +63,10 @@ end
     backward compatibility.
 
     [enclose_impl] and [enclose_intf] produces a header and footer for
-    implementation/interface files. They are a special case of [impl] and [intf]. Both
-    functions receive a location that denotes the whole file, or [None] if the file
-    contains nothing.
+    implementation/interface files. They are a special case of [impl] and [intf]. The
+    header is placed after any initial module-level attributes; the footer is placed after
+    everything else. Both functions receive a location that denotes all of the items
+    between header and footer, or [None] if the that list of items is empty.
 
     [impl] is an optional function that is applied on implementation files and [intf] is
     an optional function that is applied on interface files. These two functions are
