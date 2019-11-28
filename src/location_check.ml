@@ -584,7 +584,8 @@ let enforce_invariants fname =
                    String.is_suffix id ~suffix:"{}" ||
                    String.is_suffix id ~suffix:"{}<-") ->
           self#list (fun (_, e) -> self#expression e) args acc
-        | exception _ | _ -> super#expression_desc x acc
+        | exception _ -> super#expression_desc x acc
+        | _ -> super#expression_desc x acc
         end
       | _ ->
         super#expression_desc x acc
