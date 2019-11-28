@@ -35,6 +35,12 @@ type nonrec 'a loc = 'a loc =
   ; loc : t
   }
 
+val compare_pos : Lexing.position -> Lexing.position -> int
+val min_pos : Lexing.position -> Lexing.position -> Lexing.position
+val max_pos : Lexing.position -> Lexing.position -> Lexing.position
+
+val compare : t -> t -> int
+
 module Error : sig
   type location = t
   type t

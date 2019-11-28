@@ -33,14 +33,16 @@ end
 module Deriver = struct
   type t =
     { derived_item_loc : Location.t
+    ; inline : bool
     ; base : Base.t
     }
 
-  let make ~derived_item_loc ~base () = {derived_item_loc; base}
+  let make ~derived_item_loc ~inline ~base () = {derived_item_loc; base; inline}
 
   let derived_item_loc t = t.derived_item_loc
   let code_path t = t.base.code_path
   let omp_config t = t.base.omp_config
+  let inline t = t.inline
 
   let with_loc_and_path f =
     fun ~ctxt -> f ~loc:ctxt.derived_item_loc ~path:(Code_path.to_string_path ctxt.base.code_path)

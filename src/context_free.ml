@@ -341,7 +341,10 @@ let handle_attr_group_inline attrs rf items ~loc ~base_ctxt =
       match get_group group.attribute items with
       | None -> acc
       | Some values ->
-        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt () in
+        let ctxt =
+          Expansion_context.Deriver.make ~derived_item_loc:loc
+            ~inline:group.expect ~base:base_ctxt ()
+        in
         let expect_items = group.expand ~ctxt rf items values in
         expect_items :: acc)
 
@@ -351,7 +354,10 @@ let handle_attr_inline attrs item ~loc ~base_ctxt =
       match Attribute.get a.attribute item with
       | None -> acc
       | Some value ->
-        let ctxt = Expansion_context.Deriver.make ~derived_item_loc:loc ~base:base_ctxt () in
+        let ctxt =
+          Expansion_context.Deriver.make ~derived_item_loc:loc
+            ~inline:a.expect ~base:base_ctxt ()
+        in
         let expect_items = a.expand ~ctxt item value in
         expect_items :: acc)
 

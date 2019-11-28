@@ -58,9 +58,12 @@ module Deriver : sig
   (** Wrap a [fun ~loc ~path] into a [fun ~ctxt] *)
   val with_loc_and_path : (loc:Location.t -> path:string -> 'a) -> (ctxt:t -> 'a)
 
+  (** Whether the derived code is going to be inlined in the source *)
+  val inline : t -> bool
+
   (**/**)
   (** Undocumented section *)
 
   (** Build a new expansion context with the given item location and code path *)
-  val make : derived_item_loc:Location.t -> base:Base.t -> unit -> t
+  val make : derived_item_loc:Location.t -> inline:bool -> base:Base.t -> unit -> t
 end

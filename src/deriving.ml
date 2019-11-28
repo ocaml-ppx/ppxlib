@@ -517,49 +517,73 @@ let mk_deriving_attr context ~prefix ~suffix =
 ;;
 
 (* +-----------------------------------------------------------------+
-   | Unused warning stuff                                            |
+   | Unused warning stuff + locations check silencing                |
    +-----------------------------------------------------------------+ *)
 
-let disable_unused_warning_attribute ~loc =
+let disable_unused_warning_attribute =
+  let loc = Location.none in
   { attr_name = { txt = "ocaml.warning"; loc };
     attr_payload = PStr [pstr_eval ~loc (estring ~loc "-32") []];
     attr_loc = loc; }
 ;;
 
-let inline_doc_attr ~loc =
+let inline_doc_attr =
+  let loc = Location.none in
   { attr_name = { txt = "ocaml.doc"; loc };
     attr_payload = PStr [pstr_eval ~loc (estring ~loc "@inline") []];
     attr_loc = loc; }
 ;;
 
-let disable_unused_warning_str ~loc st =
-  if keep_w32_impl () then
-    st
-  else if not !do_insert_unused_warning_attribute then
-    Ignore_unused_warning.add_dummy_user_for_values#structure st
+let wrap_str ~loc ~hide st =
+  let include_infos = include_infos ~loc (pmod_structure ~loc st) in
+  let pincl_attributes =
+    if hide then
+      [ inline_doc_attr; Merlin_helpers.hide_attribute ]
+    else
+      [ inline_doc_attr ]
+  in
+  [pstr_include ~loc {include_infos with pincl_attributes}]
+
+let wrap_str ~loc ~hide st =
+  let loc = { loc with loc_ghost = true } in
+  let wrap, st =
+    if keep_w32_impl () then
+      hide, st
+    else if not !do_insert_unused_warning_attribute then
+      hide, Ignore_unused_warning.add_dummy_user_for_values#structure st
+    else
+      (* note: a structure is created because it is not currently possible to
+         attach an [@@ocaml.warning] attribute to a single structure item. *)
+      true, (pstr_attribute ~loc disable_unused_warning_attribute :: st)
+  in
+  if wrap then
+    wrap_str ~loc ~hide st
   else
-    (* note: a structure is created because it is not currently possible to
-       attach an [@@ocaml.warning] attribute to a single structure item. *)
-    let include_infos =
-      include_infos ~loc
-        (pmod_structure ~loc
-           (pstr_attribute ~loc (disable_unused_warning_attribute ~loc) :: st))
-    in
-    [pstr_include ~loc
-       {include_infos with pincl_attributes = [inline_doc_attr ~loc]}]
+    st
 ;;
 
-let disable_unused_warning_sig ~loc sg =
-  if keep_w32_intf () then
-    sg
+let wrap_sig ~loc ~hide st =
+  let include_infos = include_infos ~loc (pmty_signature ~loc st) in
+  let pincl_attributes =
+    if hide then
+      [ inline_doc_attr; Merlin_helpers.hide_attribute ]
+    else
+      [ inline_doc_attr ]
+  in
+  [psig_include ~loc {include_infos with pincl_attributes}]
+
+let wrap_sig ~loc ~hide sg =
+  let loc = { loc with loc_ghost = true } in
+  let wrap, sg =
+    if keep_w32_intf () then
+      hide, sg
+    else
+      true, (psig_attribute ~loc disable_unused_warning_attribute :: sg)
+  in
+  if wrap then
+    wrap_sig ~loc ~hide sg
   else
-    let include_infos =
-      include_infos ~loc
-        (pmty_signature ~loc
-           (psig_attribute ~loc (disable_unused_warning_attribute ~loc) :: sg))
-    in
-    [psig_include ~loc
-       { include_infos with pincl_attributes = [inline_doc_attr ~loc]}]
+    sg
 ;;
 
 (* +-----------------------------------------------------------------+
@@ -624,42 +648,50 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
     types_used_by_deriving tds
     @ Generator.apply_all ~ctxt (rec_flag, tds) generators;
   in
-  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_sig_type_decls ~ctxt rec_flag tds values =
   let generators = merge_generators Deriver.Field.sig_type_decl values in
   let generated = Generator.apply_all ~ctxt (rec_flag, tds) generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_str_module_type_decl ~ctxt mtd generators =
   let generators = Deriver.resolve_all Deriver.Field.str_module_type_decl generators in
   let generated = Generator.apply_all ~ctxt mtd generators in
-  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_sig_module_type_decl ~ctxt mtd generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_module_type_decl generators in
   let generated = Generator.apply_all ~ctxt mtd generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_str_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.str_exception generators in
   let generated = Generator.apply_all ~ctxt ec generators in
-  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_sig_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_exception generators in
   let generated = Generator.apply_all ~ctxt ec generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_str_type_ext ~ctxt te generators =
   let generators = Deriver.resolve_all Deriver.Field.str_type_ext generators in
   let generated = Generator.apply_all ~ctxt te generators in
-  disable_unused_warning_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_str ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let expand_sig_type_ext ~ctxt te generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_type_ext generators in
   let generated = Generator.apply_all ~ctxt te generators in
-  disable_unused_warning_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt) generated
+  wrap_sig ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt) generated
 
 let rules ~typ ~expand_sig ~expand_str ~rule_str ~rule_sig ~rule_str_expect
       ~rule_sig_expect =

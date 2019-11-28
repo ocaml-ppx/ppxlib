@@ -74,7 +74,7 @@ end
 
 module Expr = Make(struct
     type result = expression
-    let location loc = evar ~loc "loc"
+    let location loc = evar ~loc:{ loc with loc_ghost = true } "loc"
     let location_stack = None
     let attributes = None
     class std_lifters = Ppxlib_metaquot_lifters.expression_lifters
@@ -90,9 +90,9 @@ module Expr = Make(struct
 
 module Patt = Make(struct
     type result = pattern
-    let location loc = ppat_any ~loc
-    let location_stack = Some (fun loc -> ppat_any ~loc)
-    let attributes = Some (fun loc -> ppat_any ~loc)
+    let location loc = ppat_any ~loc:{ loc with loc_ghost = true }
+    let location_stack = Some (fun loc -> ppat_any ~loc:{ loc with loc_ghost = true })
+    let attributes = Some (fun loc -> ppat_any ~loc:{ loc with loc_ghost = true })
     class std_lifters = Ppxlib_metaquot_lifters.pattern_lifters
     let cast ext =
       match snd ext with
