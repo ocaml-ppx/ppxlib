@@ -1298,7 +1298,7 @@ and structure_item ctxt f x =
       let rec module_helper = function
         | {pmod_desc=Pmod_functor(s,mt,me'); pmod_attributes = []} ->
             if mt = None then pp f "()"
-            else Misc.may (pp f "(%s:%a)" s.txt (module_type ctxt)) mt;
+            else Misc_helper.may (pp f "(%s:%a)" s.txt (module_type ctxt)) mt;
             module_helper me'
         | me -> me
       in

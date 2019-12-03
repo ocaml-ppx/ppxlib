@@ -36,4 +36,14 @@ let is_unsafe () = !Ocaml_common.Clflags.fast[@ocaml.warning "-3"]
       pr {|
 let is_unsafe () = !Ocaml_common.Clflags.unsafe[@ocaml.warning "-3"]
 |};
+    end);
+  with_file Sys.argv.(4) ~f:(fun pr -> (* misc_helper *)
+    if ver < (4, 10) then begin
+      pr {|
+let may = Misc.may
+|};
+    end else begin
+      pr {|
+let may f = function Some v -> f v | None -> ()
+|};
     end)
