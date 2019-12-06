@@ -10,8 +10,10 @@ let args = ref []
 
 let add_arg key spec ~doc = args := (key, spec, doc) :: !args
 
+let loc_fname = ref None
 let perform_checks = ref Options.perform_checks
 let perform_checks_on_extensions = ref Options.perform_checks_on_extensions
+let perform_locations_check = ref Options.perform_locations_check
 let debug_attribute_drop = ref false
 let apply_list = ref None
 let preprocessor = ref None
@@ -498,6 +500,11 @@ let real_map_structure config cookies st =
     Attribute.check_unused#structure st;
     if !perform_checks_on_extensions then Extension.check_unused#structure st;
     Attribute.check_all_seen ();
+    if !perform_locations_check then
+      let open Location_check in
+      ignore (
+        (enforce_invariants !loc_fname)#structure
+          st Non_intersecting_ranges.empty : Non_intersecting_ranges.t)
   end;
   st
 ;;
@@ -541,6 +548,11 @@ let real_map_signature config cookies sg =
     Attribute.check_unused#signature sg;
     if !perform_checks_on_extensions then Extension.check_unused#signature sg;
     Attribute.check_all_seen ();
+    if !perform_locations_check then
+      let open Location_check in
+      ignore (
+        (enforce_invariants !loc_fname)#signature
+          sg Non_intersecting_ranges.empty : Non_intersecting_ranges.t)
   end;
   sg
 ;;
@@ -964,7 +976,6 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
     end
 ;;
 
-let loc_fname = ref None
 let output_mode = ref Pretty_print
 let output = ref None
 let kind = ref None
@@ -1075,6 +1086,10 @@ let shared_args =
     " Disable checks on extension point only"
   ; "-check-on-extensions", Arg.Set perform_checks_on_extensions,
     " Enable checks on extension point only"
+  ; "-no-locations-check", Arg.Clear perform_locations_check,
+    " Disable locations check only"
+  ; "-locations-check", Arg.Set perform_locations_check,
+    " Enable locations check only"
   ; "-apply", Arg.String handle_apply,
     "<names> Apply these transformations in order (comma-separated list)"
   ; "-dont-apply", Arg.String handle_dont_apply,
@@ -1298,5 +1313,7 @@ let () =
        { A.default_mapper with structure; signature })
 
 let enable_checks () =
+  (* We do not enable the locations check here, we currently require that one
+     to be specifically enabled. *)
   perform_checks := true;
   perform_checks_on_extensions := true
