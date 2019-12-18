@@ -162,6 +162,9 @@ module Generator = struct
   let make ?attributes ?deps spec gen =
     V2.make ?attributes ?deps spec (Expansion_context.Deriver.with_loc_and_path gen)
 
+  let make_code_path ?attributes ?deps spec gen =
+    V2.make ?attributes ?deps spec (Expansion_context.Deriver.with_loc_and_code_path gen)
+
   let make_noarg ?attributes ?deps gen = make ?attributes ?deps Args.empty gen
 
   let merge_accepted_args l =

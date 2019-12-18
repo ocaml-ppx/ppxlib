@@ -58,6 +58,9 @@ module Deriver : sig
   (** Wrap a [fun ~loc ~path] into a [fun ~ctxt] *)
   val with_loc_and_path : (loc:Location.t -> path:string -> 'a) -> (ctxt:t -> 'a)
 
+  (** Wrap a [fun ~loc ~path] into a [fun ~ctxt]. Uses Code_path.t, rather than a string. *)
+  val with_loc_and_code_path : (loc:Location.t -> path:Code_path.t -> 'a) -> (ctxt:t -> 'a)
+
   (** Whether the derived code is going to be inlined in the source *)
   val inline : t -> bool
 

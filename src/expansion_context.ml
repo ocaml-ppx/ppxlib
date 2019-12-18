@@ -46,4 +46,8 @@ module Deriver = struct
 
   let with_loc_and_path f =
     fun ~ctxt -> f ~loc:ctxt.derived_item_loc ~path:(Code_path.to_string_path ctxt.base.code_path)
+
+  let with_loc_and_code_path f =
+    fun ~ctxt -> f ~loc:ctxt.derived_item_loc ~path:(ctxt.base.code_path)
+
 end

@@ -30,6 +30,9 @@ val fully_qualified_path : t -> string
 *)
 val to_string_path : t -> string
 
+(** Return the name of the closest enclosing module to this path. *)
+val enclosing_module : t -> string
+
 (**/**)
 (** Undocumented section *)
 
