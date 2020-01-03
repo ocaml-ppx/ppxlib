@@ -1317,3 +1317,9 @@ let enable_checks () =
      to be specifically enabled. *)
   perform_checks := true;
   perform_checks_on_extensions := true
+
+let enable_location_check () =
+  perform_locations_check := true
+
+let disable_location_check () =
+  perform_locations_check := false
