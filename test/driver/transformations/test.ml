@@ -19,7 +19,7 @@ let lint = object
            (List.sort lds ~compare:(fun a b -> String.compare a.pld_name.txt b.pld_name.txt))
            lds
       then
-        Driver.Lint_error.of_string td.ptype_loc
+        Driver.Lint_error.of_string { td.ptype_loc with loc_ghost = true }
           "Fields are not sorted!"
         :: acc
       else

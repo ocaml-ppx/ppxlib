@@ -162,7 +162,8 @@ let should_ignore loc attrs =
 
 let rec extract_constraint e =
   match e.pexp_desc with
-  | Pexp_constraint (e, ct) -> Some (e, ct)
+  | Pexp_constraint (e, ct)
+  | Pexp_coerce (e, None, ct) -> Some (e, ct)
   | Pexp_newtype (name, exp) ->
     Option.map (extract_constraint exp) ~f:(fun (exp, ct) ->
       { e with
@@ -223,13 +224,6 @@ let enforce_invariants fname =
       else
         let childrens_locs = super#object_field x Non_intersecting_ranges.empty in
         do_check ~node_name:"object field" x.pof_loc childrens_locs siblings_locs
-
-    method! pattern x siblings_locs =
-      if should_ignore x.ppat_loc x.ppat_attributes then
-        siblings_locs
-      else
-        let childrens_locs = super#pattern x Non_intersecting_ranges.empty in
-        do_check ~node_name:"pattern" x.ppat_loc childrens_locs siblings_locs
 
     method! binding_op x siblings_locs =
       let childrens_locs = super#binding_op x Non_intersecting_ranges.empty in
@@ -387,7 +381,8 @@ let enforce_invariants fname =
           | (* let x : type a b c. ct = e *)
             Ppat_constraint (pvb_pat, { ptyp_desc = Ptyp_poly (_ :: _, ctp); _ }),
             Some (pvb_expr, cte)
-          | (* let x : ct = e *)
+          | (* let x :  ct = e
+               let x :> ct = e *)
             Ppat_constraint (pvb_pat, { ptyp_desc = Ptyp_poly ([], ctp); _ }),
             Some (pvb_expr, cte)
             when Location.compare ctp.ptyp_loc cte.ptyp_loc = 0 ->
@@ -489,6 +484,24 @@ let enforce_invariants fname =
             acc
         in
         do_check ~node_name:"expression" x.pexp_loc childrens_locs siblings_locs
+
+    (*****************)
+    (* ... and again *)
+    (*****************)
+
+    method! pattern x siblings_locs =
+      if should_ignore x.ppat_loc x.ppat_attributes then
+        siblings_locs
+      else
+        let childrens_locs =
+          if all_payloads_inside_parent ~loc:x.ppat_loc x.ppat_attributes then
+            super#pattern x Non_intersecting_ranges.empty
+          else
+            let acc = self#pattern_desc x.ppat_desc Non_intersecting_ranges.empty in
+            let _ = self#attributes x.ppat_attributes acc in
+            acc
+        in
+        do_check ~node_name:"pattern" x.ppat_loc childrens_locs siblings_locs
 
 
     (***********************************************************)
