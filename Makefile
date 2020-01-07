@@ -2,7 +2,7 @@ INSTALL_ARGS := $(if $(PREFIX),--prefix $(PREFIX),)
 
 # Default rule
 default:
-	dune build --auto-promote @cinaps @install
+	dune build --auto-promote @install
 
 install:
 	dune install $(INSTALL_ARGS)
