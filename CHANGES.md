@@ -1,3 +1,9 @@
+next
+----
+
+- Bump dune language to 1.11 since the cinaps extension requires at
+  least Dune 1.11 (#126, @diml)
+
 0.12.0 (01/07/2020)
 -------------------
 
