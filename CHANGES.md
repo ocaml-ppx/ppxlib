@@ -1,5 +1,8 @@
-next
-----
+0.13.0 (04/15/2020)
+-------------------
+
+- Add 'metaquot.' prefix to disambiguate metaquote extensions (#121,
+  @ceastlund)
 
 - Bump dune language to 1.11 since the cinaps extension requires at
   least Dune 1.11 (#126, @diml)
