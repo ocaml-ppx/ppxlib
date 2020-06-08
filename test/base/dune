@@ -7,5 +7,5 @@
   (chdir %{project_root}
    (progn
     (ignore-outputs
-     (run %{project_root}/test/expect/expect_test.exe %{test}))
+     (run %{project_root}/test/expect/expect_test.bc %{test}))
     (diff? %{test} %{test}.corrected)))))
