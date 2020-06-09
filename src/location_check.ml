@@ -1,4 +1,4 @@
-open! Import
+open Import
 
 module Non_intersecting_ranges : sig
   type t
@@ -93,20 +93,22 @@ let reloc_pmty_functors x =
   let outmost_loc = x.pmty_loc in
   let rec aux x =
     match x.pmty_desc with
-    | Pmty_functor (id, mty_opt, initial_res) ->
+    | Pmty_functor (Unit, initial_res) ->
+      let res = aux initial_res in
+      if phys_equal res initial_res then
+        x
+      else
+        { x with pmty_desc = Pmty_functor (Unit, res) }
+    | Pmty_functor (Named (id, mty), initial_res) ->
       let res = aux initial_res in
       if Location.compare outmost_loc res.pmty_loc = 0 then
-        let loc_start =
-          (match mty_opt with
-          | None -> id.loc
-          | Some mty -> mty.pmty_loc).loc_end
-        in
+        let loc_start = mty.pmty_loc.loc_end in
         let res = { res with pmty_loc = { res.pmty_loc with loc_start } } in
-        { x with pmty_desc = Pmty_functor (id, mty_opt, res) }
+        { x with pmty_desc = Pmty_functor (Named (id, mty), res) }
       else if phys_equal res initial_res then
         x
       else
-        { x with pmty_desc = Pmty_functor (id, mty_opt, res) }
+        { x with pmty_desc = Pmty_functor (Named (id, mty), res) }
     | _ -> x
   in
   aux x
@@ -115,20 +117,22 @@ let reloc_pmod_functors x =
   let outmost_loc = x.pmod_loc in
   let rec aux x =
     match x.pmod_desc with
-    | Pmod_functor (id, mty_opt, initial_res) ->
+    | Pmod_functor (Unit, initial_res) ->
+      let res = aux initial_res in
+      if phys_equal res initial_res then
+        x
+      else
+        { x with pmod_desc = Pmod_functor (Unit, res) }
+    | Pmod_functor (Named (id, mty), initial_res) ->
       let res = aux initial_res in
       if Location.compare outmost_loc res.pmod_loc = 0 then
-        let loc_start =
-          (match mty_opt with
-          | None -> id.loc
-          | Some mty -> mty.pmty_loc).loc_end
-        in
+        let loc_start = mty.pmty_loc.loc_end in
         let res = { res with pmod_loc = { res.pmod_loc with loc_start } } in
-        { x with pmod_desc = Pmod_functor (id, mty_opt, res) }
+        { x with pmod_desc = Pmod_functor (Named (id, mty), res) }
       else if phys_equal res initial_res then
         x
       else
-        { x with pmod_desc = Pmod_functor (id, mty_opt, res) }
+        { x with pmod_desc = Pmod_functor (Named (id, mty), res) }
     | _ -> x
   in
   aux x
@@ -632,7 +636,7 @@ let enforce_invariants fname =
                let acc = self#longident_loc lid acc in
                let acc = self#pattern pat acc in acc) labels acc
       | Ppat_constraint ({ ppat_desc = Ppat_unpack a; _ }, b) ->
-        let acc = self#loc self#string a acc in
+        let acc = self#loc (self#option self#string) a acc in
         self#core_type b acc
       | _ ->
         super#pattern_desc x acc
