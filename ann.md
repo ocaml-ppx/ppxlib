@@ -126,11 +126,13 @@ ppx rewriters. So we don't know if using Dune to upgrade all ppx
 rewriters at once will be a good enough story to make writing and
 maintaining ppx rewriters painless.
 
-However, because it is technically simpler than our original plan, we
-want to give this idea a proper try. @NathanReb is going to try this
-process for the upcoming 4.10 upgrade of ppxlib. Depending on the
-result, we might try this process once more for the 4.11 upgrade or
-decide sooner to pursue our original plan.
+However, because it leads to a world that is technically simpler and
+easier to reason about, we want to give this idea a proper
+try. @NathanReb is going to try this process for the upcoming 4.10
+upgrade of ppxlib. Depending on how this goes, we will decide whether
+to continue with our original plan or diverge and follow a plan based
+on the ocaml-migrate-parsetree technology rather than the dynamic AST
+we have been working on.
 
 [omp]: https://github.com/ocaml-ppx/ocaml-migrate-parsetree/
 [ppxlib]: https://github.com/ocaml-ppx/ppxlib/
