@@ -25,8 +25,30 @@ to maintain.
 ### What is the replacement?
 
 At the moment, ocaml-migrate-parsetree offers one way of writing ppx
-rewriters. Following the simplification, ocaml-migrate-parsetree
-itself will no longer be enough.
+rewriters. For instance, one might write the following to create a
+ppx rewriter with ocaml-migrate-parsetree:
+
+```ocaml
+open Migrate_parsetree
+open Ast_404
+
+let structure = ...
+let signature = ...
+
+let () =
+  Driver.register ~name:"ppx_cstruct" Versions.ocaml_404
+    (fun _config _cookies -> {default_mapper with structure; signature})
+```
+
+Following the simplification, the above code will break for at least
+two reasons:
+
+- the `Migrate_parsetree.Driver` will be gone
+- the `default_mapper` and `mapper` type coming from
+  `Ast_404.Ast_mapper` will be gone
+
+As a result, ocaml-migrate-parsetree itself will no longer be enough
+to write ppx rewriters.
 
 We recommend that ppx rewriters using the ocaml-migrate-parsetree API
 switch to [ppxlib][ppxlib].  The purpose of ppxlib is to provide a
