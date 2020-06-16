@@ -63,7 +63,8 @@ with the release of ocaml-migrate-parsetree 2.0.0 and a compatible
 ppxlib release.  At this point, most exsiting reverse dependencies of
 ocaml-migrate-parsetree will be marked as incompatible with
 ocaml-migrate-parsetree 2.0.0 and we will continue porting existing
-projects to ppxlib.
+projects to ppxlib to gradually make the world compatible with
+ocaml-migrate-parsetree 2.0.0.
 
 ### Consequences for other ppx libraries
 
