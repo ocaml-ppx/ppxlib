@@ -10,7 +10,7 @@ will go away. This will have an impact for projects that are currently
 using these functionalities and this post describes what we think such
 projects should do and how we plan to help.
 
-The motiviation for this change is to simplify ocaml-migrate-aprsetree
+The motivation for this change is to simplify ocaml-migrate-parsetree
 and make it easier to maintain. The core functionality it provides is
 valuable and worth maintaining, however right now the project is way
 too big and difficult to maintain. Going through compiler upgrades has
@@ -18,7 +18,7 @@ been unpleasant and difficult. And because of this, bugs of the
 segfault kind have accidentally been introduced and detected much
 later.
 
-Once we have droppped everything that doesn't fit in the purpose of
+Once we have dropped everything that doesn't fit in the purpose of
 the project, what will remain will be pretty simple, coherent and easy
 to maintain.
 
@@ -47,7 +47,7 @@ To make this transition smoother, we are planning to help with the
 porting effort. We have prepared [a list of ppx rewriters to port to
 ppxlib][toport].  This list is not exhaustive and in particular
 excludes ppx rewriters that have no reverse dependencies in opam in
-order to keep this work maneageable for us.  In any case, help porting
+order to keep this work manageable for us.  In any case, help porting
 projects to ppxlib would be very much appreciated.
 
 If you would like to help porting a project, please mention on the
@@ -60,7 +60,7 @@ issue.
 
 Once we have successfully converted a few projects, we will proceed
 with the release of ocaml-migrate-parsetree 2.0.0 and a compatible
-ppxlib release.  At this point, most exsiting reverse dependencies of
+ppxlib release.  At this point, most existing reverse dependencies of
 ocaml-migrate-parsetree will be marked as incompatible with
 ocaml-migrate-parsetree 2.0.0 and we will continue porting existing
 projects to ppxlib to gradually make the world compatible with
