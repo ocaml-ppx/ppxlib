@@ -74,7 +74,7 @@ Error: Signature mismatch:
 
 module type X = sig end [@@deriving mtd]
 [%%expect{|
-module type X = sig  end
+module type X = sig end
 val y : int = 42
 |}]
 
@@ -85,5 +85,5 @@ end = struct
   let y = 42
 end
 [%%expect{|
-module Y : sig module type X = sig  end val y : int end
+module Y : sig module type X = sig end val y : int end
 |}]

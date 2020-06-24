@@ -321,7 +321,7 @@ and pattern_desc = Parsetree.pattern_desc =
   (* #tconst *)
   | Ppat_lazy of pattern
   (* lazy P *)
-  | Ppat_unpack of string loc
+  | Ppat_unpack of string option loc
   (* (module P)
      Note: (module P : S) is represented as
      Ppat_constraint(Ppat_unpack, Ptyp_package)
@@ -429,7 +429,7 @@ and expression_desc = Parsetree.expression_desc =
   (* x <- 2 *)
   | Pexp_override of (label loc * expression) list
   (* {< x1 = E1; ...; Xn = En >} *)
-  | Pexp_letmodule of string loc * module_expr * expression
+  | Pexp_letmodule of string option loc * module_expr * expression
   (* let module M = ME in E *)
   | Pexp_letexception of extension_constructor * expression
   (* let exception C in E *)
@@ -792,7 +792,7 @@ and module_type_desc = Parsetree.module_type_desc =
   (* S *)
   | Pmty_signature of signature
   (* sig ... end *)
-  | Pmty_functor of string loc * module_type option * module_type
+  | Pmty_functor of functor_parameter * module_type
   (* functor(X : MT1) -> MT2 *)
   | Pmty_with of module_type * with_constraint list
   (* MT with ... *)
@@ -802,6 +802,13 @@ and module_type_desc = Parsetree.module_type_desc =
   (* [%id] *)
   | Pmty_alias of longident_loc
   (* (module M) *)
+
+and functor_parameter = Parsetree.functor_parameter =
+  | Unit
+  (* () *)
+  | Named of string option loc * module_type
+  (* (X : MT)          Some X, MT
+     (_ : MT)          None, MT *)
 
 and signature = signature_item list
 
@@ -849,7 +856,7 @@ and signature_item_desc = Parsetree.signature_item_desc =
 
 and module_declaration = Parsetree.module_declaration =
   {
-    pmd_name: string loc;
+    pmd_name: string option loc;
     pmd_type: module_type;
     pmd_attributes: attributes; (* ... [@@id1] [@@id2] *)
     pmd_loc: location;
@@ -929,7 +936,7 @@ and module_expr_desc = Parsetree.module_expr_desc =
   (* X *)
   | Pmod_structure of structure
   (* struct ... end *)
-  | Pmod_functor of string loc * module_type option * module_expr
+  | Pmod_functor of functor_parameter * module_expr
   (* functor(X : MT1) -> ME *)
   | Pmod_apply of module_expr * module_expr
   (* ME1(ME2) *)
@@ -994,7 +1001,7 @@ and value_binding = Parsetree.value_binding =
 
 and module_binding = Parsetree.module_binding =
   {
-    pmb_name: string loc;
+    pmb_name: string option loc;
     pmb_expr: module_expr;
     pmb_attributes: attributes;
     pmb_loc: location;
@@ -1229,7 +1236,8 @@ class virtual map =
             let b = self#core_type b in Ppat_constraint (a, b)
         | Ppat_type a -> let a = self#longident_loc a in Ppat_type a
         | Ppat_lazy a -> let a = self#pattern a in Ppat_lazy a
-        | Ppat_unpack a -> let a = self#loc self#string a in Ppat_unpack a
+        | Ppat_unpack a ->
+            let a = self#loc (self#option self#string) a in Ppat_unpack a
         | Ppat_exception a -> let a = self#pattern a in Ppat_exception a
         | Ppat_extension a -> let a = self#extension a in Ppat_extension a
         | Ppat_open (a, b) ->
@@ -1332,7 +1340,7 @@ class virtual map =
                    let b = self#expression b in (a, b)) a in
             Pexp_override a
         | Pexp_letmodule (a, b, c) ->
-            let a = self#loc self#string a in
+            let a = self#loc (self#option self#string) a in
             let b = self#module_expr b in
             let c = self#expression c in Pexp_letmodule (a, b, c)
         | Pexp_letexception (a, b) ->
@@ -1678,16 +1686,22 @@ class virtual map =
         match x with
         | Pmty_ident a -> let a = self#longident_loc a in Pmty_ident a
         | Pmty_signature a -> let a = self#signature a in Pmty_signature a
-        | Pmty_functor (a, b, c) ->
-            let a = self#loc self#string a in
-            let b = self#option self#module_type b in
-            let c = self#module_type c in Pmty_functor (a, b, c)
+        | Pmty_functor (a, b) ->
+            let a = self#functor_parameter a in
+            let b = self#module_type b in Pmty_functor (a, b)
         | Pmty_with (a, b) ->
             let a = self#module_type a in
             let b = self#list self#with_constraint b in Pmty_with (a, b)
         | Pmty_typeof a -> let a = self#module_expr a in Pmty_typeof a
         | Pmty_extension a -> let a = self#extension a in Pmty_extension a
         | Pmty_alias a -> let a = self#longident_loc a in Pmty_alias a
+    method functor_parameter : functor_parameter -> functor_parameter=
+      fun x ->
+        match x with
+        | Unit -> Unit
+        | Named (a, b) ->
+            let a = self#loc (self#option self#string) a in
+            let b = self#module_type b in Named (a, b)
     method signature : signature -> signature= self#list self#signature_item
     method signature_item : signature_item -> signature_item=
       fun { psig_desc; psig_loc } ->
@@ -1726,7 +1740,7 @@ class virtual map =
             let b = self#attributes b in Psig_extension (a, b)
     method module_declaration : module_declaration -> module_declaration=
       fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
-        let pmd_name = self#loc self#string pmd_name in
+        let pmd_name = self#loc (self#option self#string) pmd_name in
         let pmd_type = self#module_type pmd_type in
         let pmd_attributes = self#attributes pmd_attributes in
         let pmd_loc = self#location pmd_loc in
@@ -1796,10 +1810,9 @@ class virtual map =
         match x with
         | Pmod_ident a -> let a = self#longident_loc a in Pmod_ident a
         | Pmod_structure a -> let a = self#structure a in Pmod_structure a
-        | Pmod_functor (a, b, c) ->
-            let a = self#loc self#string a in
-            let b = self#option self#module_type b in
-            let c = self#module_expr c in Pmod_functor (a, b, c)
+        | Pmod_functor (a, b) ->
+            let a = self#functor_parameter a in
+            let b = self#module_expr b in Pmod_functor (a, b)
         | Pmod_apply (a, b) ->
             let a = self#module_expr a in
             let b = self#module_expr b in Pmod_apply (a, b)
@@ -1856,7 +1869,7 @@ class virtual map =
         { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
     method module_binding : module_binding -> module_binding=
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
-        let pmb_name = self#loc self#string pmb_name in
+        let pmb_name = self#loc (self#option self#string) pmb_name in
         let pmb_expr = self#module_expr pmb_expr in
         let pmb_attributes = self#attributes pmb_attributes in
         let pmb_loc = self#location pmb_loc in
@@ -2031,7 +2044,7 @@ class virtual iter =
         | Ppat_constraint (a, b) -> (self#pattern a; self#core_type b)
         | Ppat_type a -> self#longident_loc a
         | Ppat_lazy a -> self#pattern a
-        | Ppat_unpack a -> self#loc self#string a
+        | Ppat_unpack a -> self#loc (self#option self#string) a
         | Ppat_exception a -> self#pattern a
         | Ppat_extension a -> self#extension a
         | Ppat_open (a, b) -> (self#longident_loc a; self#pattern b)
@@ -2099,7 +2112,9 @@ class virtual iter =
             self#list
               (fun (a, b) -> self#loc self#label a; self#expression b) a
         | Pexp_letmodule (a, b, c) ->
-            (self#loc self#string a; self#module_expr b; self#expression c)
+            (self#loc (self#option self#string) a;
+             self#module_expr b;
+             self#expression c)
         | Pexp_letexception (a, b) ->
             (self#extension_constructor a; self#expression b)
         | Pexp_assert a -> self#expression a
@@ -2341,15 +2356,19 @@ class virtual iter =
         match x with
         | Pmty_ident a -> self#longident_loc a
         | Pmty_signature a -> self#signature a
-        | Pmty_functor (a, b, c) ->
-            (self#loc self#string a;
-             self#option self#module_type b;
-             self#module_type c)
+        | Pmty_functor (a, b) ->
+            (self#functor_parameter a; self#module_type b)
         | Pmty_with (a, b) ->
             (self#module_type a; self#list self#with_constraint b)
         | Pmty_typeof a -> self#module_expr a
         | Pmty_extension a -> self#extension a
         | Pmty_alias a -> self#longident_loc a
+    method functor_parameter : functor_parameter -> unit=
+      fun x ->
+        match x with
+        | Unit -> ()
+        | Named (a, b) ->
+            (self#loc (self#option self#string) a; self#module_type b)
     method signature : signature -> unit= self#list self#signature_item
     method signature_item : signature_item -> unit=
       fun { psig_desc; psig_loc } ->
@@ -2375,7 +2394,7 @@ class virtual iter =
         | Psig_extension (a, b) -> (self#extension a; self#attributes b)
     method module_declaration : module_declaration -> unit=
       fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
-        self#loc self#string pmd_name;
+        self#loc (self#option self#string) pmd_name;
         self#module_type pmd_type;
         self#attributes pmd_attributes;
         self#location pmd_loc
@@ -2432,10 +2451,8 @@ class virtual iter =
         match x with
         | Pmod_ident a -> self#longident_loc a
         | Pmod_structure a -> self#structure a
-        | Pmod_functor (a, b, c) ->
-            (self#loc self#string a;
-             self#option self#module_type b;
-             self#module_expr c)
+        | Pmod_functor (a, b) ->
+            (self#functor_parameter a; self#module_expr b)
         | Pmod_apply (a, b) -> (self#module_expr a; self#module_expr b)
         | Pmod_constraint (a, b) -> (self#module_expr a; self#module_type b)
         | Pmod_unpack a -> self#expression a
@@ -2472,7 +2489,7 @@ class virtual iter =
         self#location pvb_loc
     method module_binding : module_binding -> unit=
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
-        self#loc self#string pmb_name;
+        self#loc (self#option self#string) pmb_name;
         self#module_expr pmb_expr;
         self#attributes pmb_attributes;
         self#location pmb_loc
@@ -2720,7 +2737,7 @@ class virtual ['acc] fold =
               let acc = self#core_type b acc in acc
           | Ppat_type a -> self#longident_loc a acc
           | Ppat_lazy a -> self#pattern a acc
-          | Ppat_unpack a -> self#loc self#string a acc
+          | Ppat_unpack a -> self#loc (self#option self#string) a acc
           | Ppat_exception a -> self#pattern a acc
           | Ppat_extension a -> self#extension a acc
           | Ppat_open (a, b) ->
@@ -2824,7 +2841,7 @@ class virtual ['acc] fold =
                      let acc = self#loc self#label a acc in
                      let acc = self#expression b acc in acc) a acc
           | Pexp_letmodule (a, b, c) ->
-              let acc = self#loc self#string a acc in
+              let acc = self#loc (self#option self#string) a acc in
               let acc = self#module_expr b acc in
               let acc = self#expression c acc in acc
           | Pexp_letexception (a, b) ->
@@ -3150,16 +3167,23 @@ class virtual ['acc] fold =
           match x with
           | Pmty_ident a -> self#longident_loc a acc
           | Pmty_signature a -> self#signature a acc
-          | Pmty_functor (a, b, c) ->
-              let acc = self#loc self#string a acc in
-              let acc = self#option self#module_type b acc in
-              let acc = self#module_type c acc in acc
+          | Pmty_functor (a, b) ->
+              let acc = self#functor_parameter a acc in
+              let acc = self#module_type b acc in acc
           | Pmty_with (a, b) ->
               let acc = self#module_type a acc in
               let acc = self#list self#with_constraint b acc in acc
           | Pmty_typeof a -> self#module_expr a acc
           | Pmty_extension a -> self#extension a acc
           | Pmty_alias a -> self#longident_loc a acc
+    method functor_parameter : functor_parameter -> 'acc -> 'acc=
+      fun x ->
+        fun acc ->
+          match x with
+          | Unit -> acc
+          | Named (a, b) ->
+              let acc = self#loc (self#option self#string) a acc in
+              let acc = self#module_type b acc in acc
     method signature : signature -> 'acc -> 'acc=
       self#list self#signature_item
     method signature_item : signature_item -> 'acc -> 'acc=
@@ -3193,7 +3217,7 @@ class virtual ['acc] fold =
     method module_declaration : module_declaration -> 'acc -> 'acc=
       fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
         fun acc ->
-          let acc = self#loc self#string pmd_name acc in
+          let acc = self#loc (self#option self#string) pmd_name acc in
           let acc = self#module_type pmd_type acc in
           let acc = self#attributes pmd_attributes acc in
           let acc = self#location pmd_loc acc in acc
@@ -3264,10 +3288,9 @@ class virtual ['acc] fold =
           match x with
           | Pmod_ident a -> self#longident_loc a acc
           | Pmod_structure a -> self#structure a acc
-          | Pmod_functor (a, b, c) ->
-              let acc = self#loc self#string a acc in
-              let acc = self#option self#module_type b acc in
-              let acc = self#module_expr c acc in acc
+          | Pmod_functor (a, b) ->
+              let acc = self#functor_parameter a acc in
+              let acc = self#module_expr b acc in acc
           | Pmod_apply (a, b) ->
               let acc = self#module_expr a acc in
               let acc = self#module_expr b acc in acc
@@ -3320,7 +3343,7 @@ class virtual ['acc] fold =
     method module_binding : module_binding -> 'acc -> 'acc=
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
         fun acc ->
-          let acc = self#loc self#string pmb_name acc in
+          let acc = self#loc (self#option self#string) pmb_name acc in
           let acc = self#module_expr pmb_expr acc in
           let acc = self#attributes pmb_attributes acc in
           let acc = self#location pmb_loc acc in acc
@@ -3636,7 +3659,7 @@ class virtual ['acc] fold_map =
           | Ppat_lazy a ->
               let (a, acc) = self#pattern a acc in ((Ppat_lazy a), acc)
           | Ppat_unpack a ->
-              let (a, acc) = self#loc self#string a acc in
+              let (a, acc) = self#loc (self#option self#string) a acc in
               ((Ppat_unpack a), acc)
           | Ppat_exception a ->
               let (a, acc) = self#pattern a acc in ((Ppat_exception a), acc)
@@ -3778,7 +3801,7 @@ class virtual ['acc] fold_map =
                   a acc in
               ((Pexp_override a), acc)
           | Pexp_letmodule (a, b, c) ->
-              let (a, acc) = self#loc self#string a acc in
+              let (a, acc) = self#loc (self#option self#string) a acc in
               let (b, acc) = self#module_expr b acc in
               let (c, acc) = self#expression c acc in
               ((Pexp_letmodule (a, b, c)), acc)
@@ -4254,11 +4277,10 @@ class virtual ['acc] fold_map =
           | Pmty_signature a ->
               let (a, acc) = self#signature a acc in
               ((Pmty_signature a), acc)
-          | Pmty_functor (a, b, c) ->
-              let (a, acc) = self#loc self#string a acc in
-              let (b, acc) = self#option self#module_type b acc in
-              let (c, acc) = self#module_type c acc in
-              ((Pmty_functor (a, b, c)), acc)
+          | Pmty_functor (a, b) ->
+              let (a, acc) = self#functor_parameter a acc in
+              let (b, acc) = self#module_type b acc in
+              ((Pmty_functor (a, b)), acc)
           | Pmty_with (a, b) ->
               let (a, acc) = self#module_type a acc in
               let (b, acc) = self#list self#with_constraint b acc in
@@ -4271,6 +4293,15 @@ class virtual ['acc] fold_map =
           | Pmty_alias a ->
               let (a, acc) = self#longident_loc a acc in
               ((Pmty_alias a), acc)
+    method functor_parameter :
+      functor_parameter -> 'acc -> (functor_parameter * 'acc)=
+      fun x ->
+        fun acc ->
+          match x with
+          | Unit -> (Unit, acc)
+          | Named (a, b) ->
+              let (a, acc) = self#loc (self#option self#string) a acc in
+              let (b, acc) = self#module_type b acc in ((Named (a, b)), acc)
     method signature : signature -> 'acc -> (signature * 'acc)=
       self#list self#signature_item
     method signature_item :
@@ -4336,7 +4367,8 @@ class virtual ['acc] fold_map =
       module_declaration -> 'acc -> (module_declaration * 'acc)=
       fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
         fun acc ->
-          let (pmd_name, acc) = self#loc self#string pmd_name acc in
+          let (pmd_name, acc) =
+            self#loc (self#option self#string) pmd_name acc in
           let (pmd_type, acc) = self#module_type pmd_type acc in
           let (pmd_attributes, acc) = self#attributes pmd_attributes acc in
           let (pmd_loc, acc) = self#location pmd_loc acc in
@@ -4436,11 +4468,10 @@ class virtual ['acc] fold_map =
           | Pmod_structure a ->
               let (a, acc) = self#structure a acc in
               ((Pmod_structure a), acc)
-          | Pmod_functor (a, b, c) ->
-              let (a, acc) = self#loc self#string a acc in
-              let (b, acc) = self#option self#module_type b acc in
-              let (c, acc) = self#module_expr c acc in
-              ((Pmod_functor (a, b, c)), acc)
+          | Pmod_functor (a, b) ->
+              let (a, acc) = self#functor_parameter a acc in
+              let (b, acc) = self#module_expr b acc in
+              ((Pmod_functor (a, b)), acc)
           | Pmod_apply (a, b) ->
               let (a, acc) = self#module_expr a acc in
               let (b, acc) = self#module_expr b acc in
@@ -4529,7 +4560,8 @@ class virtual ['acc] fold_map =
       module_binding -> 'acc -> (module_binding * 'acc)=
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
         fun acc ->
-          let (pmb_name, acc) = self#loc self#string pmb_name acc in
+          let (pmb_name, acc) =
+            self#loc (self#option self#string) pmb_name acc in
           let (pmb_expr, acc) = self#module_expr pmb_expr acc in
           let (pmb_attributes, acc) = self#attributes pmb_attributes acc in
           let (pmb_loc, acc) = self#location pmb_loc acc in
@@ -4817,7 +4849,8 @@ class virtual ['ctx] map_with_context =
           | Ppat_type a -> let a = self#longident_loc ctx a in Ppat_type a
           | Ppat_lazy a -> let a = self#pattern ctx a in Ppat_lazy a
           | Ppat_unpack a ->
-              let a = self#loc self#string ctx a in Ppat_unpack a
+              let a = self#loc (self#option self#string) ctx a in
+              Ppat_unpack a
           | Ppat_exception a ->
               let a = self#pattern ctx a in Ppat_exception a
           | Ppat_extension a ->
@@ -4932,7 +4965,7 @@ class virtual ['ctx] map_with_context =
                        let b = self#expression ctx b in (a, b)) ctx a in
               Pexp_override a
           | Pexp_letmodule (a, b, c) ->
-              let a = self#loc self#string ctx a in
+              let a = self#loc (self#option self#string) ctx a in
               let b = self#module_expr ctx b in
               let c = self#expression ctx c in Pexp_letmodule (a, b, c)
           | Pexp_letexception (a, b) ->
@@ -5341,10 +5374,9 @@ class virtual ['ctx] map_with_context =
           | Pmty_ident a -> let a = self#longident_loc ctx a in Pmty_ident a
           | Pmty_signature a ->
               let a = self#signature ctx a in Pmty_signature a
-          | Pmty_functor (a, b, c) ->
-              let a = self#loc self#string ctx a in
-              let b = self#option self#module_type ctx b in
-              let c = self#module_type ctx c in Pmty_functor (a, b, c)
+          | Pmty_functor (a, b) ->
+              let a = self#functor_parameter ctx a in
+              let b = self#module_type ctx b in Pmty_functor (a, b)
           | Pmty_with (a, b) ->
               let a = self#module_type ctx a in
               let b = self#list self#with_constraint ctx b in
@@ -5353,6 +5385,15 @@ class virtual ['ctx] map_with_context =
           | Pmty_extension a ->
               let a = self#extension ctx a in Pmty_extension a
           | Pmty_alias a -> let a = self#longident_loc ctx a in Pmty_alias a
+    method functor_parameter :
+      'ctx -> functor_parameter -> functor_parameter=
+      fun ctx ->
+        fun x ->
+          match x with
+          | Unit -> Unit
+          | Named (a, b) ->
+              let a = self#loc (self#option self#string) ctx a in
+              let b = self#module_type ctx b in Named (a, b)
     method signature : 'ctx -> signature -> signature=
       self#list self#signature_item
     method signature_item : 'ctx -> signature_item -> signature_item=
@@ -5405,7 +5446,7 @@ class virtual ['ctx] map_with_context =
       'ctx -> module_declaration -> module_declaration=
       fun ctx ->
         fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
-          let pmd_name = self#loc self#string ctx pmd_name in
+          let pmd_name = self#loc (self#option self#string) ctx pmd_name in
           let pmd_type = self#module_type ctx pmd_type in
           let pmd_attributes = self#attributes ctx pmd_attributes in
           let pmd_loc = self#location ctx pmd_loc in
@@ -5487,10 +5528,9 @@ class virtual ['ctx] map_with_context =
           | Pmod_ident a -> let a = self#longident_loc ctx a in Pmod_ident a
           | Pmod_structure a ->
               let a = self#structure ctx a in Pmod_structure a
-          | Pmod_functor (a, b, c) ->
-              let a = self#loc self#string ctx a in
-              let b = self#option self#module_type ctx b in
-              let c = self#module_expr ctx c in Pmod_functor (a, b, c)
+          | Pmod_functor (a, b) ->
+              let a = self#functor_parameter ctx a in
+              let b = self#module_expr ctx b in Pmod_functor (a, b)
           | Pmod_apply (a, b) ->
               let a = self#module_expr ctx a in
               let b = self#module_expr ctx b in Pmod_apply (a, b)
@@ -5559,7 +5599,7 @@ class virtual ['ctx] map_with_context =
     method module_binding : 'ctx -> module_binding -> module_binding=
       fun ctx ->
         fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
-          let pmb_name = self#loc self#string ctx pmb_name in
+          let pmb_name = self#loc (self#option self#string) ctx pmb_name in
           let pmb_expr = self#module_expr ctx pmb_expr in
           let pmb_attributes = self#attributes ctx pmb_attributes in
           let pmb_loc = self#location ctx pmb_loc in
@@ -5884,7 +5924,8 @@ class virtual ['res] lift =
         | Ppat_lazy a ->
             let a = self#pattern a in self#constr "Ppat_lazy" [a]
         | Ppat_unpack a ->
-            let a = self#loc self#string a in self#constr "Ppat_unpack" [a]
+            let a = self#loc (self#option self#string) a in
+            self#constr "Ppat_unpack" [a]
         | Ppat_exception a ->
             let a = self#pattern a in self#constr "Ppat_exception" [a]
         | Ppat_extension a ->
@@ -6006,7 +6047,7 @@ class virtual ['res] lift =
                    let b = self#expression b in self#tuple [a; b]) a in
             self#constr "Pexp_override" [a]
         | Pexp_letmodule (a, b, c) ->
-            let a = self#loc self#string a in
+            let a = self#loc (self#option self#string) a in
             let b = self#module_expr b in
             let c = self#expression c in
             self#constr "Pexp_letmodule" [a; b; c]
@@ -6423,11 +6464,9 @@ class virtual ['res] lift =
             let a = self#longident_loc a in self#constr "Pmty_ident" [a]
         | Pmty_signature a ->
             let a = self#signature a in self#constr "Pmty_signature" [a]
-        | Pmty_functor (a, b, c) ->
-            let a = self#loc self#string a in
-            let b = self#option self#module_type b in
-            let c = self#module_type c in
-            self#constr "Pmty_functor" [a; b; c]
+        | Pmty_functor (a, b) ->
+            let a = self#functor_parameter a in
+            let b = self#module_type b in self#constr "Pmty_functor" [a; b]
         | Pmty_with (a, b) ->
             let a = self#module_type a in
             let b = self#list self#with_constraint b in
@@ -6438,6 +6477,13 @@ class virtual ['res] lift =
             let a = self#extension a in self#constr "Pmty_extension" [a]
         | Pmty_alias a ->
             let a = self#longident_loc a in self#constr "Pmty_alias" [a]
+    method functor_parameter : functor_parameter -> 'res=
+      fun x ->
+        match x with
+        | Unit -> self#constr "Unit" []
+        | Named (a, b) ->
+            let a = self#loc (self#option self#string) a in
+            let b = self#module_type b in self#constr "Named" [a; b]
     method signature : signature -> 'res= self#list self#signature_item
     method signature_item : signature_item -> 'res=
       fun { psig_desc; psig_loc } ->
@@ -6490,7 +6536,7 @@ class virtual ['res] lift =
             let b = self#attributes b in self#constr "Psig_extension" [a; b]
     method module_declaration : module_declaration -> 'res=
       fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
-        let pmd_name = self#loc self#string pmd_name in
+        let pmd_name = self#loc (self#option self#string) pmd_name in
         let pmd_type = self#module_type pmd_type in
         let pmd_attributes = self#attributes pmd_attributes in
         let pmd_loc = self#location pmd_loc in
@@ -6585,11 +6631,9 @@ class virtual ['res] lift =
             let a = self#longident_loc a in self#constr "Pmod_ident" [a]
         | Pmod_structure a ->
             let a = self#structure a in self#constr "Pmod_structure" [a]
-        | Pmod_functor (a, b, c) ->
-            let a = self#loc self#string a in
-            let b = self#option self#module_type b in
-            let c = self#module_expr c in
-            self#constr "Pmod_functor" [a; b; c]
+        | Pmod_functor (a, b) ->
+            let a = self#functor_parameter a in
+            let b = self#module_expr b in self#constr "Pmod_functor" [a; b]
         | Pmod_apply (a, b) ->
             let a = self#module_expr a in
             let b = self#module_expr b in self#constr "Pmod_apply" [a; b]
@@ -6665,7 +6709,7 @@ class virtual ['res] lift =
           ("pvb_loc", pvb_loc)]
     method module_binding : module_binding -> 'res=
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
-        let pmb_name = self#loc self#string pmb_name in
+        let pmb_name = self#loc (self#option self#string) pmb_name in
         let pmb_expr = self#module_expr pmb_expr in
         let pmb_attributes = self#attributes pmb_attributes in
         let pmb_loc = self#location pmb_loc in
