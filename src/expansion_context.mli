@@ -30,8 +30,7 @@ module Extension : sig
   val code_path : t -> Code_path.t
 
   (** Can be used within a ppx preprocessor to know which tool is
-      calling it ["ocamlc"], ["ocamlopt"], ["ocamldoc"], ["ocamldep"],
-      ["ocaml"], ... . *)
+      calling it ["ocamlc"], ["ocamlopt"], ["ocamldep"], ["ocaml"], ... . *)
   val tool_name : t -> string
 
   (** Wrap a [fun ~loc ~path] into a [fun ~ctxt] *)
@@ -55,8 +54,7 @@ module Deriver : sig
   val code_path : t -> Code_path.t
 
   (** Can be used within a ppx preprocessor to know which tool is
-      calling it ["ocamlc"], ["ocamlopt"], ["ocamldoc"], ["ocamldep"],
-      ["ocaml"], ... . *)
+      calling it ["ocamlc"], ["ocamlopt"], ["ocamldep"], ["ocaml"], ... . *)
   val tool_name : t -> string
 
   (** Wrap a [fun ~loc ~path] into a [fun ~ctxt] *)
