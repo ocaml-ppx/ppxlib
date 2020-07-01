@@ -1,6 +1,4 @@
-#use "topfind";;
 #require "base";;
-#require "ocaml-migrate-parsetree";;
 
 open Base
 open Ppxlib

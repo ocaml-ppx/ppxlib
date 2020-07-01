@@ -1,4 +1,3 @@
-{
 open StdLabels
 
 let read_file file =
@@ -30,44 +29,24 @@ let run_expect_test file ~f =
     exit 0
   end
 
-}
+let print_loc _ _ ppf (loc : Location.t) =
+  let startchar = loc.loc_start.pos_cnum - loc.loc_start.pos_bol in
+  let endchar = loc.loc_end.pos_cnum - loc.loc_start.pos_cnum + startchar in
+  Format.fprintf ppf "Line _";
+  if startchar >= 0 then
+    Format.fprintf ppf ", characters %d-%d" startchar endchar;
+  Format.fprintf ppf ":@."
 
-rule code txt start = parse
-  | "[%%expect{|\n" {
-    let pos = start.Lexing.pos_cnum in
-    let len = Lexing.lexeme_start lexbuf - pos in
-    let s = String.sub txt ~pos ~len in
-    Lexing.new_line lexbuf;
-    (start, s) :: expectation txt lexbuf
-  }
-  | [^'\n']*'\n' {
-    Lexing.new_line lexbuf;
-    code txt start lexbuf
-  }
-  | eof {
-    let pos = start.Lexing.pos_cnum in
-    let len = String.length txt - pos in
-    if pos > 0 then begin
-      let s = String.sub txt ~pos ~len in
-      if String.trim s = "" then
-        []
-      else
-        [(start, s)]
-    end else
-      []
-  }
+let report_printer () =
+  let printer = Location.default_report_printer () in
+  { printer with Location. pp_main_loc = print_loc; pp_submsg_loc = print_loc; }
 
-and expectation txt = parse
-  | "|}]\n" {
-      Lexing.new_line lexbuf;
-      code txt lexbuf.lex_curr_p lexbuf
-    }
-  | [^'\n']*'\n' {
-    Lexing.new_line lexbuf;
-    expectation txt lexbuf
-  }
+let setup_printers ppf =
+  Location.formatter_for_warnings := ppf;
+  Location.warning_reporter := Location.default_warning_reporter;
+  Location.report_printer   := report_printer;
+  Location.alert_reporter   := Location.default_alert_reporter
 
-{
 let apply_rewriters : (Parsetree.toplevel_phrase -> Parsetree.toplevel_phrase) = function
   | Ptop_dir _ as x -> x
   | Ptop_def s ->
@@ -75,36 +54,48 @@ let apply_rewriters : (Parsetree.toplevel_phrase -> Parsetree.toplevel_phrase) =
     Ptop_def (Ppxlib.Driver.map_structure s
               |> Migrate_parsetree.Driver.migrate_some_structure
                    (module Migrate_parsetree.OCaml_current))
-;;
+
 let main () =
   run_expect_test Sys.argv.(1) ~f:(fun file_contents lexbuf ->
-    let chunks = code file_contents lexbuf.lex_curr_p lexbuf in
+    let chunks = Expect_lexer.split_file ~file_contents lexbuf in
+
+    let buf = Buffer.create (String.length file_contents + 1024) in
+    let ppf = Format.formatter_of_buffer buf in
+    setup_printers ppf;
+    Topfind.log := ignore;
 
     Warnings.parse_options false "@a-4-29-40-41-42-44-45-48-58";
     Clflags.real_paths := false;
     Toploop.initialize_toplevel_env ();
-    List.iter
-      [ "ast/.ppxlib_ast.objs"
-      ; "src/.ppxlib.objs"
-      ; "metaquot_lifters/.ppxlib_metaquot_lifters.objs"
-      ; "metaquot/.ppxlib_metaquot.objs"
-      ; "traverse/.ppxlib_traverse.objs"
-      ]
-      ~f:(fun d -> Topdirs.dir_directory (d ^ "/byte"));
 
-    let buf = Buffer.create (String.length file_contents + 1024) in
-    let ppf = Format.formatter_of_buffer buf in
-    Printers.setup ppf;
+    (* Findlib stuff *)
+    let preds = ["toploop"] in
+    let preds =
+      match Sys.backend_type with
+      | Native -> "native" :: preds
+      | Bytecode -> "byte" :: preds
+      | Other _ -> preds
+    in
+    Topfind.add_predicates preds;
+    (* This just adds the include directories since the [ppx] library
+       is statically linked in *)
+    Topfind.load_deeply ["ppxlib"];
+
     List.iter chunks ~f:(fun (pos, s) ->
       Format.fprintf ppf "%s[%%%%expect{|@." s;
       let lexbuf = Lexing.from_string s in
       lexbuf.lex_curr_p <- { pos with pos_lnum = 1; };
       let phrases = !Toploop.parse_use_file lexbuf in
-      List.iter phrases ~f:(fun phr ->
-        try
-          ignore (Toploop.execute_phrase true ppf (apply_rewriters phr) : bool)
-        with exn ->
-          Location.report_exception ppf exn
+      List.iter phrases ~f:(function
+        | Parsetree.Ptop_def [] -> ()
+        | phr ->
+          try
+            let phr = apply_rewriters phr in
+            if !Clflags.dump_source then
+              Format.fprintf ppf "%a@?" Pprintast.top_phrase phr;
+            ignore (Toploop.execute_phrase true ppf phr : bool)
+          with exn ->
+            Location.report_exception ppf exn
       );
       Format.fprintf ppf "@?|}]@.");
     Buffer.contents buf)
@@ -115,4 +106,3 @@ let () =
   with exn ->
     Location.report_exception Format.err_formatter exn;
     exit 1
-}

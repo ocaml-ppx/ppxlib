@@ -1,5 +1,3 @@
-#load "ppxlib_traverse.cmo";;
-
 type t =
   { x : int
   ; y : u
