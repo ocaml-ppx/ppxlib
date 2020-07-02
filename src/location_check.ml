@@ -62,7 +62,7 @@ end = struct
 
   let union t1 t2 =
     let init, l = longest_first t1.ranges t2.ranges ~stop_after:42 in
-    let ranges = List.fold l ~init ~f:insert in
+    let ranges = List.fold_left l ~init ~f:insert in
     { min_pos = min_pos t1.min_pos t2.min_pos
     ; max_pos = max_pos t1.max_pos t2.max_pos
     ; ranges }
@@ -83,7 +83,7 @@ end = struct
       assert false
 
   let find_outside loc t =
-    List.find_exn t.ranges ~f:(fun (_, l) ->
+    List.find t.ranges ~f:(fun (_, l) ->
       Location.compare_pos loc.loc_start l.loc_start > 0 ||
       Location.compare_pos loc.loc_end l.loc_end < 0
     )
@@ -95,7 +95,7 @@ let reloc_pmty_functors x =
     match x.pmty_desc with
     | Pmty_functor (Unit, initial_res) ->
       let res = aux initial_res in
-      if phys_equal res initial_res then
+      if res == initial_res then
         x
       else
         { x with pmty_desc = Pmty_functor (Unit, res) }
@@ -105,7 +105,7 @@ let reloc_pmty_functors x =
         let loc_start = mty.pmty_loc.loc_end in
         let res = { res with pmty_loc = { res.pmty_loc with loc_start } } in
         { x with pmty_desc = Pmty_functor (Named (id, mty), res) }
-      else if phys_equal res initial_res then
+      else if res == initial_res then
         x
       else
         { x with pmty_desc = Pmty_functor (Named (id, mty), res) }
@@ -119,7 +119,7 @@ let reloc_pmod_functors x =
     match x.pmod_desc with
     | Pmod_functor (Unit, initial_res) ->
       let res = aux initial_res in
-      if phys_equal res initial_res then
+      if res == initial_res then
         x
       else
         { x with pmod_desc = Pmod_functor (Unit, res) }
@@ -129,7 +129,7 @@ let reloc_pmod_functors x =
         let loc_start = mty.pmty_loc.loc_end in
         let res = { res with pmod_loc = { res.pmod_loc with loc_start } } in
         { x with pmod_desc = Pmod_functor (Named (id, mty), res) }
-      else if phys_equal res initial_res then
+      else if res == initial_res then
         x
       else
         { x with pmod_desc = Pmod_functor (Named (id, mty), res) }

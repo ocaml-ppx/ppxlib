@@ -167,7 +167,7 @@ let pchar      t = ppat_constant (pconst_char   t     )
 let pstring    t = ppat_constant (pconst_string t drop)
 let pfloat     t = ppat_constant (pconst_float  t drop)
 
-let int'       (T f) = T (fun ctx loc x k -> f ctx loc (Int.of_string       x) k)
+let int'       (T f) = T (fun ctx loc x k -> f ctx loc (int_of_string       x) k)
 let int32'     (T f) = T (fun ctx loc x k -> f ctx loc (Int32.of_string     x) k)
 let int64'     (T f) = T (fun ctx loc x k -> f ctx loc (Int64.of_string     x) k)
 let nativeint' (T f) = T (fun ctx loc x k -> f ctx loc (Nativeint.of_string x) k)

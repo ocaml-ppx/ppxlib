@@ -115,11 +115,11 @@ class map_with_expansion_context = object (self)
 
   method! value_binding ctxt {pvb_pat; pvb_expr; pvb_attributes; pvb_loc} =
     let all_var_names = var_names_of#pattern pvb_pat [] in
-    let var_name = Base.List.last all_var_names in
+    let var_name = Stdppx.List.last all_var_names in
     let in_binding_ctxt =
-      Base.Option.fold var_name
-        ~init:ctxt
-        ~f:(fun ctxt var_name -> Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt)
+      match var_name with
+      | None -> ctxt
+      | Some var_name -> Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt
     in
     let pvb_pat = self#pattern ctxt pvb_pat in
     let pvb_expr = self#expression in_binding_ctxt pvb_expr in

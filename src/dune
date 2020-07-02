@@ -7,11 +7,10 @@
   ocaml-compiler-libs.shadow
   ocaml-migrate-parsetree
   ppxlib_ast
-  base
-  stdio
   ppxlib_print_diff
   ppx_derivers
-  ppxlib_traverse_builtins)
+  ppxlib_traverse_builtins
+  stdppx)
  (flags (:standard -open Ocaml_shadow -safe-string))
  (ppx.driver
   (main       Ppxlib.Driver.standalone)

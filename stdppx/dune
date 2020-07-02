@@ -1,0 +1,7 @@
+(library
+ (name stdppx)
+ (public_name ppxlib.stdppx)
+ (libraries
+  ocaml-compiler-libs.shadow
+  sexplib0)
+ (flags (:standard -open Ocaml_shadow -safe-string)))
