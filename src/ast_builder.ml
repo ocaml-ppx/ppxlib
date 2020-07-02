@@ -142,7 +142,7 @@ module Default = struct
       | _ :: _ -> eapply ~loc:apply_loc ident args
       end
     | Ldot (Lapply _ as module_path, n) ->
-      let suffix_n functor_ = String.uncapitalize functor_ ^ "__" ^ n in
+      let suffix_n functor_ = String.uncapitalize_ascii functor_ ^ "__" ^ n in
       let rec gather_lapply functor_args : Longident.t -> Longident.t * _ = function
         | Lapply (rest, arg) ->
           gather_lapply (arg :: functor_args) rest
@@ -229,9 +229,8 @@ module Default = struct
                 -> String.(=) name' param.txt
               | _ -> false)
           with
-          | Unequal_lengths -> assert false
-          | Ok false -> None
-          | Ok true -> Some (annotate ~loc:expr.pexp_loc f_ident params)
+          | false -> None
+          | true -> Some (annotate ~loc:expr.pexp_loc f_ident params)
         end
       | _ -> None
   ;;

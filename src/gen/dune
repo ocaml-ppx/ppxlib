@@ -5,4 +5,5 @@
   ppxlib_ast
   compiler-libs.common
   compiler-libs.bytecomp
-  ppxlib_traverse_builtins))
+  ppxlib_traverse_builtins
+  stdppx))

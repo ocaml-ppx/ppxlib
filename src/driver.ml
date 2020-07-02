@@ -83,8 +83,8 @@ module Transform = struct
 
   let print_caller_id oc (caller_id : Caller_id.t) =
     match caller_id with
-    | None -> Out_channel.output_string oc "<unknown location>"
-    | Some loc -> Out_channel.fprintf oc "%s:%d" loc.filename loc.line_number
+    | None -> output_string oc "<unknown location>"
+    | Some loc -> Printf.fprintf oc "%s:%d" loc.filename loc.line_number
   ;;
 
   let register ?(extensions=[]) ?(rules=[]) ?enclose_impl ?enclose_intf
@@ -97,9 +97,9 @@ module Transform = struct
     begin match List.filter !all ~f:(fun ct -> has_name ct name) with
     | [] -> ()
     | ct :: _ ->
-      eprintf "Warning: code transformation %s registered twice.\n" name;
-      eprintf "  - first time was at %a\n" print_caller_id ct.registered_at;
-      eprintf "  - second time is at %a\n" print_caller_id caller_id;
+      Printf.eprintf "Warning: code transformation %s registered twice.\n" name;
+      Printf.eprintf "  - first time was at %a\n" print_caller_id ct.registered_at;
+      Printf.eprintf "  - second time is at %a\n" print_caller_id caller_id;
     end;
     let ct =
       { name
@@ -299,10 +299,10 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
   let print_diff what a b =
     let diff =
       List.filter a ~f:(fun (name : _ Loc.t) ->
-        not (List.exists b ~f:(fun (name' : _ Location.loc) -> phys_equal name.txt name'.txt)))
+        not (List.exists b ~f:(fun (name' : _ Location.loc) -> name.txt == name'.txt)))
     in
     if not (List.is_empty diff) then begin
-      eprintf "The following attributes %s after applying %s:\n"
+      Printf.eprintf "The following attributes %s after applying %s:\n"
         what name;
       List.iter diff ~f:(fun { Location. txt; loc } ->
         Caml.Format.eprintf "- %a: %s\n" Location.print loc txt);
@@ -319,7 +319,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
     | None -> List.rev !Transform.all
     | Some names ->
       List.map names ~f:(fun name ->
-        List.find_exn !Transform.all ~f:(fun (ct : Transform.t) ->
+        List.find !Transform.all ~f:(fun (ct : Transform.t) ->
           Transform.has_name ct name))
   in
   let (`Linters linters, `Preprocess preprocess, `Rest cts) =
@@ -341,7 +341,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
           | None -> None
           | Some x -> Some (ct.name, x))
         (* Sort them to ensure deterministic ordering *)
-        |> List.sort ~compare:(fun (a, _) (b, _) -> String.compare a b)
+        |> List.sort ~cmp:(fun (a, _) (b, _) -> String.compare a b)
         |> List.map ~f:snd
       in
 
@@ -360,7 +360,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
           | enclosers -> Some (fun loc ->
             let headers, footers =
               List.map enclosers ~f:(fun f -> f loc)
-              |> List.unzip
+              |> List.split
             in
             let headers = List.concat headers in
             let footers = List.concat (List.rev footers) in
@@ -460,13 +460,13 @@ let print_passes () =
   let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
   let cts = get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name in
   if !perform_checks then
-    printf "<builtin:freshen-and-collect-attributes>\n";
-  List.iter cts ~f:(fun ct -> printf "%s\n" ct.Transform.name);
+    Printf.printf "<builtin:freshen-and-collect-attributes>\n";
+  List.iter cts ~f:(fun ct -> Printf.printf "%s\n" ct.Transform.name);
   if !perform_checks then
     begin
-      printf "<builtin:check-unused-attributes>\n";
+      Printf.printf "<builtin:check-unused-attributes>\n";
       if !perform_checks_on_extensions
-      then printf "<builtin:check-unused-extensions>\n"
+      then Printf.printf "<builtin:check-unused-extensions>\n"
     end
 ;;
 
@@ -602,8 +602,8 @@ let as_ppx_rewriter_main argv =
       (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
       usage
   with
-  | exception Arg.Bad  msg -> eprintf "%s" msg; Caml.exit 2
-  | exception Arg.Help msg -> eprintf "%s" msg; Caml.exit 0
+  | exception Arg.Bad  msg -> Printf.eprintf "%s" msg; Caml.exit 2
+  | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
   | () -> mapper
 
 let run_as_ppx_rewriter () =
@@ -720,7 +720,7 @@ let load_input (kind : Kind.t) fn input_name ~relocate ic =
        it with what we read to do the test. *)
     let lexbuf = Lexing.from_channel ic in
     let len = String.length prefix_read_from_file in
-    Bytes.From_string.blit ~src:prefix_read_from_file ~src_pos:0 ~dst:lexbuf.lex_buffer ~dst_pos:0
+    Bytes.blit_string ~src:prefix_read_from_file ~src_pos:0 ~dst:lexbuf.lex_buffer ~dst_pos:0
       ~len;
     lexbuf.lex_buffer_len <- len;
     lexbuf.lex_curr_p <-
@@ -1016,11 +1016,11 @@ let set_output_mode mode =
 
 let print_transformations () =
   List.iter !Transform.all ~f:(fun (ct : Transform.t) ->
-    printf "%s\n" ct.name);
+    Printf.printf "%s\n" ct.name);
 ;;
 
 let parse_apply_list s =
-  let names = if String.equal s "" then [] else String.split s ~on:',' in
+  let names = if String.equal s "" then [] else String.split_on_char s ~sep:',' in
   List.iter names ~f:(fun name ->
     if not (List.exists !Transform.all ~f:(fun (ct : Transform.t) ->
       Transform.has_name ct name)) then
@@ -1161,7 +1161,7 @@ let standalone_args =
     " Print the actual passes over the whole AST in the order they are applied"
   ; "-ite-check",
     Arg.Unit (fun () ->
-      eprintf "Warning: the -ite-check flag is deprecated \
+      Printf.eprintf "Warning: the -ite-check flag is deprecated \
                and has no effect.\n%!";
       Extra_warnings.care_about_ite_branch := true),
     " (no effect -- kept for compatibility)"
@@ -1196,13 +1196,13 @@ let get_args ?(standalone_args=standalone_args) () =
   let args = standalone_args @ List.rev !args in
   let my_arg_names =
     List.rev_map args ~f:(fun (name, _, _) -> name)
-    |> Set.of_list (module String)
+    |> String.Set.of_list
   in
   let omp_args =
     (* Filter out arguments that we override *)
     List.filter (Migrate_parsetree.Driver.registered_args ())
       ~f:(fun (name, _, _) ->
-          not (Set.mem my_arg_names name))
+          not (String.Set.mem name my_arg_names))
   in
   args @ omp_args
 ;;
@@ -1225,7 +1225,7 @@ let standalone_main () =
   end;
   match !input with
   | None    ->
-    eprintf "%s: no input file given\n%!" exe_name;
+    Printf.eprintf "%s: no input file given\n%!" exe_name;
     Caml.exit 2
   | Some fn ->
     let kind =
@@ -1235,7 +1235,7 @@ let standalone_main () =
         match Kind.of_filename fn with
         | Some k -> k
         | None ->
-          eprintf "%s: don't know what to do with '%s', use -impl or -intf.\n"
+          Printf.eprintf "%s: don't know what to do with '%s', use -impl or -intf.\n"
             exe_name fn;
           Caml.exit 2
     in
@@ -1252,10 +1252,10 @@ let standalone_run_as_ppx_rewriter () =
   let n = Array.length Caml.Sys.argv in
   let usage = Printf.sprintf "%s -as-ppx [extra_args] <infile> <outfile>" exe_name in
   if n < 4 then begin
-    eprintf "Usage: %s\n%!" usage;
+    Printf.eprintf "Usage: %s\n%!" usage;
     Caml.exit 2
   end;
-  let argv = Array.create ~len:(n - 3) "" in
+  let argv = Array.make (n - 3) "" in
   argv.(0) <- Caml.Sys.argv.(0);
   for i = 1 to (n - 4) do
     argv.(i) <- Caml.Sys.argv.(i + 1)
@@ -1271,8 +1271,8 @@ let standalone_run_as_ppx_rewriter () =
       (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
       usage
   with
-  | exception Arg.Bad  msg -> eprintf "%s" msg; Caml.exit 2
-  | exception Arg.Help msg -> eprintf "%s" msg; Caml.exit 0
+  | exception Arg.Bad  msg -> Printf.eprintf "%s" msg; Caml.exit 2
+  | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
   | () ->
     interpret_mask ();
     Ocaml_common.Ast_mapper.apply

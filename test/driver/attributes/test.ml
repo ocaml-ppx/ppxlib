@@ -1,6 +1,6 @@
 #require "base";;
 
-open Base
+open Stdppx
 open Ppxlib
 
 let () = Driver.enable_checks ()
