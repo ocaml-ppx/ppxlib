@@ -1323,3 +1323,8 @@ let enable_location_check () =
 
 let disable_location_check () =
   perform_locations_check := false
+
+let map_structure st =
+  map_structure st
+  |> Migrate_parsetree.Driver.migrate_some_structure
+       (module Ppxlib_ast.Selected_ast)

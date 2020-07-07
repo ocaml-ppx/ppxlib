@@ -176,7 +176,7 @@ val run_as_ppx_rewriter : unit -> unit
 val pretty : unit -> bool
 
 (**/**)
-val map_structure : structure -> Migrate_parsetree.Driver.some_structure
+val map_structure : structure -> structure
 
 val enable_checks : unit -> unit
 val enable_location_check : unit -> unit
