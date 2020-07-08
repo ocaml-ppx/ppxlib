@@ -1,3 +1,15 @@
+0.14.0 (08/07/2020)
+-------------------
+
+- Bump ppxlib's AST to 4.10 (#130, @NathanReb)
+
+- Remove omp_config from `Expansion_context` and replace it with `tool_name`
+  (#149, @NathanReb)
+
+- Change undocumented `Ppxlib.Driver.map_structure` to return a ppxlib's
+  `structure` instead of a `Migrate_parsetree.Driver.some_structure`.
+  (#153, @NathanReb)
+
 0.13.0 (04/15/2020)
 -------------------
 
