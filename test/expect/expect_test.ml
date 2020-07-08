@@ -51,9 +51,8 @@ let apply_rewriters : (Parsetree.toplevel_phrase -> Parsetree.toplevel_phrase) =
   | Ptop_dir _ as x -> x
   | Ptop_def s ->
     let s = Ppxlib.Selected_ast.of_ocaml Structure s in
-    Ptop_def (Ppxlib.Driver.map_structure s
-              |> Migrate_parsetree.Driver.migrate_some_structure
-                   (module Migrate_parsetree.OCaml_current))
+    let s' = Ppxlib.Driver.map_structure s in
+    Ptop_def (Ppxlib.Selected_ast.to_ocaml Structure s')
 
 let main () =
   run_expect_test Sys.argv.(1) ~f:(fun file_contents lexbuf ->
