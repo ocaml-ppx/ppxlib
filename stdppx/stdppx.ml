@@ -1,38 +1,71 @@
 module Caml = Stdlib
 
-include Caml
-include StdLabels
+open Caml
+include (Caml : module type of Caml
+         with module Array := Array
+         with module Bytes := Bytes
+         with module Char := Char
+         with module Hashtbl := Hashtbl
+         with module List := List
+         with module String := String)
+
+open StdLabels
+include (StdLabels : module type of StdLabels
+         with module Bytes := Bytes
+         with module List := List
+         with module String := String)
 
 module Sexp = Sexplib0.Sexp
 module Sexpable = Sexplib0.Sexpable
 include Sexplib0.Sexp_conv
 
 module type Comparisons = sig
-  type 'a t
+  type t
 
-  val compare : 'a t -> 'a t -> int
-  val equal : 'a t -> 'a t -> bool
-  val ( = ) : 'a t -> 'a t -> bool
-  val ( < ) : 'a t -> 'a t -> bool
-  val ( > ) : 'a t -> 'a t -> bool
-  val ( <> ) : 'a t -> 'a t -> bool
-  val ( <= ) : 'a t -> 'a t -> bool
-  val ( >= ) : 'a t -> 'a t -> bool
-  val min : 'a t -> 'a t -> 'a t
-  val max : 'a t -> 'a t -> 'a t
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+  val ( = ) : t -> t -> bool
+  val ( < ) : t -> t -> bool
+  val ( > ) : t -> t -> bool
+  val ( <> ) : t -> t -> bool
+  val ( <= ) : t -> t -> bool
+  val ( >= ) : t -> t -> bool
+  val min : t -> t -> t
+  val max : t -> t -> t
 end
 
-module Poly : Comparisons with type 'a t := 'a = struct
-  include Stdlib
+module Poly = struct
+  let compare = compare
   let equal = ( = )
+  let ( = ) = ( = )
+  let ( < ) = ( < )
+  let ( > ) = ( > )
+  let ( <> ) = ( <> )
+  let ( <= ) = ( <= )
+  let ( >= ) = ( >= )
+  let min = min
+  let max = max
 end
 
-include (Poly : Comparisons with type _ t := int)
+include (Poly : Comparisons with type t := int)
+
+module Bool = struct
+  let to_string = string_of_bool
+
+  include (Poly : Comparisons with type t := bool)
+end
+
+module Bytes = struct
+  include Bytes
+
+  let blit_string ~src ~src_pos ~dst ~dst_pos ~len =
+    Stdlib.Bytes.blit_string src src_pos dst dst_pos len
+end
 
 module Char = struct
   include Char
 
-  include (Poly : Comparisons with type _ t := char)
+  include (Poly : Comparisons with type t := char)
 end
 
 module Exn = struct
@@ -40,6 +73,12 @@ module Exn = struct
     match f x with
     | y -> finally x; y
     | exception exn -> finally x; raise exn
+end
+
+module Float = struct
+  let to_string = string_of_float
+
+  include (Poly : Comparisons with type t := float)
 end
 
 module Fn = struct
@@ -64,6 +103,11 @@ module Hashtbl = struct
     match add t ~key ~data with
     | Ok () -> ()
     | Error exn -> raise exn
+
+  let find_opt t key =
+    match find t key with
+    | data -> Some data
+    | exception Not_found -> None
 
   let find_or_add t key ~default =
     match find_opt t key with
@@ -123,9 +167,11 @@ module In_channel = struct
 end
 
 module Int = struct
-  include Int
+  let max_int = max_int
 
-  include (Poly : Comparisons with type _ t := int)
+  let to_string = string_of_int
+
+  include (Poly : Comparisons with type t := int)
 end
 
 module List = struct
@@ -168,6 +214,14 @@ module List = struct
       rev (fold_left2 list1 list2 ~init:[] ~f:(fun acc x y -> f x y :: acc))
   end
 
+  let init ~len ~f =
+    let rec loop ~len ~pos ~f ~acc =
+      if pos >= len
+      then List.rev acc
+      else loop ~len ~pos:(pos + 1) ~f ~acc:(f pos :: acc)
+    in
+    loop ~len ~pos:0 ~f ~acc:[]
+
   let is_empty = function
     | [] -> true
     | _ :: _ -> false
@@ -181,6 +235,16 @@ module List = struct
   let filter_opt list = rev (rev_filter_opt list)
 
   let filter_map list ~f = rev_filter_opt (rev_map list ~f)
+
+  let concat_map list ~f = concat (map list ~f)
+
+  let rec find_map list ~f =
+    match list with
+    | [] -> None
+    | head :: tail ->
+      match f head with
+      | Some _ as some -> some
+      | None -> find_map tail ~f
 
   let find_map_exn list ~f =
     match find_map list ~f with
@@ -217,15 +281,34 @@ module List = struct
     in
     find_a_dup_in list ~set:Elt_set.empty
 
+  let assoc_opt key alist =
+    match assoc key alist with
+    | x -> Some x
+    | exception Not_found -> None
+
   (* reorders arguments to improve type inference *)
   let iter list ~f = iter list ~f
 end
 
 module Option = struct
-  include Option
+  let is_some = function
+    | None -> false
+    | Some _ -> true
 
-  let iter t ~f = iter f t
-  let map t ~f = map f t
+  let iter t ~f =
+    match t with
+    | None -> ()
+    | Some x -> f x
+
+  let map t ~f =
+    match t with
+    | None -> None
+    | Some x -> Some (f x)
+
+  let value t ~default =
+    match t with
+    | None -> default
+    | Some x -> x
 end
 
 module Out_channel = struct
@@ -287,18 +370,48 @@ module String = struct
     in
     for_all_at t ~f ~pos:0 ~len:(length t)
 
+  let index_opt t char =
+    match index t char with
+    | i -> Some i
+    | exception Not_found -> None
+
+  let rindex_opt t char =
+    match rindex t char with
+    | i -> Some i
+    | exception Not_found -> None
+
+  let index_from_opt t char pos =
+    match index_from t char pos with
+    | i -> Some i
+    | exception Not_found -> None
+
+  let rindex_from_opt t char pos =
+    match rindex_from t char pos with
+    | i -> Some i
+    | exception Not_found -> None
+
   let lsplit2 t ~on =
     match index_opt t on with
     | None -> None
     | Some i -> Some (sub t ~pos:0 ~len:i, sub t ~pos:(i + 1) ~len:(length t - i - 1))
 
-  (* in OCaml 4.04, StringLabels doesn't define lowercase_ascii, so we
-     need to explicitly redefine it here as long as we support 4.04. *)
-  let lowercase_ascii = String.lowercase_ascii
+  let capitalize_ascii = Stdlib.String.capitalize_ascii
+  let lowercase_ascii = Stdlib.String.lowercase_ascii
+  let uncapitalize_ascii = Stdlib.String.uncapitalize_ascii
 
-  include (Poly : Comparisons with type _ t := string)
+  let split_on_char t ~sep = Stdlib.String.split_on_char sep t
 
-  module Map = Map.Make (String)
+  include (Poly : Comparisons with type t := string)
+
+  module Map = struct
+    include Map.Make (String)
+
+    let find_opt key t =
+      match find key t with
+      | x -> Some x
+      | exception Not_found -> None
+  end
+
   module Set = Set.Make (String)
 end
 
