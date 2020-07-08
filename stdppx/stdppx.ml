@@ -1,19 +1,7 @@
 module Caml = Stdlib
 
 open Caml
-include (Caml : module type of Caml
-         with module Array := Array
-         with module Bytes := Bytes
-         with module Char := Char
-         with module Hashtbl := Hashtbl
-         with module List := List
-         with module String := String)
-
 open StdLabels
-include (StdLabels : module type of StdLabels
-         with module Bytes := Bytes
-         with module List := List
-         with module String := String)
 
 module Sexp = Sexplib0.Sexp
 module Sexpable = Sexplib0.Sexpable
@@ -48,6 +36,8 @@ module Poly = struct
 end
 
 include (Poly : Comparisons with type t := int)
+
+module Array = Array
 
 module Bool = struct
   let to_string = string_of_bool
