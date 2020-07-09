@@ -22,7 +22,7 @@ depends: [
   "sexplib0"
   "stdlib-shims"
   "ocamlfind"               {with-test}
-  "cinaps"                  {with-test}
+  "cinaps"                  {with-test & >= "v0.12.1"}
   "base"                    {with-test}
   "stdio"                   {with-test}
 ]
