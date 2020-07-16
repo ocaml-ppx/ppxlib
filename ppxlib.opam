@@ -26,15 +26,16 @@ depends: [
   "base"                    {with-test}
   "stdio"                   {with-test}
 ]
-synopsis: "Base library and tools for ppx rewriters"
+synopsis: "Standard library for ppx rewriters"
 description: """
-A comprehensive toolbox for ppx development. It features:
-- a OCaml AST / parser / pretty-printer snapshot,to create a full
-   frontend independent of the version of OCaml;
-- a library for library for ppx rewriters in general, and type-driven
-  code generators in particular;
-- a feature-full driver for OCaml AST transformers;
-- a quotation mechanism allowing  to write values representing the
-   OCaml AST in the OCaml syntax;
-- a generator of open recursion classes from type definitions.
+Ppxlib is the standard library for ppx rewriters and other programs
+that manipulate the in-memory reprensation of OCaml programs, a.k.a
+the "Parsetree".
+
+It also comes bundled with two ppx rewriters that are commonly used to
+write tools that manipulate and/or generate Parsetree values;
+`ppxlib.metaquot` which allows to construct Parsetree values using the
+OCaml syntax directly and `ppxlib.traverse` which provides various
+ways of automatically traversing values of a given type, in particular
+allowing to inject a complex structured value into generated code.
 """
