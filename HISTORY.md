@@ -1,6 +1,7 @@
 # History
 
-This repository is the merge of several ppx-related repositories, namely:
+This repository was originally a merge of several ppx-related
+repositories, namely:
 
 - [ppx_ast](https://github.com/janestreet/ppx_ast);
 - [ppx_core](https://github.com/janestreet/ppx_core);
@@ -10,9 +11,10 @@ This repository is the merge of several ppx-related repositories, namely:
 - [ppx_traverse_builtins](https://github.com/janestreet/ppx_traverse_builtins);
 - [ppx_type_conv](https://github.com/janestreet/ppx_type_conv).
 
-Future development will happen only in this repository, and the aforementioned
-ones will only contain synonym definitions to provide backward compatibility.
-The structure of this repository is as follows:
+Since this merge, development has been happening only in this
+repository and the aforementioned ones only contain synonym
+definitions to provide backward compatibility.  The structure of this
+repository is as follows:
 
 - `ast/` contains the `ppxlib.ast` library, that replaces `ppx_ast`;
 - `src/` contains the `ppxlib` library, that replaces `ppx_core`,
