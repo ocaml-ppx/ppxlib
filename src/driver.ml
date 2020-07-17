@@ -256,7 +256,7 @@ module Transform = struct
             None)),
      `Preprocess
        (List.filter_map ts ~f:(fun t ->
-          if Option.is_some t.preprocess_impl || Option.is_some t.preprocess_impl
+          if Option.is_some t.preprocess_impl || Option.is_some t.preprocess_intf
           then
             Some
               { name = Printf.sprintf "<preprocess:%s>" t.name
