@@ -4,6 +4,158 @@ PPX for plugin authors
 
 This section describes how to use ``ppxlib`` for PPX plugin authors.
 
+Getting started
+---------------
+
+There are two main kinds of PPX plugins you can write with ``ppxlib``:
+
+- Extension rewriters i.e. ppx plugins that rewrite extension points such as ``[%my_ext ...]``
+  into valid OCaml code.
+- Derivers i.e. ppx plugins that generate code from type, module or exception declarations
+  annotated with ``[@@deriving my_deriver]``.
+
+It is also possible to write more advanced transformations such as rewriting constants that bear the
+right suffix, rewriting function calls based on the function identifier or to generate code from
+items annotated with a custom attribute but we won't cover those in this section.
+
+Note that you can also write arbitrary, whole AST transformations with ppxlib but they don't blend
+in so well and you should always prefer the above mentioned transformations instead when possible.
+
+Writing an extension rewriter
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To write your ppx plugin you'll need to add the following stanza in your dune file:
+
+.. code:: scheme
+
+   (library
+    (public_name my_ppx_rewriter)
+    (kind ppx_rewriter)
+    (libraries ppxlib))
+
+You'll note that you have to let dune know this is not a regular library but a ppx_rewriter using
+the ``kind`` field.
+The public name you chose here is the name your users will refer to your ppx in there ``preprocess``
+field. E.g. here to use this ppx rewriter one would add the ``(preprocess (pps my_ppx_rewriter))``
+to their ``library`` or ``executable`` stanza.
+
+You will also need the following ``my_ppx_rewriter.ml``:
+
+.. code:: ocaml
+
+   open Ppxlib
+
+   let expand ~ctxt payload =
+     ...
+
+   let my_extension =
+     Extension.V3.declare
+       "my_ext"
+       <extension_context>
+       <ast_pattern>
+       expand
+
+   let rule = Ppxlib.Context_free.Rule.extension my_extension
+
+   let () =
+     Driver.register_transformation
+       ~rules:[rule]
+       "my_ext"
+
+There are a few things to explain here. The last part, i.e. the call to
+``Driver.register_transformation`` is common to almost all ppxlib-based PPX plugins and is how
+you let ppxlib know about your transformation. You'll note that here we register a single rule
+but it is possible to register several rules for a single logical transformation.
+
+The above is specific to extension rewriters. You need to declare a ppxlib ``Extension``.
+The first argument is the extension name, that's what will appear after the ``%`` in the extension
+point when using your rewriter, e.g. here this will transform ``[%my_ext ...]`` nodes.
+The ``<extension_context>`` argument describes where in OCaml code your this extension can be used.
+You can find the full list in the API documentation for ``Extension.Context``
+`here <https://ocaml-ppx.github.io/ppxlib/ppxlib/Ppxlib/Extension/Context/index.html>`.
+The ``<ast_pattern>`` argument helps you restrict what users can put into the payload of your
+extension, i.e. ``[%my_ext <what goes there!>]``. We cover ``Ast_pattern`` in depths here but the
+simplest form it can take is ``Ast_pattern.__`` which allows any payload allowed by the language
+and passes it to the expand function which is the last argument here.
+The expand function is where the logic for your transformation is implemented. It receives an
+``Expansion_context.Extension.t`` argument labelled ``ctxt`` and other arguments whose type and
+number depends on the ``<ast_pattern>`` argument. The return type of the function is determined
+by the ``<extension_context>`` argument, e.g. in the following example:
+
+.. code:: ocaml
+
+   Extension.V3.declare "my_ext" Extension.Context.expression Ast_pattern.__ expand
+
+The type of the ``expand`` function is:
+
+.. code:: ocaml
+
+   val expand : ctxt: Expansion_context.Extension.t -> payload -> expression
+
+Writing a deriver
+^^^^^^^^^^^^^^^^^
+
+Similarly to extension rewriters, derivers must be declared as such to dune. To do so you can use
+the following stanza in your dune file:
+
+.. code:: scheme
+
+   (library
+    (public_name my_ppx_deriver)
+    (kind ppx_deriver)
+    (libraries ppxlib))
+
+Same as above, the public name used here determines how users will refer to your ppx deriver in
+their dune stanzas.
+
+You will also need the following ``my_ppx_deriver.ml``:
+
+.. code:: ocaml
+
+   open Ppxlib
+
+   let generate_impl ~ctxt (rec_flag, type_declarations) =
+     ...
+
+   let generate_intf ~ctxt (rec_flag, type_declarations) =
+     ...
+
+   let impl_generator = Deriving.Generator.V2.make_noarg generate_impl
+
+   let intf_generator = Deriving.Generator.V2.make_noarg generate_intf
+
+   let my_deriver =
+     Deriving.add
+       "my_deriver"
+       ~str_type_decl:impl_generator
+       ~sig_type_decl:intf_generator
+
+
+The call to ``Deriving.add`` is how you'll let ``ppxlib`` know about your deriver. The first string
+argument is the name of the deriver as referred to by your users, in the above example one would add
+a ``[@@deriving my_deriver]`` annotation to use this plugin.
+Here our deriver can be used on type declarations, be it in structures or signatures (i.e.
+implementation or interfaces, ``.ml`` or ``.mli``).
+
+To add a deriver you first have to define a generator. You need one for each node you want to derive
+code from. Here we just need one for type declarations in structures and one for type declarations in
+signatures. To do that you need the ``Deriving.Generator.V2.make_noarg`` constructor. You'll note
+that there exist ``Deriving.Generator.V2.make`` variant if you wish to allow passing arguments to
+your deriver but to keep this tutorial simple we won't cover this here.
+The only mandatory argument to the constructor is a function which takes a labelled
+``Expansion_context.Deriving.t``, an ``'input_ast`` and returns an ``'output_ast`` and that will
+give us a ``('output_ast, 'input_ast) Deriving.Generator.t``. Much like the ``expand`` function
+described in the section about extension rewriters, this function is where the actual implementation
+for your deriver lives.
+The ``str_type_decl`` argument of ``Deriving.add`` expects a
+``(structure, rec_flag * type_declaration list) Generator.t`` so our ``generate_impl`` function
+must take a pair ``(rec_flag, type_declaration list)`` and return a ``structure`` i.e. a
+``structure_item list``, for instance a list of function or module declaration.
+The same goes for the ``generate_intf`` function except that it must return a ``signature``.
+It is often the case that a deriver has a generator for both the structure and signature variants
+of a node. That allows users to generate the signature corresponding to the code generated by the
+deriver in their ``.ml`` files instead of having to type it and maintain it themselves.
+
 Metaquot
 --------
 
