@@ -238,7 +238,7 @@ type what = Backends.what
 let mapper_type ~(what:what) ~loc type_name params =
   let vars = vars_of_list params ~get_loc:(fun t -> t.ptyp_loc) in
   let params = tvars_of_vars vars in
-  let ty = ptyp_constr ~loc (Loc.map type_name ~f:lident) params in
+  let ty = ptyp_constr ~loc type_name params in
   let ty =
     List.fold_right params ~init:(what#typ ~loc ty)
       ~f:(fun param ty ->
@@ -276,15 +276,16 @@ let constrained_mapper ~(what:what) ?(is_gadt=false) mapper td =
   pexp_poly ~loc:mapper.pexp_loc mapper (Some typ)
 ;;
 
-let mapper_type_of_td ~what td =
-  mapper_type ~what ~loc:td.ptype_loc td.ptype_name (List.map td.ptype_params ~f:fst)
-;;
-
-let method_name = function
-  | Lident s -> String.lowercase_ascii s
-  | Ldot (_, b) -> b
-  | Lapply _ -> assert false
-;;
+let mangle_type_name lid =
+  let rec mangled_parts lid ~suffix =
+    match lid with
+    | Lident s -> String.lowercase_ascii s :: suffix
+    | Ldot (lid, s) ->
+      mangled_parts lid ~suffix:("__" :: String.lowercase_ascii s :: suffix)
+    | Lapply (a, b) ->
+      mangled_parts a ~suffix:("_'" :: mangled_parts b ~suffix:("'" :: suffix))
+  in
+  mangled_parts lid ~suffix:[] |> String.concat ~sep:""
 
 let rec type_expr_mapper ~(what:what) te =
   let loc = te.ptyp_loc in
@@ -297,9 +298,7 @@ let rec type_expr_mapper ~(what:what) te =
     let mappers = map_variables ~what vars tes in
     what#abstract ~loc deconstruct (what#combine ~loc mappers ~reconstruct)
   | Ptyp_constr (path, params) ->
-    let map =
-      pexp_send ~loc (evar ~loc "self") { txt = method_name path.txt; loc = path.loc; }
-    in
+    let map = pexp_send ~loc (evar ~loc "self") (Loc.map path ~f:mangle_type_name) in
     (match params with
      | [] -> map
      | _  ->
@@ -482,25 +481,14 @@ let lift_virtual_methods ~loc methods =
     | Pcf_method (s, _, _) -> String.Set.mem s.txt used
     | _ -> false)
 
-let map_lident id ~f =
-  match id with
-  | Lident s -> Lident (f s)
-  | Ldot (id, s) -> Ldot (id, f s)
-  | Lapply _ -> assert false
-
-let class_constr ~what ~class_params id =
-  pcl_constr ~loc:id.loc (Loc.map id ~f:(map_lident ~f:(fun s -> what#name ^ "_" ^ s)))
-    (List.map class_params ~f:fst)
-
 let gen_class ~(what:what) ~loc tds =
   let class_params = what#class_params ~loc in
   let virtual_methods =
     List.map (type_deps tds) ~f:(fun (id, arity) ->
-      let id = { txt = Longident.last_exn id; loc } in
       pcf_method ~loc
-        (id,
+        ({ txt = mangle_type_name id; loc },
          Public,
-         Cfk_virtual (mapper_type ~what ~loc id
+         Cfk_virtual (mapper_type ~what ~loc {txt = id; loc}
                         (List.init ~len:arity ~f:(fun _ -> ptyp_any ~loc)))))
   in
   let methods =
