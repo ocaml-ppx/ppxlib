@@ -40,9 +40,9 @@ The types describing the AST are defined in the ``Parsetree`` module of OCaml's 
 that they vary from one version of the compiler to another so make sure you look at an uptodate
 version and most importantly to the one corresponding to what ppxlib's using internally.
 You can find the module's API documentation online
-`here <https://caml.inria.fr/pub/docs/manual-ocaml/compilerlibref/Parsetree.html>`. If you're new to
-these parts of OCaml it's not always easy to navigate as it just contains the raw type declarations
-but no actual documentation.
+`here <https://caml.inria.fr/pub/docs/manual-ocaml/compilerlibref/Parsetree.html>`_. If you're new
+to these parts of OCaml it's not always easy to navigate as it just contains the raw type
+declarations but no actual documentation.
 This documentation is actually written in ``parsetree.mli`` but not in a way that allow it to make
 its way to the online doc unfortunately. Until this is fixed in the compiler you can look at the
 local copy in one of your opam switches:
@@ -54,6 +54,7 @@ necessarily have to know when writing a rewriter. The two main entry points are 
 and ``signature`` types which, amongst other things, describe respectively the content of ``.ml``
 and ``.mli`` files.
 Other types you should be familiar with are:
+
 * ``expression`` which describes anything in OCaml that evaluates to a value, the right hand side
   of a let binding are the branches of an if-then-else for instance.
 * ``pattern`` which is what you use to deconstruct an OCaml value, the left hand side of a let
@@ -118,7 +119,7 @@ The first argument is the extension name, that's what will appear after the ``%`
 point when using your rewriter, e.g. here this will transform ``[%my_ext ...]`` nodes.
 The ``<extension_context>`` argument describes where in OCaml code your this extension can be used.
 You can find the full list in the API documentation for ``Extension.Context``
-`here <https://ocaml-ppx.github.io/ppxlib/ppxlib/Ppxlib/Extension/Context/index.html>`.
+`here <https://ocaml-ppx.github.io/ppxlib/ppxlib/Ppxlib/Extension/Context/index.html>`_.
 The ``<ast_pattern>`` argument helps you restrict what users can put into the payload of your
 extension, i.e. ``[%my_ext <what goes there!>]``. We cover ``Ast_pattern`` in depths here but the
 simplest form it can take is ``Ast_pattern.__`` which allows any payload allowed by the language
@@ -141,7 +142,7 @@ The type of the ``expand`` function is:
 
 If you want to look at a concrete example of extension rewriter you can find one in the
 ``examples/`` folder of the ``ppxlib`` repository
-`here https://github.com/ocaml-ppx/ppxlib/tree/master/ast`.
+`here <https://github.com/ocaml-ppx/ppxlib/tree/master/ast>`_.
 
 Writing a deriver
 ^^^^^^^^^^^^^^^^^
