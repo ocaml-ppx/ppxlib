@@ -26,6 +26,47 @@ clear compisition semantic since they have to be applied sequentially as opposed
 other, better defined rewriting rule. You should always prefer the above mentioned transformations
 instead when possible.
 
+The OCaml AST
+^^^^^^^^^^^^^
+
+As described in :ref:`ppx-overview`, PPX rewriters don't operate at the text level but instead used
+the compiler's internal representation of the source code: the Abstract Syntax Tree or AST.
+
+A lot of the following sections of the manual assume a certain level of familiarity with the OCaml
+AST so we'll try to cover the basics here and to give you some pointers to deepen your knowledge on
+the subject.
+
+The types describing the AST are defined in the ``Parsetree`` module of OCaml's compiler-libs. Note
+that they vary from one version of the compiler to another so make sure you look at an uptodate
+version and most importantly to the one corresponding to what ppxlib's using internally.
+You can find the module's API documentation online
+`here <https://caml.inria.fr/pub/docs/manual-ocaml/compilerlibref/Parsetree.html>`. If you're new to
+these parts of OCaml it's not always easy to navigate as it just contains the raw type declarations
+but no actual documentation.
+This documentation is actually written in ``parsetree.mli`` but not in a way that allow it to make
+its way to the online doc unfortunately. Until this is fixed in the compiler you can look at the
+local copy in one of your opam switches:
+``<path-to-opam-switch>/lib/ocaml/compiler-libs/parsetree.mli``. Here you'll find detailed
+explanation as to which part of the concrete syntax the various types correspond to.
+
+``Parsetree`` is quite a large module and there are plenty of types there, a lot of which you don't
+necessarily have to know when writing a rewriter. The two main entry points are the ``structure``
+and ``signature`` types which, amongst other things, describe respectively the content of ``.ml``
+and ``.mli`` files.
+Other types you should be familiar with are:
+* ``expression`` which describes anything in OCaml that evaluates to a value, the right hand side
+  of a let binding are the branches of an if-then-else for instance.
+* ``pattern`` which is what you use to deconstruct an OCaml value, the left hand side of a let
+  binding or a pattern-matching case for example.
+* ``core_type`` which describes type expressions ie what you use to explicitly constrain the type
+  of an expression or describe the type of a value in your ``.mli`` files. Usually it's what comes
+  after a ``:``.
+* ``structure_item`` and ``signature_item`` which describe the top level AST nodes you can find in a
+  structure or signature such as type definitions, value declarations or module declarations.
+
+Knowing what these types correspond to puts you in a good position to write a PPX plugin as they are
+the parts of the AST you will deal with the most in general.
+
 Writing an extension rewriter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
