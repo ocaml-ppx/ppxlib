@@ -97,6 +97,11 @@ The type of the ``expand`` function is:
 
    val expand : ctxt: Expansion_context.Extension.t -> payload -> expression
 
+
+If you want to look at a concrete example of extension rewriter you can find one in the
+``examples/`` folder of the ``ppxlib`` repository
+`here https://github.com/ocaml-ppx/ppxlib/tree/master/ast`.
+
 Writing a deriver
 ^^^^^^^^^^^^^^^^^
 
