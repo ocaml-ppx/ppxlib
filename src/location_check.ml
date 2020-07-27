@@ -146,7 +146,7 @@ let same_file_so_far = ref true
 
 let stayed_in_the_same_file =
   fun fname ->
-    (* CR-soon trefis: remove uses of Location.none from the ppxes. *)
+    (* TODO: remove uses of Location.none from the ppxes. *)
     if String.equal fname "_none_" then
       true (* do nothing for now. *)
     else
@@ -202,8 +202,7 @@ let enforce_invariants fname =
   object(self)
     inherit [Non_intersecting_ranges.t] Ast_traverse.fold as super
 
-    (* CR-someday trefis: we should generate a class which enforces the location
-       invariant.
+    (* TODO: we should generate a class which enforces the location invariant.
        And then we should only override the methods where we need an escape
        hatch because the parser isn't doing the right thing.
 
