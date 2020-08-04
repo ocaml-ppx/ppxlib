@@ -1,9 +1,11 @@
 open Import
 
 module Ast            = Ast
+module Ast_extensions = Ast_extensions
 module Ast_helper     = Ast_helper
 module Ast_magic      = Selected_ast.Ast.Config
 module Asttypes       = Asttypes
+module Compiler_ast   = Versions.OCaml_current.Ast
 module Docstrings     = Docstrings
 module Extra_warnings = Warn
 module Lexer          = Lexer

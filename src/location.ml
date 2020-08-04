@@ -69,7 +69,7 @@ let compare loc1 loc2 =
   | n -> n
 
 module Error = struct
-  module Helpers = Selected_ast.Ast.Ast_mapper
+  module Helpers = Ppxlib_ast.Ast_extensions.Ast_mapper
 
   type t = Helpers.location_error
 

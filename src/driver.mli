@@ -111,10 +111,10 @@ val register_transformation
     library.
 *)
 val register_transformation_using_ocaml_current_ast
-  :  ?impl : (Migrate_parsetree.OCaml_current.Ast.Parsetree.structure ->
-              Migrate_parsetree.OCaml_current.Ast.Parsetree.structure)
-  -> ?intf : (Migrate_parsetree.OCaml_current.Ast.Parsetree.signature ->
-              Migrate_parsetree.OCaml_current.Ast.Parsetree.signature)
+  :  ?impl : (Compiler_ast.Parsetree.structure ->
+              Compiler_ast.Parsetree.structure)
+  -> ?intf : (Compiler_ast.Parsetree.signature ->
+              Compiler_ast.Parsetree.signature)
   -> ?aliases : string list
   -> string
   -> unit
@@ -181,4 +181,3 @@ val map_structure : structure -> structure
 val enable_checks : unit -> unit
 val enable_location_check : unit -> unit
 val disable_location_check : unit -> unit
-

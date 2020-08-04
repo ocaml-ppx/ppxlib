@@ -48,6 +48,9 @@ end
 module Bytes = struct
   include Bytes
 
+  let sub_string t ~pos ~len =
+    Stdlib.Bytes.sub_string t pos len
+
   let blit_string ~src ~src_pos ~dst ~dst_pos ~len =
     Stdlib.Bytes.blit_string src src_pos dst dst_pos len
 end

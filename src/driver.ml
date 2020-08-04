@@ -34,30 +34,32 @@ module Lint_error = struct
 end
 
 module Cookies = struct
-  type t = Migrate_parsetree.Driver.cookies
+  type t = T
 
-  let get t name pattern =
-    Option.map (Migrate_parsetree.Driver.get_cookie t name (module Ppxlib_ast.Selected_ast))
+  let get T name pattern =
+    Option.map (Ocaml_common.Ast_mapper.get_cookie name)
       ~f:(fun e ->
+        let e = Selected_ast.of_ocaml Expression e in
         Ast_pattern.parse pattern e.pexp_loc e Fn.id)
 
-  let set t name expr =
-    Migrate_parsetree.Driver.set_cookie t name (module Ppxlib_ast.Selected_ast) expr
+  let set T name expr =
+    Ocaml_common.Ast_mapper.set_cookie name
+      (Selected_ast.to_ocaml Expression expr)
 
   let handlers = ref []
   let add_handler f = handlers := !handlers @ [f]
 
   let add_simple_handler name pattern ~f =
-    add_handler (fun t -> f (get t name pattern))
+    add_handler (fun T -> f (get T name pattern))
 
-  let acknoledge_cookies t =
-    List.iter !handlers ~f:(fun f -> f t)
+  let acknowledge_cookies T =
+    List.iter !handlers ~f:(fun f -> f T)
 
   let post_handlers = ref []
   let add_post_handler f = post_handlers := !post_handlers @ [f]
 
-  let call_post_handlers t =
-    List.iter !post_handlers ~f:(fun f -> f t)
+  let call_post_handlers T =
+    List.iter !post_handlers ~f:(fun f -> f T)
 end
 
 module Transform = struct
@@ -144,25 +146,25 @@ module Transform = struct
     let gen_header_and_footer context whole_loc f =
       let header, footer = f whole_loc in
       (match whole_loc with
-      | Some (loc : Location.t) ->
-        let loc_header = { loc with loc_end   = loc.loc_start } in
-        let loc_footer = { loc with loc_start = loc.loc_end   } in
-        (match header with [] -> () | _ -> hook.f context loc_header (Many header));
-        (match footer with [] -> () | _ -> hook.f context loc_footer (Many footer))
-      | None ->
-        match header @ footer with
-        | [] -> ()
-        | l ->
-          let pos =
-            { Lexing.
-              pos_fname = ""
-            ; pos_lnum  = 1
-            ; pos_bol   = 0
-            ; pos_cnum  = 0
-            }
-          in
-          let loc = { Location. loc_start = pos; loc_end = pos; loc_ghost = false } in
-          hook.f context loc (Many l));
+       | Some (loc : Location.t) ->
+         let loc_header = { loc with loc_end   = loc.loc_start } in
+         let loc_footer = { loc with loc_start = loc.loc_end   } in
+         (match header with [] -> () | _ -> hook.f context loc_header (Many header));
+         (match footer with [] -> () | _ -> hook.f context loc_footer (Many footer))
+       | None ->
+         match header @ footer with
+         | [] -> ()
+         | l ->
+           let pos =
+             { Lexing.
+               pos_fname = ""
+             ; pos_lnum  = 1
+             ; pos_bol   = 0
+             ; pos_cnum  = 0
+             }
+           in
+           let loc = { Location. loc_start = pos; loc_end = pos; loc_ghost = false } in
+           hook.f context loc (Many l));
       (header, footer)
     in
     let map_impl st_with_attrs =
@@ -382,26 +384,26 @@ let apply_transforms
       ~tool_name ~field ~lint_field ~dropped_so_far ~hook ~expect_mismatch_handler x =
   let cts = get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler in
   let x, _dropped, lint_errors =
-  List.fold_left cts ~init:(x, [], [])
-    ~f:(fun (x, dropped, lint_errors) (ct : Transform.t) ->
-      let lint_errors =
-        match lint_field ct with
-        | None -> lint_errors
-        | Some f -> lint_errors @ f x
-      in
-      match field ct with
-      | None -> (x, dropped, lint_errors)
-      | Some f ->
-        let x = f x in
-        let dropped =
-          if !debug_attribute_drop then begin
-            let new_dropped = dropped_so_far x in
-            debug_dropped_attribute ct.name ~old_dropped:dropped ~new_dropped;
-            new_dropped
-          end else
-            []
+    List.fold_left cts ~init:(x, [], [])
+      ~f:(fun (x, dropped, lint_errors) (ct : Transform.t) ->
+        let lint_errors =
+          match lint_field ct with
+          | None -> lint_errors
+          | Some f -> lint_errors @ f x
         in
-        (x, dropped, lint_errors))
+        match field ct with
+        | None -> (x, dropped, lint_errors)
+        | Some f ->
+          let x = f x in
+          let dropped =
+            if !debug_attribute_drop then begin
+              let new_dropped = dropped_so_far x in
+              debug_dropped_attribute ct.name ~old_dropped:dropped ~new_dropped;
+              new_dropped
+            end else
+              []
+          in
+          (x, dropped, lint_errors))
   in
   (x, List.map lint_errors ~f:(fun (loc, s) -> Common.attribute_of_warning loc s))
 ;;
@@ -409,50 +411,6 @@ let apply_transforms
 (* +-----------------------------------------------------------------+
    | Actual rewriting of structure/signatures                        |
    +-----------------------------------------------------------------+ *)
-
-(* We want driver registered plugins to work with omp driver and vice-versa. To
-   simplify things we do as follow:
-
-   - we register driver as a single omp driver plugin
-   - driver calls the omp driver rewriting functions, which will apply everything
-
-   The registration with omp driver is at the end of the file.
-*)
-
-module C = struct
-  type t =
-    { hook                    : Context_free.Generated_code_hook.t
-    ; expect_mismatch_handler : Context_free.Expect_mismatch_handler.t
-    }
-
-  type Migrate_parsetree.Driver.extra += T of t
-
-  let default =
-    { hook                    = Context_free.Generated_code_hook.nop
-    ; expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop
-    }
-
-  let find (config : Migrate_parsetree.Driver.config) =
-    List.find_map config.extras ~f:(function
-      | T config -> Some config
-      | _ -> None)
-    |> Option.value ~default
-end
-
-let config ~hook ~expect_mismatch_handler =
-  Migrate_parsetree.Driver.make_config ()
-    ~tool_name:"ppxlib_driver"
-    ~extras:[C.T { hook
-                 ; expect_mismatch_handler
-                 }]
-
-let as_ppx_config () =
-  Migrate_parsetree.Driver.make_config ()
-    ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
-    ~include_dirs:!Ocaml_common.Clflags.include_dirs
-    ~load_path:(Compiler_specifics.get_load_path ())
-    ~debug:!Ocaml_common.Clflags.debug
-    ?for_package:!Ocaml_common.Clflags.for_package
 
 let print_passes () =
   let tool_name = "ppxlib_driver" in
@@ -471,16 +429,15 @@ let print_passes () =
 ;;
 
 (*$*)
-let real_map_structure config cookies st =
-  let { C. hook; expect_mismatch_handler } = C.find config in
-  Cookies.acknoledge_cookies cookies;
+let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler =
+  Cookies.acknowledge_cookies T;
   if !perform_checks then begin
     Attribute.reset_checks ();
     Attribute.collect#structure st
   end;
   let st, lint_errors =
     apply_transforms st
-      ~tool_name:config.Migrate_parsetree.Driver.tool_name
+      ~tool_name
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook ~expect_mismatch_handler
@@ -493,7 +450,7 @@ let real_map_structure config cookies st =
         Ast_builder.Default.pstr_attribute ~loc attr)
       @ st
   in
-  Cookies.call_post_handlers cookies;
+  Cookies.call_post_handlers T;
   if !perform_checks then begin
     (* TODO: these two passes could be merged, we now have more passes for
        checks than for actual rewriting. *)
@@ -509,26 +466,22 @@ let real_map_structure config cookies st =
   st
 ;;
 
-let map_structure_gen st ~config : Migrate_parsetree.Driver.some_structure =
-  Migrate_parsetree.Driver.rewrite_structure
-    config
-    (module Ppxlib_ast.Selected_ast)
-    st
-
 let map_structure st =
-  map_structure_gen st ~config:(as_ppx_config ())
+  map_structure_gen st
+    ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
+    ~hook:Context_free.Generated_code_hook.nop
+    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
 
 (*$ str_to_sig _last_text_block *)
-let real_map_signature config cookies sg =
-  let { C. hook; expect_mismatch_handler } = C.find config in
-  Cookies.acknoledge_cookies cookies;
+let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler =
+  Cookies.acknowledge_cookies T;
   if !perform_checks then begin
     Attribute.reset_checks ();
     Attribute.collect#signature sg
   end;
   let sg, lint_errors =
     apply_transforms sg
-      ~tool_name:config.Migrate_parsetree.Driver.tool_name
+      ~tool_name
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook ~expect_mismatch_handler
@@ -541,7 +494,7 @@ let real_map_signature config cookies sg =
         Ast_builder.Default.psig_attribute ~loc attr)
       @ sg
   in
-  Cookies.call_post_handlers cookies;
+  Cookies.call_post_handlers T;
   if !perform_checks then begin
     (* TODO: these two passes could be merged, we now have more passes for
        checks than for actual rewriting. *)
@@ -557,14 +510,11 @@ let real_map_signature config cookies sg =
   sg
 ;;
 
-let map_signature_gen sg ~config : Migrate_parsetree.Driver.some_signature =
-  Migrate_parsetree.Driver.rewrite_signature
-    config
-    (module Ppxlib_ast.Selected_ast)
-    sg
-
 let map_signature sg =
-  map_signature_gen sg ~config:(as_ppx_config ())
+  map_signature_gen sg
+    ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
+    ~hook:Context_free.Generated_code_hook.nop
+    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
 
 (*$*)
 
@@ -578,15 +528,13 @@ let mapper =
   let structure _ st =
     Js.of_ocaml Structure st
     |> map_structure
-    |> Migrate_parsetree.Driver.migrate_some_structure
-         (module Migrate_parsetree.OCaml_current)
+    |> Js.to_ocaml Structure
   in
   (*$ str_to_sig _last_text_block *)
   let signature _ sg =
     Js.of_ocaml Signature sg
     |> map_signature
-    |> Migrate_parsetree.Driver.migrate_some_signature
-         (module Migrate_parsetree.OCaml_current)
+    |> Js.to_ocaml Signature
   in
   (*$*)
   { Ocaml_common.Ast_mapper.default_mapper with structure; signature }
@@ -689,7 +637,7 @@ let set_input_name name =
 
 let load_input (kind : Kind.t) fn input_name ~relocate ic =
   set_input_name input_name;
-  match Migrate_parsetree.Ast_io.from_channel ic with
+  match Ast_io.read ic with
   | Ok (ast_input_name, ast) ->
     let ast = Intf_or_impl.of_ast_io ast in
     if not (Kind.equal kind (Intf_or_impl.kind ast)) then
@@ -856,6 +804,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
   corrections := [];
   let replacements = ref [] in
+  let tool_name = "ppx_driver" in
   let hook : Context_free.Generated_code_hook.t =
     match output_mode with
     | Reconcile (Using_line_directives | Delimiting_generated_blocks) ->
@@ -880,17 +829,23 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
              ~repl:(Many generated))
     }
   in
-
   let input_name, ast =
     try
       let input_name, ast =
         with_preprocessed_input fn ~f:(load_input kind fn input_name ~relocate)
       in
       let ast = extract_cookies ast in
-      let config = config ~hook ~expect_mismatch_handler in
       match ast with
-      | Intf x -> input_name, Some_intf_or_impl.Intf (map_signature_gen x ~config)
-      | Impl x -> input_name, Some_intf_or_impl.Impl (map_structure_gen x ~config)
+      | Intf x ->
+        input_name,
+        Intf_or_impl.Intf
+          (map_signature_gen x
+             ~tool_name ~hook ~expect_mismatch_handler)
+      | Impl x ->
+        input_name,
+        Intf_or_impl.Impl
+          (map_structure_gen x
+             ~tool_name ~hook ~expect_mismatch_handler)
     with exn when embed_errors ->
     match Location.Error.of_exn exn with
     | None -> raise exn
@@ -899,81 +854,73 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
       let ext = Location.Error.to_extension error in
       let open Ast_builder.Default in
       let ast = match kind with
-        | Intf ->
-           Some_intf_or_impl.Intf
-             (Sig ((module Ppxlib_ast.Selected_ast),
-                   [ psig_extension ~loc ext [] ]))
-        | Impl ->
-           Some_intf_or_impl.Impl
-             (Str ((module Ppxlib_ast.Selected_ast),
-                   [ pstr_extension ~loc ext [] ]))
+        | Intf -> Intf_or_impl.Intf [ psig_extension ~loc ext [] ]
+        | Impl -> Intf_or_impl.Impl [ pstr_extension ~loc ext [] ]
       in
       input_name, ast
-    in
+  in
 
-    Option.iter !output_metadata_filename ~f:(fun fn ->
-      let metadata = File_property.dump_and_reset_all () in
-      Out_channel.write_all fn
-        ~data:(
-          List.map metadata ~f:(fun (s, sexp) ->
-            Sexp.to_string_hum (Sexp.List [Atom s; sexp]) ^ "\n")
-          |> String.concat ~sep:""));
+  Option.iter !output_metadata_filename ~f:(fun fn ->
+    let metadata = File_property.dump_and_reset_all () in
+    Out_channel.write_all fn
+      ~data:(
+        List.map metadata ~f:(fun (s, sexp) ->
+          Sexp.to_string_hum (Sexp.List [Atom s; sexp]) ^ "\n")
+        |> String.concat ~sep:""));
 
-    let input_contents = lazy (load_source_file fn) in
-    let corrected = fn ^ !corrected_suffix in
-    let mismatches_found =
-      match !corrections with
-      | [] ->
-        if Caml.Sys.file_exists corrected then Caml.Sys.remove corrected;
-        false
-      | corrections ->
-        Reconcile.reconcile corrections ~contents:(Lazy.force input_contents)
-          ~output:(Some corrected) ~input_filename:fn ~input_name ~target:Corrected
-          ?styler:!styler ~kind;
-        true
-    in
+  let input_contents = lazy (load_source_file fn) in
+  let corrected = fn ^ !corrected_suffix in
+  let mismatches_found =
+    match !corrections with
+    | [] ->
+      if Caml.Sys.file_exists corrected then Caml.Sys.remove corrected;
+      false
+    | corrections ->
+      Reconcile.reconcile corrections ~contents:(Lazy.force input_contents)
+        ~output:(Some corrected) ~input_filename:fn ~input_name ~target:Corrected
+        ?styler:!styler ~kind;
+      true
+  in
 
-    (match output_mode with
-     | Null -> ()
-     | Pretty_print ->
-       with_output output ~binary:false ~f:(fun oc ->
-         let ppf = Caml.Format.formatter_of_out_channel oc in
-         let ast = Intf_or_impl.of_some_intf_or_impl ast in
-         (match ast with
-          | Intf ast -> Pprintast.signature ppf ast
-          | Impl ast -> Pprintast.structure ppf ast);
-         let null_ast =
-           match ast with
-           | Intf [] | Impl [] -> true
-           | _ -> false
-         in
-         if not null_ast then Caml.Format.pp_print_newline ppf ())
-     | Dump_ast ->
-       with_output output ~binary:true ~f:(fun oc ->
-         let ast = Some_intf_or_impl.to_ast_io ast ~add_ppx_context:true in
-         Migrate_parsetree.Ast_io.to_channel oc input_name ast)
-     | Dparsetree ->
-       with_output output ~binary:false ~f:(fun oc ->
-         let ppf = Caml.Format.formatter_of_out_channel oc in
-         let ast = Intf_or_impl.of_some_intf_or_impl ast in
-         let ast = add_cookies ast in
-         (match ast with
-          | Intf ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#signature ast)
-          | Impl ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#structure ast));
-         Caml.Format.pp_print_newline ppf ())
-     | Reconcile mode ->
-       Reconcile.reconcile !replacements ~contents:(Lazy.force input_contents) ~output
-         ~input_filename:fn ~input_name ~target:(Output mode) ?styler:!styler
-         ~kind);
+  (match output_mode with
+   | Null -> ()
+   | Pretty_print ->
+     with_output output ~binary:false ~f:(fun oc ->
+       let ppf = Caml.Format.formatter_of_out_channel oc in
+       (match ast with
+        | Intf ast -> Pprintast.signature ppf ast
+        | Impl ast -> Pprintast.structure ppf ast);
+       let null_ast =
+         match ast with
+         | Intf [] | Impl [] -> true
+         | _ -> false
+       in
+       if not null_ast then Caml.Format.pp_print_newline ppf ())
+   | Dump_ast ->
+     with_output output ~binary:true ~f:(fun oc ->
+       let ast = Intf_or_impl.to_ast_io ast ~add_ppx_context:true in
+       Ast_io.write oc input_name ast)
+   | Dparsetree ->
+     with_output output ~binary:false ~f:(fun oc ->
+       let ppf = Caml.Format.formatter_of_out_channel oc in
+       let ast = add_cookies ast in
+       (match ast with
+        | Intf ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#signature ast)
+        | Impl ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#structure ast));
+       Caml.Format.pp_print_newline ppf ())
+   | Reconcile mode ->
+     Reconcile.reconcile !replacements ~contents:(Lazy.force input_contents) ~output
+       ~input_filename:fn ~input_name ~target:(Output mode) ?styler:!styler
+       ~kind);
 
-    if mismatches_found &&
-       (match !diff_command with
-        | Some  "-" -> false
-        | _ -> true) then begin
-      Ppxlib_print_diff.print () ~file1:fn ~file2:corrected ~use_color:!use_color
-        ?diff_command:!diff_command;
-      Caml.exit 1
-    end
+  if mismatches_found &&
+     (match !diff_command with
+      | Some  "-" -> false
+      | _ -> true) then begin
+    Ppxlib_print_diff.print () ~file1:fn ~file2:corrected ~use_color:!use_color
+      ?diff_command:!diff_command;
+    Caml.exit 1
+  end
 ;;
 
 let output_mode = ref Pretty_print
@@ -1115,8 +1062,7 @@ let set_cookie s =
       ; pos_cnum  = 0
       };
     let expr = Parse.expression lexbuf in
-    Migrate_parsetree.Driver.set_global_cookie name
-      (module Ppxlib_ast.Selected_ast) expr
+    Cookies.set T name expr
 
 let as_pp () =
   set_output_mode Dump_ast;
@@ -1162,7 +1108,7 @@ let standalone_args =
   ; "-ite-check",
     Arg.Unit (fun () ->
       Printf.eprintf "Warning: the -ite-check flag is deprecated \
-               and has no effect.\n%!";
+                      and has no effect.\n%!";
       Extra_warnings.care_about_ite_branch := true),
     " (no effect -- kept for compatibility)"
   ; "-pp", Arg.String (fun s -> preprocessor := Some s),
@@ -1193,18 +1139,7 @@ let standalone_args =
 ;;
 
 let get_args ?(standalone_args=standalone_args) () =
-  let args = standalone_args @ List.rev !args in
-  let my_arg_names =
-    List.rev_map args ~f:(fun (name, _, _) -> name)
-    |> String.Set.of_list
-  in
-  let omp_args =
-    (* Filter out arguments that we override *)
-    List.filter (Migrate_parsetree.Driver.registered_args ())
-      ~f:(fun (name, _, _) ->
-          not (String.Set.mem name my_arg_names))
-  in
-  args @ omp_args
+  standalone_args @ List.rev !args
 ;;
 
 let standalone_main () =
@@ -1212,7 +1147,6 @@ let standalone_main () =
     Printf.sprintf "%s [extra_args] [<files>]" exe_name
   in
   let args = get_args () in
-  Migrate_parsetree.Driver.reset_args ();
   Arg.parse (Arg.align args) set_input usage;
   interpret_mask ();
   if !request_print_transformations then begin
@@ -1265,7 +1199,6 @@ let standalone_run_as_ppx_rewriter () =
       (arg, spec, " Unused with -as-ppx"))
   in
   let args = get_args ~standalone_args () in
-  Migrate_parsetree.Driver.reset_args ();
   match
     Arg.parse_argv argv (Arg.align args)
       (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
@@ -1298,20 +1231,6 @@ let standalone () =
 
 let pretty () = !pretty
 
-let () =
-  Migrate_parsetree.Driver.register
-    ~name:"ppxlib_driver"
-    (* This doesn't take arguments registered by rewriters. It's not worth supporting
-       them, since [--cookie] is a much better replacement for passing parameters to
-       individual rewriters. *)
-    ~args:shared_args
-    (module Ppxlib_ast.Selected_ast)
-    (fun config cookies ->
-       let module A = Ppxlib_ast.Selected_ast.Ast.Ast_mapper in
-       let structure _ st = real_map_structure config cookies st in
-       let signature _ sg = real_map_signature config cookies sg in
-       { A.default_mapper with structure; signature })
-
 let enable_checks () =
   (* We do not enable the locations check here, we currently require that one
      to be specifically enabled. *)
@@ -1326,5 +1245,3 @@ let disable_location_check () =
 
 let map_structure st =
   map_structure st
-  |> Migrate_parsetree.Driver.migrate_some_structure
-       (module Ppxlib_ast.Selected_ast)
