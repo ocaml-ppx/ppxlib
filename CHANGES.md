@@ -1,3 +1,14 @@
+0.15.0 (04/08/2020)
+-------------------
+
+- Remove `base` and `stdio` dependencies (#151, @ceastlund)
+
+- Update README and opam description (#155, @jeremiedimino)
+
+- Fix `Driver.partition_transformation` (#156, @NathanReb)
+
+- Implement name mangling for `ppxlib_traverse` (#159, @ceastlund)
+
 0.14.0 (08/07/2020)
 -------------------
 
