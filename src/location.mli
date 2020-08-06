@@ -17,6 +17,10 @@ val in_file : string -> t
 (** An arbitrary value of type [t]; describes an empty ghost range. *)
 val none : t
 
+(** Set the file name and line number of the [lexbuf] to be the start
+    of the named file. *)
+val init : Lexing.lexbuf -> string -> unit
+
 (** Raise a located error. The exception is caught by driver and handled
     appropriately *)
 val raise_errorf : ?loc:t -> ('a, Caml.Format.formatter, unit, 'b) format4 -> 'a

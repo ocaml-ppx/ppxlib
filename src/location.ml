@@ -23,6 +23,15 @@ let in_file name =
 
 let none = in_file "_none_"
 
+let init lexbuf fname =
+  let open Lexing in
+  lexbuf.lex_curr_p <- {
+    pos_fname = fname;
+    pos_lnum = 1;
+    pos_bol = 0;
+    pos_cnum = 0;
+  }
+
 let raise_errorf ?loc fmt = L.raise_errorf ?loc fmt
 let report_exception = L.report_exception
 
