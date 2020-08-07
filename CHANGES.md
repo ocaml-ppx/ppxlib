@@ -1,3 +1,9 @@
+unreleased
+-------------------
+
+- `Driver.register_transformation`: add optional parameter `~instrument` 
+  (#161, @pitag-ha)
+
 0.15.0 (04/08/2020)
 -------------------
 

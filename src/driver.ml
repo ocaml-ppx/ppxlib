@@ -60,6 +60,14 @@ module Cookies = struct
     List.iter !post_handlers ~f:(fun f -> f t)
 end
 
+module Instrument = struct
+  type pos = Before | After
+
+  type t = { transformation :  Parsetree.structure -> Parsetree.structure ; position : pos}
+
+  let make transformation ~position = { transformation ; position }
+end
+
 module Transform = struct
   type t =
     { name            : string
@@ -72,6 +80,7 @@ module Transform = struct
     ; preprocess_intf : (Parsetree.signature -> Parsetree.signature) option
     ; enclose_impl    : (Location.t option -> Parsetree.structure * Parsetree.structure) option
     ; enclose_intf    : (Location.t option -> Parsetree.signature * Parsetree.signature) option
+    ; instrument      : Instrument.t option
     ; rules           : Context_free.Rule.t list
     ; registered_at   : Caller_id.t
     }
@@ -89,7 +98,7 @@ module Transform = struct
 
   let register ?(extensions=[]) ?(rules=[]) ?enclose_impl ?enclose_intf
         ?impl ?intf ?lint_impl ?lint_intf ?preprocess_impl ?preprocess_intf
-        ?(aliases=[]) name =
+        ?instrument ?(aliases=[]) name =
     let rules =
       List.map extensions ~f:Context_free.Rule.extension @ rules
     in
@@ -113,6 +122,7 @@ module Transform = struct
       ; preprocess_impl
       ; preprocess_intf
       ; lint_intf
+      ; instrument
       ; registered_at = caller_id
       }
     in
@@ -230,11 +240,27 @@ module Transform = struct
       ; preprocess_intf = None
       ; enclose_impl
       ; enclose_intf
+      ; instrument = None
       ; rules
       ; registered_at = Caller_id.get ~skip:[]
       }
 
   let partition_transformations ts =
+    let before_instrs, after_instrs, rest = 
+      List.fold_left ts ~init:([], [], []) ~f:(fun (bef_i, aft_i, rest) t -> 
+        let reduced_t = 
+          { t with
+            lint_impl = None
+          ; lint_intf = None
+          ; preprocess_impl = None
+          ; preprocess_intf = None
+          } in
+        let f instr = (instr.Instrument.position, instr.Instrument.transformation) in
+        match Option.map t.instrument ~f with
+        | Some (Before, transf) -> { reduced_t with impl = Some transf }::bef_i, aft_i, rest
+        | Some (After, transf) -> bef_i, { reduced_t with impl = Some transf }::aft_i, rest
+        | None -> bef_i, aft_i, reduced_t::rest)
+    in
     (`Linters
        (List.filter_map ts ~f:(fun t ->
           if Option.is_some t.lint_impl || Option.is_some t.lint_intf then
@@ -249,6 +275,7 @@ module Transform = struct
               ; enclose_intf = None
               ; preprocess_impl = None
               ; preprocess_intf = None
+              ; instrument = None
               ; rules = []
               ; registered_at = t.registered_at
               }
@@ -269,19 +296,15 @@ module Transform = struct
               ; enclose_intf = None
               ; preprocess_impl = None
               ; preprocess_intf = None
+              ; instrument = None
               ; rules = []
               ; registered_at = t.registered_at
               }
           else
             None)),
-     `Rest
-       (List.map ts ~f:(fun t ->
-          { t with
-            lint_impl = None
-          ; lint_intf = None
-          ; preprocess_impl = None
-          ; preprocess_intf = None
-          })))
+     `Before_instrs before_instrs,
+     `After_instrs after_instrs,
+     `Rest rest)
 end
 
 let register_transformation = Transform.register
@@ -322,7 +345,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
         List.find !Transform.all ~f:(fun (ct : Transform.t) ->
           Transform.has_name ct name))
   in
-  let (`Linters linters, `Preprocess preprocess, `Rest cts) =
+  let (`Linters linters, `Preprocess preprocess, `Before_instrs before_instrs, `After_instrs after_instrs, `Rest cts) =
     Transform.partition_transformations cts in
   (* Allow only one preprocessor to assure deterministic order *)
   if (List.length preprocess) > 1 then begin
@@ -330,13 +353,13 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
     let err = Printf.sprintf "At most one preprocessor is allowed, while got: %s" pp in
     failwith err
   end;
-  let cts =
+  let make_generic transforms =
     if !no_merge then
-      List.map cts ~f:(Transform.merge_into_generic_mappers ~hook ~tool_name
-                         ~expect_mismatch_handler)
+      List.map transforms ~f:(Transform.merge_into_generic_mappers ~hook ~tool_name
+                                ~expect_mismatch_handler)
     else begin
       let get_enclosers ~f =
-        List.filter_map cts ~f:(fun (ct : Transform.t) ->
+        List.filter_map transforms ~f:(fun (ct : Transform.t) ->
           match f ct with
           | None -> None
           | Some x -> Some (ct.name, x))
@@ -346,14 +369,14 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
       in
 
       let rules =
-        List.map cts ~f:(fun (ct : Transform.t) -> ct.rules) |> List.concat
+        List.map transforms ~f:(fun (ct : Transform.t) -> ct.rules) |> List.concat
       and impl_enclosers =
         get_enclosers ~f:(fun ct -> ct.enclose_impl)
       and intf_enclosers =
         get_enclosers ~f:(fun ct -> ct.enclose_intf)
       in
       match rules, impl_enclosers, intf_enclosers with
-      | [], [], [] -> cts
+      | [], [], [] -> transforms
       | _              ->
         let merge_encloser = function
           | [] -> None
@@ -370,12 +393,13 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
           ~enclose_impl:(merge_encloser impl_enclosers)
           ~enclose_intf:(merge_encloser intf_enclosers)
           ~tool_name
-        :: cts
+        :: transforms
     end
-  in linters @ preprocess @ List.filter cts ~f:(fun (ct : Transform.t) ->
-    match ct.impl, ct.intf with
-    | None, None -> false
-    | _          -> true)
+         |> List.filter ~f:(fun (ct : Transform.t) ->
+           match ct.impl, ct.intf with
+           | None, None -> false
+           | _          -> true)
+  in linters @ preprocess @ make_generic before_instrs @ make_generic cts @ make_generic after_instrs
 ;;
 
 let apply_transforms

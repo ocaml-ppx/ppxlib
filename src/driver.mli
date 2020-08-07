@@ -39,6 +39,21 @@ module Cookies : sig
   val add_post_handler : (t -> unit) -> unit
 end
 
+module Instrument : sig
+  type t
+
+  type pos = Before | After
+
+  (** [make transformation ~position] creates an instrumentation that can be passed to 
+      [Driver.register_transformation] to instrument an implementation file. [transformation] is 
+      the transformation that will be applied to the AST; [position] specifies if it should be 
+      applied before or after rewriters defined through [rules], [impl] or [intf] are applied.*)
+  val make 
+    : (Parsetree.structure -> Parsetree.structure)
+    -> position:pos 
+    -> t
+end
+
 (** [register_transformation name] registers a code transformation.
 
     [name] is a logical name for the transformation (such as [sexp_conv] or
@@ -82,11 +97,22 @@ end
     [lint_impl] and [lint_intf] are applied to the unprocessed source. Errors they return
     will be reported to the user as preprocessor warnings.
 
+    [instrument] can be used to instrument implementation files. Its transformation is
+    applied to the AST of the whole file. The difference to [impl] is that you can specify
+    if it should be applied before or after all rewriters defined through [rules], [impl] 
+    or [intf] are applied.
+
+
     Rewritings are applied in the following order:
     - linters ([lint_impl], [lint_intf])
     - preprocessing ([preprocess_impl], [preprocess_intf])
+    - "before" instrumentations 
+      ([instrument], where instrument = [Instrument.make ~position:Before (...)])
     - context-independent rules ([rules], [extensions])
-    - whole-file transformations ([impl], [intf], [enclose_impl], [enclose_intf])
+    - non-instrumentation whole-file transformations 
+      ([impl], [intf], [enclose_impl], [enclose_intf])
+    - "after" instrumentations 
+      ([instrument], where instrument = [Instrument.make ~position:After (...)])
 *)
 val register_transformation
   :  ?extensions       : Extension.t list (* deprecated, use ~rules instead *)
@@ -99,6 +125,7 @@ val register_transformation
   -> ?lint_intf        : (signature -> Lint_error.t list)
   -> ?preprocess_impl  : (structure -> structure)
   -> ?preprocess_intf  : (signature -> signature)
+  -> ?instrument       : Instrument.t
   -> ?aliases          : string list
   -> string
   -> unit
@@ -135,7 +162,7 @@ val register_code_transformation
   -> impl:(structure -> structure)
   -> intf:(signature -> signature)
   -> unit
-  [@@deprecated "[since 2015-11] use register_transformation instead"]
+[@@deprecated "[since 2015-11] use register_transformation instead"]
 
 (** Rewriters might call this function to suggest a correction to the code source. When
     they do this, the driver will generate a [file.ml.ppx-corrected] file with the
