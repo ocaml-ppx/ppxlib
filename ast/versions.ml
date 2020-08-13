@@ -397,15 +397,15 @@ module Convert (A : OCaml_version) (B : OCaml_version) = struct
     migrate (module A) (module B)
 end
 
-(*$ foreach_version (fun suffix version ->
-    printf "module OCaml_%s = struct\n" suffix;
-    printf "  module Ast = Migrate_parsetree.Ast_%s\n" suffix;
-    printf "  include Make_witness(Migrate_parsetree.Ast_%s)\n" suffix;
-    printf "  let version = %s\n" suffix;
+(*$ foreach_version (fun n version ->
+    printf "module OCaml_%d = struct\n" n;
+    printf "  module Ast = Migrate_parsetree.Ast_%d\n" n;
+    printf "  include Make_witness(Migrate_parsetree.Ast_%d)\n" n;
+    printf "  let version = %d\n" n;
     printf "  let string_version = %S\n" version;
     printf "end\n";
-    printf "let ocaml_%s : OCaml_%s.types ocaml_version = (module OCaml_%s)\n"
-      suffix suffix suffix;
+    printf "let ocaml_%d : OCaml_%d.types ocaml_version = (module OCaml_%d)\n"
+      n n n;
   )
 *)
 module OCaml_402 = struct
@@ -481,8 +481,8 @@ let ocaml_411 : OCaml_411.types ocaml_version = (module OCaml_411)
 (*$*)
 
 (*$foreach_version_pair (fun a b ->
-    printf "include Register_migration(OCaml_%s)(OCaml_%s)\n" a b;
-    printf "    (Migrate_parsetree.Migrate_%s_%s)(Migrate_parsetree.Migrate_%s_%s)\n" a b b a
+    printf "include Register_migration(OCaml_%d)(OCaml_%d)\n" a b;
+    printf "    (Migrate_parsetree.Migrate_%d_%d)(Migrate_parsetree.Migrate_%d_%d)\n" a b b a
   )
 *)
 include Register_migration(OCaml_402)(OCaml_403)

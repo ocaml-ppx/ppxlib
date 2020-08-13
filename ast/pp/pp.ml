@@ -2,6 +2,7 @@ let () =
   match Sys.argv with
   | [|_; ocaml_version_str; fname|] ->
     let ocaml_version =
+      
       (match Scanf.sscanf ocaml_version_str "%u.%u" (fun a b -> (a, b)) with
        | (4, 02) -> "402"
        | (4, 03) -> "403"

@@ -111,9 +111,9 @@ end
 
 (** {1 Concrete frontend instances} *)
 
-(*$foreach_version (fun suffix _ ->
-    printf "module OCaml_%s : OCaml_version with module Ast = Migrate_parsetree.Ast_%s\n"
-      suffix suffix
+(*$foreach_version (fun n _ ->
+    printf "module OCaml_%d : OCaml_version with module Ast = Migrate_parsetree.Ast_%d\n"
+      n n
   )*)
 module OCaml_402 : OCaml_version with module Ast = Migrate_parsetree.Ast_402
 module OCaml_403 : OCaml_version with module Ast = Migrate_parsetree.Ast_403
