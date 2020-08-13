@@ -3,7 +3,6 @@ open Migrate_parsetree.Ast_410
 
 open Asttypes
 open Parsetree
-open Docstrings
 
 type 'a with_loc = 'a Location.loc
 type loc = Location.t
@@ -176,43 +175,43 @@ end
 (** Value declarations *)
 module Val:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     ?prim:string list -> str -> core_type -> value_description
 end
 
 (** Type declarations *)
 module Type:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     ?params:(core_type * variance) list ->
     ?cstrs:(core_type * core_type * loc) list ->
     ?kind:type_kind -> ?priv:private_flag -> ?manifest:core_type -> str ->
     type_declaration
 
-  val constructor: ?loc:loc -> ?attrs:attrs -> ?info:info ->
+  val constructor: ?loc:loc -> ?attrs:attrs ->
     ?args:constructor_arguments -> ?res:core_type -> str ->
     constructor_declaration
-  val field: ?loc:loc -> ?attrs:attrs -> ?info:info ->
+  val field: ?loc:loc -> ?attrs:attrs ->
     ?mut:mutable_flag -> str -> core_type -> label_declaration
 end
 
 (** Type extensions *)
 module Te:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     ?params:(core_type * variance) list -> ?priv:private_flag ->
     lid -> extension_constructor list -> type_extension
 
-  val mk_exception: ?loc:loc -> ?attrs:attrs -> ?docs:docs ->
+  val mk_exception: ?loc:loc -> ?attrs:attrs ->
     extension_constructor -> type_exception
 
-  val constructor: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?info:info ->
+  val constructor: ?loc:loc -> ?attrs:attrs ->
     str -> extension_constructor_kind -> extension_constructor
 
-  val decl: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?info:info ->
+  val decl: ?loc:loc -> ?attrs:attrs ->
     ?args:constructor_arguments -> ?res:core_type -> str ->
     extension_constructor
-  val rebind: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?info:info ->
+  val rebind: ?loc:loc -> ?attrs:attrs ->
     str -> lid -> extension_constructor
 end
 
@@ -273,7 +272,6 @@ sig
   val class_type: ?loc:loc -> class_type_declaration list -> signature_item
   val extension: ?loc:loc -> ?attrs:attrs -> extension -> signature_item
   val attribute: ?loc:loc -> attribute -> signature_item
-  val text: text -> signature_item list
 end
 
 (** Structure items *)
@@ -296,54 +294,53 @@ sig
   val include_: ?loc:loc -> include_declaration -> structure_item
   val extension: ?loc:loc -> ?attrs:attrs -> extension -> structure_item
   val attribute: ?loc:loc -> attribute -> structure_item
-  val text: text -> structure_item list
 end
 
 (** Module declarations *)
 module Md:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     str_opt -> module_type -> module_declaration
 end
 
 (** Module substitutions *)
 module Ms:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     str -> lid -> module_substitution
 end
 
 (** Module type declarations *)
 module Mtd:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     ?typ:module_type -> str -> module_type_declaration
 end
 
 (** Module bindings *)
 module Mb:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     str_opt -> module_expr -> module_binding
 end
 
 (** Opens *)
 module Opn:
 sig
-  val mk: ?loc: loc -> ?attrs:attrs -> ?docs:docs ->
+  val mk: ?loc: loc -> ?attrs:attrs ->
     ?override:override_flag -> 'a -> 'a open_infos
 end
 
 (** Includes *)
 module Incl:
 sig
-  val mk: ?loc: loc -> ?attrs:attrs -> ?docs:docs -> 'a -> 'a include_infos
+  val mk: ?loc: loc -> ?attrs:attrs -> 'a -> 'a include_infos
 end
 
 (** Value bindings *)
 module Vb:
 sig
-  val mk: ?loc: loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc: loc -> ?attrs:attrs ->
     pattern -> expression -> value_binding
 end
 
@@ -368,7 +365,7 @@ end
 (** Class type fields *)
 module Ctf:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     class_type_field_desc -> class_type_field
   val attr: class_type_field -> attribute -> class_type_field
 
@@ -381,7 +378,6 @@ sig
     class_type_field
   val extension: ?loc:loc -> ?attrs:attrs -> extension -> class_type_field
   val attribute: ?loc:loc -> attribute -> class_type_field
-  val text: text -> class_type_field list
 end
 
 (** Class expressions *)
@@ -408,7 +404,7 @@ end
 (** Class fields *)
 module Cf:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> class_field_desc ->
+  val mk: ?loc:loc -> ?attrs:attrs -> class_field_desc ->
     class_field
   val attr: class_field -> attribute -> class_field
 
@@ -423,7 +419,6 @@ sig
   val initializer_: ?loc:loc -> ?attrs:attrs -> expression -> class_field
   val extension: ?loc:loc -> ?attrs:attrs -> extension -> class_field
   val attribute: ?loc:loc -> attribute -> class_field
-  val text: text -> class_field list
 
   val virtual_: core_type -> class_field_kind
   val concrete: override_flag -> expression -> class_field_kind
@@ -433,7 +428,7 @@ end
 (** Classes *)
 module Ci:
 sig
-  val mk: ?loc:loc -> ?attrs:attrs -> ?docs:docs -> ?text:text ->
+  val mk: ?loc:loc -> ?attrs:attrs ->
     ?virt:virtual_flag -> ?params:(core_type * variance) list ->
     str -> 'a -> 'a class_infos
 end
