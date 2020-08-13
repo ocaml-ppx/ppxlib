@@ -1,4 +1,4 @@
-open Ocaml_common
+open Import
 
 type old_t (*IF_NOT_AT_LEAST 408 = Location.error *) = {
     loc: Location.t;
@@ -9,12 +9,16 @@ type old_t (*IF_NOT_AT_LEAST 408 = Location.error *) = {
 
 type location_msg = (Format.formatter -> unit) Location.loc
 
-type location_report_kind (*IF_AT_LEAST 408 = Location.report_kind *) =
-  | Report_error
-  | Report_warning of string
-  | Report_warning_as_error of string
-  | Report_alert of string
-  | Report_alert_as_error of string
+include struct
+  [@@@warning "-37"]
+
+  type location_report_kind (*IF_AT_LEAST 408 = Location.report_kind *) =
+    | Report_error
+    | Report_warning of string
+    | Report_warning_as_error of string
+    | Report_alert of string
+    | Report_alert_as_error of string
+end
 
 type location_report (*IF_AT_LEAST 408 = Location.report *) = {
   kind : location_report_kind;
@@ -40,7 +44,7 @@ let of_exn exn =
   | exception _ -> None
 
 let to_extension (error : t) =
-  let open Import.Parsetree in
+  let open Parsetree in
   let open Ast_helper in
   let mk_string_constant x = Str.eval (Exp.constant (Pconst_string (x, None))) in
   match error_type_of_t error with

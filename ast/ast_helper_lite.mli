@@ -1,3 +1,5 @@
+(** Copy of Ast_helper from OCaml 4.10 with docstring related stuff removed *)
+
 open Ocaml_common
 open Migrate_parsetree.Ast_410
 
