@@ -95,8 +95,6 @@ module Selected_ast = Select_ast(Ocaml)
 module Parsetree  = Selected_ast.Ast.Parsetree
 module Asttypes   = Selected_ast.Ast.Asttypes
 module Ast_helper = Ast_extensions.Ast_helper
-module Docstrings = Ast_extensions.Docstrings
-
 
 module Location   = struct
   include Ocaml_common.Location
