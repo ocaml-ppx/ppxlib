@@ -26,40 +26,62 @@ module Kind = struct
   let equal : t -> t -> bool = Poly.equal
 end
 
-module Some_intf_or_impl = struct
+module Ast_io = struct
   type t =
-    | Intf of Migrate_parsetree.Driver.some_signature
-    | Impl of Migrate_parsetree.Driver.some_structure
+    | Intf of Compiler_ast.Parsetree.signature
+    | Impl of Compiler_ast.Parsetree.structure
 
-  let to_ast_io (ast : t) ~add_ppx_context =
-    let open Migrate_parsetree in
-    match ast with
-    | Intf (Migrate_parsetree.Driver.Sig ((module Ver), sg)) ->
-      let sg =
-        (Migrate_parsetree.Versions.migrate
-           (module Ver)
-           (module Versions.OCaml_current)).copy_signature sg
-      in
-      let sg =
-        if add_ppx_context then
-          Ocaml_common.Ast_mapper.add_ppx_context_sig ~tool_name:"ppxlib_driver" sg
-        else
-          sg
-      in
-      Ast_io.Intf ((module Versions.OCaml_current), sg)
-    | Impl (Migrate_parsetree.Driver.Str ((module Ver), st)) ->
-      let st =
-        (Migrate_parsetree.Versions.migrate
-                      (module Ver)
-                      (module Versions.OCaml_current)).copy_structure st
-      in
-      let st =
-        if add_ppx_context then
-          Ocaml_common.Ast_mapper.add_ppx_context_str ~tool_name:"ppxlib_driver" st
-        else
-          st
-      in
-      Ast_io.Impl ((module Versions.OCaml_current), st)
+  type read_error =
+    | Not_a_binary_ast of string
+    (* The input doesn't contain a binary AST. The argument
+       corresponds to the bytes from the input that were consumed. *)
+  | Unknown_version of string
+    (* The input contains a binary AST for an unknown version of
+       OCaml.  The argument is the unknown magic number. *)
+
+  let magic_length = String.length Ocaml_common.Config.ast_impl_magic_number
+
+  let read_magic ic =
+    let buf = Bytes.create magic_length in
+    let len = input ic buf 0 magic_length in
+    let s = Bytes.sub_string buf ~pos:0 ~len in
+    if len = magic_length then
+      Ok s
+    else
+      Error s
+
+  let read ic =
+    match read_magic ic with
+    | Error s -> Error (Not_a_binary_ast s)
+    | Ok s ->
+      if String.equal s Ocaml_common.Config.ast_impl_magic_number then
+        let filename : string = input_value ic in
+        let payload = Impl (input_value ic) in
+        Ok (filename, payload)
+      else if String.equal s Ocaml_common.Config.ast_intf_magic_number then
+        let filename : string = input_value ic in
+        let payload = Intf (input_value ic) in
+        Ok (filename, payload)
+      else
+      if String.equal s
+           (String.sub Ocaml_common.Config.ast_impl_magic_number ~pos:0 ~len:9)
+      || String.equal s
+           (String.sub Ocaml_common.Config.ast_intf_magic_number ~pos:0 ~len:9)
+      then
+        Error (Unknown_version s)
+      else
+        Error (Not_a_binary_ast s)
+
+  let write oc (filename : string) x =
+    match x with
+    | Intf x ->
+      output_string oc Ocaml_common.Config.ast_intf_magic_number;
+      output_value oc filename;
+      output_value oc x
+    | Impl x ->
+      output_string oc Ocaml_common.Config.ast_impl_magic_number;
+      output_value oc filename;
+      output_value oc x
 end
 
 module Intf_or_impl = struct
@@ -83,34 +105,29 @@ module Intf_or_impl = struct
     | Intf _ -> Intf
     | Impl _ -> Impl
 
-  let of_some_intf_or_impl ast : t =
-    let open Some_intf_or_impl in
-    match ast with
-    | Intf (Migrate_parsetree.Driver.Sig ((module Ver), sg)) ->
-      Intf ((Migrate_parsetree.Versions.migrate (module Ver)
-               (module Ppxlib_ast.Selected_ast)).copy_signature sg)
-    | Impl (Migrate_parsetree.Driver.Str ((module Ver), st)) ->
-      Impl ((Migrate_parsetree.Versions.migrate (module Ver)
-               (module Ppxlib_ast.Selected_ast)).copy_structure st)
-
   let of_ast_io ast : t =
-    let open Migrate_parsetree in
     match ast with
-    | Ast_io.Intf ((module Ver), sg) ->
-      let module C = Versions.Convert(Ver)(Ppxlib_ast.Selected_ast) in
-      Intf (C.copy_signature sg)
-    | Ast_io.Impl ((module Ver), st) ->
-      let module C = Versions.Convert(Ver)(Ppxlib_ast.Selected_ast) in
-      Impl (C.copy_structure st)
-end
-(*
-let map_impl x ~(f : _ Intf_or_impl.t -> _ Intf_or_impl.t) =
-  match f (Impl x) with
-  | Impl x -> x
-  | Intf _ -> assert false
+    | Ast_io.Intf sg -> Intf (Selected_ast.Of_ocaml.copy_signature sg)
+    | Ast_io.Impl st -> Impl (Selected_ast.Of_ocaml.copy_structure st)
 
-let map_intf x ~(f : _ Intf_or_impl.t -> _ Intf_or_impl.t) =
-  match f (Intf x) with
-  | Intf x -> x
-  | Impl _ -> assert false
-*)
+  let to_ast_io (ast : t) ~add_ppx_context =
+    match ast with
+    | Intf sg ->
+      let sg = Selected_ast.To_ocaml.copy_signature sg in
+      let sg =
+        if add_ppx_context then
+          Ocaml_common.Ast_mapper.add_ppx_context_sig ~tool_name:"ppx_driver" sg
+        else
+          sg
+      in
+      Ast_io.Intf sg
+    | Impl st ->
+      let st = Selected_ast.To_ocaml.copy_structure st in
+      let st =
+        if add_ppx_context then
+          Ocaml_common.Ast_mapper.add_ppx_context_str ~tool_name:"ppx_driver" st
+        else
+          st
+      in
+      Ast_io.Impl st
+end

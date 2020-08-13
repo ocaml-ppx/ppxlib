@@ -5,7 +5,6 @@
   ocaml-compiler-libs.common
   compiler-libs.common
   ocaml-compiler-libs.shadow
-  ocaml-migrate-parsetree
   ppxlib_ast
   ppxlib_print_diff
   ppx_derivers
@@ -14,7 +13,6 @@
  (flags (:standard -open Ocaml_shadow -safe-string))
  (ppx.driver
   (main       Ppxlib.Driver.standalone)
-  (replaces   ocaml-migrate-parsetree)
   (flags      (-corrected-suffix %{corrected-suffix} -diff-cmd - -dump-ast))
   (lint_flags (-corrected-suffix %{corrected-suffix} -diff-cmd - -null    ))))
 
