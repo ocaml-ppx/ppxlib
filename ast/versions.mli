@@ -14,16 +14,16 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(*$ #use "src/cinaps_helpers" $*)
+(*$ open Ast_cinaps_helpers $*)
 
 (** {1 Abstracting an OCaml frontend} *)
 
 (** Abstract view of a version of an OCaml Ast *)
 module type Ast = sig
   (*$ foreach_module (fun m types ->
-      printf "module %s : sig\n" m;
-      List.iter types ~f:(printf "type %s\n");
-      printf "end\n"
+      printf "  module %s : sig\n" m;
+      List.iter types ~f:(printf "    type %s\n");
+      printf "  end\n"
     )
   *)
   module Parsetree : sig
@@ -38,7 +38,7 @@ module type Ast = sig
     type type_extension
     type extension_constructor
   end
-  (*$*)
+(*$*)
   module Config : sig
     val ast_impl_magic_number : string
     val ast_intf_magic_number : string
@@ -49,7 +49,7 @@ end
 
 type 'a _types = 'a constraint 'a
   = <
-    (*$ foreach_type (fun _ s -> printf "%-21s : _;\n" s) *)
+    (*$ foreach_type (fun _ s -> printf "    %-21s : _;\n" s) *)
     structure             : _;
     signature             : _;
     toplevel_phrase       : _;
@@ -60,7 +60,7 @@ type 'a _types = 'a constraint 'a
     type_declaration      : _;
     type_extension        : _;
     extension_constructor : _;
-    (*$*)
+(*$*)
   >
 ;;
 
@@ -104,7 +104,7 @@ module type OCaml_version = sig
 
   (** Shortcut for talking about Ast types *)
   type types = <
-    (*$ foreach_type (fun m s -> printf "%-21s : Ast.%s.%s;\n" s m s) *)
+    (*$ foreach_type (fun m s -> printf "    %-21s : Ast.%s.%s;\n" s m s) *)
     structure             : Ast.Parsetree.structure;
     signature             : Ast.Parsetree.signature;
     toplevel_phrase       : Ast.Parsetree.toplevel_phrase;
@@ -115,7 +115,7 @@ module type OCaml_version = sig
     type_declaration      : Ast.Parsetree.type_declaration;
     type_extension        : Ast.Parsetree.type_extension;
     extension_constructor : Ast.Parsetree.extension_constructor;
-    (*$*)
+(*$*)
   > _types
 
   (** A construtor for recovering type equalities between two arbitrary
@@ -126,52 +126,22 @@ module type OCaml_version = sig
   val migration_info : types migration_info
 end
 
-(** Representing an ocaml version in type language *)
-type 'types ocaml_version =
-  (module OCaml_version
-    (*$ let sep = with_then_and () in
-      foreach_type (fun m s ->
-          printf "%t type Ast.%s.%s = 'types get_%s\n" sep m s s) *)
-    with type Ast.Parsetree.structure = 'types get_structure
-     and type Ast.Parsetree.signature = 'types get_signature
-     and type Ast.Parsetree.toplevel_phrase = 'types get_toplevel_phrase
-     and type Ast.Parsetree.core_type = 'types get_core_type
-     and type Ast.Parsetree.expression = 'types get_expression
-     and type Ast.Parsetree.pattern = 'types get_pattern
-     and type Ast.Parsetree.case = 'types get_case
-     and type Ast.Parsetree.type_declaration = 'types get_type_declaration
-     and type Ast.Parsetree.type_extension = 'types get_type_extension
-     and type Ast.Parsetree.extension_constructor = 'types get_extension_constructor
-     (*$*)
-  )
-
 (** {1 Concrete frontend instances} *)
 
 (*$foreach_version (fun suffix _ ->
     printf "module OCaml_%s : OCaml_version with module Ast = Migrate_parsetree.Ast_%s\n"
-      suffix suffix;
-    printf "val ocaml_%s : OCaml_%s.types ocaml_version\n" suffix suffix;
+      suffix suffix
   )*)
 module OCaml_402 : OCaml_version with module Ast = Migrate_parsetree.Ast_402
-val ocaml_402 : OCaml_402.types ocaml_version
 module OCaml_403 : OCaml_version with module Ast = Migrate_parsetree.Ast_403
-val ocaml_403 : OCaml_403.types ocaml_version
 module OCaml_404 : OCaml_version with module Ast = Migrate_parsetree.Ast_404
-val ocaml_404 : OCaml_404.types ocaml_version
 module OCaml_405 : OCaml_version with module Ast = Migrate_parsetree.Ast_405
-val ocaml_405 : OCaml_405.types ocaml_version
 module OCaml_406 : OCaml_version with module Ast = Migrate_parsetree.Ast_406
-val ocaml_406 : OCaml_406.types ocaml_version
 module OCaml_407 : OCaml_version with module Ast = Migrate_parsetree.Ast_407
-val ocaml_407 : OCaml_407.types ocaml_version
 module OCaml_408 : OCaml_version with module Ast = Migrate_parsetree.Ast_408
-val ocaml_408 : OCaml_408.types ocaml_version
 module OCaml_409 : OCaml_version with module Ast = Migrate_parsetree.Ast_409
-val ocaml_409 : OCaml_409.types ocaml_version
 module OCaml_410 : OCaml_version with module Ast = Migrate_parsetree.Ast_410
-val ocaml_410 : OCaml_410.types ocaml_version
 module OCaml_411 : OCaml_version with module Ast = Migrate_parsetree.Ast_411
-val ocaml_411 : OCaml_411.types ocaml_version
 (*$*)
 
 (* An alias to the current compiler version *)
@@ -194,5 +164,5 @@ module Convert (A : OCaml_version) (B : OCaml_version) : sig
   val copy_type_declaration      : A.Ast.Parsetree.type_declaration      -> B.Ast.Parsetree.type_declaration
   val copy_type_extension        : A.Ast.Parsetree.type_extension        -> B.Ast.Parsetree.type_extension
   val copy_extension_constructor : A.Ast.Parsetree.extension_constructor -> B.Ast.Parsetree.extension_constructor
-  (*$*)
+(*$*)
 end

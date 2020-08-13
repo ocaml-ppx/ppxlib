@@ -17,3 +17,7 @@
  (targets location_helper.ml clflags_helper.ml misc_helper.ml)
  (deps    gen-compiler_specifics)
  (action  (run %{ocaml} %{deps} %{ocaml_version} %{targets})))
+
+(cinaps
+ (files *.ml *.mli)
+ (libraries ast_cinaps_helpers))
