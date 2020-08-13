@@ -64,23 +64,6 @@ type 'a _types = 'a constraint 'a
   >
 ;;
 
-(*$ foreach_type (fun _ s ->
-    printf "type 'a get_%s = 'x constraint 'a _types = < %s : 'x; .. >\n" s s
-  );
-  printf ";;\n" *)
-type 'a get_structure = 'x constraint 'a _types = < structure : 'x; .. >
-type 'a get_signature = 'x constraint 'a _types = < signature : 'x; .. >
-type 'a get_toplevel_phrase = 'x constraint 'a _types = < toplevel_phrase : 'x; .. >
-type 'a get_core_type = 'x constraint 'a _types = < core_type : 'x; .. >
-type 'a get_expression = 'x constraint 'a _types = < expression : 'x; .. >
-type 'a get_pattern = 'x constraint 'a _types = < pattern : 'x; .. >
-type 'a get_case = 'x constraint 'a _types = < case : 'x; .. >
-type 'a get_type_declaration = 'x constraint 'a _types = < type_declaration : 'x; .. >
-type 'a get_type_extension = 'x constraint 'a _types = < type_extension : 'x; .. >
-type 'a get_extension_constructor = 'x constraint 'a _types = < extension_constructor : 'x; .. >
-;;
-(*$*)
-
 (** A version of the OCaml frontend packs the ast with type witnesses
     so that equalities can be recovered dynamically. *)
 type _ witnesses (*IF_AT_LEAST 406 = private ..*)
