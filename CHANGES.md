@@ -1,8 +1,10 @@
-unreleased
+0.16.0 (18/08/2020)
 -------------------
 
-- `Driver.register_transformation`: add optional parameter `~instrument` 
+- `Driver.register_transformation`: add optional parameter `~instrument`
   (#161, @pitag-ha)
+- Add missing `Location.init` (#165, @pitag-ha)
+- Upgrade to ocaml-migrate-parsetree.2.0.0 (#164, @ceastlund)
 
 0.15.0 (04/08/2020)
 -------------------
