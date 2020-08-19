@@ -111,7 +111,7 @@ You will also need the following ``my_ppx_rewriter.ml``:
 
 There are a few things to explain here. The last part, i.e. the call to
 ``Driver.register_transformation`` is common to almost all ppxlib-based PPX plugins and is how
-you let ``ppxlib`` knows about your transformation. You'll note that here we register a single rule
+you let ``ppxlib`` know about your transformation. You'll note that here we register a single rule
 but it is possible to register several rules for a single logical transformation.
 
 The above is specific to extension rewriters. You need to declare a ppxlib ``Extension``.
@@ -183,7 +183,7 @@ You will also need the following ``my_ppx_deriver.ml``:
        ~sig_type_decl:intf_generator
 
 
-The call to ``Deriving.add`` is how you'll let ``ppxlib`` knows about your deriver. The first string
+The call to ``Deriving.add`` is how you'll let ``ppxlib`` know about your deriver. The first string
 argument is the name of the deriver as referred to by your users, in the above example one would add
 a ``[@@deriving my_deriver]`` annotation to use this plugin.
 Here our deriver can be used on type declarations, be it in structures or signatures (i.e.
@@ -359,4 +359,3 @@ whole ``metaquot`` extension point. E.g. you can write:
 
           let structure_item =
             [%stri let [%p some_pat] : [%t some_type] = [%e some_expr]]
-
