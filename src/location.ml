@@ -1,6 +1,6 @@
 open Import
 
-module L = Ocaml_common.Location
+module L = Astlib.Location
 
 type t = location =
   { loc_start : Lexing.position

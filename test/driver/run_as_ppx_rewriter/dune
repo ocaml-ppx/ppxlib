@@ -7,7 +7,7 @@
 
 (executable
  (name print_magic_number)
- (libraries ocaml-compiler-libs.common)
+ (libraries astlib)
  (modules print_magic_number))
 
 (cram

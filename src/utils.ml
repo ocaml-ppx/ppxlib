@@ -109,7 +109,7 @@ module Ast_io = struct
       | None -> raise exn
       | Some error -> Error (Source_parse_error (error, input_version)))
 
-  let magic_length = String.length Ocaml_common.Config.ast_impl_magic_number
+  let magic_length = String.length Astlib.Config.ast_impl_magic_number
 
   let read_magic ic =
     let buf = Bytes.create magic_length in
@@ -156,11 +156,11 @@ module Ast_io = struct
           if
             String.equal
               (String.sub s ~pos:0 ~len:9)
-              (String.sub Ocaml_common.Config.ast_impl_magic_number ~pos:0
+              (String.sub Astlib.Config.ast_impl_magic_number ~pos:0
                 ~len:9)
             || String.equal
                 (String.sub s ~pos:0 ~len:9)
-                (String.sub Ocaml_common.Config.ast_intf_magic_number ~pos:0
+                (String.sub Astlib.Config.ast_intf_magic_number ~pos:0
                     ~len:9)
             then Error (Unknown_version (s, fall_back_input_version))
             else (handle_non_binary s))
@@ -187,7 +187,7 @@ module Ast_io = struct
         let sg =
           if add_ppx_context then
             Selected_ast.To_ocaml.copy_signature sg
-            |> Ocaml_common.Ast_mapper.add_ppx_context_sig ~tool_name:"ppx_driver"
+            |> Astlib.Ast_mapper.add_ppx_context_sig ~tool_name:"ppx_driver"
             |> Ocaml_to_input.copy_signature
           else Ppxlib_to_input.copy_signature sg
         in
@@ -198,7 +198,7 @@ module Ast_io = struct
         let st =
           if add_ppx_context then
             Selected_ast.To_ocaml.copy_structure st
-            |> Ocaml_common.Ast_mapper.add_ppx_context_str ~tool_name:"ppx_driver"
+            |> Astlib.Ast_mapper.add_ppx_context_str ~tool_name:"ppx_driver"
             |> Ocaml_to_input.copy_structure
           else Ppxlib_to_input.copy_structure st
         in
