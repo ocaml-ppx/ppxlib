@@ -8,6 +8,9 @@ module Base = struct
     let code_path = Code_path.top_level ~file_path in
     {tool_name; code_path}
 
+  let code_path t = t.code_path
+  let tool_name t = t.tool_name
+
   let enter_expr t = {t with code_path = Code_path.enter_expr t.code_path}
   let enter_module ~loc name t = {t with code_path = Code_path.enter_module ~loc name t.code_path}
   let enter_value ~loc name t = {t with code_path = Code_path.enter_value ~loc name t.code_path}

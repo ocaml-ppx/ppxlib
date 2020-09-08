@@ -2,7 +2,14 @@ module Base : sig
   (** Type for the location independent parts of the expansion context *)
   type t
 
-  (**/*)
+  (** Return the code path for the given context *)
+  val code_path : t -> Code_path.t
+
+  (** Can be used within a ppx preprocessor to know which tool is
+      calling it ["ocamlc"], ["ocamlopt"], ["ocamldep"], ["ocaml"], ... . *)
+  val tool_name : t -> string
+
+  (**/**)
   (** Undocumented section *)
 
   (** Build a new base context at the top level of the given file with the given
