@@ -22,7 +22,7 @@ OCaml syntax directly and `ppxlib.traverse` which provides various
 ways of automatically traversing values of a given type, in particular
 allowing to inject a complex structured value into generated code.
 
-For more information about ppxlib and how to use it, pease consult the
+For more information about ppxlib and how to use it, please consult the
 [user manual][man].
 
 # What is the relation between ppxlib and other ppx libraries?
