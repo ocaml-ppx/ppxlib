@@ -11,7 +11,7 @@ let lident x = Longident.Lident x
 
 module Loc = struct
   let mk     x = { Location.loc; txt = x }
-  let lident x = mk (Longident.parse x)
+  let lident x = mk (Longident.parse x) [@@warning "-3"]
 end
 
 module List = Stdppx.List
