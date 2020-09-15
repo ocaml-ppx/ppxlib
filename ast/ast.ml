@@ -35,6 +35,24 @@ open Import
    - removing the extra values at the end of the file
    - replacing app [type ...] by [and ...] to make everything one recursive block
    - adding [@@deriving_inline traverse][@@@end] at the end
+
+   To update it to a newer OCaml version, create a new module with the above from the
+   latest compiler and add the following module definitions and opens to get it to
+   compile:
+   [{
+    module Ast = Versions.OCaml_4xx
+    open Ast.Ast
+    module Location   = struct
+      include Ocaml_common.Location
+      include Location_helper
+    end
+    module Longident = Ocaml_common.Longident
+   }]
+
+   Once you have generated the inlined derived traversal classes by running
+   [{ dune build @lint }] you can replace the above mentioned module definitions by a
+   [open Import] and update [Import] so that the [Js] module points to
+   [Versions.OCaml_4xx].
 *)
 
 (* Source code locations (ranges of positions), used in parsetree. *)
@@ -115,9 +133,11 @@ and constant = Parsetree.constant =
   *)
   | Pconst_char of char
   (* 'c' *)
-  | Pconst_string of string * string option
+  | Pconst_string of string * location * string option
   (* "constant"
      {delim|other constant|delim}
+
+     The location span the content of the string, without the delimiters.
   *)
   | Pconst_float of string * char option
   (* 3.4 2e5 1.4e-4
@@ -1097,9 +1117,10 @@ class virtual map =
             let a = self#string a in
             let b = self#option self#char b in Pconst_integer (a, b)
         | Pconst_char a -> let a = self#char a in Pconst_char a
-        | Pconst_string (a, b) ->
+        | Pconst_string (a, b, c) ->
             let a = self#string a in
-            let b = self#option self#string b in Pconst_string (a, b)
+            let b = self#location b in
+            let c = self#option self#string c in Pconst_string (a, b, c)
         | Pconst_float (a, b) ->
             let a = self#string a in
             let b = self#option self#char b in Pconst_float (a, b)
@@ -1951,7 +1972,8 @@ class virtual iter =
         match x with
         | Pconst_integer (a, b) -> (self#string a; self#option self#char b)
         | Pconst_char a -> self#char a
-        | Pconst_string (a, b) -> (self#string a; self#option self#string b)
+        | Pconst_string (a, b, c) ->
+            (self#string a; self#location b; self#option self#string c)
         | Pconst_float (a, b) -> (self#string a; self#option self#char b)
     method attribute : attribute -> unit=
       fun { attr_name; attr_payload; attr_loc } ->
@@ -2591,9 +2613,10 @@ class virtual ['acc] fold =
               let acc = self#string a acc in
               let acc = self#option self#char b acc in acc
           | Pconst_char a -> self#char a acc
-          | Pconst_string (a, b) ->
+          | Pconst_string (a, b, c) ->
               let acc = self#string a acc in
-              let acc = self#option self#string b acc in acc
+              let acc = self#location b acc in
+              let acc = self#option self#string c acc in acc
           | Pconst_float (a, b) ->
               let acc = self#string a acc in
               let acc = self#option self#char b acc in acc
@@ -3468,10 +3491,11 @@ class virtual ['acc] fold_map =
               ((Pconst_integer (a, b)), acc)
           | Pconst_char a ->
               let (a, acc) = self#char a acc in ((Pconst_char a), acc)
-          | Pconst_string (a, b) ->
+          | Pconst_string (a, b, c) ->
               let (a, acc) = self#string a acc in
-              let (b, acc) = self#option self#string b acc in
-              ((Pconst_string (a, b)), acc)
+              let (b, acc) = self#location b acc in
+              let (c, acc) = self#option self#string c acc in
+              ((Pconst_string (a, b, c)), acc)
           | Pconst_float (a, b) ->
               let (a, acc) = self#string a acc in
               let (b, acc) = self#option self#char b acc in
@@ -4688,9 +4712,11 @@ class virtual ['ctx] map_with_context =
               let a = self#string ctx a in
               let b = self#option self#char ctx b in Pconst_integer (a, b)
           | Pconst_char a -> let a = self#char ctx a in Pconst_char a
-          | Pconst_string (a, b) ->
+          | Pconst_string (a, b, c) ->
               let a = self#string ctx a in
-              let b = self#option self#string ctx b in Pconst_string (a, b)
+              let b = self#location ctx b in
+              let c = self#option self#string ctx c in
+              Pconst_string (a, b, c)
           | Pconst_float (a, b) ->
               let a = self#string ctx a in
               let b = self#option self#char ctx b in Pconst_float (a, b)
@@ -5747,10 +5773,11 @@ class virtual ['res] lift =
             self#constr "Pconst_integer" [a; b]
         | Pconst_char a ->
             let a = self#char a in self#constr "Pconst_char" [a]
-        | Pconst_string (a, b) ->
+        | Pconst_string (a, b, c) ->
             let a = self#string a in
-            let b = self#option self#string b in
-            self#constr "Pconst_string" [a; b]
+            let b = self#location b in
+            let c = self#option self#string c in
+            self#constr "Pconst_string" [a; b; c]
         | Pconst_float (a, b) ->
             let a = self#string a in
             let b = self#option self#char b in
