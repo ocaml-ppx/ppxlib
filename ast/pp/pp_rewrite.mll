@@ -7,18 +7,10 @@ let print_ocaml_version version =
   printf "%-*s" patt_len version
 }
 
-rule rewrite is_current ocaml_version = parse
+rule rewrite ocaml_version = parse
   | "OCAML_VERSION"
     { print_ocaml_version ocaml_version;
-      rewrite is_current ocaml_version lexbuf
-    }
-  |          "(*IF_CURRENT " ([^'*']* as s) "*)"
-    { let chunk = if is_current
-        then "             " ^ s ^          "  "
-        else Lexing.lexeme lexbuf
-      in
-      print_string chunk;
-      rewrite is_current ocaml_version lexbuf
+      rewrite ocaml_version lexbuf
     }
   |          "(*IF_AT_LEAST " ([^'*' ' ']* as v) " " ([^'*']* as s) "*)"
     { let chunk = if (v <= ocaml_version)
@@ -26,7 +18,7 @@ rule rewrite is_current ocaml_version = parse
         else Lexing.lexeme lexbuf
       in
       print_string chunk;
-      rewrite is_current ocaml_version lexbuf
+      rewrite ocaml_version lexbuf
     }
   |          "(*IF_NOT_AT_LEAST " ([^'*' ' ']* as v) " " ([^'*']* as s) "*)"
     { let chunk = if not (v <= ocaml_version)
@@ -34,12 +26,10 @@ rule rewrite is_current ocaml_version = parse
         else Lexing.lexeme lexbuf
       in
       print_string chunk;
-      rewrite is_current ocaml_version lexbuf
+      rewrite ocaml_version lexbuf
     }
   | _ as c
     { print_char c;
-      rewrite is_current ocaml_version lexbuf
+      rewrite ocaml_version lexbuf
     }
   | eof { () }
-
-

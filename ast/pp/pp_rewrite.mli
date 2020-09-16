@@ -1,1 +1,1 @@
-val rewrite : bool -> string -> Lexing.lexbuf -> unit
+val rewrite : string -> Lexing.lexbuf -> unit
