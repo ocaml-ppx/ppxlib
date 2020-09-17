@@ -21,3 +21,4 @@ env:
   - OCAML_VERSION="4.09"
     TEST=false
   - OCAML_VERSION="4.10"
+  - OCAML_VERSION="4.11.1"
