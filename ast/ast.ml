@@ -30,6 +30,7 @@ open Import
    - adding a type longident_loc = longident loc and replacing all the occurences of the
    latter by the former. This is so that we can override iteration an the level of a
    longident loc
+   - adding a type cases = case list
    - replacing all the (*IF_CURRENT = Foo.bar*) by: = Foo.bar
    - removing the extra values at the end of the file
    - replacing app [type ...] by [and ...] to make everything one recursive block
@@ -354,7 +355,7 @@ and expression_desc = Parsetree.expression_desc =
   (* let P1 = E1 and ... and Pn = EN in E       (flag = Nonrecursive)
      let rec P1 = E1 and ... and Pn = EN in E   (flag = Recursive)
   *)
-  | Pexp_function of case list
+  | Pexp_function of cases
   (* function P1 -> E1 | ... | Pn -> En *)
   | Pexp_fun of arg_label * expression option * pattern * expression
   (* fun P -> E1                          (Simple, None)
@@ -374,9 +375,9 @@ and expression_desc = Parsetree.expression_desc =
 
      Invariant: n > 0
   *)
-  | Pexp_match of expression * case list
+  | Pexp_match of expression * cases
   (* match E0 with P1 -> E1 | ... | Pn -> En *)
-  | Pexp_try of expression * case list
+  | Pexp_try of expression * cases
   (* try E0 with P1 -> E1 | ... | Pn -> En *)
   | Pexp_tuple of expression list
   (* (E1, ..., En)
@@ -1033,6 +1034,8 @@ and directive_argument_desc = Parsetree.directive_argument_desc =
   | Pdir_ident of longident
   | Pdir_bool of bool
 
+and cases = case list
+
 [@@deriving_inline traverse]
 class virtual map =
   object (self)
@@ -1259,7 +1262,7 @@ class virtual map =
             let a = self#rec_flag a in
             let b = self#list self#value_binding b in
             let c = self#expression c in Pexp_let (a, b, c)
-        | Pexp_function a -> let a = self#list self#case a in Pexp_function a
+        | Pexp_function a -> let a = self#cases a in Pexp_function a
         | Pexp_fun (a, b, c, d) ->
             let a = self#arg_label a in
             let b = self#option self#expression b in
@@ -1275,10 +1278,10 @@ class virtual map =
             Pexp_apply (a, b)
         | Pexp_match (a, b) ->
             let a = self#expression a in
-            let b = self#list self#case b in Pexp_match (a, b)
+            let b = self#cases b in Pexp_match (a, b)
         | Pexp_try (a, b) ->
             let a = self#expression a in
-            let b = self#list self#case b in Pexp_try (a, b)
+            let b = self#cases b in Pexp_try (a, b)
         | Pexp_tuple a -> let a = self#list self#expression a in Pexp_tuple a
         | Pexp_construct (a, b) ->
             let a = self#longident_loc a in
@@ -1899,6 +1902,7 @@ class virtual map =
             let b = self#option self#char b in Pdir_int (a, b)
         | Pdir_ident a -> let a = self#longident a in Pdir_ident a
         | Pdir_bool a -> let a = self#bool a in Pdir_bool a
+    method cases : cases -> cases= self#list self#case
   end
 class virtual iter =
   object (self)
@@ -2063,7 +2067,7 @@ class virtual iter =
             (self#rec_flag a;
              self#list self#value_binding b;
              self#expression c)
-        | Pexp_function a -> self#list self#case a
+        | Pexp_function a -> self#cases a
         | Pexp_fun (a, b, c, d) ->
             (self#arg_label a;
              self#option self#expression b;
@@ -2072,8 +2076,8 @@ class virtual iter =
         | Pexp_apply (a, b) ->
             (self#expression a;
              self#list (fun (a, b) -> self#arg_label a; self#expression b) b)
-        | Pexp_match (a, b) -> (self#expression a; self#list self#case b)
-        | Pexp_try (a, b) -> (self#expression a; self#list self#case b)
+        | Pexp_match (a, b) -> (self#expression a; self#cases b)
+        | Pexp_try (a, b) -> (self#expression a; self#cases b)
         | Pexp_tuple a -> self#list self#expression a
         | Pexp_construct (a, b) ->
             (self#longident_loc a; self#option self#expression b)
@@ -2513,6 +2517,7 @@ class virtual iter =
         | Pdir_int (a, b) -> (self#string a; self#option self#char b)
         | Pdir_ident a -> self#longident a
         | Pdir_bool a -> self#bool a
+    method cases : cases -> unit= self#list self#case
   end
 class virtual ['acc] fold =
   object (self)
@@ -2760,7 +2765,7 @@ class virtual ['acc] fold =
               let acc = self#rec_flag a acc in
               let acc = self#list self#value_binding b acc in
               let acc = self#expression c acc in acc
-          | Pexp_function a -> self#list self#case a acc
+          | Pexp_function a -> self#cases a acc
           | Pexp_fun (a, b, c, d) ->
               let acc = self#arg_label a acc in
               let acc = self#option self#expression b acc in
@@ -2777,10 +2782,10 @@ class virtual ['acc] fold =
               acc
           | Pexp_match (a, b) ->
               let acc = self#expression a acc in
-              let acc = self#list self#case b acc in acc
+              let acc = self#cases b acc in acc
           | Pexp_try (a, b) ->
               let acc = self#expression a acc in
-              let acc = self#list self#case b acc in acc
+              let acc = self#cases b acc in acc
           | Pexp_tuple a -> self#list self#expression a acc
           | Pexp_construct (a, b) ->
               let acc = self#longident_loc a acc in
@@ -3374,6 +3379,7 @@ class virtual ['acc] fold =
               let acc = self#option self#char b acc in acc
           | Pdir_ident a -> self#longident a acc
           | Pdir_bool a -> self#bool a acc
+    method cases : cases -> 'acc -> 'acc= self#list self#case
   end
 class virtual ['acc] fold_map =
   object (self)
@@ -3693,8 +3699,7 @@ class virtual ['acc] fold_map =
               let (c, acc) = self#expression c acc in
               ((Pexp_let (a, b, c)), acc)
           | Pexp_function a ->
-              let (a, acc) = self#list self#case a acc in
-              ((Pexp_function a), acc)
+              let (a, acc) = self#cases a acc in ((Pexp_function a), acc)
           | Pexp_fun (a, b, c, d) ->
               let (a, acc) = self#arg_label a acc in
               let (b, acc) = self#option self#expression b acc in
@@ -3713,12 +3718,10 @@ class virtual ['acc] fold_map =
               ((Pexp_apply (a, b)), acc)
           | Pexp_match (a, b) ->
               let (a, acc) = self#expression a acc in
-              let (b, acc) = self#list self#case b acc in
-              ((Pexp_match (a, b)), acc)
+              let (b, acc) = self#cases b acc in ((Pexp_match (a, b)), acc)
           | Pexp_try (a, b) ->
               let (a, acc) = self#expression a acc in
-              let (b, acc) = self#list self#case b acc in
-              ((Pexp_try (a, b)), acc)
+              let (b, acc) = self#cases b acc in ((Pexp_try (a, b)), acc)
           | Pexp_tuple a ->
               let (a, acc) = self#list self#expression a acc in
               ((Pexp_tuple a), acc)
@@ -4607,6 +4610,7 @@ class virtual ['acc] fold_map =
               let (a, acc) = self#longident a acc in ((Pdir_ident a), acc)
           | Pdir_bool a ->
               let (a, acc) = self#bool a acc in ((Pdir_bool a), acc)
+    method cases : cases -> 'acc -> (cases * 'acc)= self#list self#case
   end
 class virtual ['ctx] map_with_context =
   object (self)
@@ -4876,8 +4880,7 @@ class virtual ['ctx] map_with_context =
               let a = self#rec_flag ctx a in
               let b = self#list self#value_binding ctx b in
               let c = self#expression ctx c in Pexp_let (a, b, c)
-          | Pexp_function a ->
-              let a = self#list self#case ctx a in Pexp_function a
+          | Pexp_function a -> let a = self#cases ctx a in Pexp_function a
           | Pexp_fun (a, b, c, d) ->
               let a = self#arg_label ctx a in
               let b = self#option self#expression ctx b in
@@ -4894,10 +4897,10 @@ class virtual ['ctx] map_with_context =
               Pexp_apply (a, b)
           | Pexp_match (a, b) ->
               let a = self#expression ctx a in
-              let b = self#list self#case ctx b in Pexp_match (a, b)
+              let b = self#cases ctx b in Pexp_match (a, b)
           | Pexp_try (a, b) ->
               let a = self#expression ctx a in
-              let b = self#list self#case ctx b in Pexp_try (a, b)
+              let b = self#cases ctx b in Pexp_try (a, b)
           | Pexp_tuple a ->
               let a = self#list self#expression ctx a in Pexp_tuple a
           | Pexp_construct (a, b) ->
@@ -5636,6 +5639,7 @@ class virtual ['ctx] map_with_context =
               let b = self#option self#char ctx b in Pdir_int (a, b)
           | Pdir_ident a -> let a = self#longident ctx a in Pdir_ident a
           | Pdir_bool a -> let a = self#bool ctx a in Pdir_bool a
+    method cases : 'ctx -> cases -> cases= self#list self#case
   end
 class virtual ['res] lift =
   object (self)
@@ -5956,7 +5960,7 @@ class virtual ['res] lift =
             let b = self#list self#value_binding b in
             let c = self#expression c in self#constr "Pexp_let" [a; b; c]
         | Pexp_function a ->
-            let a = self#list self#case a in self#constr "Pexp_function" [a]
+            let a = self#cases a in self#constr "Pexp_function" [a]
         | Pexp_fun (a, b, c, d) ->
             let a = self#arg_label a in
             let b = self#option self#expression b in
@@ -5972,10 +5976,10 @@ class virtual ['res] lift =
             self#constr "Pexp_apply" [a; b]
         | Pexp_match (a, b) ->
             let a = self#expression a in
-            let b = self#list self#case b in self#constr "Pexp_match" [a; b]
+            let b = self#cases b in self#constr "Pexp_match" [a; b]
         | Pexp_try (a, b) ->
             let a = self#expression a in
-            let b = self#list self#case b in self#constr "Pexp_try" [a; b]
+            let b = self#cases b in self#constr "Pexp_try" [a; b]
         | Pexp_tuple a ->
             let a = self#list self#expression a in
             self#constr "Pexp_tuple" [a]
@@ -6750,5 +6754,6 @@ class virtual ['res] lift =
         | Pdir_ident a ->
             let a = self#longident a in self#constr "Pdir_ident" [a]
         | Pdir_bool a -> let a = self#bool a in self#constr "Pdir_bool" [a]
+    method cases : cases -> 'res= self#list self#case
   end
 [@@@end]
