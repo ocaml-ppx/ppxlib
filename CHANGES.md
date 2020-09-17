@@ -1,3 +1,10 @@
+0.17.0 (17/09/2020)
+-------------------
+
+- Add accessors for `code_path` and `tool_name` to `Expansion_context.Base`
+  (#173, @jberdine)
+- Add `cases` methods to traversal classes in `Ast_traverse` (#183, @pitag-ha)
+
 0.16.0 (18/08/2020)
 -------------------
 
