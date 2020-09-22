@@ -26,17 +26,18 @@ The script will clone them in a `dunireverse` folder at the repo's root.
 
 You can either install them through opam by running `./dev/rev-deps.sh install-deps opam` or
 get the sources locally in the dune-workspace (prefered) by running:
-`./dev/rev-deps.sh install-deps duniverse`. 
+`./dev/rev-deps.sh install-deps duniverse`.
 
 The opam installation step is very naive and probably won't stand the test of time but might be
 better when the rev deps have too strict constraints. The duniverse approach is prefered as it will
 work even if some of the rev-deps depend on each other but it requires the rev deps to all be
 coninstallable or the duniverse solver will fail.
 
-To get the duniverse tool, simply clone the duniverse repo at
-[https://github.com/ocamllabs/duniverse](https://github.com/ocamllabs/duniverse), build it
-and add it to your path. When initially writing this, I used duniverse's master, ie at the time
-`47faea8522e8e44ba0dbd04403425970aa5c2662`.
+To get the opam monorepo plugin, required to assemble the duniverse with all the dependencies,
+you'll need to pin it as follows:
+```
+opam pin add opam-monorepo git+https://github.com/ocamllabs/duniverse#opam-mono-plugin
+```
 
 ### Building them
 
@@ -46,3 +47,32 @@ exactly what you need, ie ppxlib and all the rev-deps packages you cloned.
 
 No black magic here, it's just running `dune build -p ppxlib,...` where `...` is the list of
 rev-deps packages. The `-p` is also helpful to avoid annoying warnings getting in the way.
+
+### Notes
+
+This is all very experimental and sometimes a bit of extra work is required. This section contains
+note that can hopefully help you with this process.
+
+A good thing to do is to deal with janestreet packages first because if some non-janestreet rev-deps
+depend on a janestreet package you can then simply pin to your patch before running the
+`install-deps` step.
+
+When last assembling the non janestreet rev-deps duniverse I had to remove the following packages:
+- `elpi` as it depends on `camlp5`
+- `gen_js_api` which depends on `omp.1.x` directly
+- `obus` as it depends on `lwt_ppx` which uses `omp.1.x`
+- `ppx_import` as it depends on `omp.1.x` directly
+- `ppx_show` depends on stdcompat which doesn't build with dune
+- `ppx_string_interpolation` depends on `sedlex.ppx` which uses OMP and `ppx_tools_versioned`
+
+When last assembling the janestreet rev-deps duniverse I had to remove the following packages:
+- `memtrace_viewer` as the repo is weirdly maintained, there's no tag for the released versions and
+  the master branch's opam file depends on packages not available in opam at the time:
+  `async_rpc_websocket` and `ocaml-embed-file`
+- `ppx_python` as it depends on `pyml` which doesn't build with dune
+
+`opam-monorepo` will pull in `dune-configurator` and if you're using a recent version of dune this
+will conflict with the one you have locally so you should probably run:
+```
+rm -rf duniverse/dune-configurator*
+```

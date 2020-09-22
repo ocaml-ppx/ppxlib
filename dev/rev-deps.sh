@@ -1,7 +1,6 @@
 #!/bin/bash
 set -euo pipefail
 
-
 pull () {
   case $1 in
     janestreet|js)
@@ -13,7 +12,7 @@ pull () {
   esac
 
   # Get a first list of revdeps candidate
-  REVDEPS=$(opam list -s --depends-on ppxlib.0.13.0 --coinstallable-with ocaml.4.10.0)
+  REVDEPS=$(opam list -s --depends-on ppxlib.0.17.0 --coinstallable-with ocaml.4.11.1)
 
   TRUE_REVDEPS=""
   for d in $REVDEPS
@@ -60,7 +59,7 @@ pull () {
       janestreet|js)
         # To checkout to the latest released version
         cd $basename
-        git checkout $ver || git checkout v$ver
+        git checkout $ver || git checkout v$ver || true
         cd ..
         ;;
       *)
@@ -82,25 +81,13 @@ install_deps_opam () {
 }
 
 install_deps_duniverse () {
-  # Generate a dummy opam file
-  echo 'opam-version: "2.0"' > dunireverse.opam
-  echo "depends: [" >> dunireverse.opam
-  echo "  \"ocaml\" {=\"4.10.0\"}" >> dunireverse.opam
-  cat dunireverse/.deps | while read line
+  PACKAGES="ppxlib"
+  while read line
   do
-    basename=${line%%.*}
-    ver=${line#*.}
-    echo "  \"$basename\" {=\"$ver\"}" >> dunireverse.opam
-  done
-  echo "]" >> dunireverse.opam
-  duniverse init
-  duniverse opam-install || true
-  duniverse pull --no-cache
-
-  cat dunireverse/.deps | while read line
-  do
-    rm -r duniverse/$line
-  done
+    PACKAGES="$PACKAGES $line"
+  done < dunireverse/.deps
+  opam monorepo lock --build-only $PACKAGES
+  opam monorepo pull --no-cache
 }
 
 install_deps () {
