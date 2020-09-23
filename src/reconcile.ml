@@ -98,7 +98,8 @@ module Replacements = struct
          String.(<>) repl.stop .pos_fname input_name then
         Location.raise_errorf ~loc:(Location.in_file input_filename)
           "ppxlib_driver: the rewriting contains parts from another file.\n\
-           It is too complicated to reconcile it with the source";
+           It is too complicated to reconcile it with the source: %s or %s and %s"
+           repl.start.pos_fname repl.stop.pos_fname input_name;
       assert (repl.start.pos_cnum <= repl.stop.pos_cnum));
     let repls =
       List.sort repls ~cmp:(fun  a b ->

@@ -46,7 +46,7 @@ let of_exn exn =
 let to_extension (error : t) =
   let open Parsetree in
   let open Ast_helper in
-  let mk_string_constant x = Str.eval (Exp.constant (Pconst_string (x, None))) in
+  let mk_string_constant x = Str.eval (Exp.constant (Const.string x)) in
   match error_type_of_t error with
   | `Old_error old_error ->
     let rec extension_of_old_error ({loc; msg; if_highlight = _; sub} : old_t) =

@@ -16,7 +16,7 @@
 (** Copy of Ast_helper from OCaml 4.10 with docstring related stuff removed *)
 
 open Ocaml_common
-open Migrate_parsetree.Ast_410
+open Migrate_parsetree.Ast_411
 
 open Asttypes
 open Parsetree
@@ -42,7 +42,7 @@ val with_default_loc: loc -> (unit -> 'a) -> 'a
 
 module Const : sig
   val char : char -> constant
-  val string : ?quotation_delimiter:string -> string -> constant
+  val string : ?quotation_delimiter:string -> ?loc:loc -> string -> constant
   val integer : ?suffix:char -> string -> constant
   val int : ?suffix:char -> int -> constant
   val int32 : ?suffix:char -> int32 -> constant
