@@ -1,5 +1,5 @@
-unreleased
-----------
+0.18.0 (06/10/2020)
+-------------------
 
 - Bump ppxlib's AST to 4.11 (#180, @NathanReb)
 
