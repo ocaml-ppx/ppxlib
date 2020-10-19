@@ -478,6 +478,13 @@ module OCaml_411 = struct
   let string_version = "4.11"
 end
 let ocaml_411 : OCaml_411.types ocaml_version = (module OCaml_411)
+module OCaml_412 = struct
+  module Ast = Migrate_parsetree.Ast_412
+  include Make_witness(Migrate_parsetree.Ast_412)
+  let version = 412
+  let string_version = "4.12"
+end
+let ocaml_412 : OCaml_412.types ocaml_version = (module OCaml_412)
 (*$*)
 
 (*$foreach_version_pair (fun a b ->
@@ -503,6 +510,8 @@ include Register_migration(OCaml_409)(OCaml_410)
     (Migrate_parsetree.Migrate_409_410)(Migrate_parsetree.Migrate_410_409)
 include Register_migration(OCaml_410)(OCaml_411)
     (Migrate_parsetree.Migrate_410_411)(Migrate_parsetree.Migrate_411_410)
+include Register_migration(OCaml_411)(OCaml_412)
+    (Migrate_parsetree.Migrate_411_412)(Migrate_parsetree.Migrate_412_411)
 (*$*)
 
 module OCaml_current = OCaml_OCAML_VERSION
