@@ -1,3 +1,8 @@
+unreleased
+----------
+
+- Make ppxlib compatible with 4.12 compiler (#191, @kit-ty-kate)
+
 0.18.0 (06/10/2020)
 -------------------
 
