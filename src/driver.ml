@@ -313,6 +313,7 @@ let register_transformation = Transform.register
 
 let register_code_transformation ~name ?(aliases=[]) ~impl ~intf =
   register_transformation name ~impl ~intf ~aliases
+[@@warning "-16"] (* This function triggers a warning 16 as of ocaml 4.12 *)
 ;;
 
 let register_transformation_using_ocaml_current_ast ?impl ?intf ?aliases name =
