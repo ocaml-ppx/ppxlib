@@ -120,7 +120,11 @@ and arg_label = Asttypes.arg_label =
 and variance = Asttypes.variance =
   | Covariant
   | Contravariant
-  | Invariant
+  | NoVariance
+
+and injectivity = Asttypes.injectivity =
+  | Injective
+  | NoInjectivity
 
 (** Abstract syntax tree produced by parsing *)
 
@@ -276,7 +280,7 @@ and row_field_desc = Parsetree.row_field_desc =
      - TODO: switch to a record representation, and keep location
   *)
   | Rinherit of core_type
-  (* [ T ] *)
+  (* [ | t ] *)
 
 and object_field = Parsetree.object_field =
   { pof_desc : object_field_desc;
@@ -527,7 +531,7 @@ and value_description = Parsetree.value_description =
 and type_declaration = Parsetree.type_declaration =
   {
     ptype_name: string loc;
-    ptype_params: (core_type * variance) list;
+    ptype_params: (core_type * (variance * injectivity)) list;
     (* ('a1,...'an) t; None represents  _*)
     ptype_cstrs: (core_type * core_type * location) list;
     (* ... constraint T1=T1'  ... constraint Tn=Tn' *)
@@ -595,7 +599,7 @@ and constructor_arguments = Parsetree.constructor_arguments =
 and type_extension = Parsetree.type_extension =
   {
     ptyext_path: longident_loc;
-    ptyext_params: (core_type * variance) list;
+    ptyext_params: (core_type * (variance * injectivity)) list;
     ptyext_constructors: extension_constructor list;
     ptyext_private: private_flag;
     ptyext_loc: location;
@@ -694,7 +698,7 @@ and class_type_field_desc = Parsetree.class_type_field_desc =
 and 'a class_infos = 'a Parsetree.class_infos =
   {
     pci_virt: virtual_flag;
-    pci_params: (core_type * variance) list;
+    pci_params: (core_type * (variance * injectivity)) list;
     pci_name: string loc;
     pci_expr: 'a;
     pci_loc: location;
@@ -1110,6 +1114,7 @@ class virtual map =
         | Labelled a -> let a = self#string a in Labelled a
         | Optional a -> let a = self#string a in Optional a
     method variance : variance -> variance= fun x -> x
+    method injectivity : injectivity -> injectivity= fun x -> x
     method constant : constant -> constant=
       fun x ->
         match x with
@@ -1420,8 +1425,12 @@ class virtual map =
         let ptype_params =
           self#list
             (fun (a, b) ->
-               let a = self#core_type a in let b = self#variance b in (a, b))
-            ptype_params in
+               let a = self#core_type a in
+               let b =
+                 (fun (a, b) ->
+                    let a = self#variance a in
+                    let b = self#injectivity b in (a, b)) b in
+               (a, b)) ptype_params in
         let ptype_cstrs =
           self#list
             (fun (a, b, c) ->
@@ -1487,8 +1496,12 @@ class virtual map =
         let ptyext_params =
           self#list
             (fun (a, b) ->
-               let a = self#core_type a in let b = self#variance b in (a, b))
-            ptyext_params in
+               let a = self#core_type a in
+               let b =
+                 (fun (a, b) ->
+                    let a = self#variance a in
+                    let b = self#injectivity b in (a, b)) b in
+               (a, b)) ptyext_params in
         let ptyext_constructors =
           self#list self#extension_constructor ptyext_constructors in
         let ptyext_private = self#private_flag ptyext_private in
@@ -1598,7 +1611,11 @@ class virtual map =
             self#list
               (fun (a, b) ->
                  let a = self#core_type a in
-                 let b = self#variance b in (a, b)) pci_params in
+                 let b =
+                   (fun (a, b) ->
+                      let a = self#variance a in
+                      let b = self#injectivity b in (a, b)) b in
+                 (a, b)) pci_params in
           let pci_name = self#loc self#string pci_name in
           let pci_expr = _a pci_expr in
           let pci_loc = self#location pci_loc in
@@ -1967,6 +1984,7 @@ class virtual iter =
         | Labelled a -> self#string a
         | Optional a -> self#string a
     method variance : variance -> unit= fun _ -> ()
+    method injectivity : injectivity -> unit= fun _ -> ()
     method constant : constant -> unit=
       fun x ->
         match x with
@@ -2183,7 +2201,10 @@ class virtual iter =
           ptype_manifest; ptype_attributes; ptype_loc }
         ->
         self#loc self#string ptype_name;
-        self#list (fun (a, b) -> self#core_type a; self#variance b)
+        self#list
+          (fun (a, b) ->
+             self#core_type a;
+             ((fun (a, b) -> self#variance a; self#injectivity b)) b)
           ptype_params;
         self#list
           (fun (a, b, c) ->
@@ -2225,7 +2246,10 @@ class virtual iter =
           ptyext_loc; ptyext_attributes }
         ->
         self#longident_loc ptyext_path;
-        self#list (fun (a, b) -> self#core_type a; self#variance b)
+        self#list
+          (fun (a, b) ->
+             self#core_type a;
+             ((fun (a, b) -> self#variance a; self#injectivity b)) b)
           ptyext_params;
         self#list self#extension_constructor ptyext_constructors;
         self#private_flag ptyext_private;
@@ -2299,7 +2323,10 @@ class virtual iter =
             }
           ->
           self#virtual_flag pci_virt;
-          self#list (fun (a, b) -> self#core_type a; self#variance b)
+          self#list
+            (fun (a, b) ->
+               self#core_type a;
+               ((fun (a, b) -> self#variance a; self#injectivity b)) b)
             pci_params;
           self#loc self#string pci_name;
           _a pci_expr;
@@ -2605,6 +2632,7 @@ class virtual ['acc] fold =
           | Labelled a -> self#string a acc
           | Optional a -> self#string a acc
     method variance : variance -> 'acc -> 'acc= fun _ -> fun acc -> acc
+    method injectivity : injectivity -> 'acc -> 'acc= fun _ -> fun acc -> acc
     method constant : constant -> 'acc -> 'acc=
       fun x ->
         fun acc ->
@@ -2930,7 +2958,12 @@ class virtual ['acc] fold =
               (fun (a, b) ->
                  fun acc ->
                    let acc = self#core_type a acc in
-                   let acc = self#variance b acc in acc) ptype_params acc in
+                   let acc =
+                     (fun (a, b) ->
+                        fun acc ->
+                          let acc = self#variance a acc in
+                          let acc = self#injectivity b acc in acc) b acc in
+                   acc) ptype_params acc in
           let acc =
             self#list
               (fun (a, b, c) ->
@@ -2985,7 +3018,12 @@ class virtual ['acc] fold =
               (fun (a, b) ->
                  fun acc ->
                    let acc = self#core_type a acc in
-                   let acc = self#variance b acc in acc) ptyext_params acc in
+                   let acc =
+                     (fun (a, b) ->
+                        fun acc ->
+                          let acc = self#variance a acc in
+                          let acc = self#injectivity b acc in acc) b acc in
+                   acc) ptyext_params acc in
           let acc =
             self#list self#extension_constructor ptyext_constructors acc in
           let acc = self#private_flag ptyext_private acc in
@@ -3086,7 +3124,12 @@ class virtual ['acc] fold =
                 (fun (a, b) ->
                    fun acc ->
                      let acc = self#core_type a acc in
-                     let acc = self#variance b acc in acc) pci_params acc in
+                     let acc =
+                       (fun (a, b) ->
+                          fun acc ->
+                            let acc = self#variance a acc in
+                            let acc = self#injectivity b acc in acc) b acc in
+                     acc) pci_params acc in
             let acc = self#loc self#string pci_name acc in
             let acc = _a pci_expr acc in
             let acc = self#location pci_loc acc in
@@ -3480,6 +3523,8 @@ class virtual ['acc] fold_map =
           | Optional a ->
               let (a, acc) = self#string a acc in ((Optional a), acc)
     method variance : variance -> 'acc -> (variance * 'acc)=
+      fun x -> fun acc -> (x, acc)
+    method injectivity : injectivity -> 'acc -> (injectivity * 'acc)=
       fun x -> fun acc -> (x, acc)
     method constant : constant -> 'acc -> (constant * 'acc)=
       fun x ->
@@ -3909,8 +3954,13 @@ class virtual ['acc] fold_map =
               (fun (a, b) ->
                  fun acc ->
                    let (a, acc) = self#core_type a acc in
-                   let (b, acc) = self#variance b acc in ((a, b), acc))
-              ptype_params acc in
+                   let (b, acc) =
+                     (fun (a, b) ->
+                        fun acc ->
+                          let (a, acc) = self#variance a acc in
+                          let (b, acc) = self#injectivity b acc in
+                          ((a, b), acc)) b acc in
+                   ((a, b), acc)) ptype_params acc in
           let (ptype_cstrs, acc) =
             self#list
               (fun (a, b, c) ->
@@ -3991,8 +4041,13 @@ class virtual ['acc] fold_map =
               (fun (a, b) ->
                  fun acc ->
                    let (a, acc) = self#core_type a acc in
-                   let (b, acc) = self#variance b acc in ((a, b), acc))
-              ptyext_params acc in
+                   let (b, acc) =
+                     (fun (a, b) ->
+                        fun acc ->
+                          let (a, acc) = self#variance a acc in
+                          let (b, acc) = self#injectivity b acc in
+                          ((a, b), acc)) b acc in
+                   ((a, b), acc)) ptyext_params acc in
           let (ptyext_constructors, acc) =
             self#list self#extension_constructor ptyext_constructors acc in
           let (ptyext_private, acc) = self#private_flag ptyext_private acc in
@@ -4144,8 +4199,13 @@ class virtual ['acc] fold_map =
                 (fun (a, b) ->
                    fun acc ->
                      let (a, acc) = self#core_type a acc in
-                     let (b, acc) = self#variance b acc in ((a, b), acc))
-                pci_params acc in
+                     let (b, acc) =
+                       (fun (a, b) ->
+                          fun acc ->
+                            let (a, acc) = self#variance a acc in
+                            let (b, acc) = self#injectivity b acc in
+                            ((a, b), acc)) b acc in
+                     ((a, b), acc)) pci_params acc in
             let (pci_name, acc) = self#loc self#string pci_name acc in
             let (pci_expr, acc) = _a pci_expr acc in
             let (pci_loc, acc) = self#location pci_loc acc in
@@ -4704,6 +4764,8 @@ class virtual ['ctx] map_with_context =
           | Labelled a -> let a = self#string ctx a in Labelled a
           | Optional a -> let a = self#string ctx a in Optional a
     method variance : 'ctx -> variance -> variance= fun _ctx -> fun x -> x
+    method injectivity : 'ctx -> injectivity -> injectivity=
+      fun _ctx -> fun x -> x
     method constant : 'ctx -> constant -> constant=
       fun ctx ->
         fun x ->
@@ -5061,7 +5123,12 @@ class virtual ['ctx] map_with_context =
               (fun ctx ->
                  fun (a, b) ->
                    let a = self#core_type ctx a in
-                   let b = self#variance ctx b in (a, b)) ctx ptype_params in
+                   let b =
+                     (fun ctx ->
+                        fun (a, b) ->
+                          let a = self#variance ctx a in
+                          let b = self#injectivity ctx b in (a, b)) ctx b in
+                   (a, b)) ctx ptype_params in
           let ptype_cstrs =
             self#list
               (fun ctx ->
@@ -5138,7 +5205,12 @@ class virtual ['ctx] map_with_context =
               (fun ctx ->
                  fun (a, b) ->
                    let a = self#core_type ctx a in
-                   let b = self#variance ctx b in (a, b)) ctx ptyext_params in
+                   let b =
+                     (fun ctx ->
+                        fun (a, b) ->
+                          let a = self#variance ctx a in
+                          let b = self#injectivity ctx b in (a, b)) ctx b in
+                   (a, b)) ctx ptyext_params in
           let ptyext_constructors =
             self#list self#extension_constructor ctx ptyext_constructors in
           let ptyext_private = self#private_flag ctx ptyext_private in
@@ -5266,7 +5338,12 @@ class virtual ['ctx] map_with_context =
                 (fun ctx ->
                    fun (a, b) ->
                      let a = self#core_type ctx a in
-                     let b = self#variance ctx b in (a, b)) ctx pci_params in
+                     let b =
+                       (fun ctx ->
+                          fun (a, b) ->
+                            let a = self#variance ctx a in
+                            let b = self#injectivity ctx b in (a, b)) ctx b in
+                     (a, b)) ctx pci_params in
             let pci_name = self#loc self#string ctx pci_name in
             let pci_expr = _a ctx pci_expr in
             let pci_loc = self#location ctx pci_loc in
@@ -5763,7 +5840,12 @@ class virtual ['res] lift =
         match x with
         | Covariant -> self#constr "Covariant" []
         | Contravariant -> self#constr "Contravariant" []
-        | Invariant -> self#constr "Invariant" []
+        | NoVariance -> self#constr "NoVariance" []
+    method injectivity : injectivity -> 'res=
+      fun x ->
+        match x with
+        | Injective -> self#constr "Injective" []
+        | NoInjectivity -> self#constr "NoInjectivity" []
     method constant : constant -> 'res=
       fun x ->
         match x with
@@ -6156,7 +6238,11 @@ class virtual ['res] lift =
           self#list
             (fun (a, b) ->
                let a = self#core_type a in
-               let b = self#variance b in self#tuple [a; b]) ptype_params in
+               let b =
+                 (fun (a, b) ->
+                    let a = self#variance a in
+                    let b = self#injectivity b in self#tuple [a; b]) b in
+               self#tuple [a; b]) ptype_params in
         let ptype_cstrs =
           self#list
             (fun (a, b, c) ->
@@ -6233,7 +6319,11 @@ class virtual ['res] lift =
           self#list
             (fun (a, b) ->
                let a = self#core_type a in
-               let b = self#variance b in self#tuple [a; b]) ptyext_params in
+               let b =
+                 (fun (a, b) ->
+                    let a = self#variance a in
+                    let b = self#injectivity b in self#tuple [a; b]) b in
+               self#tuple [a; b]) ptyext_params in
         let ptyext_constructors =
           self#list self#extension_constructor ptyext_constructors in
         let ptyext_private = self#private_flag ptyext_private in
@@ -6361,7 +6451,11 @@ class virtual ['res] lift =
             self#list
               (fun (a, b) ->
                  let a = self#core_type a in
-                 let b = self#variance b in self#tuple [a; b]) pci_params in
+                 let b =
+                   (fun (a, b) ->
+                      let a = self#variance a in
+                      let b = self#injectivity b in self#tuple [a; b]) b in
+                 self#tuple [a; b]) pci_params in
           let pci_name = self#loc self#string pci_name in
           let pci_expr = _a pci_expr in
           let pci_loc = self#location pci_loc in

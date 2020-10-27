@@ -20,7 +20,7 @@ open Ocaml_common
 module Location = Location
 module Longident = Longident
 
-open Migrate_parsetree.Ast_411
+open Migrate_parsetree.Ast_412
 
 [@@@warning "-9"]
 open Asttypes
