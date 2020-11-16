@@ -1,4 +1,4 @@
-0.19.1 (??/11/2020)
+0.20.0 (16/11/2020)
 -------------------
 
 - Expose `Ppxlib.Driver.map_signature` (#194, @kit-ty-kate)
