@@ -204,6 +204,7 @@ val pretty : unit -> bool
 
 (**/**)
 val map_structure : structure -> structure
+val map_signature : signature -> signature
 
 val enable_checks : unit -> unit
 val enable_location_check : unit -> unit
