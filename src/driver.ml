@@ -655,6 +655,14 @@ let relocate_mapper = object
       pos
 end
 
+let read_ast ic =
+  match Ast_io.read ic with
+  | Ok (input_name, ast) ->
+      let ast = Intf_or_impl.of_ast_io ast in
+      let kind = Intf_or_impl.kind ast in
+      Ok (ast, input_name, kind)
+  | Error e -> Error e
+
 (* Set the input name globally. This is used by some ppx rewriters
    such as bisect_ppx. *)
 let set_input_name name =
@@ -662,13 +670,12 @@ let set_input_name name =
 
 let load_input (kind : Kind.t) fn input_name ~relocate ic =
   set_input_name input_name;
-  match Ast_io.read ic with
-  | Ok (ast_input_name, ast) ->
-    let ast = Intf_or_impl.of_ast_io ast in
-    if not (Kind.equal kind (Intf_or_impl.kind ast)) then
+  match read_ast ic with
+  | Ok (ast, ast_input_name, ast_kind) ->
+    if not (Kind.equal kind ast_kind) then
       Location.raise_errorf ~loc:(Location.in_file fn)
         "File contains a binary %s AST but an %s was expected"
-        (Kind.describe (Intf_or_impl.kind ast))
+        (Kind.describe ast_kind)
         (Kind.describe kind);
     if String.equal ast_input_name input_name || not relocate then begin
       set_input_name ast_input_name;
@@ -706,6 +713,36 @@ let load_input (kind : Kind.t) fn input_name ~relocate ic =
     match kind with
     | Intf -> input_name, Intf (Parse.interface      lexbuf)
     | Impl -> input_name, Impl (Parse.implementation lexbuf)
+;;
+
+let load_input_run_as_ppx ~input_fn ic =
+  match read_ast ic with
+  | Ok (ast, ast_input_name, kind) ->
+      let ast =
+        match !loc_fname with
+        | None ->
+            set_input_name ast_input_name;
+            ast
+        | Some input_name ->
+            set_input_name input_name;
+            if String.equal ast_input_name input_name then ast
+            else
+              Intf_or_impl.map_with_context ast relocate_mapper
+                (ast_input_name, input_name)
+      in
+      (* With `--as-ppx`, ocaml calls the standalone separately for every structure/signature item
+         with the filename as metadata that it gets from the previous call. relocate_mapper only
+         relocates positions whose position filename coincides with that metadata filename.
+         So always return the metadata filename itself, even if `-loc-filename` is provided. *)
+      (ast_input_name, ast, kind)
+  | Error (Unknown_version _) ->
+      Location.raise_errorf
+        ~loc:(Location.in_file input_fn)
+        "The input is a binary ast for an unknown version of OCaml"
+  | Error (Not_a_binary_ast _) ->
+      Location.raise_errorf
+        ~loc:(Location.in_file input_fn)
+        "Expected a binary AST as input"
 ;;
 
 let load_source_file fn =
@@ -824,6 +861,34 @@ module Create_file_property(Name : sig val name : string end)(T : Sexpable.S) = 
   let set x = t.data <- Some x
 end
 
+let handle_exn exn ~input_name ~(kind : Kind.t) =
+  match Location.Error.of_exn exn with
+  | None -> raise exn
+  | Some error ->
+    let loc = Location.none in
+    let ext = Location.Error.to_extension error in
+    let open Ast_builder.Default in
+    let ast = match kind with
+      | Intf -> Intf_or_impl.Intf [ psig_extension ~loc ext [] ]
+      | Impl -> Intf_or_impl.Impl [ pstr_extension ~loc ext [] ]
+    in
+    input_name, ast
+;;
+
+let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook ~expect_mismatch_handler =
+  match ast with
+  | Intf x ->
+    input_name,
+    Intf_or_impl.Intf
+      (map_signature_gen x
+         ~tool_name ~hook ~expect_mismatch_handler)
+  | Impl x ->
+    input_name,
+    Intf_or_impl.Impl
+      (map_structure_gen x
+         ~tool_name ~hook ~expect_mismatch_handler)
+;;
+
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_errors ~output =
   File_property.reset_all ();
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
@@ -860,29 +925,8 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
         with_preprocessed_input fn ~f:(load_input kind fn input_name ~relocate)
       in
       let ast = extract_cookies ast in
-      match ast with
-      | Intf x ->
-        input_name,
-        Intf_or_impl.Intf
-          (map_signature_gen x
-             ~tool_name ~hook ~expect_mismatch_handler)
-      | Impl x ->
-        input_name,
-        Intf_or_impl.Impl
-          (map_structure_gen x
-             ~tool_name ~hook ~expect_mismatch_handler)
-    with exn when embed_errors ->
-    match Location.Error.of_exn exn with
-    | None -> raise exn
-    | Some error ->
-      let loc = Location.none in
-      let ext = Location.Error.to_extension error in
-      let open Ast_builder.Default in
-      let ast = match kind with
-        | Intf -> Intf_or_impl.Intf [ psig_extension ~loc ext [] ]
-        | Impl -> Intf_or_impl.Impl [ pstr_extension ~loc ext [] ]
-      in
-      input_name, ast
+      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+    with exn when embed_errors -> handle_exn exn ~input_name ~kind
   in
 
   Option.iter !output_metadata_filename ~f:(fun fn ->
@@ -1233,8 +1277,25 @@ let standalone_run_as_ppx_rewriter () =
   | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
   | () ->
     interpret_mask ();
-    Ocaml_common.Ast_mapper.apply
-      ~source:Caml.Sys.argv.(n - 2) ~target:Caml.Sys.argv.(n - 1) mapper
+    let input_fn = Caml.Sys.argv.(n - 2) in
+    let output_fn = Some (Caml.Sys.argv.(n - 1)) in
+    let input_name, ast, kind =
+      In_channel.with_file input_fn ~f:(load_input_run_as_ppx ~input_fn)
+    in
+    let input_name, ast =
+    try
+      let ast = extract_cookies ast in
+      let tool_name = Ocaml_common.Ast_mapper.tool_name () in
+      let hook = Context_free.Generated_code_hook.nop in
+      let expect_mismatch_handler =
+        Context_free.Expect_mismatch_handler.nop
+      in
+      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+    with exn -> handle_exn exn ~input_name ~kind
+    in
+    with_output output_fn ~binary:true ~f:(fun oc ->
+    let ast = Intf_or_impl.to_ast_io ast ~add_ppx_context:true in
+    Ast_io.write oc input_name ast)
 ;;
 
 let standalone () =
