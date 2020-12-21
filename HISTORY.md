@@ -174,7 +174,7 @@ depends on a few extra `.cma`'s by adding a few lines into your `_tags` file
     <regression/test*.*>: ppx(./pp_foo.native --as-ppx)
     <regression/test*.*>: depends_on_foo
     
-and specifing dependencies in your `myocamlbuild.ml` file using
+and specifying dependencies in your `myocamlbuild.ml` file using
 
     dep ["compile";"depends_on_foo"] ["ppx_foo.cmxa"; "pp_foo.native"]
 
@@ -421,7 +421,7 @@ For instance:
 [%expr x + 1]
 ```
 
-is a value of type `Ppxlib_ast.Ast.expression`, represention the OCaml
+is a value of type `Ppxlib_ast.Ast.expression`, representing the OCaml
 expression `x + 1`.
 
 `Ppxlib_metaquot` is similar to [ppx_tools.metaquot](https://github.com/ocaml-ppx/ppx_tools),

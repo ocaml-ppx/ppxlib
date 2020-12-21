@@ -25,11 +25,11 @@ The script will clone them in a `dunireverse` folder at the repo's root.
 ### Installing their dependencies
 
 You can either install them through opam by running `./dev/rev-deps.sh install-deps opam` or
-get the sources locally in the dune-workspace (prefered) by running:
+get the sources locally in the dune-workspace (preferred) by running:
 `./dev/rev-deps.sh install-deps duniverse`.
 
 The opam installation step is very naive and probably won't stand the test of time but might be
-better when the rev deps have too strict constraints. The duniverse approach is prefered as it will
+better when the rev deps have too strict constraints. The duniverse approach is preferred as it will
 work even if some of the rev-deps depend on each other but it requires the rev deps to all be
 coninstallable or the duniverse solver will fail.
 
