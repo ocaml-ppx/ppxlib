@@ -1,5 +1,6 @@
 (executable
  (name expect_test)
+ (enabled_if (>= %{ocaml_version} "4.08.0"))
  (link_flags (-linkall))
  (modes byte)
  (libraries unix compiler-libs.toplevel ppxlib ppxlib.metaquot ppxlib.traverse

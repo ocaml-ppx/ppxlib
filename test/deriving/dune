@@ -1,5 +1,6 @@
 (rule
  (alias runtest)
+ (enabled_if (>= %{ocaml_version} "4.10.0"))
  (deps
   (:test test.ml)
   (package ppxlib))
