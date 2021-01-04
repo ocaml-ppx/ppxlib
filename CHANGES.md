@@ -3,6 +3,8 @@ unreleased
 
 - `-as-ppx`: take into account the `-loc-filename` argument (#197, @pitag-ha)
 
+- Add input name to expansion context (#202, @pitag-ha)
+
 0.20.0 (16/11/2020)
 -------------------
 

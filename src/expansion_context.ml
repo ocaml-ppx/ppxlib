@@ -2,13 +2,17 @@ module Base = struct
   type t =
     { tool_name : string
     ; code_path : Code_path.t
+    ; input_name : string
     }
 
-  let top_level ~tool_name ~file_path =
+  let top_level ~tool_name ~file_path ~input_name =
     let code_path = Code_path.top_level ~file_path in
-    {tool_name; code_path}
+    {tool_name; code_path; input_name }
 
   let code_path t = t.code_path
+
+  let input_name t = t.input_name
+
   let tool_name t = t.tool_name
 
   let enter_expr t = {t with code_path = Code_path.enter_expr t.code_path}
