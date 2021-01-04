@@ -6,7 +6,6 @@ module Base : sig
   In Driver, Deriving and Extension, the context is initialized so that the [file_path] component of
   the [code_path] is determined from the first location found in the input AST. That means that:
   - It's the empty string in empty structures or signatures
-  - It can be altered by earlier running PPX's
   - It can be altered by line directives *)
   val code_path : t -> Code_path.t
 
@@ -14,7 +13,6 @@ module Base : sig
   In Driver, Deriving and Extension, the context argument is initialized so that the [input_name]
   matches the input filename passed to the driver on the command line. That means that:
   - It has a value even for empty files
-  - It is not affected by earlier running PPX's
   - It is not affected by line directives
   - It is ["_none_"] when using [Driver.map_structure] or [Driver.map_signature] *)
   val input_name : t -> string

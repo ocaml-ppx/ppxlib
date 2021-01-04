@@ -65,23 +65,29 @@ end
 module Instrument = struct
   type pos = Before | After
 
-  type t = { transformation :  Parsetree.structure -> Parsetree.structure ; position : pos}
+  type t = { transformation : Expansion_context.Base.t -> Parsetree.structure -> Parsetree.structure ; position : pos}
 
-  let make transformation ~position = { transformation ; position }
+  module V2 = struct
+    let make transformation ~position = { transformation ; position }
+  end
+
+  let make transformation ~position =
+    let transformation _ st = transformation st in
+    V2.make transformation ~position
 end
 
 module Transform = struct
   type t =
     { name            : string
     ; aliases         : string list
-    ; impl            : (Parsetree.structure -> Parsetree.structure) option
-    ; intf            : (Parsetree.signature -> Parsetree.signature) option
-    ; lint_impl       : (Parsetree.structure -> Lint_error.t list) option
-    ; lint_intf       : (Parsetree.signature -> Lint_error.t list) option
-    ; preprocess_impl : (Parsetree.structure -> Parsetree.structure) option
-    ; preprocess_intf : (Parsetree.signature -> Parsetree.signature) option
-    ; enclose_impl    : (Location.t option -> Parsetree.structure * Parsetree.structure) option
-    ; enclose_intf    : (Location.t option -> Parsetree.signature * Parsetree.signature) option
+    ; impl            : (Expansion_context.Base.t -> Parsetree.structure -> Parsetree.structure) option
+    ; intf            : (Expansion_context.Base.t -> Parsetree.signature -> Parsetree.signature) option
+    ; lint_impl       : (Expansion_context.Base.t -> Parsetree.structure -> Lint_error.t list) option
+    ; lint_intf       : (Expansion_context.Base.t -> Parsetree.signature -> Lint_error.t list) option
+    ; preprocess_impl : (Expansion_context.Base.t -> Parsetree.structure -> Parsetree.structure) option
+    ; preprocess_intf : (Expansion_context.Base.t -> Parsetree.signature -> Parsetree.signature) option
+    ; enclose_impl    : (Expansion_context.Base.t -> Location.t option -> Parsetree.structure * Parsetree.structure) option
+    ; enclose_intf    : (Expansion_context.Base.t -> Location.t option -> Parsetree.signature * Parsetree.signature) option
     ; instrument      : Instrument.t option
     ; rules           : Context_free.Rule.t list
     ; registered_at   : Caller_id.t
@@ -146,7 +152,7 @@ module Transform = struct
       Some { first with loc_end = last.loc_end }
   ;;
 
-  let merge_into_generic_mappers t ~hook ~expect_mismatch_handler ~tool_name =
+  let merge_into_generic_mappers t ~hook ~expect_mismatch_handler ~tool_name ~input_name =
     let { rules; enclose_impl; enclose_intf; impl; intf; _ } = t in
     let map =
       new Context_free.map_top_down rules
@@ -177,61 +183,64 @@ module Transform = struct
            hook.f context loc (Many l));
       (header, footer)
     in
-    let map_impl st_with_attrs =
+    let input_name =
+      match input_name with Some input_name -> input_name | None -> "_none_"
+    in
+    let map_impl ctxt st_with_attrs =
       let st =
         let attrs, st =
           List.split_while st_with_attrs ~f:(function
             | { pstr_desc = Pstr_attribute _; _ } -> true
             | _ -> false)
         in
+        let file_path = File_path.get_default_path_str st in
+        let base_ctxt = Expansion_context.Base.top_level ~tool_name ~file_path ~input_name in
         let header, footer =
           match enclose_impl with
           | None   -> ([], [])
           | Some f ->
             let whole_loc = loc_of_list st ~get_loc:(fun st -> st.Parsetree.pstr_loc) in
-            gen_header_and_footer Structure_item whole_loc f
+            gen_header_and_footer Structure_item whole_loc (f base_ctxt)
         in
-        let file_path = File_path.get_default_path_str st in
-        let base_ctxt = Expansion_context.Base.top_level ~tool_name ~file_path in
         let attrs = map#structure base_ctxt attrs in
         let st = map#structure base_ctxt st in
         List.concat [ attrs; header; st; footer ]
       in
       match impl with
       | None -> st
-      | Some f -> f st
+      | Some f -> f ctxt st
     in
-    let map_intf sg_with_attrs =
+    let map_intf ctxt sg_with_attrs =
       let sg =
         let attrs, sg =
           List.split_while sg_with_attrs ~f:(function
             | { psig_desc = Psig_attribute _; _ } -> true
             | _ -> false)
         in
+        let file_path = File_path.get_default_path_sig sg in
+        let base_ctxt = Expansion_context.Base.top_level ~tool_name ~file_path ~input_name in
         let header, footer =
           match enclose_intf with
           | None   -> ([], [])
           | Some f ->
             let whole_loc = loc_of_list sg ~get_loc:(fun sg -> sg.Parsetree.psig_loc) in
-            gen_header_and_footer Signature_item whole_loc f
+            gen_header_and_footer Signature_item whole_loc (f base_ctxt)
         in
-        let file_path = File_path.get_default_path_sig sg in
-        let base_ctxt = Expansion_context.Base.top_level ~tool_name ~file_path in
         let attrs = map#signature base_ctxt attrs in
         let sg = map#signature base_ctxt sg in
         List.concat [ attrs; header; sg; footer ]
       in
       match intf with
       | None -> sg
-      | Some f -> f sg
+      | Some f -> f ctxt sg
     in
     { t with
       impl = Some map_impl
     ; intf = Some map_intf
     }
 
-  let builtin_of_context_free_rewriters ~hook ~rules ~enclose_impl ~enclose_intf =
-    merge_into_generic_mappers ~hook
+  let builtin_of_context_free_rewriters ~hook ~rules ~enclose_impl ~enclose_intf ~input_name =
+    merge_into_generic_mappers ~hook ~input_name
       { name = "<builtin:context-free>"
       ; aliases = []
       ; impl = None
@@ -309,17 +318,37 @@ module Transform = struct
      `Rest rest)
 end
 
-let register_transformation = Transform.register
+module V2 = struct
+  let register_transformation = Transform.register
+
+  let register_transformation_using_ocaml_current_ast ?impl ?intf ?aliases name =
+    let impl = Option.map impl ~f:(Ppxlib_ast.Selected_ast.of_ocaml_mapper Structure) in
+    let intf = Option.map intf ~f:(Ppxlib_ast.Selected_ast.of_ocaml_mapper Signature) in
+    register_transformation ?impl ?intf ?aliases name
+end
+
+let add_ctxt_arg (f : 'a -> 'b) : (Expansion_context.Base.t -> 'a -> 'b) = fun _ x -> f x
+
+let register_transformation ?extensions ?rules ?enclose_impl ?enclose_intf ?impl ?intf ?lint_impl ?lint_intf ?preprocess_impl ?preprocess_intf =
+  let impl = Option.map impl ~f:add_ctxt_arg in
+  let intf = Option.map intf ~f:add_ctxt_arg in
+  let preprocess_impl = Option.map preprocess_impl ~f:add_ctxt_arg in
+  let preprocess_intf = Option.map preprocess_intf ~f:add_ctxt_arg in
+  let lint_impl = Option.map lint_impl ~f:add_ctxt_arg in
+  let lint_intf = Option.map lint_intf ~f:add_ctxt_arg in
+  let enclose_impl = Option.map enclose_impl ~f:add_ctxt_arg in
+  let enclose_intf = Option.map enclose_intf ~f:add_ctxt_arg in
+  V2.register_transformation ?extensions ?rules ?enclose_impl ?enclose_intf ?impl ?intf ?lint_impl ?lint_intf ?preprocess_impl ?preprocess_intf
 
 let register_code_transformation ~name ?(aliases=[]) ~impl ~intf =
   register_transformation name ~impl ~intf ~aliases
 [@@warning "-16"] (* This function triggers a warning 16 as of ocaml 4.12 *)
 ;;
 
-let register_transformation_using_ocaml_current_ast ?impl ?intf ?aliases name =
-  let impl = Option.map impl ~f:(Ppxlib_ast.Selected_ast.of_ocaml_mapper Structure) in
-  let intf = Option.map intf ~f:(Ppxlib_ast.Selected_ast.of_ocaml_mapper Signature) in
-  register_transformation ?impl ?intf ?aliases name
+let register_transformation_using_ocaml_current_ast ?impl ?intf =
+  let impl = Option.map impl ~f:add_ctxt_arg in
+  let intf = Option.map intf ~f:add_ctxt_arg in
+  V2.register_transformation_using_ocaml_current_ast ?impl ?intf
 
 let debug_dropped_attribute name ~old_dropped ~new_dropped =
   let print_diff what a b =
@@ -339,7 +368,7 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
   print_diff "reappeared"  old_dropped new_dropped
 ;;
 
-let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
+let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
   let cts =
     match !apply_list with
     | None -> List.rev !Transform.all
@@ -359,7 +388,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
   let make_generic transforms =
     if !no_merge then
       List.map transforms ~f:(Transform.merge_into_generic_mappers ~hook ~tool_name
-                                ~expect_mismatch_handler)
+                                ~expect_mismatch_handler ~input_name)
     else begin
       let get_enclosers ~f =
         List.filter_map transforms ~f:(fun (ct : Transform.t) ->
@@ -383,9 +412,9 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
       | _              ->
         let merge_encloser = function
           | [] -> None
-          | enclosers -> Some (fun loc ->
+          | enclosers -> Some (fun ctxt loc ->
             let headers, footers =
-              List.map enclosers ~f:(fun f -> f loc)
+              List.map enclosers ~f:(fun f -> f ctxt loc)
               |> List.split
             in
             let headers = List.concat headers in
@@ -396,6 +425,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
           ~enclose_impl:(merge_encloser impl_enclosers)
           ~enclose_intf:(merge_encloser intf_enclosers)
           ~tool_name
+          ~input_name
         :: transforms
     end
          |> List.filter ~f:(fun (ct : Transform.t) ->
@@ -406,20 +436,24 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name =
 ;;
 
 let apply_transforms
-      ~tool_name ~field ~lint_field ~dropped_so_far ~hook ~expect_mismatch_handler x =
-  let cts = get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler in
+      ~tool_name ~file_path ~field ~lint_field ~dropped_so_far ~hook ~expect_mismatch_handler ~input_name x =
+  let cts = get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name in
   let x, _dropped, lint_errors =
     List.fold_left cts ~init:(x, [], [])
       ~f:(fun (x, dropped, lint_errors) (ct : Transform.t) ->
+        let input_name =
+          match input_name with Some input_name -> input_name | None -> "_none_"
+        in
+        let ctxt = Expansion_context.Base.top_level ~tool_name ~file_path ~input_name in
         let lint_errors =
           match lint_field ct with
           | None -> lint_errors
-          | Some f -> lint_errors @ f x
+          | Some f -> lint_errors @ f ctxt x
         in
         match field ct with
         | None -> (x, dropped, lint_errors)
         | Some f ->
-          let x = f x in
+          let x = f ctxt x in
           let dropped =
             if !debug_attribute_drop then begin
               let new_dropped = dropped_so_far x in
@@ -441,7 +475,7 @@ let print_passes () =
   let tool_name = "ppxlib_driver" in
   let hook = Context_free.Generated_code_hook.nop in
   let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
-  let cts = get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name in
+  let cts = get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name:None in
   if !perform_checks then
     Printf.printf "<builtin:freshen-and-collect-attributes>\n";
   List.iter cts ~f:(fun ct -> Printf.printf "%s\n" ct.Transform.name);
@@ -454,18 +488,21 @@ let print_passes () =
 ;;
 
 (*$*)
-let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler =
+let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
   Cookies.acknowledge_cookies T;
   if !perform_checks then begin
     Attribute.reset_checks ();
     Attribute.collect#structure st
   end;
   let st, lint_errors =
+    let file_path = File_path.get_default_path_str st in
     apply_transforms st
       ~tool_name
+      ~file_path
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook ~expect_mismatch_handler
+      ~input_name
   in
   let st =
     match lint_errors with
@@ -496,20 +533,24 @@ let map_structure st =
     ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
     ~hook:Context_free.Generated_code_hook.nop
     ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+    ~input_name:None
 
 (*$ str_to_sig _last_text_block *)
-let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler =
+let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
   Cookies.acknowledge_cookies T;
   if !perform_checks then begin
     Attribute.reset_checks ();
     Attribute.collect#signature sg
   end;
   let sg, lint_errors =
+    let file_path = File_path.get_default_path_sig sg in
     apply_transforms sg
       ~tool_name
+      ~file_path
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook ~expect_mismatch_handler
+      ~input_name
   in
   let sg =
     match lint_errors with
@@ -540,6 +581,7 @@ let map_signature sg =
     ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
     ~hook:Context_free.Generated_code_hook.nop
     ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+    ~input_name:None
 
 (*$*)
 
@@ -881,12 +923,12 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook ~expect_mism
     input_name,
     Intf_or_impl.Intf
       (map_signature_gen x
-         ~tool_name ~hook ~expect_mismatch_handler)
+         ~tool_name ~hook ~expect_mismatch_handler ~input_name:(Some input_name))
   | Impl x ->
     input_name,
     Intf_or_impl.Impl
       (map_structure_gen x
-         ~tool_name ~hook ~expect_mismatch_handler)
+         ~tool_name ~hook ~expect_mismatch_handler ~input_name:(Some input_name))
 ;;
 
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_errors ~output =

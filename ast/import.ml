@@ -82,11 +82,11 @@ module Select_ast(Ocaml : Versions.OCaml_version) = struct
         let g = to_ocaml b in
         fun (x, y) -> (f x, g y)
 
-  let of_ocaml_mapper item f x =
-    to_ocaml item x |> f |> of_ocaml item
+  let of_ocaml_mapper item f ctxt x =
+    to_ocaml item x |> f ctxt |> of_ocaml item
 
-  let to_ocaml_mapper item f x =
-    of_ocaml item x |> f |> to_ocaml item
+  let to_ocaml_mapper item f ctxt x =
+    of_ocaml item x |> f ctxt |> to_ocaml item
 end
 
 module Selected_ast = Select_ast(Ocaml)
