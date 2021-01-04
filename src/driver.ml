@@ -1203,7 +1203,7 @@ let standalone_args =
   ; "-output-metadata", Arg.String (fun s -> output_metadata_filename := Some s),
     "FILE Where to store the output metadata"
   ; "-corrected-suffix", Arg.Set_string corrected_suffix,
-    "SUFFIX Suffix to happend to corrected files"
+    "SUFFIX Suffix to append to corrected files"
   ]
 ;;
 

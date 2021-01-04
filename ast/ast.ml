@@ -27,7 +27,7 @@ open Import
    - renaming a few types:
    - - Location.t -> location
    - - Longident.t -> longident
-   - adding a type longident_loc = longident loc and replacing all the occurences of the
+   - adding a type longident_loc = longident loc and replacing all the occurrences of the
    latter by the former. This is so that we can override iteration an the level of a
    longident loc
    - adding a type cases = case list

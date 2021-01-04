@@ -159,7 +159,7 @@ let should_ignore loc attrs =
   (* If the filename changed, then there were line directives, and the locations
      are all messed up. *)
   not (stayed_in_the_same_file loc.loc_start.pos_fname) ||
-  (* Ignore things explicitely marked. *)
+  (* Ignore things explicitly marked. *)
   List.exists ~f:(fun attr ->
     String.equal attr.attr_name.txt Merlin_helpers.hide_attribute.attr_name.txt
   ) attrs
@@ -523,10 +523,10 @@ let enforce_invariants fname =
         ignore (do_check ~node_name:"exception" x.ptyexn_loc attrs_locs siblings_locs);
         do_check ~node_name:"exception" x.ptyexn_loc childs_locs siblings_locs
 
-    (******************************************)
-    (* The following is overriden because the *)
-    (* lhs is sometimes included in the rhs.  *)
-    (******************************************)
+    (*******************************************)
+    (* The following is overridden because the *)
+    (* lhs is sometimes included in the rhs.   *)
+    (*******************************************)
 
     method! with_constraint x siblings_loc =
       match x with
@@ -538,7 +538,7 @@ let enforce_invariants fname =
 
 
     (******************************************)
-    (* The following is overriden because of: *)
+    (* The following is overridden because of:*)
     (* - Foo.{ bar; ... }                     *)
     (* - Foo.[ bar; ... ]                     *)
     (* - Foo.( bar; ... )                     *)
@@ -607,7 +607,7 @@ let enforce_invariants fname =
         super#expression_desc x acc
 
     (*******************************************************)
-    (* The following is overriden because of:              *)
+    (* The following is overridden because of:             *)
     (* - punning.                                          *)
     (* - record field with type constraint.                *)
     (* - unpack locations being incorrect when constrained *)
@@ -640,11 +640,11 @@ let enforce_invariants fname =
       | _ ->
         super#pattern_desc x acc
 
-    (**********************************************************)
-    (* The following is overriden because the location of the *)
-    (* fake structure for a generative argument covers the    *)
-    (* location of the functor.                               *)
-    (**********************************************************)
+    (***********************************************************)
+    (* The following is overridden because the location of the *)
+    (* fake structure for a generative argument covers the     *)
+    (* location of the functor.                                *)
+    (***********************************************************)
 
     method! module_expr_desc x acc =
       match x with
@@ -654,11 +654,11 @@ let enforce_invariants fname =
       | _ ->
         super#module_expr_desc x acc
 
-    (**********************************************************)
-    (* The following is overriden because the location of the *)
-    (* open_infos for Pcl_open only covers the "open" keyword *)
-    (* and not the module opened.                             *)
-    (**********************************************************)
+    (***********************************************************)
+    (* The following is overridden because the location of the *)
+    (* open_infos for Pcl_open only covers the "open" keyword  *)
+    (* and not the module opened.                              *)
+    (***********************************************************)
 
     method! class_expr_desc x acc =
       match x with
@@ -695,8 +695,8 @@ let enforce_invariants fname =
         super#class_type_desc x acc
 
     (**********************************************************)
-    (* The following is overriden because docstrings have the *)
-    (* same location as the item they get attached to.        *)
+    (* The following is overridden because docstrings have    *)
+    (* the same location as the item they get attached to.    *)
     (**********************************************************)
 
     method! attribute x acc =
