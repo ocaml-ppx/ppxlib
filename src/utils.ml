@@ -33,11 +33,7 @@ module Ast_io = struct
 
   type read_error =
     | Not_a_binary_ast of string
-    (* The input doesn't contain a binary AST. The argument
-       corresponds to the bytes from the input that were consumed. *)
-  | Unknown_version of string
-    (* The input contains a binary AST for an unknown version of
-       OCaml.  The argument is the unknown magic number. *)
+    | Unknown_version of string
 
   let magic_length = String.length Ocaml_common.Config.ast_impl_magic_number
 
