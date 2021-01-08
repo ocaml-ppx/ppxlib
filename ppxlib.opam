@@ -14,7 +14,6 @@ run-test: [
   ["dune" "runtest" "-p" name "-j" jobs] { ocaml:version >= "4.07" }
 ]
 depends: [
-  "ocaml" {>= "4.04.1" & < "4.13"}
   (
     ("ocaml" {>= "4.04.1" & < "4.07"}) |
     (
