@@ -23,7 +23,7 @@ depends: [
   "stdlib-shims"
   "ocamlfind"               {with-test}
   "re"                      {with-test & >= "1.9.0"}
-  "cinaps"                  {with-test & >= "v0.12.1"}
+  "cinaps"                  {with-test & >= "v0.12.1" & ocaml:version >= "4.07"}
   "base"                    {with-test}
   "stdio"                   {with-test}
 ]
