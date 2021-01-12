@@ -52,6 +52,15 @@ module Instrument : sig
     : (Parsetree.structure -> Parsetree.structure)
     -> position:pos 
     -> t
+
+  module V2 : sig
+    (** Same as [Instrument.make], but the transformation that will be applied to the AST has
+        access to an expansion context. To be used together with [Driver.V2].*)
+    val make
+    : (Expansion_context.Base.t -> Parsetree.structure -> Parsetree.structure)
+    -> position:pos
+    -> t
+  end
 end
 
 (** [register_transformation name] registers a code transformation.
@@ -172,6 +181,38 @@ val register_correction : loc:Location.t -> repl:string -> unit
 
 (** Hook called before processing a file *)
 val register_process_file_hook : (unit -> unit) -> unit
+
+module V2 : sig
+  (** Same as [Driver.register_transformation], but the callbacks have access
+      to an expansion context. Their signatures coincide with the signatures of the
+      respective methods in [Ast_traverse.map_with_expansion_context]. *)
+  val register_transformation
+  :  ?extensions       : Extension.t list (* deprecated, use ~rules instead *)
+  -> ?rules            : Context_free.Rule.t list
+  -> ?enclose_impl     : (Expansion_context.Base.t -> Location.t option -> structure * structure)
+  -> ?enclose_intf     : (Expansion_context.Base.t -> Location.t option -> signature * signature)
+  -> ?impl             : (Expansion_context.Base.t -> structure -> structure)
+  -> ?intf             : (Expansion_context.Base.t -> signature -> signature)
+  -> ?lint_impl        : (Expansion_context.Base.t -> structure -> Lint_error.t list)
+  -> ?lint_intf        : (Expansion_context.Base.t -> signature -> Lint_error.t list)
+  -> ?preprocess_impl  : (Expansion_context.Base.t -> structure -> structure)
+  -> ?preprocess_intf  : (Expansion_context.Base.t -> signature -> signature)
+  -> ?instrument       : Instrument.t
+  -> ?aliases          : string list
+  -> string
+  -> unit
+
+  (** Same as [Driver.register_transformation_using_ocaml_current_ast], but the callbacks [?impl]
+      and [?intf] have access to an expansion context. *)
+  val register_transformation_using_ocaml_current_ast
+    :  ?impl : (Expansion_context.Base.t -> Compiler_ast.Parsetree.structure ->
+                Compiler_ast.Parsetree.structure)
+    -> ?intf : (Expansion_context.Base.t -> Compiler_ast.Parsetree.signature ->
+                Compiler_ast.Parsetree.signature)
+    -> ?aliases : string list
+    -> string
+    -> unit
+end
 
 (** Create a new file property.
 

@@ -3,6 +3,11 @@ unreleased
 
 - `-as-ppx`: take into account the `-loc-filename` argument (#197, @pitag-ha)
 
+- Add input name to expansion context (#202, @pitag-ha)
+
+- Add Driver.V2: give access to expansion context in whole file transformation
+  callbacks of `register_transformation` (#202, @pitag-ha)
+
 0.20.0 (16/11/2020)
 -------------------
 
