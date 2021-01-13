@@ -44,13 +44,13 @@ module Instrument : sig
 
   type pos = Before | After
 
-  (** [make transformation ~position] creates an instrumentation that can be passed to 
-      [Driver.register_transformation] to instrument an implementation file. [transformation] is 
-      the transformation that will be applied to the AST; [position] specifies if it should be 
+  (** [make transformation ~position] creates an instrumentation that can be passed to
+      [Driver.register_transformation] to instrument an implementation file. [transformation] is
+      the transformation that will be applied to the AST; [position] specifies if it should be
       applied before or after rewriters defined through [rules], [impl] or [intf] are applied.*)
-  val make 
+  val make
     : (Parsetree.structure -> Parsetree.structure)
-    -> position:pos 
+    -> position:pos
     -> t
 
   module V2 : sig
@@ -108,19 +108,19 @@ end
 
     [instrument] can be used to instrument implementation files. Its transformation is
     applied to the AST of the whole file. The difference to [impl] is that you can specify
-    if it should be applied before or after all rewriters defined through [rules], [impl] 
+    if it should be applied before or after all rewriters defined through [rules], [impl]
     or [intf] are applied.
 
 
     Rewritings are applied in the following order:
     - linters ([lint_impl], [lint_intf])
     - preprocessing ([preprocess_impl], [preprocess_intf])
-    - "before" instrumentations 
+    - "before" instrumentations
       ([instrument], where instrument = [Instrument.make ~position:Before (...)])
     - context-independent rules ([rules], [extensions])
-    - non-instrumentation whole-file transformations 
+    - non-instrumentation whole-file transformations
       ([impl], [intf], [enclose_impl], [enclose_intf])
-    - "after" instrumentations 
+    - "after" instrumentations
       ([instrument], where instrument = [Instrument.make ~position:After (...)])
 *)
 val register_transformation

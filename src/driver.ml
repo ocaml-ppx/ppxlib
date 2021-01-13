@@ -257,9 +257,9 @@ module Transform = struct
       }
 
   let partition_transformations ts =
-    let before_instrs, after_instrs, rest = 
-      List.fold_left ts ~init:([], [], []) ~f:(fun (bef_i, aft_i, rest) t -> 
-        let reduced_t = 
+    let before_instrs, after_instrs, rest =
+      List.fold_left ts ~init:([], [], []) ~f:(fun (bef_i, aft_i, rest) t ->
+        let reduced_t =
           { t with
             lint_impl = None
           ; lint_intf = None

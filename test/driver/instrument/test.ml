@@ -12,12 +12,12 @@ end
 val extend_list_by : string -> Ast_traverse.map = <fun>
 |}]
 
-let () = 
+let () =
   let name = "a: instr pos=Before" in
   let transform = extend_list_by name in
   Driver.(register_transformation ~instrument:(Instrument.make ~position:Before transform#structure) name)
 
-let () = 
+let () =
   let name = "b: instr pos=After" in
   let transform = extend_list_by name in
   Driver.(register_transformation ~instrument:(Instrument.make ~position:After transform#structure) name)
