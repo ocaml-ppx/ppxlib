@@ -36,6 +36,8 @@ end
 module Cookies = struct
   type t = T
 
+  let given_through_cli = ref []
+
   let get T name pattern =
     Option.map (Ocaml_common.Ast_mapper.get_cookie name)
       ~f:(fun e ->
@@ -804,7 +806,7 @@ type output_mode =
 
 (*$*)
 let extract_cookies_str st =
-  match st with
+  let st = match st with
   | { pstr_desc = Pstr_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: st ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Structure [prefix] in
@@ -812,6 +814,12 @@ let extract_cookies_str st =
               (Ocaml_common.Ast_mapper.drop_ppx_context_str ~restore:true prefix));
     st
   | _ -> st
+  in
+  (* The cli cookies have to be set after restoring the ppx context,
+     since restoring the ppx context resets the cookies *)
+  List.iter !Cookies.given_through_cli ~f:(fun (name, expr) ->
+    Cookies.set T name expr);
+  st
 
 let add_cookies_str st =
   let prefix =
@@ -822,7 +830,7 @@ let add_cookies_str st =
 
 (*$ str_to_sig _last_text_block *)
 let extract_cookies_sig sg =
-  match sg with
+  let sg = match sg with
   | { psig_desc = Psig_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: sg ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Signature [prefix] in
@@ -830,6 +838,12 @@ let extract_cookies_sig sg =
               (Ocaml_common.Ast_mapper.drop_ppx_context_sig ~restore:true prefix));
     sg
   | _ -> sg
+  in
+  (* The cli cookies have to be set after restoring the ppx context,
+     since restoring the ppx context resets the cookies *)
+  List.iter !Cookies.given_through_cli ~f:(fun (name, expr) ->
+    Cookies.set T name expr);
+  sg
 
 let add_cookies_sig sg =
   let prefix =
@@ -1173,7 +1187,7 @@ let set_cookie s =
       ; pos_cnum  = 0
       };
     let expr = Parse.expression lexbuf in
-    Cookies.set T name expr
+    Cookies.given_through_cli := (name, expr) :: !Cookies.given_through_cli
 
 let as_pp () =
   set_output_mode Dump_ast;

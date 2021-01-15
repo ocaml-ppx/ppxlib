@@ -8,6 +8,9 @@ unreleased
 - Add Driver.V2: give access to expansion context in whole file transformation
   callbacks of `register_transformation` (#202, @pitag-ha)
 
+- Driver: take `-cookie` argument into account, also when the input is a
+  binary AST (@pitag-ha, #209)
+
 0.20.0 (16/11/2020)
 -------------------
 
