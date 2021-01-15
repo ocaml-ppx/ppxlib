@@ -591,43 +591,6 @@ let map_signature sg =
    | Entry points                                                    |
    +-----------------------------------------------------------------+ *)
 
-let mapper =
-  let module Js = Ppxlib_ast.Selected_ast in
-  (*$*)
-  let structure _ st =
-    Js.of_ocaml Structure st
-    |> map_structure
-    |> Js.to_ocaml Structure
-  in
-  (*$ str_to_sig _last_text_block *)
-  let signature _ sg =
-    Js.of_ocaml Signature sg
-    |> map_signature
-    |> Js.to_ocaml Signature
-  in
-  (*$*)
-  { Ocaml_common.Ast_mapper.default_mapper with structure; signature }
-;;
-
-let as_ppx_rewriter_main argv =
-  let argv = Caml.Sys.executable_name :: argv in
-  let usage =
-    Printf.sprintf "%s [extra_args] <infile> <outfile>" exe_name
-  in
-  match
-    Arg.parse_argv (Array.of_list argv) (Arg.align (List.rev !args))
-      (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
-      usage
-  with
-  | exception Arg.Bad  msg -> Printf.eprintf "%s" msg; Caml.exit 2
-  | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
-  | () -> mapper
-
-let run_as_ppx_rewriter () =
-  perform_checks := false;
-  Ocaml_common.Ast_mapper.run_main as_ppx_rewriter_main;
-  Caml.exit 0
-
 let string_contains_binary_ast s =
   let test magic_number =
     String.is_prefix s ~prefix:(String.sub magic_number ~pos:0 ~len:9)
@@ -1307,51 +1270,70 @@ let standalone_main () =
       ~embed_errors:!embed_errors
 ;;
 
+let rewrite_binary_ast_file input_fn output_fn =
+  let input_name, ast, kind =
+    In_channel.with_file input_fn ~f:(load_input_run_as_ppx ~input_fn)
+  in
+  let input_name, ast =
+    try
+      let ast = extract_cookies ast in
+      let tool_name = Ocaml_common.Ast_mapper.tool_name () in
+      let hook = Context_free.Generated_code_hook.nop in
+      let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
+      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+    with exn -> handle_exn exn ~input_name ~kind
+  in
+  with_output (Some output_fn) ~binary:true ~f:(fun oc ->
+      let ast = Intf_or_impl.to_ast_io ast ~add_ppx_context:true in
+      Ast_io.write oc input_name ast)
+;;
+
+let parse_input passed_in_args ~valid_args
+    ~incorrect_input_msg =
+  try
+    Arg.parse_argv passed_in_args (Arg.align valid_args)
+      (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
+      incorrect_input_msg
+  with
+  | Arg.Bad msg ->
+      Printf.eprintf "%s" msg;
+      Caml.exit 2
+  | Arg.Help msg ->
+      Printf.eprintf "%s" msg;
+      Caml.exit 0
+;;
+
+let run_as_ppx_rewriter_main ~valid_args ~usage input =
+  match List.rev @@ Array.to_list @@ input with
+  | output_fn :: input_fn :: flags_and_prog_name
+    when List.length flags_and_prog_name > 0 ->
+      let prog_name_and_flags = List.rev flags_and_prog_name |> Array.of_list in
+      parse_input prog_name_and_flags ~valid_args ~incorrect_input_msg:usage;
+      interpret_mask ();
+      rewrite_binary_ast_file input_fn output_fn;
+      Caml.exit 0
+  | [ help; _ ] when String.equal help "-help" || String.equal help "--help" ->
+      parse_input input ~valid_args ~incorrect_input_msg:usage;
+      assert false
+  | _ ->
+      Printf.eprintf "Usage: %s\n%!" usage;
+      Caml.exit 2
+
+
 let standalone_run_as_ppx_rewriter () =
   let n = Array.length Caml.Sys.argv in
   let usage = Printf.sprintf "%s -as-ppx [extra_args] <infile> <outfile>" exe_name in
-  if n < 4 then begin
-    Printf.eprintf "Usage: %s\n%!" usage;
-    Caml.exit 2
-  end;
-  let argv = Array.make (n - 3) "" in
+  let argv = Array.make (n - 1) "" in
   argv.(0) <- Caml.Sys.argv.(0);
-  for i = 1 to (n - 4) do
+  for i = 1 to (n - 2) do
     argv.(i) <- Caml.Sys.argv.(i + 1)
   done;
   let standalone_args =
     List.map standalone_args ~f:(fun (arg, spec, _doc) ->
       (arg, spec, " Unused with -as-ppx"))
   in
-  let args = get_args ~standalone_args () in
-  match
-    Arg.parse_argv argv (Arg.align args)
-      (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
-      usage
-  with
-  | exception Arg.Bad  msg -> Printf.eprintf "%s" msg; Caml.exit 2
-  | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
-  | () ->
-    interpret_mask ();
-    let input_fn = Caml.Sys.argv.(n - 2) in
-    let output_fn = Some (Caml.Sys.argv.(n - 1)) in
-    let input_name, ast, kind =
-      In_channel.with_file input_fn ~f:(load_input_run_as_ppx ~input_fn)
-    in
-    let input_name, ast =
-    try
-      let ast = extract_cookies ast in
-      let tool_name = Ocaml_common.Ast_mapper.tool_name () in
-      let hook = Context_free.Generated_code_hook.nop in
-      let expect_mismatch_handler =
-        Context_free.Expect_mismatch_handler.nop
-      in
-      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
-    with exn -> handle_exn exn ~input_name ~kind
-    in
-    with_output output_fn ~binary:true ~f:(fun oc ->
-    let ast = Intf_or_impl.to_ast_io ast ~add_ppx_context:true in
-    Ast_io.write oc input_name ast)
+  let valid_args = get_args ~standalone_args () in
+  run_as_ppx_rewriter_main ~valid_args ~usage argv
 ;;
 
 let standalone () =
@@ -1366,6 +1348,16 @@ let standalone () =
     else
       standalone_main ();
     Caml.exit 0
+  with exn ->
+    Location.report_exception Caml.Format.err_formatter exn;
+    Caml.exit 1
+;;
+
+let run_as_ppx_rewriter () =
+  let usage = Printf.sprintf "%s [extra_args] <infile> <outfile>" exe_name in
+  let valid_args = List.rev !args in
+  let input = Caml.Sys.argv in
+  try run_as_ppx_rewriter_main ~valid_args ~usage input
   with exn ->
     Location.report_exception Caml.Format.err_formatter exn;
     Caml.exit 1

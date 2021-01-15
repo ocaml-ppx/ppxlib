@@ -11,6 +11,9 @@ unreleased
 - Driver: take `-cookie` argument into account, also when the input is a
   binary AST (@pitag-ha, #209)
 
+- `run_as_ppx_rewriter`: take into account the arguments
+  `-loc-filename`, `apply` and `dont-apply` (#205, @pitag-ha)
+
 0.20.0 (16/11/2020)
 -------------------
 
