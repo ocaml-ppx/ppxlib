@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Driver (important for bucklescript): handling binary AST's, accept any
+  supported version as input; preserve that version (#205, @pitag-ha)
+
 - `-as-ppx`: take into account the `-loc-filename` argument (#197, @pitag-ha)
 
 - Add input name to expansion context (#202, @pitag-ha)

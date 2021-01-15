@@ -487,6 +487,23 @@ end
 let ocaml_412 : OCaml_412.types ocaml_version = (module OCaml_412)
 (*$*)
 
+let all_versions : (module OCaml_version) list = [
+  (*$foreach_version (fun n _ ->
+      printf "(module OCaml_%d : OCaml_version);\n" n)*)
+(module OCaml_402 : OCaml_version);
+(module OCaml_403 : OCaml_version);
+(module OCaml_404 : OCaml_version);
+(module OCaml_405 : OCaml_version);
+(module OCaml_406 : OCaml_version);
+(module OCaml_407 : OCaml_version);
+(module OCaml_408 : OCaml_version);
+(module OCaml_409 : OCaml_version);
+(module OCaml_410 : OCaml_version);
+(module OCaml_411 : OCaml_version);
+(module OCaml_412 : OCaml_version);
+(*$*)
+]
+
 (*$foreach_version_pair (fun a b ->
     printf "include Register_migration(OCaml_%d)(OCaml_%d)\n" a b;
     printf "    (Migrate_parsetree.Migrate_%d_%d)(Migrate_parsetree.Migrate_%d_%d)\n" a b b a
@@ -515,3 +532,20 @@ include Register_migration(OCaml_411)(OCaml_412)
 (*$*)
 
 module OCaml_current = OCaml_OCAML_VERSION
+
+module Find_version = struct
+  type t = Impl of (module OCaml_version) | Intf of (module OCaml_version) | Unknown
+
+  let from_magic magic =
+    let rec loop = function
+      | [] -> Unknown
+      | (module Version : OCaml_version) :: tail ->
+          if Version.Ast.Config.ast_impl_magic_number = magic then
+            Impl (module Version)
+          else if Version.Ast.Config.ast_intf_magic_number = magic then
+            Intf (module Version)
+          else
+            loop tail
+    in
+    loop all_versions
+end

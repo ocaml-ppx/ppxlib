@@ -87,15 +87,11 @@ The only exception is consulting help
     -help                       Display this list of options
     --help                      Display this list of options
 
-[To be fixed]
-Binary AST's of any by ppxlib supported OCaml version should be supported as input;
-but at the moment, only the OCaml version the driver got compiled with is supported.
-At the moment, that test would break the CI on 4.06. In the future, it can be tested
-as follows.
+Binary AST's of any by ppxlib supported OCaml version are supported.
+The version is preserved.
 
-$ cat 406_binary_ast | print_magic_number
-Magic number: Caml1999N022
+  $ cat 406_binary_ast | print_magic_number
+  Magic number: Caml1999N022
 
-$ print_greetings 406_binary_ast /dev/stdout | print_magic_number
-(Failure "Ast_mapper: OCaml version mismatch or malformed input")
-Magic number: 
+  $ print_greetings 406_binary_ast /dev/stdout | print_magic_number
+  Magic number: Caml1999N022

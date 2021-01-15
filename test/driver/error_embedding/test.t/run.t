@@ -27,17 +27,18 @@ error from the preprocessor's stderr also gets reported on the driver's stderr)
   [%%ocaml.error
     "Error while running external preprocessor\nCommand line: pp 'file.ml' > tmpfile\n"]
 
-Also `unknown version` errors get embedded into an AST when using the main
-standalone
+Also `unknown version` errors are embedded into an AST when using the
+main standalone
 
   $ raiser -embed-errors -intf unknown_version_binary_ast
-  [%%ocaml.error "File is a binary ast for an unknown version of OCaml"]
+  [%%ocaml.error
+    "File is a binary ast for an unknown version of OCaml with magic number 'Caml1999N012'"]
 
 ... but the `-as-ppx` standalone raises them
 
   $ raiser -as-ppx unknown_version_binary_ast output
   File "unknown_version_binary_ast", line 1:
-  Error: The input is a binary ast for an unknown version of OCaml
+  Error: The input is a binary ast for an unknown version of OCaml with magic number 'Caml1999N012'
   [1]
 
 Similar for 'input doesn't exist' errors: they get embedded by the main standalone...
@@ -45,11 +46,9 @@ Similar for 'input doesn't exist' errors: they get embedded by the main standalo
   $ raiser -embed-errors -impl non_existing_file
   [%%ocaml.error "I/O error: non_existing_file: No such file or directory"]
 
-[To be fixed]
-... but not by the `-as-ppx` standalone, which should report the missing file
-name correctly when raising, but doesn't at the moment
+... but not by the `-as-ppx` standalone
 
   $ raiser -as-ppx non_existing_file output
-  File "_none_", line 1:
+  File "non_existing_file", line 1:
   Error: I/O error: non_existing_file: No such file or directory
   [1]

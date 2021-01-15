@@ -12,22 +12,6 @@ module Kind : sig
   val equal : t -> t -> bool
 end
 
-module Ast_io : sig
-  type t
-
-  type read_error =
-  | Not_a_binary_ast of string
-  (* The input doesn't contain a binary AST. The argument
-      corresponds to the bytes from the input that were consumed. *)
-  | Unknown_version of string
-  (* The input contains a binary AST for an unknown version of
-      OCaml.  The argument is the unknown magic number. *)
-
-  val read : in_channel -> (string * t, read_error) result
-
-  val write : out_channel -> string -> t -> unit
-end
-
 module Intf_or_impl  : sig
   type t =
   | Intf of signature
@@ -38,8 +22,43 @@ module Intf_or_impl  : sig
   val map_with_context : t -> 'a Ast_traverse.map_with_context -> 'a -> t
 
   val kind : t -> Kind.t
+end
 
-  val of_ast_io : Ast_io.t -> t
+module Ast_io : sig
+    type input_version
 
-  val to_ast_io : t -> add_ppx_context:bool -> Ast_io.t
+    type t = {
+      input_name : string;
+      input_version : input_version;
+      ast : Intf_or_impl.t;
+    }
+
+    type read_error =
+    | Not_a_binary_ast
+    | Unknown_version of string * input_version
+    (* The input contains a binary AST for an unknown version of
+        OCaml. The first argument is the unknown magic number. *)
+    | Source_parse_error of Location.Error.t * input_version
+    | System_error of Location.Error.t * input_version
+
+    type input_source = Stdin | File of string
+
+    type input_kind =
+    | Possibly_source of Kind.t * string
+    | Necessarily_binary
+
+    val read
+      : input_source
+      -> input_kind: input_kind
+      -> (t, read_error) result
+
+    val write : out_channel -> t -> add_ppx_context:bool -> unit
+end
+
+module System : sig
+  val run_preprocessor
+    : pp: string
+    -> input: string
+    -> output:string
+    -> (unit, string * Ast_io.input_version) result
 end
