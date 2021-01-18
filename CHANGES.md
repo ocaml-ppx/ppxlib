@@ -14,6 +14,9 @@ unreleased
 - `run_as_ppx_rewriter`: take into account the arguments
   `-loc-filename`, `apply` and `dont-apply` (#205, @pitag-ha)
 
+- Location.Error: add functions `raise` and `update_loc`
+  (#205, @pitag-ha)
+
 0.20.0 (16/11/2020)
 -------------------
 

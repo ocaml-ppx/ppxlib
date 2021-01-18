@@ -110,3 +110,16 @@ let make_error_of_message_new ~loc msg ~sub =
 let make ~loc msg ~sub =
   (*IF_NOT_AT_LEAST 408 make_error_of_message_old ~loc msg ~sub*)
   (*IF_AT_LEAST 408 make_error_of_message_new ~loc msg ~sub*)
+
+let raise error = raise (Location.Error error)
+
+let update_loc_old error loc =
+  { error with loc }
+
+let update_loc_new error loc =
+  let main = { error.main with loc } in
+  { error with main }
+
+let update_loc error loc =
+  (*IF_NOT_AT_LEAST 408 update_loc_old error loc*)
+  (*IF_AT_LEAST 408 update_loc_new error loc*)
