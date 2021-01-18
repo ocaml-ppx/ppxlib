@@ -36,6 +36,8 @@ end
 module Cookies = struct
   type t = T
 
+  let given_through_cli = ref []
+
   let get T name pattern =
     Option.map (Ocaml_common.Ast_mapper.get_cookie name)
       ~f:(fun e ->
@@ -804,7 +806,7 @@ type output_mode =
 
 (*$*)
 let extract_cookies_str st =
-  match st with
+  let st = match st with
   | { pstr_desc = Pstr_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: st ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Structure [prefix] in
@@ -812,6 +814,12 @@ let extract_cookies_str st =
               (Ocaml_common.Ast_mapper.drop_ppx_context_str ~restore:true prefix));
     st
   | _ -> st
+  in
+  (* The cli cookies have to be set after restoring the ppx context,
+     since restoring the ppx context resets the cookies *)
+  List.iter !Cookies.given_through_cli ~f:(fun (name, expr) ->
+    Cookies.set T name expr);
+  st
 
 let add_cookies_str st =
   let prefix =
@@ -822,7 +830,7 @@ let add_cookies_str st =
 
 (*$ str_to_sig _last_text_block *)
 let extract_cookies_sig sg =
-  match sg with
+  let sg = match sg with
   | { psig_desc = Psig_attribute {attr_name={txt = "ocaml.ppx.context"; _}; _}; _ } as prefix
     :: sg ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Signature [prefix] in
@@ -830,6 +838,12 @@ let extract_cookies_sig sg =
               (Ocaml_common.Ast_mapper.drop_ppx_context_sig ~restore:true prefix));
     sg
   | _ -> sg
+  in
+  (* The cli cookies have to be set after restoring the ppx context,
+     since restoring the ppx context resets the cookies *)
+  List.iter !Cookies.given_through_cli ~f:(fun (name, expr) ->
+    Cookies.set T name expr);
+  sg
 
 let add_cookies_sig sg =
   let prefix =
@@ -1131,6 +1145,22 @@ let interpret_mask () =
     apply_list := Some (List.filter_map !Transform.all ~f:selected_transform_name)
   end
 
+let set_cookie s =
+  match String.lsplit2 s ~on:'=' with
+  | None ->
+    raise (Arg.Bad "invalid cookie, must be of the form \"<name>=<expr>\"")
+  | Some (name, value) ->
+    let lexbuf = Lexing.from_string value in
+    lexbuf.Lexing.lex_curr_p <-
+      { Lexing.
+        pos_fname = "<command-line>"
+      ; pos_lnum  = 1
+      ; pos_bol   = 0
+      ; pos_cnum  = 0
+      };
+    let expr = Parse.expression lexbuf in
+    Cookies.given_through_cli := (name, expr) :: !Cookies.given_through_cli
+
 let shared_args =
   [ "-loc-filename", Arg.String (fun s -> loc_fname := Some s),
     "<string> File name to use in locations"
@@ -1154,26 +1184,14 @@ let shared_args =
     "<names> Exclude these transformations"
   ; "-no-merge", Arg.Set no_merge,
     " Do not merge context free transformations (better for debugging rewriters)"
+  ; "-cookie", Arg.String set_cookie,
+    "NAME=EXPR Set the cookie NAME to EXPR"
+  ; "--cookie", Arg.String set_cookie,
+    " Same as -cookie"
   ]
 
 let () =
   List.iter shared_args ~f:(fun (key, spec, doc) -> add_arg key spec ~doc)
-
-let set_cookie s =
-  match String.lsplit2 s ~on:'=' with
-  | None ->
-    raise (Arg.Bad "invalid cookie, must be of the form \"<name>=<expr>\"")
-  | Some (name, value) ->
-    let lexbuf = Lexing.from_string value in
-    lexbuf.Lexing.lex_curr_p <-
-      { Lexing.
-        pos_fname = "<command-line>"
-      ; pos_lnum  = 1
-      ; pos_bol   = 0
-      ; pos_cnum  = 0
-      };
-    let expr = Parse.expression lexbuf in
-    Cookies.set T name expr
 
 let as_pp () =
   set_output_mode Dump_ast;
@@ -1238,10 +1256,6 @@ let standalone_args =
     " Instruct code generators to improve the prettiness of the generated code"
   ; "-styler", Arg.String (fun s -> styler := Some s),
     " Code styler"
-  ; "-cookie", Arg.String set_cookie,
-    "NAME=EXPR Set the cookie NAME to EXPR"
-  ; "--cookie", Arg.String set_cookie,
-    " Same as -cookie"
   ; "-output-metadata", Arg.String (fun s -> output_metadata_filename := Some s),
     "FILE Where to store the output metadata"
   ; "-corrected-suffix", Arg.Set_string corrected_suffix,
