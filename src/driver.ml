@@ -1145,6 +1145,22 @@ let interpret_mask () =
     apply_list := Some (List.filter_map !Transform.all ~f:selected_transform_name)
   end
 
+let set_cookie s =
+  match String.lsplit2 s ~on:'=' with
+  | None ->
+    raise (Arg.Bad "invalid cookie, must be of the form \"<name>=<expr>\"")
+  | Some (name, value) ->
+    let lexbuf = Lexing.from_string value in
+    lexbuf.Lexing.lex_curr_p <-
+      { Lexing.
+        pos_fname = "<command-line>"
+      ; pos_lnum  = 1
+      ; pos_bol   = 0
+      ; pos_cnum  = 0
+      };
+    let expr = Parse.expression lexbuf in
+    Cookies.given_through_cli := (name, expr) :: !Cookies.given_through_cli
+
 let shared_args =
   [ "-loc-filename", Arg.String (fun s -> loc_fname := Some s),
     "<string> File name to use in locations"
@@ -1168,26 +1184,14 @@ let shared_args =
     "<names> Exclude these transformations"
   ; "-no-merge", Arg.Set no_merge,
     " Do not merge context free transformations (better for debugging rewriters)"
+  ; "-cookie", Arg.String set_cookie,
+    "NAME=EXPR Set the cookie NAME to EXPR"
+  ; "--cookie", Arg.String set_cookie,
+    " Same as -cookie"
   ]
 
 let () =
   List.iter shared_args ~f:(fun (key, spec, doc) -> add_arg key spec ~doc)
-
-let set_cookie s =
-  match String.lsplit2 s ~on:'=' with
-  | None ->
-    raise (Arg.Bad "invalid cookie, must be of the form \"<name>=<expr>\"")
-  | Some (name, value) ->
-    let lexbuf = Lexing.from_string value in
-    lexbuf.Lexing.lex_curr_p <-
-      { Lexing.
-        pos_fname = "<command-line>"
-      ; pos_lnum  = 1
-      ; pos_bol   = 0
-      ; pos_cnum  = 0
-      };
-    let expr = Parse.expression lexbuf in
-    Cookies.given_through_cli := (name, expr) :: !Cookies.given_through_cli
 
 let as_pp () =
   set_output_mode Dump_ast;
@@ -1252,10 +1256,6 @@ let standalone_args =
     " Instruct code generators to improve the prettiness of the generated code"
   ; "-styler", Arg.String (fun s -> styler := Some s),
     " Code styler"
-  ; "-cookie", Arg.String set_cookie,
-    "NAME=EXPR Set the cookie NAME to EXPR"
-  ; "--cookie", Arg.String set_cookie,
-    " Same as -cookie"
   ; "-output-metadata", Arg.String (fun s -> output_metadata_filename := Some s),
     "FILE Where to store the output metadata"
   ; "-corrected-suffix", Arg.Set_string corrected_suffix,
