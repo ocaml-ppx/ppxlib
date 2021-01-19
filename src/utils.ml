@@ -59,9 +59,11 @@ module Ast_io = struct
         let payload = Intf (input_value ic) in
         Ok (filename, payload)
       else
-      if String.equal s
+      if String.equal
+           (String.sub s ~pos:0 ~len:9)
            (String.sub Ocaml_common.Config.ast_impl_magic_number ~pos:0 ~len:9)
-      || String.equal s
+      || String.equal
+           (String.sub s ~pos:0 ~len:9)
            (String.sub Ocaml_common.Config.ast_intf_magic_number ~pos:0 ~len:9)
       then
         Error (Unknown_version s)

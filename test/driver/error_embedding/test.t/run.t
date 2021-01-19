@@ -27,25 +27,17 @@ error from the preprocessor's stderr also gets reported on the driver's stderr)
   [%%ocaml.error
     "Error while running external preprocessor\nCommand line: pp 'file.ml' > tmpfile\n"]
 
-[To be fixed]
 Also `unknown version` errors get embedded into an AST when using the main
-standalone. But at the moment they get recognized as syntax errors
-instead of unknown version errors. That makes the following test variant
-under different versions and would break the CI at the moment.
+standalone
 
-$ raiser -embed-errors -intf unknown_version_binary_ast
-File "unknown_version_binary_ast", line 1, characters 0-13:
-Alert deprecated: ISO-Latin1 characters in identifiers
-[%%ocaml.error "Syntax error"]
+  $ raiser -embed-errors -intf unknown_version_binary_ast
+  [%%ocaml.error "File is a binary ast for an unknown version of OCaml"]
 
-
-[To be fixed]
-... but the `-as-ppx` standalone raises them (although at the moment they get
-recognized as 'expected a binary AST as input' errors instead of unknown version errors)
+... but the `-as-ppx` standalone raises them
 
   $ raiser -as-ppx unknown_version_binary_ast output
   File "unknown_version_binary_ast", line 1:
-  Error: Expected a binary AST as input
+  Error: The input is a binary ast for an unknown version of OCaml
   [1]
 
 Similar for 'input doesn't exist' errors: they get embedded by the main standalone...
