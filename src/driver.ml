@@ -591,43 +591,6 @@ let map_signature sg =
    | Entry points                                                    |
    +-----------------------------------------------------------------+ *)
 
-let mapper =
-  let module Js = Ppxlib_ast.Selected_ast in
-  (*$*)
-  let structure _ st =
-    Js.of_ocaml Structure st
-    |> map_structure
-    |> Js.to_ocaml Structure
-  in
-  (*$ str_to_sig _last_text_block *)
-  let signature _ sg =
-    Js.of_ocaml Signature sg
-    |> map_signature
-    |> Js.to_ocaml Signature
-  in
-  (*$*)
-  { Ocaml_common.Ast_mapper.default_mapper with structure; signature }
-;;
-
-let as_ppx_rewriter_main argv =
-  let argv = Caml.Sys.executable_name :: argv in
-  let usage =
-    Printf.sprintf "%s [extra_args] <infile> <outfile>" exe_name
-  in
-  match
-    Arg.parse_argv (Array.of_list argv) (Arg.align (List.rev !args))
-      (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
-      usage
-  with
-  | exception Arg.Bad  msg -> Printf.eprintf "%s" msg; Caml.exit 2
-  | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
-  | () -> mapper
-
-let run_as_ppx_rewriter () =
-  perform_checks := false;
-  Ocaml_common.Ast_mapper.run_main as_ppx_rewriter_main;
-  Caml.exit 0
-
 let string_contains_binary_ast s =
   let test magic_number =
     String.is_prefix s ~prefix:(String.sub magic_number ~pos:0 ~len:9)
@@ -635,24 +598,12 @@ let string_contains_binary_ast s =
   test Ast_magic.ast_intf_magic_number ||
   test Ast_magic.ast_impl_magic_number
 
-type pp_error = { filename : string; command_line : string }
-exception Pp_error of pp_error
-
-let report_pp_error e =
-  let buff = Buffer.create 128 in
-  let ppf = Caml.Format.formatter_of_buffer buff in
-  Caml.Format.fprintf ppf "Error while running external preprocessor@.\
-                           Command line: %s@." e.command_line;
-  Caml.Format.pp_print_flush ppf ();
-  Buffer.contents buff
-
-let () =
-  Location.Error.register_error_of_exn
-    (function
-      | Pp_error e ->
-        Some (Location.Error.make ~loc:(Location.in_file e.filename) ~sub:[]
-                (report_pp_error e))
-      | _ -> None)
+let versioned_errorf input_version input_file_name =
+  Printf.ksprintf (fun msg ->
+    let err =
+      Location.Error.make ~loc:(Location.in_file input_file_name) msg ~sub:[]
+    in
+    Error (err, input_version))
 
 let remove_no_error fn =
   try Caml.Sys.remove fn with Sys_error _ -> ()
@@ -670,23 +621,13 @@ let with_preprocessed_file fn ~f =
     protectx (Caml.Filename.temp_file "ocamlpp" "")
       ~finally:remove_no_error
       ~f:(fun tmpfile ->
-        let comm =
-          Printf.sprintf "%s %s > %s"
-            pp (if String.equal fn "-" then "" else Caml.Filename.quote fn)
-            (Caml.Filename.quote tmpfile)
-        in
-        if Caml.Sys.command comm <> 0 then
-          raise (Pp_error { filename = fn
-                          ; command_line = comm
-                          });
-        f tmpfile)
-
-let with_preprocessed_input fn ~f =
-  with_preprocessed_file fn ~f:(fun fn ->
-    if String.equal fn "-" then
-      f stdin
-    else
-      In_channel.with_file fn ~f)
+        match System.run_preprocessor ~pp ~input:fn ~output:tmpfile with
+          | Ok () -> f tmpfile
+          | Error (failed_command, fall_back_version) ->
+            versioned_errorf fall_back_version fn
+              "Error while running external preprocessor\n\
+               Command line: %s\n" failed_command
+      )
 ;;
 
 let relocate_mapper = object
@@ -699,69 +640,47 @@ let relocate_mapper = object
       pos
 end
 
-let read_ast ic =
-  match Ast_io.read ic with
-  | Ok (input_name, ast) ->
-      let ast = Intf_or_impl.of_ast_io ast in
-      let kind = Intf_or_impl.kind ast in
-      Ok (ast, input_name, kind)
-  | Error e -> Error e
-
 (* Set the input name globally. This is used by some ppx rewriters
    such as bisect_ppx. *)
 let set_input_name name =
   Ocaml_common.Location.input_name := name
 
-let load_input (kind : Kind.t) fn input_name ~relocate ic =
+let load_input ~(kind : Kind.t) ~input_name ~relocate fn =
   set_input_name input_name;
-  match read_ast ic with
-  | Ok (ast, ast_input_name, ast_kind) ->
+  let input_source = if String.equal fn "-" then Ast_io.Stdin else File fn in
+  let input_kind = Ast_io.Possibly_source (kind, input_name) in
+  match Ast_io.read input_source ~input_kind with
+  | Ok { input_name = ast_input_name; input_version; ast } ->
+    let ast_kind = Intf_or_impl.kind ast in
     if not (Kind.equal kind ast_kind) then
-      Location.raise_errorf ~loc:(Location.in_file fn)
+      versioned_errorf input_version fn
         "File contains a binary %s AST but an %s was expected"
-        (Kind.describe ast_kind)
-        (Kind.describe kind);
-    if String.equal ast_input_name input_name || not relocate then begin
+        (Kind.describe ast_kind) (Kind.describe kind)
+    else if String.equal ast_input_name input_name || not relocate then (
       set_input_name ast_input_name;
-      (ast_input_name, ast)
-    end else
-      (input_name,
-       Intf_or_impl.map_with_context ast relocate_mapper
-         (ast_input_name, input_name))
-
-  | Error (Unknown_version _) ->
-    Location.raise_errorf ~loc:(Location.in_file fn)
-      "File is a binary ast for an unknown version of OCaml"
-  | Error (Not_a_binary_ast prefix_read_from_file) ->
-    (* To test if a file is an AST file, we have to read the first few bytes of the
-       file. If it is not, we have to parse these bytes and the rest of the file as
-       source code.
-
-       The compiler just does [seek_on 0] in this case, however this doesn't work when
-       the input is a pipe.
-
-       What we do instead is create a lexing buffer from the input channel and pre-fill
-       it with what we read to do the test. *)
-    let lexbuf = Lexing.from_channel ic in
-    let len = String.length prefix_read_from_file in
-    Bytes.blit_string ~src:prefix_read_from_file ~src_pos:0 ~dst:lexbuf.lex_buffer ~dst_pos:0
-      ~len;
-    lexbuf.lex_buffer_len <- len;
-    lexbuf.lex_curr_p <-
-      { pos_fname = input_name
-      ; pos_lnum  = 1
-      ; pos_bol   = 0
-      ; pos_cnum  = 0
-      };
-    Lexer.skip_hash_bang lexbuf;
-    match kind with
-    | Intf -> input_name, Intf (Parse.interface      lexbuf)
-    | Impl -> input_name, Impl (Parse.implementation lexbuf)
+      Ok (ast_input_name, input_version, ast) )
+    else
+      Ok
+        ( input_name,
+          input_version,
+          Intf_or_impl.map_with_context ast relocate_mapper
+            (ast_input_name, input_name) )
+  | Error (Unknown_version (unknown_magic, fall_back_version)) ->
+    versioned_errorf fall_back_version fn
+      "File is a binary ast for an unknown version of OCaml with magic \
+       number '%s'" unknown_magic
+  | Error (System_error (error, fall_back_version))
+  | Error (Source_parse_error (error, fall_back_version)) ->
+    Error (error, fall_back_version)
+  | Error Not_a_binary_ast -> assert false
 ;;
 
-let load_input_run_as_ppx ~input_fn ic =
-  match read_ast ic with
-  | Ok (ast, ast_input_name, kind) ->
+let load_input_run_as_ppx fn =
+  (* If there's an error while loading in run_as_ppx mode, the kind of AST (impl/intf) is still unknown.
+     That's why, as opposed to load_input, this function raises errors instead of returning a result:
+     handling an error by returning an AST with the error packed as extension node wouldn't be possible. *)
+  match Ast_io.read (File fn) ~input_kind:Ast_io.Necessarily_binary with
+  | Ok {input_name = ast_input_name; input_version; ast} ->
       let ast =
         match !loc_fname with
         | None ->
@@ -778,15 +697,19 @@ let load_input_run_as_ppx ~input_fn ic =
          with the filename as metadata that it gets from the previous call. relocate_mapper only
          relocates positions whose position filename coincides with that metadata filename.
          So always return the metadata filename itself, even if `-loc-filename` is provided. *)
-      (ast_input_name, ast, kind)
-  | Error (Unknown_version _) ->
+      (ast_input_name, input_version, ast)
+  | Error (Unknown_version (unknown_magic, _)) ->
       Location.raise_errorf
-        ~loc:(Location.in_file input_fn)
-        "The input is a binary ast for an unknown version of OCaml"
-  | Error (Not_a_binary_ast _) ->
+        ~loc:(Location.in_file fn)
+        "The input is a binary ast for an unknown version of OCaml with magic number '%s'" unknown_magic
+  | Error Not_a_binary_ast ->
       Location.raise_errorf
-        ~loc:(Location.in_file input_fn)
+        ~loc:(Location.in_file fn)
         "Expected a binary AST as input"
+  | Error (System_error (error, _)) | Error (Source_parse_error (error, _)) ->
+      Location.in_file fn
+      |> Location.Error.update_loc error
+      |> Location.Error.raise
 ;;
 
 let load_source_file fn =
@@ -917,29 +840,31 @@ module Create_file_property(Name : sig val name : string end)(T : Sexpable.S) = 
   let set x = t.data <- Some x
 end
 
-let handle_exn exn ~input_name ~(kind : Kind.t) =
+
+let error_to_extension error ~(kind : Kind.t) =
+  let loc = Location.none in
+  let ext = Location.Error.to_extension error in
+  let open Ast_builder.Default in
+  let ast = match kind with
+    | Intf -> Intf_or_impl.Intf [ psig_extension ~loc ext [] ]
+    | Impl -> Intf_or_impl.Impl [ pstr_extension ~loc ext [] ]
+  in
+  ast
+;;
+
+let exn_to_extension exn ~(kind : Kind.t) =
   match Location.Error.of_exn exn with
   | None -> raise exn
-  | Some error ->
-    let loc = Location.none in
-    let ext = Location.Error.to_extension error in
-    let open Ast_builder.Default in
-    let ast = match kind with
-      | Intf -> Intf_or_impl.Intf [ psig_extension ~loc ext [] ]
-      | Impl -> Intf_or_impl.Impl [ pstr_extension ~loc ext [] ]
-    in
-    input_name, ast
+  | Some error -> error_to_extension error ~kind
 ;;
 
 let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook ~expect_mismatch_handler =
   match ast with
   | Intf x ->
-    input_name,
     Intf_or_impl.Intf
       (map_signature_gen x
          ~tool_name ~hook ~expect_mismatch_handler ~input_name:(Some input_name))
   | Impl x ->
-    input_name,
     Intf_or_impl.Impl
       (map_structure_gen x
          ~tool_name ~hook ~expect_mismatch_handler ~input_name:(Some input_name))
@@ -975,16 +900,28 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
              ~repl:(Many generated))
     }
   in
-  let input_name, ast =
-    try
-      let input_name, ast =
-        with_preprocessed_input fn ~f:(load_input kind fn input_name ~relocate)
-      in
-      let ast = extract_cookies ast in
-      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
-    with exn when embed_errors -> handle_exn exn ~input_name ~kind
-  in
 
+  let input_name, input_version, ast =
+    let preprocessed_and_loaded =
+      with_preprocessed_file fn ~f:(load_input ~kind ~input_name ~relocate)
+    in
+    match preprocessed_and_loaded with
+    | Ok (input_fname, input_version, ast) -> (
+        try
+          let ast =
+            extract_cookies ast
+            |> process_ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+          in
+          (input_fname, input_version, ast)
+        with exn when embed_errors ->
+          (input_fname, input_version, exn_to_extension exn ~kind) )
+    | Error (error, input_version) when embed_errors ->
+        (input_name, input_version, error_to_extension error ~kind)
+    | Error (error, _) ->
+        Location.in_file fn
+        |> Location.Error.update_loc error
+        |> Location.Error.raise
+  in
   Option.iter !output_metadata_filename ~f:(fun fn ->
     let metadata = File_property.dump_and_reset_all () in
     Out_channel.write_all fn
@@ -1023,8 +960,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode ~embed_er
        if not null_ast then Caml.Format.pp_print_newline ppf ())
    | Dump_ast ->
      with_output output ~binary:true ~f:(fun oc ->
-       let ast = Intf_or_impl.to_ast_io ast ~add_ppx_context:true in
-       Ast_io.write oc input_name ast)
+       Ast_io.write oc {input_name; input_version; ast} ~add_ppx_context:true)
    | Dparsetree ->
      with_output output ~binary:false ~f:(fun oc ->
        let ppf = Caml.Format.formatter_of_out_channel oc in
@@ -1307,51 +1243,69 @@ let standalone_main () =
       ~embed_errors:!embed_errors
 ;;
 
+let rewrite_binary_ast_file input_fn output_fn =
+  let input_name, input_version, ast =
+    load_input_run_as_ppx input_fn
+  in
+  let ast =
+    try
+      let ast = extract_cookies ast in
+      let tool_name = Ocaml_common.Ast_mapper.tool_name () in
+      let hook = Context_free.Generated_code_hook.nop in
+      let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
+      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+    with exn -> exn_to_extension exn ~kind:(Intf_or_impl.kind ast)
+  in
+  with_output (Some output_fn) ~binary:true ~f:(fun oc ->
+    Ast_io.write oc {input_name; input_version; ast} ~add_ppx_context:true)
+;;
+
+let parse_input passed_in_args ~valid_args
+    ~incorrect_input_msg =
+  try
+    Arg.parse_argv passed_in_args (Arg.align valid_args)
+      (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
+      incorrect_input_msg
+  with
+  | Arg.Bad msg ->
+      Printf.eprintf "%s" msg;
+      Caml.exit 2
+  | Arg.Help msg ->
+      Printf.eprintf "%s" msg;
+      Caml.exit 0
+;;
+
+let run_as_ppx_rewriter_main ~standalone_args ~usage input =
+  let valid_args = get_args ~standalone_args () in
+  match List.rev @@ Array.to_list @@ input with
+  | output_fn :: input_fn :: flags_and_prog_name
+    when List.length flags_and_prog_name > 0 ->
+      let prog_name_and_flags = List.rev flags_and_prog_name |> Array.of_list in
+      parse_input prog_name_and_flags ~valid_args ~incorrect_input_msg:usage;
+      interpret_mask ();
+      rewrite_binary_ast_file input_fn output_fn;
+      Caml.exit 0
+  | [ help; _ ] when String.equal help "-help" || String.equal help "--help" ->
+      parse_input input ~valid_args ~incorrect_input_msg:usage;
+      assert false
+  | _ ->
+      Printf.eprintf "Usage: %s\n%!" usage;
+      Caml.exit 2
+
+
 let standalone_run_as_ppx_rewriter () =
   let n = Array.length Caml.Sys.argv in
   let usage = Printf.sprintf "%s -as-ppx [extra_args] <infile> <outfile>" exe_name in
-  if n < 4 then begin
-    Printf.eprintf "Usage: %s\n%!" usage;
-    Caml.exit 2
-  end;
-  let argv = Array.make (n - 3) "" in
+  let argv = Array.make (n - 1) "" in
   argv.(0) <- Caml.Sys.argv.(0);
-  for i = 1 to (n - 4) do
+  for i = 1 to (n - 2) do
     argv.(i) <- Caml.Sys.argv.(i + 1)
   done;
   let standalone_args =
     List.map standalone_args ~f:(fun (arg, spec, _doc) ->
       (arg, spec, " Unused with -as-ppx"))
   in
-  let args = get_args ~standalone_args () in
-  match
-    Arg.parse_argv argv (Arg.align args)
-      (fun _ -> raise (Arg.Bad "anonymous arguments not accepted"))
-      usage
-  with
-  | exception Arg.Bad  msg -> Printf.eprintf "%s" msg; Caml.exit 2
-  | exception Arg.Help msg -> Printf.eprintf "%s" msg; Caml.exit 0
-  | () ->
-    interpret_mask ();
-    let input_fn = Caml.Sys.argv.(n - 2) in
-    let output_fn = Some (Caml.Sys.argv.(n - 1)) in
-    let input_name, ast, kind =
-      In_channel.with_file input_fn ~f:(load_input_run_as_ppx ~input_fn)
-    in
-    let input_name, ast =
-    try
-      let ast = extract_cookies ast in
-      let tool_name = Ocaml_common.Ast_mapper.tool_name () in
-      let hook = Context_free.Generated_code_hook.nop in
-      let expect_mismatch_handler =
-        Context_free.Expect_mismatch_handler.nop
-      in
-      process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
-    with exn -> handle_exn exn ~input_name ~kind
-    in
-    with_output output_fn ~binary:true ~f:(fun oc ->
-    let ast = Intf_or_impl.to_ast_io ast ~add_ppx_context:true in
-    Ast_io.write oc input_name ast)
+  run_as_ppx_rewriter_main ~standalone_args ~usage argv
 ;;
 
 let standalone () =
@@ -1366,6 +1320,15 @@ let standalone () =
     else
       standalone_main ();
     Caml.exit 0
+  with exn ->
+    Location.report_exception Caml.Format.err_formatter exn;
+    Caml.exit 1
+;;
+
+let run_as_ppx_rewriter () =
+  let usage = Printf.sprintf "%s [extra_args] <infile> <outfile>" exe_name in
+  let input = Caml.Sys.argv in
+  try run_as_ppx_rewriter_main ~standalone_args:[] ~usage input
   with exn ->
     Location.report_exception Caml.Format.err_formatter exn;
     Caml.exit 1

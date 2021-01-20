@@ -64,6 +64,13 @@ module Error : sig
   (** Convert an error to an extension point. The compiler recognizes this and displays
       the error properly. *)
   val to_extension : t -> extension
+
+ (** Raise a compiler [Parsing.Location.Error] exception.
+     The composition of [Location.Error.createf] with [Location.Error.raise] is the
+     same as [Location.raise_errorf]. *)
+  val raise : t -> 'a
+
+  val update_loc : t -> location -> t
 end with type location := t
 
 exception Error of Error.t

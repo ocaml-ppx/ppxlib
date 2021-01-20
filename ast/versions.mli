@@ -131,6 +131,9 @@ module OCaml_412 : OCaml_version with module Ast = Migrate_parsetree.Ast_412
 (* An alias to the current compiler version *)
 module OCaml_current = OCaml_OCAML_VERSION
 
+(* The list of all supported versions *)
+val all_versions : (module OCaml_version) list
+
 (** {1 Convenience definitions} *)
 
 (** Module level migration *)
@@ -149,4 +152,11 @@ module Convert (A : OCaml_version) (B : OCaml_version) : sig
   val copy_type_extension        : A.Ast.Parsetree.type_extension        -> B.Ast.Parsetree.type_extension
   val copy_extension_constructor : A.Ast.Parsetree.extension_constructor -> B.Ast.Parsetree.extension_constructor
 (*$*)
+end
+
+(** Helper to find the frontend corresponding to a given magic number *)
+module Find_version : sig
+  type t = Impl of (module OCaml_version) | Intf of (module OCaml_version) | Unknown
+
+  val from_magic : string -> t
 end

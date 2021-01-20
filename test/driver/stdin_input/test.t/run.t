@@ -6,11 +6,7 @@ The driver can read from stdin. Both when the input is source code...
   > EOF
   let a = 1
 
-[to be fixed]
-...and when the input is a binary AST. At the moment the test would break
-the CI since it's variant under different versions. Once, ppxlib supports
-all supported ocaml versions in binary AST inputs, it can be tested as
-follows:
+...and when the input is a binary AST.
 
-$ cat binary_ast | identity_driver -impl -
-let b = 2
+  $ cat binary_ast | identity_driver -impl -
+  let b = 2

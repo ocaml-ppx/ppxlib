@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Driver (important for bucklescript): handling binary AST's, accept any
+  supported version as input; preserve that version (#205, @pitag-ha)
+
 - `-as-ppx`: take into account the `-loc-filename` argument (#197, @pitag-ha)
 
 - Add input name to expansion context (#202, @pitag-ha)
@@ -10,6 +13,12 @@ unreleased
 
 - Driver: take `-cookie` argument into account, also when the input is a
   binary AST (@pitag-ha, #209)
+
+- `run_as_ppx_rewriter`: take into account the arguments
+  `-loc-filename`, `apply` and `dont-apply` (#205, @pitag-ha)
+
+- Location.Error: add functions `raise` and `update_loc`
+  (#205, @pitag-ha)
 
 0.20.0 (16/11/2020)
 -------------------

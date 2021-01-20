@@ -147,10 +147,10 @@ val register_transformation
     library.
 *)
 val register_transformation_using_ocaml_current_ast
-  :  ?impl : (Compiler_ast.Parsetree.structure ->
-              Compiler_ast.Parsetree.structure)
-  -> ?intf : (Compiler_ast.Parsetree.signature ->
-              Compiler_ast.Parsetree.signature)
+  :  ?impl : (Compiler_version.Ast.Parsetree.structure ->
+              Compiler_version.Ast.Parsetree.structure)
+  -> ?intf : (Compiler_version.Ast.Parsetree.signature ->
+              Compiler_version.Ast.Parsetree.signature)
   -> ?aliases : string list
   -> string
   -> unit
@@ -205,10 +205,10 @@ module V2 : sig
   (** Same as [Driver.register_transformation_using_ocaml_current_ast], but the callbacks [?impl]
       and [?intf] have access to an expansion context. *)
   val register_transformation_using_ocaml_current_ast
-    :  ?impl : (Expansion_context.Base.t -> Compiler_ast.Parsetree.structure ->
-                Compiler_ast.Parsetree.structure)
-    -> ?intf : (Expansion_context.Base.t -> Compiler_ast.Parsetree.signature ->
-                Compiler_ast.Parsetree.signature)
+    :  ?impl : (Expansion_context.Base.t -> Compiler_version.Ast.Parsetree.structure ->
+                Compiler_version.Ast.Parsetree.structure)
+    -> ?intf : (Expansion_context.Base.t -> Compiler_version.Ast.Parsetree.signature ->
+                Compiler_version.Ast.Parsetree.signature)
     -> ?aliases : string list
     -> string
     -> unit
