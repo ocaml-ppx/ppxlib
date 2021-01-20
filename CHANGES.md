@@ -1,5 +1,5 @@
-unreleased
-----------
+0.21.0 (20/01/2021)
+-------------------
 
 - Driver (important for bucklescript): handling binary AST's, accept any
   supported version as input; preserve that version (#205, @pitag-ha)
