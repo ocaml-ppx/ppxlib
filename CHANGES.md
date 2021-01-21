@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Fix ppxlib.traverse declaration and make it a deriver and not a rewriter
+  (#213, @NathanReb)
 - Driver (important for bucklescript): handling binary AST's, accept any
   supported version as input; preserve that version (#205, @pitag-ha)
 
