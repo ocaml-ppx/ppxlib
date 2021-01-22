@@ -1,18 +1,23 @@
 opam-version: "2.0"
+synopsis: "Standard library for ppx rewriters"
+description: """
+Ppxlib is the standard library for ppx rewriters and other programs
+that manipulate the in-memory reprensation of OCaml programs, a.k.a
+the "Parsetree".
+
+It also comes bundled with two ppx rewriters that are commonly used to
+write tools that manipulate and/or generate Parsetree values;
+`ppxlib.metaquot` which allows to construct Parsetree values using the
+OCaml syntax directly and `ppxlib.traverse` which provides various
+ways of automatically traversing values of a given type, in particular
+allowing to inject a complex structured value into generated code.
+"""
 maintainer: "opensource@janestreet.com"
 authors: ["Jane Street Group, LLC <opensource@janestreet.com>"]
-homepage: "https://github.com/ocaml-ppx/ppxlib"
-bug-reports: "https://github.com/ocaml-ppx/ppxlib/issues"
-dev-repo: "git+https://github.com/ocaml-ppx/ppxlib.git"
-doc: "https://ocaml-ppx.github.io/ppxlib/"
 license: "MIT"
-build: [
-  ["dune" "subst"] {pinned}
-  ["dune" "build" "-p" name "-j" jobs]
-]
-run-test: [
-  ["dune" "runtest" "-p" name "-j" jobs]
-]
+homepage: "https://github.com/ocaml-ppx/ppxlib"
+doc: "https://ocaml-ppx.github.io/ppxlib/"
+bug-reports: "https://github.com/ocaml-ppx/ppxlib/issues"
 depends: [
   "ocaml"                   {>= "4.04.1" & < "4.13"}
   "dune"                    {>= "1.11"}
@@ -27,16 +32,11 @@ depends: [
   "base"                    {with-test}
   "stdio"                   {with-test}
 ]
-synopsis: "Standard library for ppx rewriters"
-description: """
-Ppxlib is the standard library for ppx rewriters and other programs
-that manipulate the in-memory reprensation of OCaml programs, a.k.a
-the "Parsetree".
-
-It also comes bundled with two ppx rewriters that are commonly used to
-write tools that manipulate and/or generate Parsetree values;
-`ppxlib.metaquot` which allows to construct Parsetree values using the
-OCaml syntax directly and `ppxlib.traverse` which provides various
-ways of automatically traversing values of a given type, in particular
-allowing to inject a complex structured value into generated code.
-"""
+build: [
+  ["dune" "subst"] {pinned}
+  ["dune" "build" "-p" name "-j" jobs]
+]
+run-test: [
+  ["dune" "runtest" "-p" name "-j" jobs]
+]
+dev-repo: "git+https://github.com/ocaml-ppx/ppxlib.git"
