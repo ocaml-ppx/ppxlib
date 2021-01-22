@@ -1,5 +1,5 @@
-unreleased
-----------
+0.21.0 (22/01/2021)
+-------------------
 
 - Fix ppxlib.traverse declaration and make it a deriver and not a rewriter
   (#213, @NathanReb)
