@@ -34,9 +34,9 @@ work even if some of the rev-deps depend on each other but it requires the rev d
 coninstallable or the duniverse solver will fail.
 
 To get the opam monorepo plugin, required to assemble the duniverse with all the dependencies,
-you'll need to pin it as follows:
+simply install it through opam:
 ```
-opam pin add opam-monorepo git+https://github.com/ocamllabs/duniverse#opam-mono-plugin
+opam install opam-monorepo
 ```
 
 ### Building them
