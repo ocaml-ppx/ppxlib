@@ -1,7 +1,9 @@
 (library
- (name        ppxlib_traverse)
+ (name ppxlib_traverse)
  (public_name ppxlib.traverse)
  (kind ppx_deriver)
- (flags (:standard -safe-string))
- (libraries  ppxlib)
- (preprocess (pps ppxlib_metaquot)))
+ (flags
+  (:standard -safe-string))
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib_metaquot)))
