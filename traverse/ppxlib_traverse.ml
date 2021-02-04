@@ -34,7 +34,7 @@ module Backends = struct
 
     inherit reconstructors
 
-    method class_params : loc:Location.t -> (core_type * variance) list
+    method class_params : loc:Location.t -> (core_type * (variance * injectivity)) list
 
     method apply
       :  loc:Location.t
@@ -106,7 +106,7 @@ module Backends = struct
 
     inherit reconstructors
 
-    method class_params ~loc = [(ptyp_var ~loc "acc", Invariant)]
+    method class_params ~loc = [(ptyp_var ~loc "acc", (NoVariance, NoInjectivity))]
 
     method apply ~loc expr args = eapply ~loc expr (args @ [evar ~loc "acc"])
     method abstract ~loc patt expr =
@@ -132,7 +132,7 @@ module Backends = struct
 
     inherit reconstructors
 
-    method class_params ~loc = [(ptyp_var ~loc "acc", Invariant)]
+    method class_params ~loc = [(ptyp_var ~loc "acc", (NoVariance, NoInjectivity))]
 
     method apply ~loc expr args = eapply ~loc expr (args @ [evar ~loc "acc"])
     method abstract ~loc patt expr = eabstract ~loc [patt; pvar ~loc "acc"] expr
@@ -174,7 +174,7 @@ module Backends = struct
 
       inherit reconstructors
 
-      method class_params ~loc = [(ptyp_var ~loc "ctx", Invariant)]
+      method class_params ~loc = [(ptyp_var ~loc "ctx", (NoVariance, NoInjectivity))]
 
       method apply ~loc expr args = eapply ~loc expr (evar ~loc "ctx" :: args)
       method abstract ~loc patt expr =
@@ -201,7 +201,7 @@ module Backends = struct
   let lifter : what = object
     method name = "lift"
 
-    method class_params ~loc = [(ptyp_var ~loc "res", Invariant)]
+    method class_params ~loc = [(ptyp_var ~loc "res", (NoVariance, NoInjectivity))]
 
     method apply ~loc expr args = eapply ~loc expr args
     method abstract ~loc patt expr = pexp_fun ~loc Nolabel None patt expr

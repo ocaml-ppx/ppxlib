@@ -24,19 +24,15 @@ The script will clone them in a `dunireverse` folder at the repo's root.
 
 ### Installing their dependencies
 
-You can either install them through opam by running `./dev/rev-deps.sh install-deps opam` or
-get the sources locally in the dune-workspace (preferred) by running:
-`./dev/rev-deps.sh install-deps duniverse`.
+To install the dependencies using opam-monorepo, you can run
+`./dev/rev-deps.sh install-deps`
 
-The opam installation step is very naive and probably won't stand the test of time but might be
-better when the rev deps have too strict constraints. The duniverse approach is preferred as it will
-work even if some of the rev-deps depend on each other but it requires the rev deps to all be
-coninstallable or the duniverse solver will fail.
+That gets the sources locally by pulling them into `duniverse/` in your dune-workspace.
 
 To get the opam monorepo plugin, required to assemble the duniverse with all the dependencies,
-you'll need to pin it as follows:
+simply install it through opam:
 ```
-opam pin add opam-monorepo git+https://github.com/ocamllabs/duniverse#opam-mono-plugin
+opam install opam-monorepo
 ```
 
 ### Building them

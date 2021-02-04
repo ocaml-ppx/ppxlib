@@ -22,7 +22,7 @@ val string_of_core_type : core_type -> string
 val assert_no_attributes : attributes -> unit
 val assert_no_attributes_in : Ast_traverse.iter
 
-val get_type_param_name : (core_type * variance) -> string Loc.t
+val get_type_param_name : (core_type * (variance * injectivity)) -> string Loc.t
 (** [get_tparam_id tp] returns the string identifier associated with [tp] if it is a type
     parameter. *)
 

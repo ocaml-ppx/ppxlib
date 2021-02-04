@@ -13,10 +13,10 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Copy of Ast_helper from OCaml 4.10 with docstring related stuff removed *)
+(** Copy of Ast_helper from OCaml 4.12 with docstring related stuff removed *)
 
 open Ocaml_common
-open Migrate_parsetree.Ast_411
+open Migrate_parsetree.Ast_412
 
 open Asttypes
 open Parsetree
@@ -200,7 +200,7 @@ end
 module Type:
 sig
   val mk: ?loc:loc -> ?attrs:attrs ->
-    ?params:(core_type * variance) list ->
+    ?params:(core_type * (variance * injectivity)) list ->
     ?cstrs:(core_type * core_type * loc) list ->
     ?kind:type_kind -> ?priv:private_flag -> ?manifest:core_type -> str ->
     type_declaration
@@ -216,7 +216,7 @@ end
 module Te:
 sig
   val mk: ?loc:loc -> ?attrs:attrs ->
-    ?params:(core_type * variance) list -> ?priv:private_flag ->
+    ?params:(core_type * (variance * injectivity)) list -> ?priv:private_flag ->
     lid -> extension_constructor list -> type_extension
 
   val mk_exception: ?loc:loc -> ?attrs:attrs ->
@@ -446,7 +446,7 @@ end
 module Ci:
 sig
   val mk: ?loc:loc -> ?attrs:attrs ->
-    ?virt:virtual_flag -> ?params:(core_type * variance) list ->
+    ?virt:virtual_flag -> ?params:(core_type * (variance * injectivity)) list ->
     str -> 'a -> 'a class_infos
 end
 

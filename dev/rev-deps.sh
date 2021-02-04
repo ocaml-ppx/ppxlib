@@ -12,7 +12,7 @@ pull () {
   esac
 
   # Get a first list of revdeps candidate
-  REVDEPS=$(opam list -s --depends-on ppxlib.0.17.0 --coinstallable-with ocaml.4.11.1)
+  REVDEPS=$(opam list -s --depends-on ppxlib.0.21.0 --coinstallable-with ocaml.4.12.0~beta2)
 
   TRUE_REVDEPS=""
   for d in $REVDEPS
@@ -70,35 +70,14 @@ pull () {
   cd ..
 }
 
-install_deps_opam () {
-  cd dunireverse
-  for dir in */
-  do
-    basename=${dir%/}
-    echo "Installing $basename dependencies"
-    opam install --deps-only $basename/$basename.opam -y || opam install --deps-only $basename/opam -y
-  done
-}
-
-install_deps_duniverse () {
+install_deps () {
   PACKAGES="ppxlib"
   while read line
   do
     PACKAGES="$PACKAGES $line"
   done < dunireverse/.deps
   opam monorepo lock --build-only $PACKAGES
-  opam monorepo pull --no-cache
-}
-
-install_deps () {
-  case $1 in
-    duniverse)
-      install_deps_duniverse
-      ;;
-    opam|*)
-      install_deps_opam
-      ;;
-  esac
+  opam monorepo pull
 }
 
 build () {
