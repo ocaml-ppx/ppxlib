@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Fix bug due to which unwanted public binaries got installed when installing
+  ppxlib (#223, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 
