@@ -4,6 +4,12 @@ unreleased
 - Fix bug due to which unwanted public binaries got installed when installing
   ppxlib (#223, @pitag-ha)
 
+- Add `Keyword.is_keyword` to check if a string is an OCaml keyword
+  (#227, @pitag-ha)
+
+- Remove `Lexer.keyword_table`: use `Keyword.is_keyword` instead
+  (#227, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 

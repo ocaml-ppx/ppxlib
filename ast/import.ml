@@ -104,7 +104,6 @@ end
 
 module Lexer      = struct
   include Ocaml_common.Lexer
-  include Lexer_helper
 end
 
 module Syntaxerr  = struct
