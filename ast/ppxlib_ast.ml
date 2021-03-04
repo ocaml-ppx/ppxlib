@@ -11,7 +11,6 @@ module Js             = Js
 module Find_version   = Versions.Find_version
 module Convert        = Versions.Convert
 module Extra_warnings = Warn
-module Lexer          = Lexer
 module Location_error = Location_error
 module Parse          = Parse
 module Parser         = Parser
