@@ -13,6 +13,12 @@ unreleased
 - Remove `Lexer` from the API: it was the same as the compiler-libs
   `Lexer` (#228, @pitag-ha)
 
+- Remove the modules `Ast_magic`, `Compiler_version`, `Js`, `Find_version`,
+  `Convert`, `Extra_warnings`, `Location_error`, `Select_ast` and
+  `Import_for_core` from the API: they are meant for internal use and
+  aren't used by any current downstream user in the
+  [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#230, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 
