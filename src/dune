@@ -37,3 +37,5 @@
  (deps gen-compiler_specifics)
  (action
   (run %{ocaml} %{deps} %{ocaml_version} %{targets})))
+
+(ocamllex skip_hash_bang)
