@@ -98,7 +98,7 @@ module Ast_io = struct
         ; pos_bol   = 0
         ; pos_cnum  = 0
         };
-      Lexer.skip_hash_bang lexbuf;
+      Skip_hash_bang.skip_hash_bang lexbuf;
       let ast : Intf_or_impl.t =
         match kind with
         | Intf -> Intf (Parse.interface      lexbuf)
