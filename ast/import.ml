@@ -102,10 +102,6 @@ module Location   = struct
   include Location_helper
 end
 
-module Lexer      = struct
-  include Ocaml_common.Lexer
-end
-
 module Syntaxerr  = struct
   include Ocaml_common.Syntaxerr
 end

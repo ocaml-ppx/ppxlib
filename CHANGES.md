@@ -10,6 +10,9 @@ unreleased
 - Remove `Lexer.keyword_table`: use `Keyword.is_keyword` instead
   (#227, @pitag-ha)
 
+- Remove `Lexer` from the API: it was the same as the compiler-libs
+  `Lexer` (#228, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 
