@@ -22,9 +22,30 @@ include struct
           )
 end (** @inline *)
 
-(** Includes the overrides from Ppxlib_ast, as well as all the Ast definitions since we
-    need them in every single ppx *)
-include Ppxlib_ast
+(** Expose all modules from Ppxlib_ast;
+    in particular, overwrite some of the modules above *)
+module type OCaml_version = Ppxlib_ast.OCaml_version
+
+module Ast                = Ppxlib_ast.Ast
+module Ast_helper         = Ppxlib_ast.Ast_helper
+module Ast_magic          = Ppxlib_ast.Ast_magic
+module Asttypes           = Ppxlib_ast.Asttypes
+module Compiler_version   = Ppxlib_ast.Compiler_version
+module Js                 = Ppxlib_ast.Js
+module Find_version       = Ppxlib_ast.Find_version
+module Convert            = Ppxlib_ast.Convert
+module Extra_warnings     = Ppxlib_ast.Extra_warnings
+module Location_error     = Ppxlib_ast.Location_error
+module Parse              = Ppxlib_ast.Parse
+module Parser             = Ppxlib_ast.Parser
+module Parsetree          = Ppxlib_ast.Parsetree
+module Pprintast          = Ppxlib_ast.Pprintast
+module Select_ast         = Ppxlib_ast.Select_ast
+module Selected_ast       = Ppxlib_ast.Selected_ast
+module Syntaxerr          = Ppxlib_ast.Syntaxerr
+module Import_for_core    = Ppxlib_ast.Import_for_core
+
+(** Include all the Ast definitions since we need them in every single ppx *)
 include Ast
 
 module Ast_builder         = Ast_builder
