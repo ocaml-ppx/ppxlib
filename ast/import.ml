@@ -130,6 +130,22 @@ module Parser = struct
   let implementation lexer lexbuf = implementation lexer lexbuf |> Of_ocaml.copy_structure
 end
 
+module Pprintast = struct
+  include Ocaml_common.Pprintast
+  module To_ocaml = Versions.Convert(Js)(Ocaml)
+  let toplevel_phrase formatter phrase = To_ocaml.copy_toplevel_phrase phrase |> toplevel_phrase formatter
+  let expression formatter expr = To_ocaml.copy_expression expr |> expression formatter
+  let string_of_expression expr = To_ocaml.copy_expression expr |> string_of_expression
+  let top_phrase formatter phrase = To_ocaml.copy_toplevel_phrase phrase |> top_phrase formatter
+  let core_type formatter ct = To_ocaml.copy_core_type ct |> core_type formatter
+  let pattern formatter pat = To_ocaml.copy_pattern pat |> pattern formatter
+  let signature formatter sign = To_ocaml.copy_signature sign |> signature formatter
+  let signature_item formatter item = signature formatter [item]
+  let structure formatter str = To_ocaml.copy_structure str |> structure formatter
+  let string_of_structure str = To_ocaml.copy_structure str |> string_of_structure
+  let structure_item formatter item = structure formatter [item]
+end
+
 (* Modules imported directly from the compiler *)
 module Longident  = Ocaml_common.Longident
 module Misc       = Ocaml_common.Misc

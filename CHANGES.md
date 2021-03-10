@@ -19,6 +19,12 @@ unreleased
   aren't used by any current downstream user in the
   [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#230, @pitag-ha)
 
+- Reduce `Pprintast` to the compiler-libs `Pprintast`, only augmented by
+  `structure_item` and `signature_item` (#231, @pitag-ha)
+
+- Reduce the `-reconcile` and `-reconcile-with-comments` options to simple ASTs:
+  ASTs without classes or modules (#231, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 

@@ -14,22 +14,22 @@ module Context = struct
     let open Extension.Context in
     let open Attribute.Floating.Context in
     function
-    | Extension Class_expr       -> Pprintast.class_expr
-    | Extension Class_field      -> Pprintast.class_field
-    | Extension Class_type       -> Pprintast.class_type
-    | Extension Class_type_field -> Pprintast.class_type_field
+    | Extension Class_expr       -> assert false
+    | Extension Class_field      -> assert false
+    | Extension Class_type       -> assert false
+    | Extension Class_type_field -> assert false
     | Extension Core_type        -> paren Pprintast.core_type
     | Extension Expression       -> paren Pprintast.expression
-    | Extension Module_expr      -> Pprintast.module_expr
-    | Extension Module_type      -> Pprintast.module_type
+    | Extension Module_expr      -> assert false
+    | Extension Module_type      -> assert false
     | Extension Pattern          -> paren Pprintast.pattern
     | Extension Signature_item   -> Pprintast.signature_item
     | Extension Structure_item   -> Pprintast.structure_item
 
     | Floating_attribute Structure_item   -> Pprintast.structure_item
     | Floating_attribute Signature_item   -> Pprintast.signature_item
-    | Floating_attribute Class_field      -> Pprintast.class_field
-    | Floating_attribute Class_type_field -> Pprintast.class_type_field
+    | Floating_attribute Class_field      -> assert false
+    | Floating_attribute Class_type_field -> assert false
 end
 
 module Replacement = struct
