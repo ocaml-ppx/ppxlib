@@ -36,8 +36,20 @@ type attrs = attribute list
 
 let default_loc = ref Location.none
 
+type ref_and_value = R : 'a ref * 'a -> ref_and_value
+
+let protect_ref =
+  let set_ref (R (r, v)) = r := v in
+  fun ref f ->
+    let (R (r, _)) = ref in
+    let backup = R (r, !r) in
+    set_ref ref;
+    match f () with
+    | x           -> set_ref backup; x
+    | exception e -> set_ref backup; raise e
+
 let with_default_loc l f =
-  Misc.protect_refs [Misc.R (default_loc, l)] f
+  protect_ref (R (default_loc, l)) f
 
 module Const = struct
   let integer ?suffix i = Pconst_integer (i, suffix)
