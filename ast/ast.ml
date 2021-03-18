@@ -42,10 +42,7 @@ open Import
    [{
     module Ast = Versions.OCaml_4xx
     open Ast.Ast
-    module Location   = struct
-      include Ocaml_common.Location
-      include Location_helper
-    end
+    module Location   = Ocaml_common.Location
     module Longident = Ocaml_common.Longident
    }]
 
