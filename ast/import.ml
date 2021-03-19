@@ -97,10 +97,7 @@ module Asttypes   = Selected_ast.Ast.Asttypes
 
 module Ast_helper = Ast_helper_lite
 
-module Location   = struct
-  include Ocaml_common.Location
-  include Location_helper
-end
+module Location   = Ocaml_common.Location
 
 module Syntaxerr  = struct
   include Ocaml_common.Syntaxerr

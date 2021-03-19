@@ -19,6 +19,10 @@ unreleased
   aren't used by any current downstream user in the
   [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#230, @pitag-ha)
 
+- Remove compiler specific helper functions from `Location`. They aren't used
+  by any current downstream user in the
+  [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#238, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 

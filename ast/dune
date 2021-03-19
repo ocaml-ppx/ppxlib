@@ -20,15 +20,6 @@
  (lint
   (pps ppxlib_traverse -deriving-keep-w32=impl)))
 
-;; This is to make the code compatible with different versions of
-;; OCaml
-
-(rule
- (targets location_helper.ml clflags_helper.ml misc_helper.ml)
- (deps gen-compiler_specifics)
- (action
-  (run %{ocaml} %{deps} %{ocaml_version} %{targets})))
-
 (cinaps
  (files *.ml *.mli)
  (libraries ast_cinaps_helpers))
