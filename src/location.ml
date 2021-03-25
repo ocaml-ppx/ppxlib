@@ -81,7 +81,7 @@ module Error = struct
   include Ppxlib_ast.Location_error
 
   let createf ~loc fmt =
-    Printf.ksprintf
+    Format.kasprintf
       (fun str -> make ~loc ~sub:[] str) fmt
 end
 
