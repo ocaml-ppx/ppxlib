@@ -23,6 +23,8 @@ unreleased
   by any current downstream user in the
   [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#238, @pitag-ha)
 
+- Allow "%a" when using Location.Error.createf (#239, @mlasson)
+
 0.22.0 (04/02/2021)
 -------------------
 
