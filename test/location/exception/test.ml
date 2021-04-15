@@ -13,5 +13,5 @@ let catch_as_ppxlib_exception =
   | Error _ -> "caught"
   | _ -> "uncaught"
 [%%expect{|
-val catch_as_ppxlib_exception : string = "uncaught"
+val catch_as_ppxlib_exception : string = "caught"
 |}]

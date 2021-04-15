@@ -85,7 +85,7 @@ module Error = struct
       (fun str -> make ~loc ~sub:[] str) fmt
 end
 
-exception Error of Error.t
+exception Error = L.Error
 
 let () =
   Caml.Printexc.register_printer (function

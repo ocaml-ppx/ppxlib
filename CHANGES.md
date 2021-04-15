@@ -27,6 +27,9 @@ unreleased
 
 - Allow "%a" when using Location.Error.createf (#239, @mlasson)
 
+- Fix in `Location`: make `raise_errorf` exception equivalent to exception
+  `Error` (#242, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 
