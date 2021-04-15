@@ -23,7 +23,7 @@ error from the preprocessor's stderr also gets reported on the driver's stderr)
 
   $ touch file.ml
   $ ../raiser.exe -embed-errors -pp ../pp.exe file.ml | sed "s/> '.*'/> tmpfile/"
-  Fatal error: exception Location.Error(_)
+  Fatal error: exception Raising inside the preprocessor
   [%%ocaml.error
     "Error while running external preprocessor\nCommand line: ../pp.exe 'file.ml' > tmpfile\n"]
 
