@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Add a lower-bound constraint for Sexplib0 (#240, @pitag-ha)
+
 - Fix bug due to which unwanted public binaries got installed when installing
   ppxlib (#223, @pitag-ha)
 
