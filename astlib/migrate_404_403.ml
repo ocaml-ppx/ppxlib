@@ -14,14 +14,13 @@
 (*                                                                        *)
 (**************************************************************************)
 
-module Def = Migrate_parsetree_def
 module From = Ast_404
 module To = Ast_403
 
 let from_loc { Location.txt = _; loc } = loc
 
-let migration_error location feature =
-  raise (Def.Migration_error (feature, location))
+let migration_error loc missing_feature =
+  Location.raise_errorf ~loc missing_feature
 
 let rec copy_expression : From.Parsetree.expression -> To.Parsetree.expression =
  fun {
@@ -122,7 +121,7 @@ and copy_expression_desc loc :
       To.Parsetree.Pexp_letmodule
         (copy_loc (fun x -> x) x0, copy_module_expr x1, copy_expression x2)
   | From.Parsetree.Pexp_letexception _ ->
-      migration_error loc Def.Pexp_letexception
+      migration_error loc "migration error: local exceptions"
   | From.Parsetree.Pexp_assert x0 ->
       To.Parsetree.Pexp_assert (copy_expression x0)
   | From.Parsetree.Pexp_lazy x0 -> To.Parsetree.Pexp_lazy (copy_expression x0)
@@ -222,7 +221,7 @@ and copy_pattern_desc loc :
   | From.Parsetree.Ppat_extension x0 ->
       To.Parsetree.Ppat_extension (copy_extension x0)
   | From.Parsetree.Ppat_open _ ->
-      migration_error loc Def.Ppat_open
+      migration_error loc "migration error: module open in patterns"
 
 and copy_core_type : From.Parsetree.core_type -> To.Parsetree.core_type =
  fun {

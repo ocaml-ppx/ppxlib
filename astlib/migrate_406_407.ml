@@ -14,7 +14,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-module Def = Migrate_parsetree_def
 module From = Ast_406
 module To = Ast_407
 

@@ -14,7 +14,6 @@
 (*                                                                        *)
 (**************************************************************************)
 
-module Def = Migrate_parsetree_def
 module From = Ast_403
 module To = Ast_402
 
@@ -35,8 +34,8 @@ let inject_predef_option label d =
 
 let from_loc { Location.txt = _; loc } = loc
 
-let migration_error location feature =
-  raise (Def.Migration_error (feature, location))
+let migration_error loc missing_feature =
+  Location.raise_errorf ~loc missing_feature
 
 let rec copy_expression : From.Parsetree.expression -> To.Parsetree.expression =
  fun {
@@ -152,8 +151,7 @@ and copy_expression_desc loc :
   | From.Parsetree.Pexp_extension x0 ->
       To.Parsetree.Pexp_extension (copy_extension x0)
   | From.Parsetree.Pexp_unreachable ->
-      migration_error loc Def.Pexp_unreachable
-
+      migration_error loc "migration error: unreachable patterns"
 
 and copy_direction_flag :
     From.Asttypes.direction_flag -> To.Asttypes.direction_flag = function
@@ -320,7 +318,7 @@ and copy_attribute : From.Parsetree.attribute -> To.Parsetree.attribute =
 and copy_payload loc : From.Parsetree.payload -> To.Parsetree.payload = function
   | From.Parsetree.PStr x0 -> To.Parsetree.PStr (copy_structure x0)
   | From.Parsetree.PSig _x0 ->
-      migration_error loc Def.PSig
+      migration_error loc "migration error: signatures in attribute"
   | From.Parsetree.PTyp x0 -> To.Parsetree.PTyp (copy_core_type x0)
   | From.Parsetree.PPat (x0, x1) ->
       To.Parsetree.PPat (copy_pattern x0, copy_option copy_expression x1)
@@ -913,7 +911,7 @@ and copy_constructor_arguments loc :
   function
   | From.Parsetree.Pcstr_tuple x0 -> List.map copy_core_type x0
   | From.Parsetree.Pcstr_record _x0 ->
-      migration_error loc Def.Pcstr_record
+      migration_error loc "migration error: inline records"
 
 and copy_label_declaration :
     From.Parsetree.label_declaration -> To.Parsetree.label_declaration =
@@ -983,14 +981,14 @@ and copy_constant loc : From.Parsetree.constant -> To.Asttypes.constant =
       | Some 'l' -> To.Asttypes.Const_int32 (Int32.of_string x0)
       | Some 'L' -> To.Asttypes.Const_int64 (Int64.of_string x0)
       | Some 'n' -> To.Asttypes.Const_nativeint (Nativeint.of_string x0)
-      | Some _ -> migration_error loc Def.Pconst_integer
+      | Some _ -> migration_error loc "migration error: custom integer literals"
       )
   | From.Parsetree.Pconst_char x0 -> To.Asttypes.Const_char x0
   | From.Parsetree.Pconst_string (x0, x1) -> To.Asttypes.Const_string (x0, x1)
   | From.Parsetree.Pconst_float (x0, x1) -> (
       match x1 with
       | None -> To.Asttypes.Const_float x0
-      | Some _ -> migration_error loc Def.Pconst_float)
+      | Some _ -> migration_error loc "migration error: custom float literals")
 
 and copy_option : 'f0 'g0. ('f0 -> 'g0) -> 'f0 option -> 'g0 option =
  fun f0 -> function None -> None | Some x0 -> Some (f0 x0)

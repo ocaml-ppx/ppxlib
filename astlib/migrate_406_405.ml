@@ -14,12 +14,11 @@
 (*                                                                        *)
 (**************************************************************************)
 
-module Def = Migrate_parsetree_def
 module From = Ast_406
 module To = Ast_405
 
-let migration_error location feature =
-  raise (Def.Migration_error (feature, location))
+let migration_error loc missing_feature =
+  Location.raise_errorf ~loc missing_feature
 
 let rec copy_expression : From.Parsetree.expression -> To.Parsetree.expression =
  fun {
@@ -256,7 +255,8 @@ and copy_core_type_desc :
                     copy_attributes x1,
                     copy_core_type x2 )
               | From.Parsetree.Oinherit _ ->
-                 migration_error Location.none Def.Oinherit)
+                  migration_error Location.none
+                    "migration error: inheritance in object type")
             x0,
           copy_closed_flag x1 )
   | From.Parsetree.Ptyp_class (x0, x1) ->
@@ -408,7 +408,8 @@ and copy_class_expr_desc :
   | From.Parsetree.Pcl_extension x0 ->
       To.Parsetree.Pcl_extension (copy_extension x0)
   | From.Parsetree.Pcl_open (_, loc, _) ->
-      migration_error loc.Location.loc Def.Pcl_open
+      migration_error loc.Location.loc
+        "migration error: module open in class expression"
 
 and copy_class_structure :
     From.Parsetree.class_structure -> To.Parsetree.class_structure =
@@ -560,9 +561,11 @@ and copy_with_constraint :
   | From.Parsetree.Pwith_modsubst ({ txt = Longident.Lident x0; loc }, x1) ->
       To.Parsetree.Pwith_modsubst ({ txt = x0; loc }, copy_loc copy_longident x1)
   | From.Parsetree.Pwith_typesubst ({ loc; _ }, _x0) ->
-      migration_error loc Pwith_typesubst_longident
-  | From.Parsetree.Pwith_modsubst ({ loc; _ },_x1) ->
-      migration_error loc Pwith_modsubst_longident
+      migration_error loc
+        "migration error: type substitution inside a submodule"
+  | From.Parsetree.Pwith_modsubst ({ loc; _ }, _x1) ->
+      migration_error loc
+        "migration error: module substitution inside a submodule"
 
 and copy_signature : From.Parsetree.signature -> To.Parsetree.signature =
  fun x -> List.map copy_signature_item x
@@ -640,7 +643,8 @@ and copy_class_type_desc :
   | From.Parsetree.Pcty_extension x0 ->
       To.Parsetree.Pcty_extension (copy_extension x0)
   | From.Parsetree.Pcty_open (_, loc, _) ->
-      migration_error loc.Location.loc Def.Pcty_open
+      migration_error loc.Location.loc
+        "migration error: module open in class type"
 
 and copy_class_signature :
     From.Parsetree.class_signature -> To.Parsetree.class_signature =

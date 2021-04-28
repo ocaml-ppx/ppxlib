@@ -17,10 +17,6 @@
 (*$ open Astlib_cinaps_helpers
     open Printf $*)
 
-(* Shared definitions.
-   Mostly errors about features missing in older versions. *)
-module Def = Migrate_parsetree_def
-
 (* Copy of OCaml parsetrees *)
 (*$
   foreach_version (fun suffix _ ->
