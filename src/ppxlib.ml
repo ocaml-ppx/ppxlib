@@ -32,7 +32,6 @@ module Parser             = Ppxlib_ast.Parser
 module Parsetree          = Ppxlib_ast.Parsetree
 module Pprintast          = Ppxlib_ast.Pprintast
 module Selected_ast       = Ppxlib_ast.Selected_ast
-module Syntaxerr          = Ppxlib_ast.Syntaxerr
 
 (** Include all the Ast definitions since we need them in every single ppx *)
 include Ast

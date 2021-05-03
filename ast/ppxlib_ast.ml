@@ -18,6 +18,5 @@ module Parsetree      = Parsetree
 module Pprintast      = Pprintast
 module Select_ast     = Select_ast
 module Selected_ast   = Selected_ast
-module Syntaxerr      = Syntaxerr
 
 module Import_for_core = Import
