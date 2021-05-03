@@ -99,10 +99,6 @@ module Ast_helper = Ast_helper_lite
 
 module Location   = Ocaml_common.Location
 
-module Syntaxerr  = struct
-  include Ocaml_common.Syntaxerr
-end
-
 module Parse = struct
   include Ocaml_common.Parse
   module Of_ocaml = Versions.Convert(Ocaml)(Js)

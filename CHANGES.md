@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Drop `Syntaxerr` from the public API. Doesn't affect any user in the
+  [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#244, @pitag-ha)
+
 - Add a lower-bound constraint for Sexplib0 (#240, @pitag-ha)
 
 - Fix bug due to which unwanted public binaries got installed when installing
