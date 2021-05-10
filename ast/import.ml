@@ -111,17 +111,5 @@ module Parse = struct
   let pattern lexbuf = pattern lexbuf |> Of_ocaml.copy_pattern
 end
 
-module Parser = struct
-  include Astlib.Parser
-  module Of_ocaml = Versions.Convert(Ocaml)(Js)
-  let use_file lexer lexbuf = use_file lexer lexbuf |> List.map Of_ocaml.copy_toplevel_phrase
-  let toplevel_phrase lexer lexbuf = toplevel_phrase lexer lexbuf |> Of_ocaml.copy_toplevel_phrase
-  let parse_pattern lexer lexbuf = parse_pattern lexer lexbuf |> Of_ocaml.copy_pattern
-  let parse_expression lexer lexbuf = parse_expression lexer lexbuf |> Of_ocaml.copy_expression
-  let parse_core_type lexer lexbuf = parse_core_type lexer lexbuf |> Of_ocaml.copy_core_type
-  let interface lexer lexbuf = interface lexer lexbuf |> Of_ocaml.copy_signature
-  let implementation lexer lexbuf = implementation lexer lexbuf |> Of_ocaml.copy_structure
-end
-
 (* Modules imported directly from the Astlib *)
 module Longident  = Astlib.Longident

@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Drop `Parser` from the API (#263, @pitag-ha)
+
 - Fix location in parse errors (#247, @pitag-ha)
 
 - `Location`: add `set_filename` and `Error.get_location` (#247, @pitag-ha)
