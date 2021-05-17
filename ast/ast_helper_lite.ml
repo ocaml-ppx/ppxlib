@@ -15,12 +15,11 @@
 
 (* TODO: remove this open *)
 open Stdlib0
-open Ocaml_common
 
-module Location = Location
-module Longident = Longident
+module Location = Astlib.Location
+module Longident = Astlib.Longident
 
-open Migrate_parsetree.Ast_412
+open Astlib.Ast_412
 
 [@@@warning "-9"]
 open Asttypes
@@ -100,7 +99,7 @@ module Typ = struct
   let varify_constructors var_names t =
     let check_variable vl loc v =
       if List.mem v vl then
-        raise Syntaxerr.(Error(Variable_in_scope(loc,v))) in
+        Location.raise_errorf ~loc "variable in scope syntax error: %s" v in
     let var_names = List.map (fun v -> v.txt) var_names in
     let rec loop t =
       let desc =

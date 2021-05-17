@@ -15,16 +15,15 @@
 
 (** Copy of Ast_helper from OCaml 4.12 with docstring related stuff removed *)
 
-open Ocaml_common
-open Migrate_parsetree.Ast_412
+open Astlib.Ast_412
 
 open Asttypes
 open Parsetree
 
-type 'a with_loc = 'a Location.loc
-type loc = Location.t
+type 'a with_loc = 'a Astlib.Location.loc
+type loc = Astlib.Location.t
 
-type lid = Longident.t with_loc
+type lid = Astlib.Longident.t with_loc
 type str = string with_loc
 type str_opt = string option with_loc
 type attrs = attribute list

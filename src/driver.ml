@@ -39,13 +39,13 @@ module Cookies = struct
   let given_through_cli = ref []
 
   let get T name pattern =
-    Option.map (Ocaml_common.Ast_mapper.get_cookie name)
+    Option.map (Astlib.Ast_mapper.get_cookie name)
       ~f:(fun e ->
         let e = Selected_ast.of_ocaml Expression e in
         Ast_pattern.parse pattern e.pexp_loc e Fn.id)
 
   let set T name expr =
-    Ocaml_common.Ast_mapper.set_cookie name
+    Astlib.Ast_mapper.set_cookie name
       (Selected_ast.to_ocaml Expression expr)
 
   let handlers = ref []
@@ -532,7 +532,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
 
 let map_structure st =
   map_structure_gen st
-    ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
+    ~tool_name:(Astlib.Ast_mapper.tool_name ())
     ~hook:Context_free.Generated_code_hook.nop
     ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
     ~input_name:None
@@ -580,7 +580,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
 
 let map_signature sg =
   map_signature_gen sg
-    ~tool_name:(Ocaml_common.Ast_mapper.tool_name ())
+    ~tool_name:(Astlib.Ast_mapper.tool_name ())
     ~hook:Context_free.Generated_code_hook.nop
     ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
     ~input_name:None
@@ -642,8 +642,7 @@ end
 
 (* Set the input name globally. This is used by some ppx rewriters
    such as bisect_ppx. *)
-let set_input_name name =
-  Ocaml_common.Location.input_name := name
+let set_input_name = Astlib.Location.set_input_name
 
 let load_input ~(kind : Kind.t) ~input_name ~relocate fn =
   set_input_name input_name;
@@ -734,7 +733,7 @@ let extract_cookies_str st =
     :: st ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Structure [prefix] in
     assert (List.is_empty
-              (Ocaml_common.Ast_mapper.drop_ppx_context_str ~restore:true prefix));
+              (Astlib.Ast_mapper.drop_ppx_context_str ~restore:true prefix));
     st
   | _ -> st
   in
@@ -746,7 +745,7 @@ let extract_cookies_str st =
 
 let add_cookies_str st =
   let prefix =
-    Ocaml_common.Ast_mapper.add_ppx_context_str ~tool_name:"ppxlib_driver" []
+    Astlib.Ast_mapper.add_ppx_context_str ~tool_name:"ppxlib_driver" []
     |> Ppxlib_ast.Selected_ast.of_ocaml Structure
   in
   prefix @ st
@@ -758,7 +757,7 @@ let extract_cookies_sig sg =
     :: sg ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Signature [prefix] in
     assert (List.is_empty
-              (Ocaml_common.Ast_mapper.drop_ppx_context_sig ~restore:true prefix));
+              (Astlib.Ast_mapper.drop_ppx_context_sig ~restore:true prefix));
     sg
   | _ -> sg
   in
@@ -770,7 +769,7 @@ let extract_cookies_sig sg =
 
 let add_cookies_sig sg =
   let prefix =
-    Ocaml_common.Ast_mapper.add_ppx_context_sig ~tool_name:"ppxlib_driver" []
+    Astlib.Ast_mapper.add_ppx_context_sig ~tool_name:"ppxlib_driver" []
     |> Ppxlib_ast.Selected_ast.of_ocaml Signature
   in
   prefix @ sg
@@ -1250,7 +1249,7 @@ let rewrite_binary_ast_file input_fn output_fn =
   let ast =
     try
       let ast = extract_cookies ast in
-      let tool_name = Ocaml_common.Ast_mapper.tool_name () in
+      let tool_name = Astlib.Ast_mapper.tool_name () in
       let hook = Context_free.Generated_code_hook.nop in
       let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
       process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
@@ -1309,7 +1308,7 @@ let standalone_run_as_ppx_rewriter () =
 ;;
 
 let standalone () =
-  Compiler_specifics.read_clflags_from_env ();
+  Astlib.init_error_reporting_style_using_env_vars ();
   try
     if Array.length Caml.Sys.argv >= 2 &&
        match Caml.Sys.argv.(1) with

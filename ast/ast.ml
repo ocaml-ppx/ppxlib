@@ -19,7 +19,7 @@ open Import
 
 (* This file is obtained by:
 
-   - copying a subset of the corresponding ast_xxx.ml file from migrate-parsetree
+   - copying a subset of the corresponding ast_xxx.ml file from Astlib
    (sub-modules Asttypes and Parsetree)
    - adding the type definitions for position, location, loc and longident
    - flattening all the modules

@@ -2,6 +2,7 @@
 (name ppxlib)
 (using cinaps 1.0)
 (allow_approximate_merlin)
+(implicit_transitive_deps false)
 (formatting (enabled_for dune))
 (cram enable)
 (generate_opam_files true)

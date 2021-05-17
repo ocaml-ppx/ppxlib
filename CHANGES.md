@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Drop dependency on OMP (#187, @pitag-ha)
+
 - Drop `Syntaxerr` from the public API. Doesn't affect any user in the
   [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#244, @pitag-ha)
 

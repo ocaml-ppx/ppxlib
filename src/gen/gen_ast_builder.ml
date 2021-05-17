@@ -240,5 +240,5 @@ let () =
   try
     List.iter (List.rev !fns) ~f:generate
   with exn ->
-    Errors.report_error Format.err_formatter exn;
+    Astlib.Location.report_exception Format.err_formatter exn;
     exit 2

@@ -1,5 +1,5 @@
 open Import
-type t = Ocaml_common.Location.error
+type t = Astlib.Location.Error.t
 val of_exn : exn -> t option
 val register_error_of_exn : (exn -> t option) -> unit
 val message : t -> string
