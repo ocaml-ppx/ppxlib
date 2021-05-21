@@ -74,3 +74,4 @@ module Parser = Parser
 let init_error_reporting_style_using_env_vars () =
   (*IF_AT_LEAST 408 Ocaml_common.Compmisc.read_clflags_from_env () *)
   (*IF_NOT_AT_LEAST 408 () *)
+(** Adjust the reporting style of error messages to the environment variables OCAML_COLOR and OCAML_ERROR_STYLE. *)
