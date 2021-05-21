@@ -100,15 +100,15 @@ module Error = struct
     (*IF_NOT_AT_LEAST 408 _make_error_of_message_old ~sub msg*)
     (*IF_AT_LEAST 408 _make_error_of_message_new ~sub msg*)
 
-  let _update_loc_old error loc = { error with loc }
+  let _set_main_loc_old error loc = { error with loc }
 
-  let _update_loc_new error loc =
+  let _set_main_loc_new error loc =
     let main = { error.main with loc } in
     { error with main }
 
-  let update_loc error loc =
-    (*IF_NOT_AT_LEAST 408 _update_loc_old error loc*)
-    (*IF_AT_LEAST 408 _update_loc_new error loc*)
+  let set_main_loc error loc =
+    (*IF_NOT_AT_LEAST 408 _set_main_loc_old error loc*)
+    (*IF_AT_LEAST 408 _set_main_loc_new error loc*)
 end
 
 let raise_errorf ?loc msg = raise_errorf ?loc msg

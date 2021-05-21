@@ -39,13 +39,13 @@ module Cookies = struct
   let given_through_cli = ref []
 
   let get T name pattern =
-    Option.map (Astlib.Ast_mapper.get_cookie name)
+    Option.map (Astlib.Ast_metadata.get_cookie name)
       ~f:(fun e ->
         let e = Selected_ast.of_ocaml Expression e in
         Ast_pattern.parse pattern e.pexp_loc e Fn.id)
 
   let set T name expr =
-    Astlib.Ast_mapper.set_cookie name
+    Astlib.Ast_metadata.set_cookie name
       (Selected_ast.to_ocaml Expression expr)
 
   let handlers = ref []
@@ -532,7 +532,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
 
 let map_structure st =
   map_structure_gen st
-    ~tool_name:(Astlib.Ast_mapper.tool_name ())
+    ~tool_name:(Astlib.Ast_metadata.tool_name ())
     ~hook:Context_free.Generated_code_hook.nop
     ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
     ~input_name:None
@@ -580,7 +580,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
 
 let map_signature sg =
   map_signature_gen sg
-    ~tool_name:(Astlib.Ast_mapper.tool_name ())
+    ~tool_name:(Astlib.Ast_metadata.tool_name ())
     ~hook:Context_free.Generated_code_hook.nop
     ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
     ~input_name:None
@@ -734,7 +734,7 @@ let extract_cookies_str st =
     :: st ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Structure [prefix] in
     assert (List.is_empty
-              (Astlib.Ast_mapper.drop_ppx_context_str ~restore:true prefix));
+              (Astlib.Ast_metadata.drop_ppx_context_str ~restore:true prefix));
     st
   | _ -> st
   in
@@ -746,7 +746,7 @@ let extract_cookies_str st =
 
 let add_cookies_str st =
   let prefix =
-    Astlib.Ast_mapper.add_ppx_context_str ~tool_name:"ppxlib_driver" []
+    Astlib.Ast_metadata.add_ppx_context_str ~tool_name:"ppxlib_driver" []
     |> Ppxlib_ast.Selected_ast.of_ocaml Structure
   in
   prefix @ st
@@ -758,7 +758,7 @@ let extract_cookies_sig sg =
     :: sg ->
     let prefix = Ppxlib_ast.Selected_ast.to_ocaml Signature [prefix] in
     assert (List.is_empty
-              (Astlib.Ast_mapper.drop_ppx_context_sig ~restore:true prefix));
+              (Astlib.Ast_metadata.drop_ppx_context_sig ~restore:true prefix));
     sg
   | _ -> sg
   in
@@ -770,7 +770,7 @@ let extract_cookies_sig sg =
 
 let add_cookies_sig sg =
   let prefix =
-    Astlib.Ast_mapper.add_ppx_context_sig ~tool_name:"ppxlib_driver" []
+    Astlib.Ast_metadata.add_ppx_context_sig ~tool_name:"ppxlib_driver" []
     |> Ppxlib_ast.Selected_ast.of_ocaml Signature
   in
   prefix @ sg
@@ -1251,7 +1251,7 @@ let rewrite_binary_ast_file input_fn output_fn =
   let ast =
     try
       let ast = extract_cookies ast in
-      let tool_name = Astlib.Ast_mapper.tool_name () in
+      let tool_name = Astlib.Ast_metadata.tool_name () in
       let hook = Context_free.Generated_code_hook.nop in
       let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
       process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
