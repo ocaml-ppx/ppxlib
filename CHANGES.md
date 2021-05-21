@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Fix location in parse error reporting (#257, @pitag-ha)
+
 0.22.0 (04/02/2021)
 -------------------
 
