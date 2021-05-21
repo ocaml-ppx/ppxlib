@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Fix location in parse errors (#247, @pitag-ha)
+
+- `Location`: add `set_filename` and `Error.get_location` (#247, @pitag-ha)
+
 - Drop dependency on OMP (#187, @pitag-ha)
 
 - Drop `Syntaxerr` from the public API. Doesn't affect any user in the
