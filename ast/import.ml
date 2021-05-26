@@ -91,13 +91,15 @@ end
 
 module Selected_ast = Select_ast(Ocaml)
 
-(* Modules from astlib *)
+module Ast_helper   = Ast_helper_lite
+
+(* Modules from Ast_<n> of Astlib, where <n> is the compiler version the ppxlib driver is compiled with *)
 module Parsetree  = Selected_ast.Ast.Parsetree
 module Asttypes   = Selected_ast.Ast.Asttypes
 
-module Ast_helper = Ast_helper_lite
-
-module Location   = Astlib.Location
+(* Other Astlib modules *)
+module Location = Astlib.Location
+module Longident  = Astlib.Longident
 
 module Parse = struct
   include Astlib.Parse
@@ -122,6 +124,3 @@ module Parser = struct
   let interface lexer lexbuf = interface lexer lexbuf |> Of_ocaml.copy_signature
   let implementation lexer lexbuf = implementation lexer lexbuf |> Of_ocaml.copy_structure
 end
-
-(* Modules imported directly from the Astlib *)
-module Longident  = Astlib.Longident
