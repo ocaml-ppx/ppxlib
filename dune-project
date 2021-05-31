@@ -15,9 +15,9 @@
 (package
  (name ppxlib)
  (depends
-  (ocaml (and (>= 4.04.1) (< 4.13)))
+  (ocaml (and (>= 4.04.1) (< 4.14)))
   (ocaml-compiler-libs (>= v0.11.0))
-  (ocaml-migrate-parsetree (>= 2.1.0))
+  (ocaml-migrate-parsetree (>= 2.2.0))
   (ppx_derivers (>= 1.0))
   sexplib0
   stdlib-shims
