@@ -2,7 +2,9 @@ module From = Ast_408
 module To = Ast_407
 
 let migration_error loc missing_feature =
-  Location.raise_errorf ~loc missing_feature
+  Location.raise_errorf ~loc
+    "migration error: %s is not supported before OCaml 4.08"
+    missing_feature
 
 let rec copy_toplevel_phrase :
     From.Parsetree.toplevel_phrase -> To.Parsetree.toplevel_phrase = function
@@ -154,10 +156,9 @@ and copy_expression_desc :
               copy_expression x1 )
       | Pmod_structure _ | Pmod_functor _ | Pmod_apply _ | Pmod_constraint _
       | Pmod_unpack _ | Pmod_extension _ ->
-          migration_error x0.From.Parsetree.popen_loc
-            "migration error: complex open")
+          migration_error x0.From.Parsetree.popen_loc "complex open")
   | From.Parsetree.Pexp_letop { let_; ands = _; body = _ } ->
-      migration_error let_.pbop_op.loc "migration error: let operators"
+      migration_error let_.pbop_op.loc "let operators"
   | From.Parsetree.Pexp_extension x0 ->
       To.Parsetree.Pexp_extension (copy_extension x0)
   | From.Parsetree.Pexp_unreachable -> To.Parsetree.Pexp_unreachable
@@ -407,8 +408,7 @@ and copy_structure_item_desc :
             }
       | Pmod_structure _ | Pmod_functor _ | Pmod_apply _ | Pmod_constraint _
       | Pmod_unpack _ | Pmod_extension _ ->
-          migration_error x0.From.Parsetree.popen_loc
-            "migration error: complex open")
+          migration_error x0.From.Parsetree.popen_loc "complex open")
   | From.Parsetree.Pstr_class x0 ->
       To.Parsetree.Pstr_class (List.map copy_class_declaration x0)
   | From.Parsetree.Pstr_class_type x0 ->
@@ -647,7 +647,7 @@ and copy_signature_item_desc :
         | [] -> Location.none
         | { From.Parsetree.ptype_loc; _ } :: _ -> ptype_loc
       in
-      migration_error x0_loc "migration error: type substitution in signatures"
+      migration_error x0_loc "type substitution in signatures"
   | From.Parsetree.Psig_typext x0 ->
       To.Parsetree.Psig_typext (copy_type_extension x0)
   | From.Parsetree.Psig_exception x0 ->
@@ -663,8 +663,7 @@ and copy_signature_item_desc :
   | From.Parsetree.Psig_module x0 ->
       To.Parsetree.Psig_module (copy_module_declaration x0)
   | From.Parsetree.Psig_modsubst x0 ->
-      migration_error x0.pms_loc
-        "migration error: module substitution in signatures"
+      migration_error x0.pms_loc "module substitution in signatures"
   | From.Parsetree.Psig_recmodule x0 ->
       To.Parsetree.Psig_recmodule (List.map copy_module_declaration x0)
   | From.Parsetree.Psig_modtype x0 ->

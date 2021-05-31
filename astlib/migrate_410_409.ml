@@ -2,7 +2,9 @@ module From = Ast_410
 module To = Ast_409
 
 let migration_error loc missing_feature =
-  Location.raise_errorf ~loc missing_feature
+  Location.raise_errorf ~loc
+    "migration error: %s is not supported before OCaml 4.10"
+    missing_feature
 
 let map_option f x = match x with None -> None | Some x -> Some (f x)
 
@@ -154,7 +156,7 @@ and copy_expression_desc :
         ( copy_loc
             (function
               | None ->
-                  migration_error x0.loc "migration error: anonymous let module"
+                  migration_error x0.loc "anonymous let module"
               | Some x -> x)
             x0,
           copy_module_expr x1,
@@ -298,7 +300,7 @@ and copy_pattern_desc :
         (copy_loc
            (function
              | None ->
-                 migration_error x0.loc "migration error: anynymous unpack"
+                 migration_error x0.loc "anynymous unpack"
              | Some x -> x)
            x0)
   | Ast_410.Parsetree.Ppat_exception x0 ->
@@ -608,8 +610,7 @@ and copy_module_binding :
         (function
           | Some x -> x
           | None ->
-              migration_error pmb_name.loc
-                "migration error: anonymous module binding")
+              migration_error pmb_name.loc "anonymous module binding")
         pmb_name;
     Ast_409.Parsetree.pmb_expr = copy_module_expr pmb_expr;
     Ast_409.Parsetree.pmb_attributes = copy_attributes pmb_attributes;
@@ -971,8 +972,7 @@ and copy_module_declaration :
       copy_loc
         (function
           | None ->
-              migration_error pmd_name.loc
-                "migration error: anonymous module declaration"
+              migration_error pmd_name.loc "anonymous module declaration"
           | Some x -> x)
         pmd_name;
     Ast_409.Parsetree.pmd_type = copy_module_type pmd_type;
