@@ -1,4 +1,4 @@
-type token
+type token = Ocaml_common.Parser.token
 
 val use_file :
   (Lexing.lexbuf -> token) -> Lexing.lexbuf -> Parsetree.toplevel_phrase list
