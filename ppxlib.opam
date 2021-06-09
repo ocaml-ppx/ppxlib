@@ -33,6 +33,9 @@ depends: [
   "stdio" {with-test}
   "odoc" {with-doc}
 ]
+conflicts: [
+  "ocaml-migrate-parsetree" {< "2.0.0"}
+]
 build: [
   ["dune" "subst"] {dev}
   [
