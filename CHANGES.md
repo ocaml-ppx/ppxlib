@@ -3,8 +3,6 @@ unreleased
 
 - Drop `Parser` from the API (#263, @pitag-ha)
 
-- Fix location in parse errors (#247, @pitag-ha)
-
 - `Location`: add `set_filename` and `Error.get_location` (#247, @pitag-ha)
 
 - Drop dependency on OMP2 (#187, @pitag-ha)
@@ -51,6 +49,20 @@ unreleased
 
 - Expose a part of `Ast_io` in order to allow reading AST values from binary
  files (#270, @arozovyk)
+0.22.2 (23/06/2021)
+-------------------
+
+- Make ppxlib compatible with 4.13 compiler (#260, @kit-ty-kate)
+
+0.22.1 (10/06/2021)
+-------------------
+
+- Fix location in parse error reporting (#257, @pitag-ha)
+
+0.21.1 (09/06/2021)
+-------------------
+
+- Fix location in parse error reporting (#256, @pitag-ha)
 
 0.22.0 (04/02/2021)
 -------------------
