@@ -66,6 +66,7 @@ module Migrate_412_411 = Migrate_412_411
 (* Compiler modules *)
 module Ast_mapper = Ast_mapper
 module Config = Config
+module Keyword = Keyword
 module Location = Location
 module Longident = Longident
 module Parse = Parse
