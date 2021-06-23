@@ -39,8 +39,8 @@ unreleased
 - Fix in `Location`: make `raise_errorf` exception equivalent to exception
   `Error` (#242, @pitag-ha)
 
-- Fix in `Pprintast`: correctly pretry print local type substitutions, e.g. type
-  t := ... (#261, @matthewelse)
+- Fix in `Pprintast`: correctly pretty print local type substitutions, e.g.
+  type t := ... (#261, @matthewelse)
 
 0.22.0 (04/02/2021)
 -------------------
