@@ -1,4 +1,4 @@
-0.22.2 (??/06/2021)
+0.22.2 (23/06/2021)
 -------------------
 
 - Make ppxlib compatible with 4.13 compiler (#260, @kit-ty-kate)
