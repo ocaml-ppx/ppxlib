@@ -219,6 +219,7 @@ val attribute : name:(string, 'a, 'b) t -> payload:(payload, 'b, 'c) t -> (attri
 val extension : (string, 'a, 'b) t -> (payload, 'b, 'c) t -> (extension, 'a, 'c) t
 
 val elist : (expression, 'a -> 'a, 'b) t -> (expression, 'b list -> 'c, 'c) t
+val esequence : (expression, 'a -> 'a, 'b) t -> (expression, 'b list -> 'c, 'c) t
 
 type context
 val of_func : (context -> Location.t -> 'a -> 'b -> 'c) -> ('a, 'b, 'c) t
