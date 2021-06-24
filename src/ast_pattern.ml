@@ -227,8 +227,8 @@ let esequence (T f) = T (fun ctx _loc e k ->
       expr :: (parse_seq next)
     | _ -> [ expr ]
   in
-  k (List.map (parse_seq e) ~f:(fun expr -> f ctx expr.pexp_loc expr k))
-)
+  k (List.map (parse_seq e) ~f:(fun expr -> f ctx expr.pexp_loc expr (fun x -> x))))
+;;
 
 let of_func f = (T f)
 let to_func (T f) = f
