@@ -1,8 +1,6 @@
 unreleased
 ----------
 
-- Fix location in parse errors (#247, @pitag-ha)
-
 - `Location`: add `set_filename` and `Error.get_location` (#247, @pitag-ha)
 
 - Drop dependency on OMP (#187, @pitag-ha)
@@ -41,6 +39,21 @@ unreleased
 
 - Fix in `Pprintast`: correctly pretty print local type substitutions, e.g.
   type t := ... (#261, @matthewelse)
+
+0.22.2 (23/06/2021)
+-------------------
+
+- Make ppxlib compatible with 4.13 compiler (#260, @kit-ty-kate)
+
+0.22.1 (10/06/2021)
+-------------------
+
+- Fix location in parse error reporting (#257, @pitag-ha)
+
+0.21.1 (09/06/2021)
+-------------------
+
+- Fix location in parse error reporting (#256, @pitag-ha)
 
 0.22.0 (04/02/2021)
 -------------------
