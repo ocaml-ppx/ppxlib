@@ -224,7 +224,7 @@ let esequence (T f) = T (fun ctx _loc e k ->
   let rec parse_seq expr acc =
     match expr.pexp_desc with
     | Pexp_sequence (expr, next) ->
-      (parse_seq next (expr :: acc))
+      parse_seq next (expr :: acc)
     | _ -> expr :: acc
   in
   k (List.rev_map (parse_seq e []) ~f:(fun expr -> f ctx expr.pexp_loc expr (fun x -> x))))
