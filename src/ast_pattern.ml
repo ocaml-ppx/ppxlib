@@ -221,13 +221,13 @@ let elist (T f) = T (fun ctx _loc e k ->
 ;;
 
 let esequence (T f) = T (fun ctx _loc e k ->
-  let rec parse_seq expr =
+  let rec parse_seq expr acc =
     match expr.pexp_desc with
     | Pexp_sequence (expr, next) ->
-      expr :: (parse_seq next)
-    | _ -> [ expr ]
+      (parse_seq next (expr :: acc))
+    | _ -> expr :: acc
   in
-  k (List.map (parse_seq e) ~f:(fun expr -> f ctx expr.pexp_loc expr (fun x -> x))))
+  k (List.rev_map (parse_seq e []) ~f:(fun expr -> f ctx expr.pexp_loc expr (fun x -> x))))
 ;;
 
 let of_func f = (T f)
