@@ -43,7 +43,7 @@ unreleased
   type t := ... (#261, @matthewelse)
 
 - Add `Ast_pattern.esequence`, for matching on any number of sequenced
-  expressions e.g. `a; b; c; d`. (#264, @matthewelse)
+  expressions e.g. `do_a (); do_b (); ...`. (#264, @matthewelse)
 
 0.22.0 (04/02/2021)
 -------------------
