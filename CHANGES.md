@@ -42,6 +42,9 @@ unreleased
 - Fix in `Pprintast`: correctly pretty print local type substitutions, e.g.
   type t := ... (#261, @matthewelse)
 
+- Add `Ast_pattern.esequence`, for matching on any number of sequenced
+  expressions e.g. `do_a (); do_b (); ...`. (#264, @matthewelse)
+
 0.22.0 (04/02/2021)
 -------------------
 

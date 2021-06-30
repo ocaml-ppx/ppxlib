@@ -220,5 +220,15 @@ let elist (T f) = T (fun ctx _loc e k ->
   k (List.map l ~f:(fun x -> f ctx x.Parsetree.pexp_loc x (fun x -> x))))
 ;;
 
+let esequence (T f) = T (fun ctx _loc e k ->
+  let rec parse_seq expr acc =
+    match expr.pexp_desc with
+    | Pexp_sequence (expr, next) ->
+      parse_seq next (expr :: acc)
+    | _ -> expr :: acc
+  in
+  k (List.rev_map (parse_seq e []) ~f:(fun expr -> f ctx expr.pexp_loc expr (fun x -> x))))
+;;
+
 let of_func f = (T f)
 let to_func (T f) = f
