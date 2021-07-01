@@ -3,7 +3,7 @@ platform:
 environment:
   global:
     FORK_USER: ocaml
-    FORK_BRANCH: master
+    FORK_BRANCH: main
     CYG_ROOT: C:\cygwin64
     PINS: ppxlib:.
   matrix:
