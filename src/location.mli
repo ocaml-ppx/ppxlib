@@ -42,6 +42,8 @@ type nonrec 'a loc = 'a loc =
   ; loc : t
   }
 
+val mknoloc : 'a -> 'a loc
+
 val compare_pos : Lexing.position -> Lexing.position -> int
 val min_pos : Lexing.position -> Lexing.position -> Lexing.position
 val max_pos : Lexing.position -> Lexing.position -> Lexing.position

@@ -62,6 +62,11 @@ type nonrec 'a loc = 'a loc =
   ; loc : t
   }
 
+let mknoloc (txt : 'a) : 'a loc =
+  { txt
+  ; loc = none
+  }
+
 let compare_pos p1 p2 =
   let open Lexing in
   let column p =

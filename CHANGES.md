@@ -45,6 +45,8 @@ unreleased
 - Add `Ast_pattern.esequence`, for matching on any number of sequenced
   expressions e.g. `do_a (); do_b (); ...`. (#264, @matthewelse)
 
+- Add `Location.mknoloc` (#266, @tatchi)
+
 0.22.0 (04/02/2021)
 -------------------
 
