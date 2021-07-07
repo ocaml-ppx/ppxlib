@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Import
+open Ast_412
 
 type space_formatter = (unit, Format.formatter, unit) format
 
