@@ -14,7 +14,7 @@ module Extra_warnings = Warn
 module Location_error = Location_error
 module Parse          = Parse
 module Parsetree      = Parsetree
-module Pprintast      = Pprintast
+module Pprintast      = Astlib.Pprintast
 module Select_ast     = Select_ast
 module Selected_ast   = Selected_ast
 

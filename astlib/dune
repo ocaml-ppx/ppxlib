@@ -2,6 +2,7 @@
  (name astlib)
  (public_name ppxlib.astlib)
  (libraries ocaml-compiler-libs.common compiler-libs.common)
+ (flags -w -9)
  (preprocess
   (action
    (run %{exe:pp/pp.exe} %{read:ast-version} %{input-file}))))
