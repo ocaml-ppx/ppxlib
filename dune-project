@@ -18,7 +18,6 @@
  (depends
   (ocaml (and (>= 4.04.1) (< 4.13)))
   (ocaml-compiler-libs (>= v0.11.0))
-  (ocaml-migrate-parsetree (>= 2.1.0))
   (ppx_derivers (>= 1.0))
   (sexplib0 (>= v0.12))
   stdlib-shims
