@@ -3,8 +3,8 @@
 [![ocaml-ci status][ocaml-ci-img]][ocaml-ci] [![AppVeyor status][appveyor-img]][appveyor]
 
 [ocaml-ci]: https://ci.ocamllabs.io/github/ocaml-ppx/ppxlib
-[ocaml-ci-img]: https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Focaml-ppx%2Fppxlib%2Fmaster&logo=ocaml
-[appveyor]:       https://ci.appveyor.com/project/diml/ppxlib/branch/master
+[ocaml-ci-img]: https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Focaml-ppx%2Fppxlib%main&logo=ocaml
+[appveyor]:       https://ci.appveyor.com/project/diml/ppxlib/branch/main
 [appveyor-img]:   https://ci.appveyor.com/api/projects/status/bogbsm33uvh083jx?svg=true
 
 [User manual][man]
