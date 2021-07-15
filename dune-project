@@ -26,6 +26,8 @@
   (cinaps (and :with-test (>= v0.12.1)))
   (base :with-test)
   (stdio :with-test))
+ (conflicts
+  (ocaml-migrate-parsetree (< 2.0.0)))
  (synopsis "Standard library for ppx rewriters")
  (description "Ppxlib is the standard library for ppx rewriters and other programs
 that manipulate the in-memory reprensation of OCaml programs, a.k.a
