@@ -13,7 +13,6 @@ module Convert        = Versions.Convert
 module Extra_warnings = Warn
 module Location_error = Location_error
 module Parse          = Parse
-module Parser         = Parser
 module Parsetree      = Parsetree
 module Pprintast      = Pprintast
 module Select_ast     = Select_ast
