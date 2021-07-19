@@ -125,6 +125,12 @@ val add_alias
   -> t list
   -> t
 
+(** [of_name name] gets a reference to the deriver named [name], so that one
+    can build an alias from external named derivers:
+    [Deriving.add_alias [Deriving.of_name "deriver"]]
+*)
+val of_name : string -> t
+
 (** Ignore a deriver. So that one can write: [Deriving.add ... |>
     Deriving.ignore] *)
 val ignore : t -> unit
