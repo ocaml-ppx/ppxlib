@@ -56,6 +56,7 @@ module Merlin_helpers      = Merlin_helpers
 module Reserved_namespaces = Name.Reserved_namespaces
 module Spellcheck          = Spellcheck
 module Quoter              = Quoter
+module Ast_io              = Utils.Ast_io.Read_bin 
 
 include Common
 

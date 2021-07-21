@@ -205,6 +205,11 @@ module Ast_io = struct
         output_string oc Input_version.Ast.Config.ast_impl_magic_number;
         output_value oc input_name;
         output_value oc st
+        
+  module Read_bin = struct
+    let read fn =
+      In_channel.with_file fn ~f:(from_channel ~input_kind:Necessarily_binary)
+  end
 end
 
 module System = struct
