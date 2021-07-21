@@ -53,6 +53,9 @@ module Ast_io : sig
       -> (t, read_error) result
 
     val write : out_channel -> t -> add_ppx_context:bool -> unit
+    module Read_bin : sig 
+      val read : string ->(t, read_error) result
+    end 
 end
 
 module System : sig
