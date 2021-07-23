@@ -16,6 +16,7 @@ module Context = struct
     | Pattern : pattern t
     | Signature_item : signature_item t
     | Structure_item : structure_item t
+    | Ppx_import : type_declaration t
 
   type packed = T : _ t -> packed
 
@@ -53,6 +54,7 @@ module Context = struct
     | Pattern -> "pattern"
     | Signature_item -> "signature item"
     | Structure_item -> "structure item"
+    | Ppx_import -> "ppx_import"
 
   let eq : type a b. a t -> b t -> (a, b) equality =
    fun a b ->
@@ -68,9 +70,37 @@ module Context = struct
     | Pattern, Pattern -> Eq
     | Signature_item, Signature_item -> Eq
     | Structure_item, Structure_item -> Eq
+    | Ppx_import, Ppx_import -> Eq
     | _ ->
         assert (Poly.( <> ) (T a) (T b));
         Ne
+
+  let get_ppx_import_extension type_decl =
+    match type_decl with
+    | {
+     ptype_manifest =
+       Some { ptyp_desc = Ptyp_extension (name, PTyp core_type); _ };
+     _;
+    } ->
+        (* If the type_decl follows the syntax expected by ppx_import, we pass the expander
+           the type_declaration with the extension around the type manifest removed.
+           [type declaration] can't be used as payload directly so we wrap it in a dummy str_item
+           from which the Ast_pattern will extract the type_declaration.
+           This str_item will not be seen by the user. *)
+        let expander_type_decl =
+          { type_decl with ptype_manifest = Some core_type }
+        in
+        let virtual_payload =
+          Ast_builder.Default.pstr_type ~loc:type_decl.ptype_loc Recursive
+            [ expander_type_decl ]
+        in
+        (* TODO: Do we need to extract attributes to be later merged here?
+            E.g. in the case [type t = [%import A.t][@attr ...], should attr be re-attached
+            to the generated type manifest, and if so what should we do if said manifest is
+            None, even though ppx_import should never generate such a manifest. *)
+        let attr = [] in
+        Some ((name, PStr [ virtual_payload ]), attr)
+    | _ -> None
 
   let get_extension : type a. a t -> a -> (extension * attributes) option =
    fun t x ->
@@ -96,6 +126,7 @@ module Context = struct
         Some (e, a)
     | Signature_item, { psig_desc = Psig_extension (e, a); _ } -> Some (e, a)
     | Structure_item, { pstr_desc = Pstr_extension (e, a); _ } -> Some (e, a)
+    | Ppx_import, type_decl -> get_ppx_import_extension type_decl
     | _ -> None
 
   let merge_attributes : type a. a t -> a -> attributes -> a =
@@ -114,6 +145,10 @@ module Context = struct
         assert_no_attributes attrs;
         x
     | Structure_item ->
+        assert_no_attributes attrs;
+        x
+    | Ppx_import ->
+        (* TODO: bis attrs *)
         assert_no_attributes attrs;
         x
 end
@@ -350,6 +385,12 @@ let declare_inline_with_path_arg name context pattern k =
     ~func:"Extension.declare_inline_with_path_arg";
   let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
   T (M.declare ~with_arg:true name context pattern k')
+
+let __declare_ppx_import name expand =
+  (* This pattern is used to unwrap the type declaration from the payload assembled by
+     [Context.get_ppx_import_extension] *)
+  let pattern = Ast_pattern.(pstr (pstr_type recursive (__ ^:: nil) ^:: nil)) in
+  V3.declare name Context.Ppx_import pattern expand
 
 module V2 = struct
   type nonrec t = t

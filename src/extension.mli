@@ -15,6 +15,8 @@ module Context : sig
     | Pattern : pattern t
     | Signature_item : signature_item t
     | Structure_item : structure_item t
+    | Ppx_import : type_declaration t
+        (** For ppx_import compat only, please do not use *)
 
   val class_expr : class_expr t
 
@@ -189,3 +191,8 @@ end
 (**/**)
 
 val check_context_for_inline : func:string -> 'a Context.t -> unit
+
+val __declare_ppx_import :
+  string ->
+  (ctxt:Expansion_context.Extension.t -> type_declaration -> type_declaration) ->
+  t
