@@ -58,9 +58,7 @@ module Ast_io : sig
       | Intf of signature
       | Impl of structure
 
-      type read_error' = Read_error of string
-
-      val read_binary : string -> (ast, read_error') result
+      val read_binary : string -> (ast, string) result
     end
 end
 

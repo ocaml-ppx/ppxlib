@@ -211,16 +211,14 @@ module Ast_io = struct
     | Intf of signature
     | Impl of structure
 
-    type read_error' = Read_error of string
-
     let ast_read_error_string (error : read_error) =
       match error with
-      | Not_a_binary_ast -> Read_error "Error: Not a binary ast"
-      | Unknown_version (s, _) -> Read_error ("Error: Unknown version " ^ s)
+      | Not_a_binary_ast ->  "Error: Not a binary ast"
+      | Unknown_version (s, _) ->  ("Error: Unknown version " ^ s)
       | Source_parse_error (loc, _) ->
-        Read_error ("Source parse error:" ^ Location.Error.message loc)
+         ("Source parse error:" ^ Location.Error.message loc)
       | System_error (loc, _) ->
-        Read_error ("System_error: " ^ Location.Error.message loc)
+         ("System_error: " ^ Location.Error.message loc)
 
     let read_binary fn =
       match
