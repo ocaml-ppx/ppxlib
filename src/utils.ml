@@ -205,10 +205,32 @@ module Ast_io = struct
         output_string oc Input_version.Ast.Config.ast_impl_magic_number;
         output_value oc input_name;
         output_value oc st
-        
-  module Read_bin = struct
-    let read fn =
-      In_channel.with_file fn ~f:(from_channel ~input_kind:Necessarily_binary)
+
+    module Read_bin = struct
+    type ast =
+    | Intf of signature
+    | Impl of structure
+
+    type read_error' = Read_error of string
+
+    let ast_read_error_string (error : read_error) =
+      match error with
+      | Not_a_binary_ast -> Read_error "Error: Not a binary ast"
+      | Unknown_version (s, _) -> Read_error ("Error: Unknown version " ^ s)
+      | Source_parse_error (loc, _) ->
+        Read_error ("Source parse error:" ^ Location.Error.message loc)
+      | System_error (loc, _) ->
+        Read_error ("System_error: " ^ Location.Error.message loc)
+
+    let read_binary fn =
+      match
+        In_channel.with_file fn ~f:(from_channel ~input_kind:Necessarily_binary)
+      with
+      | Ok {ast;_} -> Ok (match ast with
+        | Impl structure -> Impl structure
+        | Intf signature -> Intf signature )
+      | Error e -> Error (ast_read_error_string e)
+
   end
 end
 
