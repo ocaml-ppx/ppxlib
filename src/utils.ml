@@ -211,7 +211,7 @@ module Ast_io = struct
     | Intf of signature
     | Impl of structure
 
-    let ast_read_error_string (error : read_error) =
+    let read_error_to_string (error : read_error) =
       match error with
       | Not_a_binary_ast ->  "Error: Not a binary ast"
       | Unknown_version (s, _) ->  ("Error: Unknown version " ^ s)
@@ -227,7 +227,7 @@ module Ast_io = struct
       | Ok {ast;_} -> Ok (match ast with
         | Impl structure -> Impl structure
         | Intf signature -> Intf signature )
-      | Error e -> Error (ast_read_error_string e)
+      | Error e -> Error (read_error_to_string e)
 
   end
 end
