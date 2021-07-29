@@ -73,6 +73,15 @@ module Ast_io = struct
     | Possibly_source of Kind.t * string
     | Necessarily_binary
 
+  let read_error_to_string (error : read_error) =
+    match error with
+    | Not_a_binary_ast ->  "Error: Not a binary ast"
+    | Unknown_version (s, _) ->  ("Error: Unknown version " ^ s)
+    | Source_parse_error (loc, _) ->
+      ("Source parse error:" ^ Location.Error.message loc)
+    | System_error (loc, _) ->
+      ("System error: " ^ Location.Error.message loc)
+      
   let parse_source_code ~(kind : Kind.t) ~input_name ~prefix_read_from_source ic =
     (* The input version is determined by the fact that the input will get parsed by
        the current compiler Parse module *)
@@ -211,14 +220,6 @@ module Ast_io = struct
     | Intf of signature
     | Impl of structure
 
-    let read_error_to_string (error : read_error) =
-      match error with
-      | Not_a_binary_ast ->  "Error: Not a binary ast"
-      | Unknown_version (s, _) ->  ("Error: Unknown version " ^ s)
-      | Source_parse_error (loc, _) ->
-         ("Source parse error:" ^ Location.Error.message loc)
-      | System_error (loc, _) ->
-         ("System_error: " ^ Location.Error.message loc)
 
     let read_binary fn =
       match
