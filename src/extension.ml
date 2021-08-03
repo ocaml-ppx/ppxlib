@@ -77,27 +77,12 @@ module Context = struct
 
   let get_ppx_import_extension type_decl =
     match type_decl with
-    | {
-     ptype_manifest =
-       Some { ptyp_desc = Ptyp_extension (name, PTyp core_type); _ };
-     _;
-    } ->
-        (* If the type_decl follows the syntax expected by ppx_import, we pass the expander
-           the type_declaration with the extension around the type manifest removed.
-           [type declaration] can't be used as payload directly so we wrap it in a dummy str_item
-           from which the Ast_pattern will extract the type_declaration.
-           This str_item will not be seen by the user. *)
-        let expander_type_decl =
-          { type_decl with ptype_manifest = Some core_type }
-        in
+    | { ptype_manifest = Some { ptyp_desc = Ptyp_extension (name, _); _ }; _ }
+      ->
         let virtual_payload =
           Ast_builder.Default.pstr_type ~loc:type_decl.ptype_loc Recursive
-            [ expander_type_decl ]
+            [ type_decl ]
         in
-        (* TODO: Do we need to extract attributes to be later merged here?
-            E.g. in the case [type t = [%import A.t][@attr ...], should attr be re-attached
-            to the generated type manifest, and if so what should we do if said manifest is
-            None, even though ppx_import should never generate such a manifest. *)
         let attr = [] in
         Some ((name, PStr [ virtual_payload ]), attr)
     | _ -> None
@@ -148,7 +133,6 @@ module Context = struct
         assert_no_attributes attrs;
         x
     | Ppx_import ->
-        (* TODO: bis attrs *)
         assert_no_attributes attrs;
         x
 end
@@ -387,8 +371,8 @@ let declare_inline_with_path_arg name context pattern k =
   T (M.declare ~with_arg:true name context pattern k')
 
 let __declare_ppx_import name expand =
-  (* This pattern is used to unwrap the type declaration from the payload assembled by
-     [Context.get_ppx_import_extension] *)
+  (* This pattern is used to unwrap the type declaration from the payload
+     assembled by [Context.get_ppx_import_extension] *)
   let pattern = Ast_pattern.(pstr (pstr_type recursive (__ ^:: nil) ^:: nil)) in
   V3.declare name Context.Ppx_import pattern expand
 

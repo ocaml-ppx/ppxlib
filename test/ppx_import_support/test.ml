@@ -5,7 +5,11 @@ open Ppxlib
 let id =
   Extension.__declare_ppx_import
     "id"
-    (fun ~ctxt:_ td -> td)
+    (fun ~ctxt:_ td ->
+       match td.ptype_manifest with
+       | Some {ptyp_desc = Ptyp_extension (_, PTyp wrapped_manifest); _} ->
+         {td with ptype_manifest = Some wrapped_manifest}
+       | _ -> assert false)
 [%%expect{|
 val id : Extension.t = <abstr>
 |}]
