@@ -5744,7 +5744,7 @@ class virtual ['ctx] map_with_context =
 class virtual ['res] lift =
   object (self)
     method virtual  record : (string * 'res) list -> 'res
-    method virtual  constr : string -> 'res list -> 'rest
+    method virtual  constr : string -> 'res list -> 'res
     method virtual  tuple : 'res list -> 'res
     method virtual  bool : bool -> 'res
     method virtual  char : char -> 'res
