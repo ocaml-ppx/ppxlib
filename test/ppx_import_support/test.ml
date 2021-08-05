@@ -62,8 +62,28 @@ end
 module type T = sig type t = int val foo : t end
 |}]
 
-(* Extra things to test:
-   - the contxt is right
-   - the context for inner nodes is right as well *)
+(* It should be properly interpreted if it's the result of the expansion of a
+   previous node as well *)
+let gen_id =
+  Extension.V3.declare
+    "gen_id"
+    Extension.Context.structure_item
+    Ast_pattern.(pstr nil)
+    (fun ~ctxt ->
+       let loc = Expansion_context.Extension.extension_point_loc ctxt in
+       [%stri type t = [%id: int]])
 [%%expect{|
+val gen_id : Extension.t = <abstr>
+|}]
+
+Driver.register_transformation
+  ~rules:[Context_free.Rule.extension gen_id]
+  "gen_id"
+[%%expect{|
+- : unit = ()
+|}]
+
+[%%gen_id]
+[%%expect{|
+type t = int
 |}]
