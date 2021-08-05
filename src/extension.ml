@@ -157,7 +157,23 @@ struct
     with_arg : bool;
   }
 
-  let declare ~with_arg name context pattern k =
+  let declare :
+      type a.
+      with_arg:bool ->
+      string ->
+      a Context.t ->
+      (payload, 'b, 'payload) Ast_pattern.t ->
+      'b Callback.t ->
+      (a, 'payload) t =
+   fun ~with_arg name context pattern k ->
+    (* Check that there is no collisions between ppx_import and core_type
+       extensions *)
+    (match context with
+    | Context.Ppx_import ->
+        Name.Registrar.check_collisions registrar (Context.T Core_type) name
+    | Context.Core_type ->
+        Name.Registrar.check_collisions registrar (Context.T Ppx_import) name
+    | _ -> ());
     Name.Registrar.register ~kind:`Extension registrar (Context.T context) name;
     {
       name = Name.Pattern.make name;

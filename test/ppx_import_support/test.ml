@@ -87,3 +87,14 @@ Driver.register_transformation
 [%%expect{|
 type t = int
 |}]
+
+(* One can't have ppx_import-like and core_type extensions with the same name *)
+let id_for_core_types =
+  Extension.V3.declare
+    "id"
+    Extension.Context.core_type
+    Ast_pattern.(ptyp __)
+    (fun ~ctxt:_ core_type -> core_type)
+[%%expect{|
+Exception: (Failure "Extension 'id' on ppx_imports matches extension 'id'")
+|}]
