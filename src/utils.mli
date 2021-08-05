@@ -58,7 +58,14 @@ module Ast_io : sig
       | Intf of signature
       | Impl of structure
 
-      val read_binary : string -> (ast, string) result
+      type t 
+
+      val read_binary : string -> (t, string) result
+
+      val get_ast : t -> ast 
+
+      val get_input_name : t -> string 
+
     end
 end
 
