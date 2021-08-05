@@ -193,7 +193,9 @@ module Registrar = struct
           | None -> ""
           | Some s -> " on " ^ s ^ "s"
         in
-        Printf.ksprintf failwith "%s '%s'%s%s matches %s '%s'%s"
+        Printf.ksprintf failwith
+          "Some ppx-es tried to register conflicting transformations: %s \
+           '%s'%s%s matches %s '%s'%s"
           (String.capitalize_ascii t.kind)
           name context (declared_at caller) t.kind e.fully_qualified_name
           (declared_at e.declared_at)

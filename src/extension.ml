@@ -54,7 +54,7 @@ module Context = struct
     | Pattern -> "pattern"
     | Signature_item -> "signature item"
     | Structure_item -> "structure item"
-    | Ppx_import -> "ppx_import"
+    | Ppx_import -> "type declaration"
 
   let eq : type a b. a t -> b t -> (a, b) equality =
    fun a b ->

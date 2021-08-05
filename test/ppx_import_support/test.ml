@@ -96,5 +96,7 @@ let id_for_core_types =
     Ast_pattern.(ptyp __)
     (fun ~ctxt:_ core_type -> core_type)
 [%%expect{|
-Exception: (Failure "Extension 'id' on ppx_imports matches extension 'id'")
+Exception:
+(Failure
+  "Some ppx-es tried to register conflicting transformations: Extension 'id' on type declarations matches extension 'id'")
 |}]
