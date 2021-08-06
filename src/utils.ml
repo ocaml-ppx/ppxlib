@@ -73,6 +73,15 @@ module Ast_io = struct
     | Possibly_source of Kind.t * string
     | Necessarily_binary
 
+  let read_error_to_string (error : read_error) =
+    match error with
+    | Not_a_binary_ast ->  "Error: Not a binary ast"
+    | Unknown_version (s, _) ->  ("Error: Unknown version " ^ s)
+    | Source_parse_error (loc, _) ->
+      ("Source parse error:" ^ Location.Error.message loc)
+    | System_error (loc, _) ->
+      ("System error: " ^ Location.Error.message loc)
+
   let parse_source_code ~(kind : Kind.t) ~input_name ~prefix_read_from_source ic =
     (* The input version is determined by the fact that the input will get parsed by
        the current compiler Parse module *)
@@ -205,6 +214,32 @@ module Ast_io = struct
         output_string oc Input_version.Ast.Config.ast_impl_magic_number;
         output_value oc input_name;
         output_value oc st
+
+    module Read_bin = struct
+    type ast =
+    | Intf of signature
+    | Impl of structure
+
+    type t = {ast: ast ; input_name : string }
+
+    let read_binary fn =
+      match
+        In_channel.with_file fn ~f:(from_channel ~input_kind:Necessarily_binary)
+      with
+      | Ok { ast; input_name; _ } ->
+          let ast =
+            match ast with
+            | Impl structure -> Impl structure
+            | Intf signature -> Intf signature
+          in
+          Ok { ast; input_name }
+      | Error e -> Error (read_error_to_string e)
+
+    let get_ast t = t.ast
+
+    let get_input_name t = t.input_name
+
+  end
 end
 
 module System = struct

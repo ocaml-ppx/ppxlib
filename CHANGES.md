@@ -45,6 +45,9 @@ unreleased
 - Add `Ast_pattern.esequence`, for matching on any number of sequenced
   expressions e.g. `do_a (); do_b (); ...`. (#264, @matthewelse)
 
+- Expose a part of `Ast_io` in order to allow reading AST values from binary
+ files (#270, @arozovyk)
+
 0.22.0 (04/02/2021)
 -------------------
 
