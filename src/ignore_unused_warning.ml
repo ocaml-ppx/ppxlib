@@ -39,31 +39,41 @@ end
 let binds_module_names = object
   inherit [bool] Ast_traverse.fold as super
 
-  method! structure_item item acc =
-    match item.pstr_desc with
-    | Pstr_module _ -> true
-    | Pstr_recmodule _ -> true
-    | _ -> super#structure_item item acc
+  method! module_binding mb acc =
+    match mb.pmb_name.txt with
+    | Some (_ : string) -> true
+    | None -> super#module_binding mb acc
 
-  method! signature_item item acc =
-    match item.psig_desc with
-    | Psig_module _ -> true
-    | Psig_modsubst _ -> true
-    | Psig_recmodule _ -> true
-    | _ -> super#signature_item item acc
+  method! module_declaration md acc =
+    match md.pmd_name.txt with
+    | Some (_ : string) -> true
+    | None -> super#module_declaration md acc
 
-  method! module_expr me acc =
-    match me.pmod_desc with
-    | Pmod_functor _ -> true
-    | _ -> super#module_expr me acc
+  method! module_substitution ms _ =
+    match ms.pms_name.txt with
+    | (_ : string) -> true
+
+  method! functor_parameter fp acc =
+    match fp with
+    | Unit -> acc
+    | Named (name, _) ->
+      match name.txt with
+      | Some (_ : string) -> true
+      | None -> super#functor_parameter fp acc
 
   method! pattern pat acc =
     match pat.ppat_desc with
-    | Ppat_unpack _ -> true
+    | Ppat_unpack name ->
+      (match name.txt with
+       | Some (_ : string) -> true
+       | None -> acc)
     | _ -> super#pattern pat acc
 
   method! expression expr acc =
     match expr.pexp_desc with
-    | Pexp_letmodule _ -> true
+    | Pexp_letmodule (name, _, _) ->
+      (match name.txt with
+       | Some (_ : string) -> true
+       | None -> super#expression expr acc)
     | _ -> super#expression expr acc
 end
