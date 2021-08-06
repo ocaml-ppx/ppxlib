@@ -43,6 +43,27 @@ let () =
 let keep_w32_impl () = !keep_w32_impl || Driver.pretty ()
 let keep_w32_intf () = !keep_w32_intf || Driver.pretty ()
 
+let keep_w60_impl = ref false
+let keep_w60_intf = ref false
+let () =
+  let keep_w60_spec =
+    Caml.Arg.Symbol
+      (["impl"; "intf"; "both"],
+       (function
+         | "impl" -> keep_w60_impl := true
+         | "intf" -> keep_w60_intf := true
+         | "both" ->
+           keep_w60_impl := true;
+           keep_w60_intf := true
+         | _ -> assert false))
+  in
+  Driver.add_arg "-deriving-keep-w60"
+    keep_w60_spec
+    ~doc:" Do not try to disable warning 60 for the generated code"
+
+let keep_w60_impl () = !keep_w60_impl || Driver.pretty ()
+let keep_w60_intf () = !keep_w60_intf || Driver.pretty ()
+
 module Args = struct
   include (Ast_pattern : module type of struct include Ast_pattern end
            with type ('a, 'b, 'c) t := ('a, 'b, 'c) Ast_pattern.t)
@@ -507,10 +528,15 @@ let mk_deriving_attr context ~prefix ~suffix =
    | Unused warning stuff + locations check silencing                |
    +-----------------------------------------------------------------+ *)
 
-let disable_unused_warning_attribute =
+let disable_warnings_attribute warnings =
   let loc = Location.none in
+  let string =
+    List.sort warnings ~cmp:Int.compare
+    |> List.map ~f:(fun warning -> "-" ^ Int.to_string warning)
+    |> String.concat ~sep:""
+  in
   { attr_name = { txt = "ocaml.warning"; loc };
-    attr_payload = PStr [pstr_eval ~loc (estring ~loc "-32") []];
+    attr_payload = PStr [pstr_eval ~loc (estring ~loc string) []];
     attr_loc = loc; }
 ;;
 
@@ -533,15 +559,27 @@ let wrap_str ~loc ~hide st =
 
 let wrap_str ~loc ~hide st =
   let loc = { loc with loc_ghost = true } in
-  let wrap, st =
+  let warnings, st =
     if keep_w32_impl () then
-      hide, st
+      [], st
     else if not !do_insert_unused_warning_attribute then
-      hide, Ignore_unused_warning.add_dummy_user_for_values#structure st
+      [], Ignore_unused_warning.add_dummy_user_for_values#structure st
     else
-      (* note: a structure is created because it is not currently possible to
-         attach an [@@ocaml.warning] attribute to a single structure item. *)
-      true, (pstr_attribute ~loc disable_unused_warning_attribute :: st)
+      [32], st
+  in
+  let warnings, st =
+    if keep_w60_impl ()
+    || not (Ignore_unused_warning.binds_module_names#structure st false)
+    then
+      warnings, st
+    else
+      (60 :: warnings), st
+  in
+  let wrap, st =
+    if List.is_empty warnings then
+      hide, st
+    else
+      true, (pstr_attribute ~loc (disable_warnings_attribute warnings) :: st)
   in
   if wrap then
     wrap_str ~loc ~hide st
@@ -561,11 +599,25 @@ let wrap_sig ~loc ~hide st =
 
 let wrap_sig ~loc ~hide sg =
   let loc = { loc with loc_ghost = true } in
-  let wrap, sg =
+  let warnings =
     if keep_w32_intf () then
+      []
+    else
+      [32]
+  in
+  let warnings =
+    if keep_w60_intf ()
+    || not (Ignore_unused_warning.binds_module_names#signature sg false)
+    then
+      warnings
+    else
+      (60 :: warnings)
+  in
+  let wrap, sg =
+    if List.is_empty warnings then
       hide, sg
     else
-      true, (psig_attribute ~loc disable_unused_warning_attribute :: sg)
+      true, (psig_attribute ~loc (disable_warnings_attribute warnings) :: sg)
   in
   if wrap then
     wrap_sig ~loc ~hide sg

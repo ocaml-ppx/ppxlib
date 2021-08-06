@@ -35,3 +35,35 @@ let add_dummy_user_for_values = object
     in
     loop (super#structure st) []
 end
+
+let binds_module_names = object
+  inherit [bool] Ast_traverse.fold as super
+
+  method! structure_item item acc =
+    match item.pstr_desc with
+    | Pstr_module _ -> true
+    | Pstr_recmodule _ -> true
+    | _ -> super#structure_item item acc
+
+  method! signature_item item acc =
+    match item.psig_desc with
+    | Psig_module _ -> true
+    | Psig_modsubst _ -> true
+    | Psig_recmodule _ -> true
+    | _ -> super#signature_item item acc
+
+  method! module_expr me acc =
+    match me.pmod_desc with
+    | Pmod_functor _ -> true
+    | _ -> super#module_expr me acc
+
+  method! pattern pat acc =
+    match pat.ppat_desc with
+    | Ppat_unpack _ -> true
+    | _ -> super#pattern pat acc
+
+  method! expression expr acc =
+    match expr.pexp_desc with
+    | Pexp_letmodule _ -> true
+    | _ -> super#expression expr acc
+end
