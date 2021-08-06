@@ -23,6 +23,19 @@ let add_deriver () =
         [
           {pstr_loc = loc;
            pstr_desc =
+             Pstr_module
+               { pmb_loc = loc;
+                 pmb_name = { loc; txt = Some "Foo" };
+                 pmb_expr =
+                   { pmod_loc = loc;
+                     pmod_desc = Pmod_structure [];
+                     pmod_attributes = [];
+                   };
+                 pmb_attributes = [];
+               }
+          };
+          {pstr_loc = loc;
+           pstr_desc =
              (Pstr_value (Nonrecursive, [{
                 pvb_pat =
                   { ppat_desc = Ppat_any;
