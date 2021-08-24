@@ -5,7 +5,9 @@ unreleased
 
 - `Location`: add `set_filename` and `Error.get_location` (#247, @pitag-ha)
 
-- Drop dependency on OMP (#187, @pitag-ha)
+- Drop dependency on OMP2 (#187, @pitag-ha)
+
+- Make OMP1 a conflict (#255, @kit-ty-kate)
 
 - Drop `Syntaxerr` from the public API. Doesn't affect any user in the
   [ppx universe](https://github.com/ocaml-ppx/ppx_universe) (#244, @pitag-ha)
