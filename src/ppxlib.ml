@@ -15,7 +15,6 @@ include struct
            with module Location     := Location
            with module Longident    := Longident
            with module Parse        := Parse
-           with module Parser       := Parser
            with module Parsetree    := Parsetree
            with module Pprintast    := Pprintast
            with module Syntaxerr    := Syntaxerr
@@ -28,7 +27,6 @@ module Ast                = Ppxlib_ast.Ast
 module Ast_helper         = Ppxlib_ast.Ast_helper
 module Asttypes           = Ppxlib_ast.Asttypes
 module Parse              = Ppxlib_ast.Parse
-module Parser             = Ppxlib_ast.Parser
 module Parsetree          = Ppxlib_ast.Parsetree
 module Pprintast          = Ppxlib_ast.Pprintast
 module Selected_ast       = Ppxlib_ast.Selected_ast
