@@ -1,5 +1,5 @@
-unreleased
-----------
+0.23.0 (31/08/2021)
+-------------------
 
 - Drop `Parser` from the API (#263, @pitag-ha)
 
@@ -49,6 +49,7 @@ unreleased
 
 - Expose a part of `Ast_io` in order to allow reading AST values from binary
  files (#270, @arozovyk)
+
 0.22.2 (23/06/2021)
 -------------------
 
