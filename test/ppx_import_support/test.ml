@@ -37,11 +37,22 @@ module type T = sig type t = int end
 |}]
 
 let foo =
+  let check_interpreted (_, type_decls) =
+    let {ptype_manifest; _} = List.hd type_decls in
+    match ptype_manifest with
+    | Some {ptyp_desc = Ptyp_extension _; _} ->
+      failwith "Extension should be intepreted before attributes"
+    | _ -> ()
+  in
   Deriving.add "foo"
     ~str_type_decl:(Deriving.Generator.make_noarg
-                      (fun ~loc ~path:_ _ -> [%str let foo = 42]))
+                      (fun ~loc ~path:_ type_decl ->
+                         check_interpreted type_decl;
+                         [%str let foo = 42]))
     ~sig_type_decl:(Deriving.Generator.make_noarg
-                      (fun ~loc ~path:_ _ -> [%sig: val foo : int]))
+                      (fun ~loc ~path:_ type_decl ->
+                         check_interpreted type_decl;
+                         [%sig: val foo : int]))
 [%%expect{|
 val foo : Deriving.t = <abstr>
 |}]
