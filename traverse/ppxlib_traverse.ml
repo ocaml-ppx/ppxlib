@@ -460,7 +460,7 @@ let lift_virtual_methods ~loc methods =
       [%stri
         class virtual blah = object
           method virtual record : (string * 'res) list -> 'res
-          method virtual constr : string -> 'res list -> 'rest
+          method virtual constr : string -> 'res list -> 'res
           method virtual tuple : 'res list -> 'res
           method virtual other : 'a. 'a -> 'res
         end
