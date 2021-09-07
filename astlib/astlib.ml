@@ -73,6 +73,7 @@ module Keyword = Keyword
 module Location = Location
 module Longident = Longident
 module Parse = Parse
+module Pprintast = Pprintast
 
 let init_error_reporting_style_using_env_vars () =
   (*IF_AT_LEAST 408 Ocaml_common.Compmisc.read_clflags_from_env () *)
