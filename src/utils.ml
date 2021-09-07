@@ -196,7 +196,7 @@ module Ast_io = struct
         let sg =
           if add_ppx_context then
             Selected_ast.To_ocaml.copy_signature sg
-            |> Astlib.Ast_mapper.add_ppx_context_sig ~tool_name:"ppx_driver"
+            |> Astlib.Ast_metadata.add_ppx_context_sig ~tool_name:"ppx_driver"
             |> Ocaml_to_input.copy_signature
           else Ppxlib_to_input.copy_signature sg
         in
@@ -207,7 +207,7 @@ module Ast_io = struct
         let st =
           if add_ppx_context then
             Selected_ast.To_ocaml.copy_structure st
-            |> Astlib.Ast_mapper.add_ppx_context_str ~tool_name:"ppx_driver"
+            |> Astlib.Ast_metadata.add_ppx_context_str ~tool_name:"ppx_driver"
             |> Ocaml_to_input.copy_structure
           else Ppxlib_to_input.copy_structure st
         in

@@ -34,7 +34,7 @@ let make ~loc txt ~sub =
   let sub = List.map (fun (loc, txt) -> { Astlib.Location.loc; txt }) sub in
   Astlib.Location.Error.make ~sub { loc; txt }
 
-let update_loc = Astlib.Location.Error.update_loc
+let update_loc = Astlib.Location.Error.set_main_loc
 
 let get_location error =
   let { Astlib.Location.loc; _ } = Astlib.Location.Error.main_msg error in
