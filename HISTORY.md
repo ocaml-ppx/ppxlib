@@ -522,7 +522,7 @@ let expression_of_t ~loc t : Ast.expression =
 Context-free rules
 ------------------
 
-Ppxlib expresses most transformation as context-free rules. Each of these rules
+Ppxlib expresses most transformations as context-free rules. Each of these rules
 describe how specific AST nodes (extensions points, nodes with particular
 attributes attached, numeric literals with specific suffixes, etc...) must be
 transformed.
