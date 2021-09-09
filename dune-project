@@ -27,7 +27,8 @@
   (base :with-test)
   (stdio :with-test))
  (conflicts
-  (ocaml-migrate-parsetree (< 2.0.0)))
+  (ocaml-migrate-parsetree (< 2.0.0))
+  base-effects)
  (synopsis "Standard library for ppx rewriters")
  (description "Ppxlib is the standard library for ppx rewriters and other programs
 that manipulate the in-memory reprensation of OCaml programs, a.k.a
