@@ -63,7 +63,7 @@ let main () =
     setup_printers ppf;
     Topfind.log := ignore;
 
-    Warnings.parse_options false "@a-4-29-40-41-42-44-45-48-58";
+    let _ = Warnings.parse_options false "@a-4-29-40-41-42-44-45-48-58" in
     Clflags.real_paths := false;
     Toploop.initialize_toplevel_env ();
 
