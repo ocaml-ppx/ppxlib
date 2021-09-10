@@ -1,7 +1,9 @@
 (executable
  (name expect_test)
  (enabled_if
-  (>= %{ocaml_version} "4.08.0"))
+  (and
+   (>= %{ocaml_version} "4.08.0")
+   (< %{ocaml_version} "4.13.0")))
  (link_flags (-linkall))
  (modes byte)
  (libraries
