@@ -545,3 +545,7 @@ generates new structure or signature items based on the value of an item
 with that attribute attached. This rule is applied before the item has been
 transformed meaning the input of the expander function might contain "wrong"
 information.
+*Note that this behaviour was changed in
+[#279](https://github.com/ocaml-ppx/ppxlib/pull/279) and that nodes are now
+expanded before derivers and other attributes-based inline code generation rules
+are applied*

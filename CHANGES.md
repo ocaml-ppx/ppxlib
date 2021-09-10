@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Expand nodes before applying derivers or other inline attributes based
+  transformation, allowing better interactions between extensions and
+  derivers (#279, @NathanReb)
+
 0.23.0 (31/08/2021)
 -------------------
 

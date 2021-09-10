@@ -550,7 +550,6 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     method! structure base_ctxt st =
       let rec with_extra_items item ~extra_items ~expect_items ~rest
           ~in_generated_code =
-        let item = super#structure_item base_ctxt item in
         let extra_items =
           loop (rev_concat extra_items) ~in_generated_code:true
         in
@@ -592,52 +591,54 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                       Generated_code_hook.replace hook Structure_item
                         item.pstr_loc (Many items);
                     items @ loop rest ~in_generated_code)
-            | Pstr_type (rf, tds) ->
-                let extra_items =
-                  handle_attr_group_inline attr_str_type_decls rf tds ~loc
-                    ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_group_inline attr_str_type_decls_expect rf tds
-                    ~loc ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | Pstr_modtype mtd ->
-                let extra_items =
-                  handle_attr_inline attr_str_module_type_decls mtd ~loc
-                    ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_inline attr_str_module_type_decls_expect mtd ~loc
-                    ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | Pstr_typext te ->
-                let extra_items =
-                  handle_attr_inline attr_str_type_exts te ~loc ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_inline attr_str_type_exts_expect te ~loc
-                    ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | Pstr_exception ec ->
-                let extra_items =
-                  handle_attr_inline attr_str_exceptions ec ~loc ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_inline attr_str_exceptions_expect ec ~loc
-                    ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | _ ->
-                let item = self#structure_item base_ctxt item in
-                let rest = self#structure base_ctxt rest in
-                item :: rest)
+            | _ -> (
+                let item = super#structure_item base_ctxt item in
+                match item.pstr_desc with
+                | Pstr_type (rf, tds) ->
+                    let extra_items =
+                      handle_attr_group_inline attr_str_type_decls rf tds ~loc
+                        ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_group_inline attr_str_type_decls_expect rf tds
+                        ~loc ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | Pstr_modtype mtd ->
+                    let extra_items =
+                      handle_attr_inline attr_str_module_type_decls mtd ~loc
+                        ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_inline attr_str_module_type_decls_expect mtd
+                        ~loc ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | Pstr_typext te ->
+                    let extra_items =
+                      handle_attr_inline attr_str_type_exts te ~loc ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_inline attr_str_type_exts_expect te ~loc
+                        ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | Pstr_exception ec ->
+                    let extra_items =
+                      handle_attr_inline attr_str_exceptions ec ~loc ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_inline attr_str_exceptions_expect ec ~loc
+                        ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | _ ->
+                    let rest = self#structure base_ctxt rest in
+                    item :: rest))
       in
       loop st ~in_generated_code:false
 
@@ -645,7 +646,6 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     method! signature base_ctxt sg =
       let rec with_extra_items item ~extra_items ~expect_items ~rest
           ~in_generated_code =
-        let item = super#signature_item base_ctxt item in
         let extra_items =
           loop (rev_concat extra_items) ~in_generated_code:true
         in
@@ -687,52 +687,54 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                       Generated_code_hook.replace hook Signature_item
                         item.psig_loc (Many items);
                     items @ loop rest ~in_generated_code)
-            | Psig_type (rf, tds) ->
-                let extra_items =
-                  handle_attr_group_inline attr_sig_type_decls rf tds ~loc
-                    ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_group_inline attr_sig_type_decls_expect rf tds
-                    ~loc ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | Psig_modtype mtd ->
-                let extra_items =
-                  handle_attr_inline attr_sig_module_type_decls mtd ~loc
-                    ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_inline attr_sig_module_type_decls_expect mtd ~loc
-                    ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | Psig_typext te ->
-                let extra_items =
-                  handle_attr_inline attr_sig_type_exts te ~loc ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_inline attr_sig_type_exts_expect te ~loc
-                    ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | Psig_exception ec ->
-                let extra_items =
-                  handle_attr_inline attr_sig_exceptions ec ~loc ~base_ctxt
-                in
-                let expect_items =
-                  handle_attr_inline attr_sig_exceptions_expect ec ~loc
-                    ~base_ctxt
-                in
-                with_extra_items item ~extra_items ~expect_items ~rest
-                  ~in_generated_code
-            | _ ->
-                let item = self#signature_item base_ctxt item in
-                let rest = self#signature base_ctxt rest in
-                item :: rest)
+            | _ -> (
+                let item = super#signature_item base_ctxt item in
+                match item.psig_desc with
+                | Psig_type (rf, tds) ->
+                    let extra_items =
+                      handle_attr_group_inline attr_sig_type_decls rf tds ~loc
+                        ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_group_inline attr_sig_type_decls_expect rf tds
+                        ~loc ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | Psig_modtype mtd ->
+                    let extra_items =
+                      handle_attr_inline attr_sig_module_type_decls mtd ~loc
+                        ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_inline attr_sig_module_type_decls_expect mtd
+                        ~loc ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | Psig_typext te ->
+                    let extra_items =
+                      handle_attr_inline attr_sig_type_exts te ~loc ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_inline attr_sig_type_exts_expect te ~loc
+                        ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | Psig_exception ec ->
+                    let extra_items =
+                      handle_attr_inline attr_sig_exceptions ec ~loc ~base_ctxt
+                    in
+                    let expect_items =
+                      handle_attr_inline attr_sig_exceptions_expect ec ~loc
+                        ~base_ctxt
+                    in
+                    with_extra_items item ~extra_items ~expect_items ~rest
+                      ~in_generated_code
+                | _ ->
+                    let rest = self#signature base_ctxt rest in
+                    item :: rest))
       in
       loop sg ~in_generated_code:false
 
