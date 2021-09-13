@@ -3,8 +3,5 @@ module Int = struct
 end
 
 module Option = struct
-  let map f o =
-    match o with
-    | None -> None
-    | Some v -> Some (f v)
+  let map f o = match o with None -> None | Some v -> Some (f v)
 end

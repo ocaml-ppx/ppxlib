@@ -56,23 +56,20 @@ let spellcheck names name =
   in
   let _, suggestions =
     List.fold_left names ~init:(Int.max_int, [])
-      ~f:(fun ((best_distance, names_at_best_distance) as acc) registered_name ->
+      ~f:(fun ((best_distance, names_at_best_distance) as acc) registered_name
+         ->
         match levenshtein_distance name registered_name cutoff with
         | None -> acc
         | Some dist ->
-          if dist < best_distance then
-            (dist, [registered_name])
-          else if dist > best_distance then
-            acc
-          else
-            (dist, registered_name :: names_at_best_distance))
+            if dist < best_distance then (dist, [ registered_name ])
+            else if dist > best_distance then acc
+            else (dist, registered_name :: names_at_best_distance))
   in
-  match List.rev suggestions |> List.filter ~f:(String.(<>) name) with
+  match List.rev suggestions |> List.filter ~f:(String.( <> ) name) with
   | [] -> None
   | last :: rev_rest ->
-    Some
-      (Printf.sprintf "Hint: Did you mean %s%s%s?"
-         (String.concat ~sep:", " (List.rev rev_rest))
-         (if List.is_empty rev_rest then "" else " or ")
-         last)
-;;
+      Some
+        (Printf.sprintf "Hint: Did you mean %s%s%s?"
+           (String.concat ~sep:", " (List.rev rev_rest))
+           (if List.is_empty rev_rest then "" else " or ")
+           last)
