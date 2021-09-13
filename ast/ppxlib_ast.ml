@@ -17,5 +17,3 @@ module Parsetree      = Parsetree
 module Pprintast      = Astlib.Pprintast
 module Select_ast     = Select_ast
 module Selected_ast   = Selected_ast
-
-module Import_for_core = Import
