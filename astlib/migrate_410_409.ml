@@ -3,8 +3,7 @@ module To = Ast_409
 
 let migration_error loc missing_feature =
   Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 4.10"
-    missing_feature
+    "migration error: %s is not supported before OCaml 4.10" missing_feature
 
 let map_option f x = match x with None -> None | Some x -> Some (f x)
 
@@ -155,8 +154,7 @@ and copy_expression_desc :
       Ast_409.Parsetree.Pexp_letmodule
         ( copy_loc
             (function
-              | None ->
-                  migration_error x0.loc "anonymous let module"
+              | None -> migration_error x0.loc "anonymous let module"
               | Some x -> x)
             x0,
           copy_module_expr x1,
@@ -299,9 +297,7 @@ and copy_pattern_desc :
       Ast_409.Parsetree.Ppat_unpack
         (copy_loc
            (function
-             | None ->
-                 migration_error x0.loc "anynymous unpack"
-             | Some x -> x)
+             | None -> migration_error x0.loc "anynymous unpack" | Some x -> x)
            x0)
   | Ast_410.Parsetree.Ppat_exception x0 ->
       Ast_409.Parsetree.Ppat_exception (copy_pattern x0)
@@ -609,8 +605,7 @@ and copy_module_binding :
       copy_loc
         (function
           | Some x -> x
-          | None ->
-              migration_error pmb_name.loc "anonymous module binding")
+          | None -> migration_error pmb_name.loc "anonymous module binding")
         pmb_name;
     Ast_409.Parsetree.pmb_expr = copy_module_expr pmb_expr;
     Ast_409.Parsetree.pmb_attributes = copy_attributes pmb_attributes;
@@ -850,7 +845,9 @@ and copy_extension : Ast_410.Parsetree.extension -> Ast_409.Parsetree.extension
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
 and copy_class_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_410.Parsetree.class_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 Ast_410.Parsetree.class_infos ->
       'g0 Ast_409.Parsetree.class_infos =
  fun f0
      {
@@ -886,7 +883,9 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_410.Parsetree.include_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 Ast_410.Parsetree.include_infos ->
       'g0 Ast_409.Parsetree.include_infos =
  fun f0
      {
@@ -905,7 +904,9 @@ and copy_open_description :
  fun x -> copy_open_infos (fun x -> copy_loc copy_Longident_t x) x
 
 and copy_open_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_410.Parsetree.open_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 Ast_410.Parsetree.open_infos ->
       'g0 Ast_409.Parsetree.open_infos =
  fun f0
      {
@@ -971,8 +972,7 @@ and copy_module_declaration :
     Ast_409.Parsetree.pmd_name =
       copy_loc
         (function
-          | None ->
-              migration_error pmd_name.loc "anonymous module declaration"
+          | None -> migration_error pmd_name.loc "anonymous module declaration"
           | Some x -> x)
         pmd_name;
     Ast_409.Parsetree.pmd_type = copy_module_type pmd_type;
@@ -1201,8 +1201,8 @@ and copy_constant : Ast_410.Parsetree.constant -> Ast_409.Parsetree.constant =
 and copy_Longident_t : Longident.t -> Longident.t = fun x -> x
 
 and copy_loc :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_410.Asttypes.loc ->
-      'g0 Ast_409.Asttypes.loc =
+      'f0 'g0.
+      ('f0 -> 'g0) -> 'f0 Ast_410.Asttypes.loc -> 'g0 Ast_409.Asttypes.loc =
  fun f0 { Ast_410.Asttypes.txt; Ast_410.Asttypes.loc } ->
   { Ast_409.Asttypes.txt = f0 txt; Ast_409.Asttypes.loc = copy_location loc }
 

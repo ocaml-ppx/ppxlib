@@ -3,8 +3,7 @@ module To = Ast_407
 
 let migration_error loc missing_feature =
   Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 4.08"
-    missing_feature
+    "migration error: %s is not supported before OCaml 4.08" missing_feature
 
 let rec copy_toplevel_phrase :
     From.Parsetree.toplevel_phrase -> To.Parsetree.toplevel_phrase = function
@@ -783,7 +782,9 @@ and copy_extension : From.Parsetree.extension -> To.Parsetree.extension =
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
 and copy_class_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Parsetree.class_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 From.Parsetree.class_infos ->
       'g0 To.Parsetree.class_infos =
  fun f0
      {
@@ -818,7 +819,9 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Parsetree.include_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 From.Parsetree.include_infos ->
       'g0 To.Parsetree.include_infos =
  fun f0
      {
@@ -884,19 +887,19 @@ and copy_module_declaration :
   }
 
 (* and copy_type_exception :
-  From.Parsetree.type_exception -> To.Parsetree.type_exception =
-  fun
-    { From.Parsetree.ptyexn_constructor = ptyexn_constructor;
-      From.Parsetree.ptyexn_loc = ptyexn_loc;
-      From.Parsetree.ptyexn_attributes = ptyexn_attributes }
-     ->
-    {
-      To.Parsetree.ptyexn_constructor =
-        (copy_extension_constructor ptyexn_constructor);
-      To.Parsetree.ptyexn_loc = (copy_location ptyexn_loc);
-      To.Parsetree.ptyexn_attributes =
-        (copy_attributes ptyexn_attributes)
-    }*)
+   From.Parsetree.type_exception -> To.Parsetree.type_exception =
+   fun
+     { From.Parsetree.ptyexn_constructor = ptyexn_constructor;
+       From.Parsetree.ptyexn_loc = ptyexn_loc;
+       From.Parsetree.ptyexn_attributes = ptyexn_attributes }
+      ->
+     {
+       To.Parsetree.ptyexn_constructor =
+         (copy_extension_constructor ptyexn_constructor);
+       To.Parsetree.ptyexn_loc = (copy_location ptyexn_loc);
+       To.Parsetree.ptyexn_attributes =
+         (copy_attributes ptyexn_attributes)
+     }*)
 and copy_type_extension :
     From.Parsetree.type_extension -> To.Parsetree.type_extension =
  fun {

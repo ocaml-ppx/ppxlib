@@ -826,7 +826,9 @@ and copy_extension : Ast_412.Parsetree.extension -> Ast_411.Parsetree.extension
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
 and copy_class_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_412.Parsetree.class_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 Ast_412.Parsetree.class_infos ->
       'g0 Ast_411.Parsetree.class_infos =
  fun f0
      {
@@ -864,7 +866,9 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_412.Parsetree.include_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 Ast_412.Parsetree.include_infos ->
       'g0 Ast_411.Parsetree.include_infos =
  fun f0
      {
@@ -883,7 +887,9 @@ and copy_open_description :
  fun x -> copy_open_infos (fun x -> copy_loc copy_Longident_t x) x
 
 and copy_open_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_412.Parsetree.open_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 Ast_412.Parsetree.open_infos ->
       'g0 Ast_411.Parsetree.open_infos =
  fun f0
      {
@@ -1179,8 +1185,8 @@ and copy_constant : Ast_412.Parsetree.constant -> Ast_411.Parsetree.constant =
 and copy_Longident_t : Longident.t -> Longident.t = fun x -> x
 
 and copy_loc :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 Ast_412.Asttypes.loc ->
-      'g0 Ast_411.Asttypes.loc =
+      'f0 'g0.
+      ('f0 -> 'g0) -> 'f0 Ast_412.Asttypes.loc -> 'g0 Ast_411.Asttypes.loc =
  fun f0 { Ast_412.Asttypes.txt; Ast_412.Asttypes.loc } ->
   { Ast_411.Asttypes.txt = f0 txt; Ast_411.Asttypes.loc = copy_location loc }
 

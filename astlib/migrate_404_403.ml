@@ -21,8 +21,7 @@ let from_loc { Location.txt = _; loc } = loc
 
 let migration_error loc missing_feature =
   Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 4.04"
-    missing_feature
+    "migration error: %s is not supported before OCaml 4.04" missing_feature
 
 let rec copy_expression : From.Parsetree.expression -> To.Parsetree.expression =
  fun {
@@ -122,8 +121,7 @@ and copy_expression_desc loc :
   | From.Parsetree.Pexp_letmodule (x0, x1, x2) ->
       To.Parsetree.Pexp_letmodule
         (copy_loc (fun x -> x) x0, copy_module_expr x1, copy_expression x2)
-  | From.Parsetree.Pexp_letexception _ ->
-      migration_error loc "local exceptions"
+  | From.Parsetree.Pexp_letexception _ -> migration_error loc "local exceptions"
   | From.Parsetree.Pexp_assert x0 ->
       To.Parsetree.Pexp_assert (copy_expression x0)
   | From.Parsetree.Pexp_lazy x0 -> To.Parsetree.Pexp_lazy (copy_expression x0)
@@ -222,8 +220,7 @@ and copy_pattern_desc loc :
       To.Parsetree.Ppat_exception (copy_pattern x0)
   | From.Parsetree.Ppat_extension x0 ->
       To.Parsetree.Ppat_extension (copy_extension x0)
-  | From.Parsetree.Ppat_open _ ->
-      migration_error loc "module open in patterns"
+  | From.Parsetree.Ppat_open _ -> migration_error loc "module open in patterns"
 
 and copy_core_type : From.Parsetree.core_type -> To.Parsetree.core_type =
  fun {
@@ -679,7 +676,9 @@ and copy_extension : From.Parsetree.extension -> To.Parsetree.extension =
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
 and copy_class_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Parsetree.class_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 From.Parsetree.class_infos ->
       'g0 To.Parsetree.class_infos =
  fun f0
      {
@@ -714,7 +713,9 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Parsetree.include_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 From.Parsetree.include_infos ->
       'g0 To.Parsetree.include_infos =
  fun f0
      {

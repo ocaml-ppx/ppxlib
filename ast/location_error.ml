@@ -23,9 +23,7 @@ let to_extension (error : Astlib.Location.Error.t) =
 let register_error_of_exn = Astlib.Location.register_error_of_exn
 
 let message error =
-  let { Astlib.Location.txt; _ } =
-    Astlib.Location.Error.main_msg error
-  in
+  let { Astlib.Location.txt; _ } = Astlib.Location.Error.main_msg error in
   txt
 
 let set_message = Astlib.Location.Error.set_main_msg

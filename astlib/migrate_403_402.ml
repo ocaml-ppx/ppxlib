@@ -36,8 +36,7 @@ let from_loc { Location.txt = _; loc } = loc
 
 let migration_error loc missing_feature =
   Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 4.03"
-    missing_feature
+    "migration error: %s is not supported before OCaml 4.03" missing_feature
 
 let rec copy_expression : From.Parsetree.expression -> To.Parsetree.expression =
  fun {
@@ -319,8 +318,7 @@ and copy_attribute : From.Parsetree.attribute -> To.Parsetree.attribute =
 
 and copy_payload loc : From.Parsetree.payload -> To.Parsetree.payload = function
   | From.Parsetree.PStr x0 -> To.Parsetree.PStr (copy_structure x0)
-  | From.Parsetree.PSig _x0 ->
-      migration_error loc "signatures in attribute"
+  | From.Parsetree.PSig _x0 -> migration_error loc "signatures in attribute"
   | From.Parsetree.PTyp x0 -> To.Parsetree.PTyp (copy_core_type x0)
   | From.Parsetree.PPat (x0, x1) ->
       To.Parsetree.PPat (copy_pattern x0, copy_option copy_expression x1)
@@ -694,7 +692,9 @@ and copy_extension : From.Parsetree.extension -> To.Parsetree.extension =
   (copy_loc (fun x -> x) x0, copy_payload (from_loc x0) x1)
 
 and copy_class_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Parsetree.class_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 From.Parsetree.class_infos ->
       'g0 To.Parsetree.class_infos =
  fun f0
      {
@@ -729,7 +729,9 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Parsetree.include_infos ->
+      'f0 'g0.
+      ('f0 -> 'g0) ->
+      'f0 From.Parsetree.include_infos ->
       'g0 To.Parsetree.include_infos =
  fun f0
      {
@@ -912,8 +914,7 @@ and copy_constructor_arguments loc :
     From.Parsetree.constructor_arguments -> To.Parsetree.core_type list =
   function
   | From.Parsetree.Pcstr_tuple x0 -> List.map copy_core_type x0
-  | From.Parsetree.Pcstr_record _x0 ->
-      migration_error loc "inline records"
+  | From.Parsetree.Pcstr_record _x0 -> migration_error loc "inline records"
 
 and copy_label_declaration :
     From.Parsetree.label_declaration -> To.Parsetree.label_declaration =
@@ -983,8 +984,7 @@ and copy_constant loc : From.Parsetree.constant -> To.Asttypes.constant =
       | Some 'l' -> To.Asttypes.Const_int32 (Int32.of_string x0)
       | Some 'L' -> To.Asttypes.Const_int64 (Int64.of_string x0)
       | Some 'n' -> To.Asttypes.Const_nativeint (Nativeint.of_string x0)
-      | Some _ -> migration_error loc "custom integer literals"
-      )
+      | Some _ -> migration_error loc "custom integer literals")
   | From.Parsetree.Pconst_char x0 -> To.Asttypes.Const_char x0
   | From.Parsetree.Pconst_string (x0, x1) -> To.Asttypes.Const_string (x0, x1)
   | From.Parsetree.Pconst_float (x0, x1) -> (
