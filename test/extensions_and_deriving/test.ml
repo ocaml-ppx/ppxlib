@@ -128,14 +128,15 @@ let () = Driver.register_transformation ~rules:[id] "id"
 val id : Context_free.Rule.t = <abstr>
 |}]
 
-(* At the time of writing this test, attribute rules are applied before
-   expanding the node they're attached to. That seems slightly wrong as
-   it's likely that expander function doesn't expect to find uninterpreted
-   extensions in its input. *)
+(* Nodes with attributes are expanded before attribute-based, inline
+   code generation rules are applied.
+   In this below, the `[[%id: int]]` is interpreted before the deriver
+   is applied, meaning it can't see this extension point in its expand
+   function argument. *)
 type t = [%id: int]
 [@@deriving derived]
 
 [%%expect{|
 type t = int
-val derived_t : string = "uninterpreted extension in input"
+val derived_t : string = "ok"
 |}]
