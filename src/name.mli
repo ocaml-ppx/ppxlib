@@ -49,6 +49,8 @@ module Registrar : sig
   val register :
     kind:[ `Attribute | `Extension ] -> 'context t -> 'context -> string -> unit
 
+  val check_collisions : 'context t -> 'context -> string -> unit
+
   val spellcheck :
     'context t -> 'context -> ?white_list:string list -> string -> string option
 

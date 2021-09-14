@@ -179,11 +179,8 @@ module Registrar = struct
     Hashtbl.find_or_add t.all_by_context context ~default:(fun () ->
         { all = String.Map.empty })
 
-  let register ~kind t context name =
-    Reserved_namespaces.check_not_reserved ~kind name;
-    let caller = Caller_id.get ~skip:t.skip in
-    let all = get_all_for_context t context in
-    (match String.Map.find_opt name all.all with
+  let check_collisions_local ~caller ~all_for_context t context name =
+    match String.Map.find_opt name all_for_context.all with
     | None -> ()
     | Some e ->
         let declared_at = function
@@ -196,10 +193,23 @@ module Registrar = struct
           | None -> ""
           | Some s -> " on " ^ s ^ "s"
         in
-        Printf.ksprintf failwith "%s '%s'%s%s matches %s '%s'%s"
+        Printf.ksprintf failwith
+          "Some ppx-es tried to register conflicting transformations: %s \
+           '%s'%s%s matches %s '%s'%s"
           (String.capitalize_ascii t.kind)
           name context (declared_at caller) t.kind e.fully_qualified_name
-          (declared_at e.declared_at));
+          (declared_at e.declared_at)
+
+  let check_collisions t context name =
+    let caller = Caller_id.get ~skip:t.skip in
+    let all_for_context = get_all_for_context t context in
+    check_collisions_local ~caller ~all_for_context t context name
+
+  let register ~kind t context name =
+    Reserved_namespaces.check_not_reserved ~kind name;
+    let caller = Caller_id.get ~skip:t.skip in
+    let all = get_all_for_context t context in
+    check_collisions_local ~caller ~all_for_context:all t context name;
     let t = { fully_qualified_name = name; declared_at = caller } in
     all.all <-
       fold_dot_suffixes name ~init:all.all ~f:(fun name acc ->

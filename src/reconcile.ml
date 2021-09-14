@@ -23,6 +23,7 @@ module Context = struct
     | Extension Pattern -> paren Pprintast.pattern
     | Extension Signature_item -> Pprintast.signature_item
     | Extension Structure_item -> Pprintast.structure_item
+    | Extension Ppx_import -> Pprintast.type_declaration
     | Floating_attribute Structure_item -> Pprintast.structure_item
     | Floating_attribute Signature_item -> Pprintast.signature_item
     | Floating_attribute Class_field -> Pprintast.class_field

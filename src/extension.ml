@@ -16,6 +16,7 @@ module Context = struct
     | Pattern : pattern t
     | Signature_item : signature_item t
     | Structure_item : structure_item t
+    | Ppx_import : type_declaration t
 
   type packed = T : _ t -> packed
 
@@ -53,6 +54,7 @@ module Context = struct
     | Pattern -> "pattern"
     | Signature_item -> "signature item"
     | Structure_item -> "structure item"
+    | Ppx_import -> "type declaration"
 
   let eq : type a b. a t -> b t -> (a, b) equality =
    fun a b ->
@@ -68,9 +70,22 @@ module Context = struct
     | Pattern, Pattern -> Eq
     | Signature_item, Signature_item -> Eq
     | Structure_item, Structure_item -> Eq
+    | Ppx_import, Ppx_import -> Eq
     | _ ->
         assert (Poly.( <> ) (T a) (T b));
         Ne
+
+  let get_ppx_import_extension type_decl =
+    match type_decl with
+    | { ptype_manifest = Some { ptyp_desc = Ptyp_extension (name, _); _ }; _ }
+      ->
+        let virtual_payload =
+          Ast_builder.Default.pstr_type ~loc:type_decl.ptype_loc Recursive
+            [ type_decl ]
+        in
+        let attr = [] in
+        Some ((name, PStr [ virtual_payload ]), attr)
+    | _ -> None
 
   let get_extension : type a. a t -> a -> (extension * attributes) option =
    fun t x ->
@@ -96,6 +111,7 @@ module Context = struct
         Some (e, a)
     | Signature_item, { psig_desc = Psig_extension (e, a); _ } -> Some (e, a)
     | Structure_item, { pstr_desc = Pstr_extension (e, a); _ } -> Some (e, a)
+    | Ppx_import, type_decl -> get_ppx_import_extension type_decl
     | _ -> None
 
   let merge_attributes : type a. a t -> a -> attributes -> a =
@@ -114,6 +130,9 @@ module Context = struct
         assert_no_attributes attrs;
         x
     | Structure_item ->
+        assert_no_attributes attrs;
+        x
+    | Ppx_import ->
         assert_no_attributes attrs;
         x
 end
@@ -138,7 +157,23 @@ struct
     with_arg : bool;
   }
 
-  let declare ~with_arg name context pattern k =
+  let declare :
+      type a.
+      with_arg:bool ->
+      string ->
+      a Context.t ->
+      (payload, 'b, 'payload) Ast_pattern.t ->
+      'b Callback.t ->
+      (a, 'payload) t =
+   fun ~with_arg name context pattern k ->
+    (* Check that there is no collisions between ppx_import and core_type
+       extensions *)
+    (match context with
+    | Context.Ppx_import ->
+        Name.Registrar.check_collisions registrar (Context.T Core_type) name
+    | Context.Core_type ->
+        Name.Registrar.check_collisions registrar (Context.T Ppx_import) name
+    | _ -> ());
     Name.Registrar.register ~kind:`Extension registrar (Context.T context) name;
     {
       name = Name.Pattern.make name;
@@ -350,6 +385,12 @@ let declare_inline_with_path_arg name context pattern k =
     ~func:"Extension.declare_inline_with_path_arg";
   let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
   T (M.declare ~with_arg:true name context pattern k')
+
+let __declare_ppx_import name expand =
+  (* This pattern is used to unwrap the type declaration from the payload
+     assembled by [Context.get_ppx_import_extension] *)
+  let pattern = Ast_pattern.(pstr (pstr_type recursive (__ ^:: nil) ^:: nil)) in
+  V3.declare name Context.Ppx_import pattern expand
 
 module V2 = struct
   type nonrec t = t

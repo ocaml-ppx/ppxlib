@@ -378,7 +378,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   and module_type = E.filter_by_context EC.module_type extensions
   and pattern = E.filter_by_context EC.pattern extensions
   and signature_item = E.filter_by_context EC.signature_item extensions
-  and structure_item = E.filter_by_context EC.structure_item extensions in
+  and structure_item = E.filter_by_context EC.structure_item extensions
+  and ppx_import = E.filter_by_context EC.Ppx_import extensions in
 
   let attr_str_type_decls, attr_str_type_decls_expect =
     Rule.filter Attr_str_type_decl rules
@@ -535,6 +536,10 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           base_ctxt pcstr_fields
       in
       { pcstr_self; pcstr_fields }
+
+    method! type_declaration base_ctxt x =
+      map_node EC.Ppx_import ppx_import super#type_declaration x.ptype_loc
+        base_ctxt x
 
     method! class_signature base_ctxt { pcsig_self; pcsig_fields } =
       let pcsig_self = self#core_type base_ctxt pcsig_self in

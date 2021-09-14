@@ -53,3 +53,5 @@ val module_type : Format.formatter -> Parsetree.module_type -> unit
 val signature_item : Format.formatter -> Parsetree.signature_item -> unit
 
 val structure_item : Format.formatter -> Parsetree.structure_item -> unit
+
+val type_declaration : Format.formatter -> Parsetree.type_declaration -> unit

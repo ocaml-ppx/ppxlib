@@ -5,6 +5,8 @@ unreleased
   transformation, allowing better interactions between extensions and
   derivers (#279, @NathanReb)
 
+- Add support for registering ppx_import as a pseudo context-free rule (#???, @NathanReb)
+
 0.23.0 (31/08/2021)
 -------------------
 
