@@ -53,6 +53,9 @@ module Extension : sig
   val code_path : t -> Code_path.t
   (** Return the code path for the given context *)
 
+  val input_name : t -> string
+  (** Return the input name for the given context *)
+
   val tool_name : t -> string
   (** Can be used within a ppx preprocessor to know which tool is calling it
       ["ocamlc"], ["ocamlopt"], ["ocamldep"], ["ocaml"], ... . *)
