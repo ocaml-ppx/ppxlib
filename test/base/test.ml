@@ -155,7 +155,7 @@ let _ =
   let b = gen_symbol () ~prefix:a in
   a, b
 [%%expect{|
-- : string * string = ("__prefix____001_", "__prefix____001___002_")
+- : string * string = ("__prefix____001_", "__prefix____002_")
 |}]
 
 let _ =
