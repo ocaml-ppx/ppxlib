@@ -176,5 +176,5 @@ let _ =
 [%%expect{|
 - : core_type_desc list * core_type_desc list =
 ([Ptyp_any; Ptyp_any; Ptyp_any],
- [Ptyp_var "v_x__003_"; Ptyp_var "v_x__004_"; Ptyp_var "v_x__005_"])
+ [Ptyp_var "a__003_"; Ptyp_var "b__004_"; Ptyp_var "c__005_"])
 |}]
