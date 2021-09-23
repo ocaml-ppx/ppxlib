@@ -149,3 +149,11 @@ let _ = Ppxlib.Code_path.to_string_path complex_path
 [%%expect{|
 - : string = "dir/main.ml.Sub.Sub_sub"
 |}]
+
+let _ =
+  let a = gen_symbol () ~prefix:"__prefix__" in
+  let b = gen_symbol () ~prefix:a in
+  a, b
+[%%expect{|
+- : string * string = ("__prefix____001_", "__prefix____001___002_")
+|}]
