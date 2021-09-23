@@ -157,3 +157,24 @@ let _ =
 [%%expect{|
 - : string * string = ("__prefix____001_", "__prefix____001___002_")
 |}]
+
+let _ =
+  let open Ast_builder.Make (struct let loc = Location.none end) in
+  let params decl =
+    List.map decl.ptype_params ~f:(fun (core_type, _) -> core_type.ptyp_desc)
+  in
+  let decl =
+    type_declaration
+      ~name:{ txt = "t"; loc = Location.none }
+      ~params:(List.init 3 ~f:(fun _ -> ptyp_any, (NoVariance, NoInjectivity)))
+      ~cstrs:[]
+      ~kind:Ptype_abstract
+      ~private_:Public
+      ~manifest:None
+  in
+  params decl, params (name_type_params_in_td decl)
+[%%expect{|
+- : core_type_desc list * core_type_desc list =
+([Ptyp_any; Ptyp_any; Ptyp_any],
+ [Ptyp_var "v_x__003_"; Ptyp_var "v_x__004_"; Ptyp_var "v_x__005_"])
+|}]
