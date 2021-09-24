@@ -7,7 +7,7 @@ unreleased
 
 - Add support for registering ppx_import as a pseudo context-free rule (#???, @NathanReb)
 
-- Improve `gen_symbol` to strip previous unique suffix before adding a new one
+- Improve `gen_symbol` to strip previous unique suffix before adding a new one (#285, @ceastlund)
 
 - Improve `name_type_params_in_td` to use prefixes `a`, `b`, ... instead of `v_x`.
 
