@@ -48,6 +48,8 @@ module Deriver = struct
 
   let code_path t = t.base.code_path
 
+  let input_name t = t.base.input_name
+
   let tool_name t = t.base.tool_name
 
   let inline t = t.inline
