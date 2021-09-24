@@ -9,7 +9,7 @@ unreleased
 
 - Improve `gen_symbol` to strip previous unique suffix before adding a new one (#285, @ceastlund)
 
-- Improve `name_type_params_in_td` to use prefixes `a`, `b`, ... instead of `v_x`.
+- Improve `name_type_params_in_td` to use prefixes `a`, `b`, ... instead of `v_x`. (#285, @ceastlund)
 
 0.23.0 (31/08/2021)
 -------------------
