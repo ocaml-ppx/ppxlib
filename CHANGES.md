@@ -7,7 +7,7 @@ unreleased
 
 - Add support for registering ppx_import as a pseudo context-free rule (#???, @NathanReb)
 
-- Add `input_name` to the `Expansion_context.Extension` module (#284, @tatchi)
+- Add `input_name` to the `Expansion_context.Extension` and `Expansion_context.Deriver` modules (#284, @tatchi)
 
 0.23.0 (31/08/2021)
 -------------------
