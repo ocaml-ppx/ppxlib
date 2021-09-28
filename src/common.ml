@@ -11,23 +11,47 @@ let core_type_of_type_declaration td =
     (Located.map lident td.ptype_name)
     (List.map td.ptype_params ~f:fst)
 
+let strip_gen_symbol_suffix =
+  let chop n ~or_more string pos f =
+    let target = !pos - n in
+    while !pos > 0 && (or_more || !pos > target) && f string.[!pos - 1] do
+      pos := !pos - 1
+    done;
+    !pos <= target
+  in
+  fun string ->
+    let pos = ref (String.length string) in
+    if
+      chop 1 ~or_more:false string pos (Char.equal '_')
+      && chop 3 ~or_more:true string pos (function
+           | '0' .. '9' -> true
+           | _ -> false)
+      && chop 2 ~or_more:false string pos (Char.equal '_')
+    then String.prefix string !pos
+    else string
+
 let gen_symbol =
   let cnt = ref 0 in
   fun ?(prefix = "_x") () ->
     cnt := !cnt + 1;
+    let prefix = strip_gen_symbol_suffix prefix in
     Printf.sprintf "%s__%03i_" prefix !cnt
 
 let name_type_params_in_td (td : type_declaration) : type_declaration =
-  let name_param (tp, variance) =
+  let prefix_string i =
+    (* a, b, ..., y, z, aa, bb, ... *)
+    String.make ((i / 26) + 1) (Char.chr (Char.code 'a' + (i mod 26)))
+  in
+  let name_param i (tp, variance) =
     let ptyp_desc =
       match tp.ptyp_desc with
-      | Ptyp_any -> Ptyp_var ("v" ^ gen_symbol ())
+      | Ptyp_any -> Ptyp_var (gen_symbol ~prefix:(prefix_string i) ())
       | Ptyp_var _ as v -> v
       | _ -> Location.raise_errorf ~loc:tp.ptyp_loc "not a type parameter"
     in
     ({ tp with ptyp_desc }, variance)
   in
-  { td with ptype_params = List.map td.ptype_params ~f:name_param }
+  { td with ptype_params = List.mapi td.ptype_params ~f:name_param }
 
 let combinator_type_of_type_declaration td ~f =
   let td = name_type_params_in_td td in
