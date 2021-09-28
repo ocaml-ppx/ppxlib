@@ -29,6 +29,8 @@ module Extension = struct
 
   let code_path t = t.base.code_path
 
+  let input_name t = t.base.input_name
+
   let tool_name t = t.base.tool_name
 
   let with_loc_and_path f ~ctxt =
@@ -45,6 +47,8 @@ module Deriver = struct
   let derived_item_loc t = t.derived_item_loc
 
   let code_path t = t.base.code_path
+
+  let input_name t = t.base.input_name
 
   let tool_name t = t.base.tool_name
 
