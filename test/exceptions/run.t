@@ -35,7 +35,7 @@ can be reported about it.
   $ ./exceptions.exe -embed-errors impl.ml
   [%%ocaml.error "A raised located error"]
 
-3. Raising an exception. The exception is not catched by the driver.
+3. Raising an exception. The exception is not caught by the driver.
 
   $ echo "let _ = [%gen_raise_exc] + [%gen_raise_exc]" > impl.ml
   $ ./exceptions.exe impl.ml
