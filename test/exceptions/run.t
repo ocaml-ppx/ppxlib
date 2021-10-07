@@ -13,10 +13,9 @@ There is mainly three way for rewriters to handle errors, from best to worst pra
 2. Raising a located error. Currently, the driver catches it and replace the whole AST with an error extension node
 
   $ echo "let _ = [%gen_raise_located_error] + [%gen_raise_located_error]" > impl.ml
+  $ export OCAML_ERROR_STYLE=short
   $ ./exceptions.exe impl.ml
   File "impl.ml", line 1, characters 8-34:
-  1 | let _ = [%gen_raise_located_error] + [%gen_raise_located_error]
-              ^^^^^^^^^^^^^^^^^^^^^^^^^^
   Error: A raised located error
   [1]
   $ ./exceptions.exe -embed-errors impl.ml
