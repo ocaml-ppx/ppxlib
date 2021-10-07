@@ -23,7 +23,7 @@ produced.
   $ echo "let x = 1+1. \nlet _ = [%gen_raise_located_error]" > impl.ml
   $ export OCAML_ERROR_STYLE=short
   $ ./exceptions.exe impl.ml
-  File "impl.ml", line 2, characters 9-35:
+  File "impl.ml", line 2, characters 8-34:
   Error: A raised located error
   [1]
 
