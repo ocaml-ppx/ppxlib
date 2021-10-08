@@ -1,6 +1,0 @@
-(executable
- (name exceptions)
- (libraries ppxlib))
-
-(cram
- (deps exceptions.exe))

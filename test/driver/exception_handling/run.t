@@ -16,15 +16,25 @@ is rewritten to contain two of these nodes.
 (Note that Merlin will notify both errors, while the compiler only
 notifies the first.)
 
-2. Raising a located error. This is what the ppx does in this
-example. By default, the exception is not caught, so no AST is
-produced.
+2. Raising a located error. In these tests, such an error is raised
+during the rewritting of the AST. By default, the exception is not
+caught, so no AST is produced.
 
-  $ echo "let x = 1+1. \nlet _ = [%gen_raise_located_error]" > impl.ml
+ In the case of extensions:
+
+  $ echo "let x = 1+1. " > impl.ml
+  $ echo "let _ = [%gen_raise_located_error]" >> impl.ml
   $ export OCAML_ERROR_STYLE=short
   $ ./exceptions.exe impl.ml
   File "impl.ml", line 2, characters 8-34:
   Error: A raised located error
+  [1]
+
+ In the case of whole file transformations:
+
+  $ ./whole_file_located_error.exe impl.ml
+  File "impl.ml", line 1, characters 3-7:
+  Error: A located error in a whole file transform
   [1]
 
 When the argument `-embed-errors` is added, the exception is caught
@@ -32,10 +42,19 @@ and the whole AST is replaced with a single error extension node. The
 first line `let x = 1+1.` is thus not present in the AST, and no error
 can be reported about it.
 
+ In the case of extensions:
+
   $ ./exceptions.exe -embed-errors impl.ml
   [%%ocaml.error "A raised located error"]
 
+ In the case of whole file transformations:
+
+  $ ./whole_file_located_error.exe -embed-errors impl.ml
+  [%%ocaml.error "A located error in a whole file transform"]
+
 3. Raising an exception. The exception is not caught by the driver.
+
+ In the case of extensions:
 
   $ echo "let _ = [%gen_raise_exc] + [%gen_raise_exc]" > impl.ml
   $ ./exceptions.exe impl.ml
@@ -43,4 +62,13 @@ can be reported about it.
   [2]
   $ ./exceptions.exe -embed-errors impl.ml
   Fatal error: exception (Failure "A raised exception")
+  [2]
+
+ In the case of whole file transformations:
+
+  $ ./whole_file_exception.exe impl.ml
+  Fatal error: exception (Failure "An exception in a whole file transform")
+  [2]
+  $ ./whole_file_exception.exe -embed-errors impl.ml
+  Fatal error: exception (Failure "An exception in a whole file transform")
   [2]

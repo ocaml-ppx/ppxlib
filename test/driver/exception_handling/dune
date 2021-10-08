@@ -1,0 +1,10 @@
+; (executable
+;  (name exceptions)
+;  (libraries ppxlib))
+
+(executables
+ (names whole_file_exception whole_file_located_error exceptions)
+ (libraries ppxlib))
+
+(cram
+ (deps exceptions.exe whole_file_exception.exe whole_file_located_error.exe))
