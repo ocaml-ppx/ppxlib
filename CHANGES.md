@@ -19,6 +19,9 @@
   consider a type declaration recursive if the type appeared inside an attribute
   payload (#299, @NathanReb)
 
+- Improve error messages in ppx raised exceptions (#292, #309, @panglesd)
+
+
 0.23.0 (31/08/2021)
 -------------------
 

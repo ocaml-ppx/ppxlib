@@ -37,13 +37,15 @@ val mtd : Deriving.t = <abstr>
 type t = int [@@deriving bar]
 [%%expect{|
 Line _, characters 25-28:
-Error: Deriver foo is needed for bar, you need to add it before in the list
+Error: The following located exception was raised during the context-free transformation phase:
+Deriver foo is needed for bar, you need to add it before in the list
 |}]
 
 type t = int [@@deriving bar, foo]
 [%%expect{|
 Line _, characters 25-33:
-Error: Deriver foo is needed for bar, you need to add it before in the list
+Error: The following located exception was raised during the context-free transformation phase:
+Deriver foo is needed for bar, you need to add it before in the list
 |}]
 
 type nonrec int = int [@@deriving foo, bar]
