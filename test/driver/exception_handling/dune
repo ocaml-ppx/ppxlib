@@ -3,8 +3,8 @@
 ;  (libraries ppxlib))
 
 (executables
- (names whole_file_exception whole_file_located_error exceptions)
+ (names whole_file_exception whole_file_located_error extender deriver)
  (libraries ppxlib))
 
 (cram
- (deps exceptions.exe whole_file_exception.exe whole_file_located_error.exe))
+ (deps extender.exe whole_file_exception.exe whole_file_located_error.exe deriver.exe))
