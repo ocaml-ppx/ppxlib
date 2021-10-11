@@ -57,7 +57,7 @@ caught, so no AST is produced.
 
   $ echo "let x = 1+1. " > impl.ml
   $ ./whole_file_located_error.exe impl.ml
-  File "impl.ml", line 1, characters 3-7:
+  File "impl.ml", line 1, characters 0-12:
   Error: A located error in a whole file transform
   [1]
 
