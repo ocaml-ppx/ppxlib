@@ -1,7 +1,3 @@
-; (executable
-;  (name exceptions)
-;  (libraries ppxlib))
-
 (executables
  (names whole_file_exception whole_file_located_error extender deriver)
  (libraries ppxlib))
