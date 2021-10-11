@@ -27,7 +27,13 @@ is rewritten to contain two of these nodes.
       [%%ocaml.error "An error message in an extension node"]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
-(Note that Merlin will notify both errors, while the compiler only
+ In the case of whole file transformations:
+
+  $ echo "let x = 1+1. " > impl.ml
+  $ ./whole_file_extension_point.exe impl.ml
+  [%%ocaml.error "An error message in an extension node"]
+
+(Note that Merlin will notify all errors, while the compiler only
 notifies the first.)
 
 2. Raising a located error. In these tests, such an error is raised
