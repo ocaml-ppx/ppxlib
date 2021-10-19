@@ -141,15 +141,9 @@ type parsed_args =
   | Unknown_syntax of Location.t * string
 
 module Context = struct
+
   type 'a t = Str : structure_item t | Sig : signature_item t
 
-  (* let extension_builder : type a. a t -> loc:location -> extension -> a = *)
-  (*  fun t -> *)
-  (*  match t with *)
-  (*   | Type_declaration -> Ast_builder.Default.ptyp_extension *)
-  (*   | Extension -> failwith "yo" *)
-  (*   | Exception -> failwith "yo" *)
-  (*   | Module_type_declaration -> Ast_builder.Default.pmod_constraint *)
 end
 
 module Generator = struct
