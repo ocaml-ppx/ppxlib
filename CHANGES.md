@@ -15,6 +15,8 @@ unreleased
 
 - Improve error messages in ppx raised exceptions (#292, @panglesd)
 
+- Embed error messages in the AST for extenders and derivers (#294, @panglesd)
+
 0.23.0 (31/08/2021)
 -------------------
 
