@@ -342,22 +342,22 @@ let handle_attr_group_inline ?(embed_errors = false) attrs rf items ~loc
     ~base_ctxt =
   List.filter_map attrs ~f:(fun (Rule.Attr_group_inline.T group) ->
       Option.map (get_group group.attribute items) ~f:(fun values ->
-      let ctxt =
-        Expansion_context.Deriver.make ~derived_item_loc:loc
-          ~inline:group.expect ~base:base_ctxt ()
-      in
-      let expect_items = group.expand ~embed_errors ~ctxt rf items values in
-      expect_items))
+          let ctxt =
+            Expansion_context.Deriver.make ~derived_item_loc:loc
+              ~inline:group.expect ~base:base_ctxt ()
+          in
+          let expect_items = group.expand ~embed_errors ~ctxt rf items values in
+          expect_items))
 
 let handle_attr_inline ?(embed_errors = false) attrs item ~loc ~base_ctxt =
   List.filter_map attrs ~f:(fun (Rule.Attr_inline.T a) ->
-    Option.map (Attribute.get a.attribute item) ~f:(fun value ->
-      let ctxt =
-        Expansion_context.Deriver.make ~derived_item_loc:loc
-          ~inline:a.expect ~base:base_ctxt ()
-      in
-      let expect_items = a.expand ~embed_errors ~ctxt item value in
-      expect_items))
+      Option.map (Attribute.get a.attribute item) ~f:(fun value ->
+          let ctxt =
+            Expansion_context.Deriver.make ~derived_item_loc:loc
+              ~inline:a.expect ~base:base_ctxt ()
+          in
+          let expect_items = a.expand ~embed_errors ~ctxt item value in
+          expect_items))
 
 module Expect_mismatch_handler = struct
   type t = {

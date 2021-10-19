@@ -141,9 +141,7 @@ type parsed_args =
   | Unknown_syntax of Location.t * string
 
 module Context = struct
-
   type 'a t = Str : structure_item t | Sig : signature_item t
-
 end
 
 module Generator = struct
