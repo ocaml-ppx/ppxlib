@@ -29,9 +29,7 @@ let raise_located_error_extension =
     expand_raise_located_error
 
 let rule1 = Ppxlib.Context_free.Rule.extension extension_point_extension
-
 let rule2 = Ppxlib.Context_free.Rule.extension raise_exception_extension
-
 let rule3 = Ppxlib.Context_free.Rule.extension raise_located_error_extension
 
 let () =

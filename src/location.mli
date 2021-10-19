@@ -40,16 +40,12 @@ val print : Caml.Format.formatter -> t -> unit
 type nonrec 'a loc = 'a loc = { txt : 'a; loc : t }
 
 val compare_pos : Lexing.position -> Lexing.position -> int
-
 val min_pos : Lexing.position -> Lexing.position -> Lexing.position
-
 val max_pos : Lexing.position -> Lexing.position -> Lexing.position
-
 val compare : t -> t -> int
 
 module Error : sig
   type location = t
-
   type t
 
   val make : loc:location -> string -> sub:(location * string) list -> t
@@ -58,7 +54,6 @@ module Error : sig
     loc:location -> ('a, Caml.Format.formatter, unit, t) format4 -> 'a
 
   val message : t -> string
-
   val set_message : t -> string -> t
 
   val register_error_of_exn : (exn -> t option) -> unit

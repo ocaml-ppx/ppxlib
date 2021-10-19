@@ -70,7 +70,6 @@ let generate_intf ~ctxt (_rec_flag, type_declarations) =
   |> List.concat
 
 let impl_generator = Deriving.Generator.V2.make_noarg generate_impl
-
 let intf_generator = Deriving.Generator.V2.make_noarg generate_intf
 
 let my_deriver =
