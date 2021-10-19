@@ -44,6 +44,8 @@ module Context : sig
 
   val get_extension : 'a t -> 'a -> (extension * attributes) option
 
+  val extension_builder : 'a t -> 'a -> loc:location -> extension -> 'a
+
   val merge_attributes : 'a t -> 'a -> attributes -> 'a
 end
 

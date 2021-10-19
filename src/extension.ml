@@ -114,6 +114,25 @@ module Context = struct
     | Ppx_import, type_decl -> get_ppx_import_extension type_decl
     | _ -> None
 
+  let extension_builder : type a. a t -> a -> loc:location -> extension -> a =
+   fun t x ->
+    match t with
+    | Class_expr -> Ast_builder.Default.pcl_extension
+    | Class_field -> Ast_builder.Default.pcf_extension
+    | Class_type -> Ast_builder.Default.pcty_extension
+    | Class_type_field -> Ast_builder.Default.pctf_extension
+    | Core_type -> Ast_builder.Default.ptyp_extension
+    | Expression -> Ast_builder.Default.pexp_extension
+    | Module_expr -> Ast_builder.Default.pmod_extension
+    | Module_type -> Ast_builder.Default.pmty_extension
+    | Pattern -> Ast_builder.Default.ppat_extension
+    | Signature_item ->
+        fun ~loc ext -> Ast_builder.Default.psig_extension ~loc ext []
+    | Structure_item ->
+        fun ~loc ext -> Ast_builder.Default.pstr_extension ~loc ext []
+    | Ppx_import ->
+       fun ~loc ext -> { x with ptype_manifest = Some (Ast_builder.Default.ptyp_extension ~loc ext) }
+
   let merge_attributes : type a. a t -> a -> attributes -> a =
    fun t x attrs ->
     match t with

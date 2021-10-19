@@ -210,25 +210,34 @@ let rec map_node_rec context ts super_call loc base_ctxt x =
           map_node_rec context ts super_call loc base_ctxt
             (EC.merge_attributes context x attrs))
 
-let map_node context ts super_call loc base_ctxt x ~hook =
+let map_node (context:'a EC.t) ts super_call loc base_ctxt (x:'a) ~hook ?(embed_errors = false)
+    =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
-  | Some (ext, attrs) -> (
-      match E.For_context.convert ts ~ctxt ext with
-      | None -> super_call base_ctxt x
-      | Some x ->
-          let generated_code =
-            map_node_rec context ts super_call loc base_ctxt
-              (EC.merge_attributes context x attrs)
-          in
-          Generated_code_hook.replace hook context loc (Single generated_code);
-          generated_code)
+  | Some (((str_loc, _) as ext), attrs) ->
+      (try
+         match E.For_context.convert ts ~ctxt ext with
+         | None -> super_call base_ctxt x
+         | Some x ->
+             map_node_rec context ts super_call loc base_ctxt
+               (EC.merge_attributes context x attrs)
+       with exn when embed_errors ->
+         let extension_node =
+           Location.Error.make ~loc
+             ("(ppx " ^ str_loc.txt ^ ") " ^ Printexc.to_string exn)
+             ~sub:[]
+           |> Location.Error.to_extension
+         in
+         EC.extension_builder context x ~loc:str_loc.loc extension_node)
+      |> fun generated_code ->
+      Generated_code_hook.replace hook context loc (Single generated_code);
+      generated_code
 
-let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
-    ~in_generated_code =
+let rec map_nodes context ts super_call get_loc ?(embed_errors = false)
+    base_ctxt l ~hook ~in_generated_code =
   match l with
   | [] -> []
   | x :: l -> (
@@ -239,7 +248,7 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
           let x = super_call base_ctxt x in
           let l =
             map_nodes context ts super_call get_loc base_ctxt l ~hook
-              ~in_generated_code
+              ~in_generated_code ~embed_errors
           in
           x :: l
       | Some (ext, attrs) -> (
@@ -248,26 +257,45 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
             Expansion_context.Extension.make ~extension_point_loc
               ~base:base_ctxt ()
           in
-          match E.For_context.convert_inline ts ~ctxt ext with
-          | None ->
-              let x = super_call base_ctxt x in
-              let l =
-                map_nodes context ts super_call get_loc base_ctxt l ~hook
-                  ~in_generated_code
-              in
-              x :: l
-          | Some x ->
-              assert_no_attributes attrs;
-              let generated_code =
-                map_nodes context ts super_call get_loc base_ctxt x ~hook
-                  ~in_generated_code:true
-              in
-              if not in_generated_code then
-                Generated_code_hook.replace hook context extension_point_loc
-                  (Many generated_code);
-              generated_code
-              @ map_nodes context ts super_call get_loc base_ctxt l ~hook
-                  ~in_generated_code))
+          try
+            match E.For_context.convert_inline ts ~ctxt ext with
+            | None ->
+                let x = super_call base_ctxt x in
+                let l =
+                  map_nodes context ts super_call get_loc base_ctxt l ~hook
+                    ~in_generated_code ~embed_errors
+                in
+                x :: l
+            | Some x ->
+                assert_no_attributes attrs;
+                let generated_code =
+                  map_nodes context ts super_call get_loc base_ctxt x ~hook
+                    ~in_generated_code:true ~embed_errors
+                in
+                if not in_generated_code then
+                  Generated_code_hook.replace hook context extension_point_loc
+                    (Many generated_code);
+                generated_code
+                @ map_nodes context ts super_call get_loc base_ctxt l ~hook
+                    ~in_generated_code ~embed_errors
+          with exn when embed_errors ->
+            let str_loc, _payload = ext in
+            let extension_node =
+              Location.Error.(
+                make ~loc:extension_point_loc
+                  ("(ppx " ^ str_loc.txt ^ ") " ^ Printexc.to_string exn)
+                  ~sub:[]
+                |> to_extension)
+            in
+            let generated_code =
+              [ EC.extension_builder ~loc:str_loc.loc context x extension_node ]
+            in
+            if not in_generated_code then
+              Generated_code_hook.replace hook context extension_point_loc
+                (Many generated_code);
+            generated_code
+            @ map_nodes context ts super_call get_loc base_ctxt l ~hook
+                ~in_generated_code ~embed_errors))
 
 let map_nodes = map_nodes ~in_generated_code:false
 
@@ -356,7 +384,8 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) rules =
+  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = true) rules
+  =
   let hook = generated_code_hook in
 
   let special_functions =
@@ -428,9 +457,11 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     method! core_type base_ctxt x =
       map_node EC.core_type core_type super#core_type x.ptyp_loc base_ctxt x
+        ~embed_errors
 
     method! pattern base_ctxt x =
       map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
+        ~embed_errors
 
     method! expression base_ctxt e =
       let e =
@@ -438,7 +469,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | Pexp_extension _ ->
             map_node EC.expression expression
               (fun _ e -> e)
-              e.pexp_loc base_ctxt e
+              e.pexp_loc base_ctxt e ~embed_errors
         | _ -> e
       in
       let expand_constant kind char text =
@@ -500,53 +531,55 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     method! class_type base_ctxt x =
       map_node EC.class_type class_type super#class_type x.pcty_loc base_ctxt x
+        ~embed_errors
 
     method! class_type_field base_ctxt x =
       map_node EC.class_type_field class_type_field super#class_type_field
-        x.pctf_loc base_ctxt x
+        x.pctf_loc base_ctxt x ~embed_errors
 
     method! class_expr base_ctxt x =
       map_node EC.class_expr class_expr super#class_expr x.pcl_loc base_ctxt x
+        ~embed_errors
 
     method! class_field base_ctxt x =
       map_node EC.class_field class_field super#class_field x.pcf_loc base_ctxt
-        x
+        x ~embed_errors
 
     method! module_type base_ctxt x =
       map_node EC.module_type module_type super#module_type x.pmty_loc base_ctxt
-        x
+        x ~embed_errors
 
     method! module_expr base_ctxt x =
       map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
-        x
+        x ~embed_errors
 
     method! structure_item base_ctxt x =
       map_node EC.structure_item structure_item super#structure_item x.pstr_loc
-        base_ctxt x
+        base_ctxt x ~embed_errors
 
     method! signature_item base_ctxt x =
       map_node EC.signature_item signature_item super#signature_item x.psig_loc
-        base_ctxt x
+        base_ctxt x ~embed_errors
 
     method! class_structure base_ctxt { pcstr_self; pcstr_fields } =
       let pcstr_self = self#pattern base_ctxt pcstr_self in
       let pcstr_fields =
         map_nodes EC.class_field class_field super#class_field
           (fun x -> x.pcf_loc)
-          base_ctxt pcstr_fields
+          base_ctxt pcstr_fields ~embed_errors
       in
       { pcstr_self; pcstr_fields }
 
     method! type_declaration base_ctxt x =
       map_node EC.Ppx_import ppx_import super#type_declaration x.ptype_loc
-        base_ctxt x
+        base_ctxt x ~embed_errors
 
     method! class_signature base_ctxt { pcsig_self; pcsig_fields } =
       let pcsig_self = self#core_type base_ctxt pcsig_self in
       let pcsig_fields =
         map_nodes EC.class_type_field class_type_field super#class_type_field
           (fun x -> x.pctf_loc)
-          base_ctxt pcsig_fields
+          base_ctxt pcsig_fields ~embed_errors
       in
       { pcsig_self; pcsig_fields }
 

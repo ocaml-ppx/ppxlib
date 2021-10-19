@@ -195,11 +195,11 @@ module Transform = struct
         Some { first with loc_end = last.loc_end }
 
   let merge_into_generic_mappers t ~hook ~expect_mismatch_handler ~tool_name
-      ~input_name =
+      ~input_name ~embed_errors =
     let { rules; enclose_impl; enclose_intf; impl; intf; _ } = t in
     let map =
       new Context_free.map_top_down
-        rules ~generated_code_hook:hook ~expect_mismatch_handler
+        rules ~generated_code_hook:hook ~expect_mismatch_handler ~embed_errors
     in
     let gen_header_and_footer context whole_loc f =
       let header, footer = f whole_loc in
@@ -289,8 +289,8 @@ module Transform = struct
     { t with impl = Some map_impl; intf = Some map_intf }
 
   let builtin_of_context_free_rewriters ~hook ~rules ~enclose_impl ~enclose_intf
-      ~input_name =
-    merge_into_generic_mappers ~hook ~input_name
+      ~embed_errors ~input_name =
+    merge_into_generic_mappers ~hook ~input_name ~embed_errors
       {
         name = "<builtin:context-free>";
         aliases = [];
@@ -452,7 +452,8 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
   print_diff "disappeared" new_dropped old_dropped;
   print_diff "reappeared" old_dropped new_dropped
 
-let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
+let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name
+    ~embed_errors =
   let cts =
     match !apply_list with
     | None -> List.rev !Transform.all
@@ -482,7 +483,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
       List.map transforms
         ~f:
           (Transform.merge_into_generic_mappers ~hook ~tool_name
-             ~expect_mismatch_handler ~input_name)
+             ~expect_mismatch_handler ~input_name ~embed_errors)
     else
       (let get_enclosers ~f =
          List.filter_map transforms ~f:(fun (ct : Transform.t) ->
@@ -517,7 +518,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
              ~expect_mismatch_handler
              ~enclose_impl:(merge_encloser impl_enclosers)
              ~enclose_intf:(merge_encloser intf_enclosers)
-             ~tool_name ~input_name
+             ~tool_name ~input_name ~embed_errors
            :: (transforms |> List.map ~f:(fun ct -> Transform.{ ct with kind })))
       |> List.filter ~f:(fun (ct : Transform.t) ->
              match (ct.impl, ct.intf) with None, None -> false | _ -> true)
@@ -599,9 +600,10 @@ let process_exn exn owner_name kind =
         (Location.Error.set_message error (error_message exn owner_name kind))
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
-    ~hook ~expect_mismatch_handler ~input_name x =
+    ~hook ~expect_mismatch_handler ~input_name ~embed_errors x =
   let cts =
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
+      ~embed_errors
   in
   let x, _dropped, lint_errors =
     List.fold_left cts ~init:(x, [], [])
@@ -648,13 +650,13 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
    | Actual rewriting of structure/signatures                        |
    +-----------------------------------------------------------------+ *)
 
-let print_passes () =
+let print_passes ~embed_errors () =
   let tool_name = "ppxlib_driver" in
   let hook = Context_free.Generated_code_hook.nop in
   let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
   let cts =
     get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name
-      ~input_name:None
+      ~input_name:None ~embed_errors
   in
   if !perform_checks then
     Printf.printf "<builtin:freshen-and-collect-attributes>\n";
@@ -665,7 +667,8 @@ let print_passes () =
       Printf.printf "<builtin:check-unused-extensions>\n")
 
 (*$*)
-let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
+let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
+    ~embed_errors =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
@@ -676,7 +679,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
-      ~expect_mismatch_handler ~input_name
+      ~expect_mismatch_handler ~input_name ~embed_errors
   in
   let st =
     match lint_errors with
@@ -709,7 +712,8 @@ let map_structure st =
     ~input_name:None
 
 (*$ str_to_sig _last_text_block *)
-let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
+let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
+    ~embed_errors =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
@@ -720,7 +724,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
-      ~expect_mismatch_handler ~input_name
+      ~expect_mismatch_handler ~input_name ~embed_errors
   in
   let sg =
     match lint_errors with
@@ -1026,16 +1030,16 @@ let exn_to_extension exn ~(kind : Kind.t) =
   | Some error -> error_to_extension error ~kind
 
 let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
-    ~expect_mismatch_handler =
+    ~expect_mismatch_handler ~embed_errors =
   match ast with
   | Intf x ->
       Intf_or_impl.Intf
         (map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
-           ~input_name:(Some input_name))
+           ~input_name:(Some input_name) ~embed_errors)
   | Impl x ->
       Intf_or_impl.Impl
         (map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
-           ~input_name:(Some input_name))
+           ~input_name:(Some input_name) ~embed_errors)
 
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
     ~embed_errors ~output =
@@ -1076,6 +1080,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
           let ast =
             extract_cookies ast
             |> process_ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+                 ~embed_errors
           in
           (input_fname, input_version, ast)
         with exn when embed_errors ->
@@ -1404,7 +1409,7 @@ let standalone_main () =
     print_transformations ();
     Caml.exit 0);
   if !request_print_passes then (
-    print_passes ();
+    print_passes () ~embed_errors:!embed_errors;
     Caml.exit 0);
   match !input with
   | None ->
@@ -1438,6 +1443,7 @@ let rewrite_binary_ast_file input_fn output_fn =
       let hook = Context_free.Generated_code_hook.nop in
       let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
       process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+        ~embed_errors:!embed_errors
     with exn -> exn_to_extension exn ~kind:(Intf_or_impl.kind ast)
   in
   with_output (Some output_fn) ~binary:true ~f:(fun oc ->

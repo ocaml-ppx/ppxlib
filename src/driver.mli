@@ -251,9 +251,9 @@ val pretty : unit -> bool
 
 (**/**)
 
-val map_structure : structure -> structure
+val map_structure : structure -> embed_errors:bool -> structure
 
-val map_signature : signature -> signature
+val map_signature : signature -> embed_errors:bool -> signature
 
 val enable_checks : unit -> unit
 

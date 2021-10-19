@@ -6,4 +6,5 @@ let set_filename (lexbuf : Lexing.lexbuf) ~filename =
 let _ =
   Lexing.from_channel stdin
   |> set_filename ~filename:"lexbuf_pos_fname"
-  |> Parse.implementation |> Driver.map_structure
+  |> Parse.implementation
+  |> Driver.map_structure ~embed_errors:false
