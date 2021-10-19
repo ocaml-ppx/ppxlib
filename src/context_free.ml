@@ -208,30 +208,29 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let rec map_node_rec context ts super_call loc base_ctxt x
-    ?(embed_errors = false) =
+let rec map_node_rec ?(embed_errors = false) context ts super_call loc base_ctxt
+    x =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      match E.For_context.convert ts ~ctxt ext embed_errors context x with
+      match E.For_context.convert ~embed_errors ts ~ctxt ext context x with
       | None -> super_call base_ctxt x
       | Some x ->
-          map_node_rec context ts super_call loc base_ctxt
-            (EC.merge_attributes context x attrs)
-            ~embed_errors)
+          map_node_rec ~embed_errors context ts super_call loc base_ctxt
+            (EC.merge_attributes context x attrs))
 
-let map_node (context : 'a EC.t) ts super_call loc base_ctxt (x : 'a) ~hook
-    ?(embed_errors = false) =
+let map_node ?(embed_errors = false) (context : 'a EC.t) ts super_call loc
+    base_ctxt (x : 'a) ~hook =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      match E.For_context.convert ts ~ctxt ext embed_errors context x with
+      match E.For_context.convert ~embed_errors ts ~ctxt ext context x with
       | None -> super_call base_ctxt x
       | Some x ->
           map_node_rec context ts super_call loc base_ctxt
@@ -263,7 +262,7 @@ let rec map_nodes context ts super_call get_loc ?(embed_errors = false)
               ~base:base_ctxt ()
           in
           match
-            E.For_context.convert_inline ts ~ctxt ext embed_errors context x
+            E.For_context.convert_inline ~embed_errors ts ~ctxt ext context x
           with
           | None ->
               let x = super_call base_ctxt x in
@@ -373,7 +372,7 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = true) rules
+  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = false) rules
   =
   let hook = generated_code_hook in
 
@@ -607,8 +606,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     ~base:base_ctxt ()
                 in
                 match
-                  E.For_context.convert_inline structure_item ~ctxt ext
-                    embed_errors EC.Structure_item item
+                  E.For_context.convert_inline ~embed_errors structure_item
+                    ~ctxt ext EC.Structure_item item
                 with
                 | None ->
                     let item = super#structure_item base_ctxt item in
@@ -708,8 +707,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     ~base:base_ctxt ()
                 in
                 match
-                  E.For_context.convert_inline signature_item ~ctxt ext
-                    embed_errors EC.Signature_item item
+                  E.For_context.convert_inline ~embed_errors signature_item
+                    ~ctxt ext EC.Signature_item item
                 with
                 | None ->
                     let item = super#signature_item base_ctxt item in

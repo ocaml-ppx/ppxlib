@@ -262,7 +262,7 @@ type 'a expander_result = Simple of 'a | Inline of 'a list
 module For_context = struct
   type 'a t = ('a, 'a expander_result) M.t
 
-  let convert ts ~ctxt ((str_loc, _) as ext) embed_errors context x =
+  let convert ?(embed_errors = false) ts ~ctxt ((str_loc, _) as ext) context x =
     let loc = Expansion_context.Extension.extension_point_loc ctxt in
     match M.find ts ext with
     | None -> None
@@ -282,7 +282,8 @@ module For_context = struct
             (Context.extension_builder context x ~loc:str_loc.loc extension_node)
         )
 
-  let convert_inline ts ~ctxt ((str_loc, _) as ext) embed_errors context x =
+  let convert_inline ?(embed_errors = false) ts ~ctxt ((str_loc, _) as ext)
+      context x =
     let loc = Expansion_context.Extension.extension_point_loc ctxt in
     match M.find ts ext with
     | None -> None

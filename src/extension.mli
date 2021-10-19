@@ -111,19 +111,19 @@ module For_context : sig
   type 'a t
 
   val convert :
+    ?embed_errors:bool ->
     'a t list ->
     ctxt:Expansion_context.Extension.t ->
     extension ->
-    bool ->
     'a Context.t ->
     'a ->
     'a option
 
   val convert_inline :
+    ?embed_errors:bool ->
     'a t list ->
     ctxt:Expansion_context.Extension.t ->
     extension ->
-    bool ->
     'a Context.t ->
     'a ->
     'a list option
