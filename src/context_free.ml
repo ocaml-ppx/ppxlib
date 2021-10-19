@@ -595,7 +595,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | item :: rest -> (
             let loc = item.pstr_loc in
             match item.pstr_desc with
-            | Pstr_extension (((_str_loc, _) as ext), attrs) -> (
+            | Pstr_extension (ext, attrs) -> (
                 let extension_point_loc = item.pstr_loc in
                 let ctxt =
                   Expansion_context.Extension.make ~extension_point_loc
