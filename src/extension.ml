@@ -131,7 +131,11 @@ module Context = struct
     | Structure_item ->
         fun ~loc ext -> Ast_builder.Default.pstr_extension ~loc ext []
     | Ppx_import ->
-       fun ~loc ext -> { x with ptype_manifest = Some (Ast_builder.Default.ptyp_extension ~loc ext) }
+        fun ~loc ext ->
+          {
+            x with
+            ptype_manifest = Some (Ast_builder.Default.ptyp_extension ~loc ext);
+          }
 
   let merge_attributes : type a. a t -> a -> attributes -> a =
    fun t x attrs ->
@@ -258,23 +262,47 @@ type 'a expander_result = Simple of 'a | Inline of 'a list
 module For_context = struct
   type 'a t = ('a, 'a expander_result) M.t
 
-  let convert ts ~ctxt ext =
+  let convert ts ~ctxt ((str_loc, _) as ext) embed_errors context x =
     let loc = Expansion_context.Extension.extension_point_loc ctxt in
     match M.find ts ext with
     | None -> None
     | Some ({ payload = M.Payload_parser (pattern, f); _ }, arg) -> (
-        match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
-        | Simple x -> Some x
-        | Inline _ -> failwith "Extension.convert")
+        try
+          match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
+          | Simple x -> Some x
+          | Inline _ -> failwith "Extension.convert"
+        with exn when embed_errors ->
+          let extension_node =
+            Location.Error.make ~loc
+              ("(ppx " ^ str_loc.txt ^ ") " ^ Printexc.to_string exn)
+              ~sub:[]
+            |> Location.Error.to_extension
+          in
+          Some
+            (Context.extension_builder context x ~loc:str_loc.loc extension_node)
+        )
 
-  let convert_inline ts ~ctxt ext =
+  let convert_inline ts ~ctxt ((str_loc, _) as ext) embed_errors context x =
     let loc = Expansion_context.Extension.extension_point_loc ctxt in
     match M.find ts ext with
     | None -> None
     | Some ({ payload = M.Payload_parser (pattern, f); _ }, arg) -> (
-        match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
-        | Simple x -> Some [ x ]
-        | Inline l -> Some l)
+        try
+          match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
+          | Simple x -> Some [ x ]
+          | Inline l -> Some l
+        with exn when embed_errors ->
+          let extension_node =
+            Location.Error.make ~loc
+              ("(ppx " ^ str_loc.txt ^ ") " ^ Printexc.to_string exn)
+              ~sub:[]
+            |> Location.Error.to_extension
+          in
+          Some
+            [
+              Context.extension_builder context x ~loc:str_loc.loc
+                extension_node;
+            ])
 end
 
 type t = T : _ For_context.t -> t

@@ -42,6 +42,10 @@ end
 type t
 (** Type of registered derivers *)
 
+module Context : sig
+  type 'a t
+end
+
 module Generator : sig
   type deriver = t
 

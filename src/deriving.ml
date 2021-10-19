@@ -140,6 +140,18 @@ type parsed_args =
   | Args of (string * expression) list
   | Unknown_syntax of Location.t * string
 
+module Context = struct
+  type 'a t = Str : structure_item t | Sig : signature_item t
+
+  (* let extension_builder : type a. a t -> loc:location -> extension -> a = *)
+  (*  fun t -> *)
+  (*  match t with *)
+  (*   | Type_declaration -> Ast_builder.Default.ptyp_extension *)
+  (*   | Extension -> failwith "yo" *)
+  (*   | Exception -> failwith "yo" *)
+  (*   | Module_type_declaration -> Ast_builder.Default.pmod_constraint *)
+end
+
 module Generator = struct
   type deriver = t
 
@@ -202,13 +214,48 @@ module Generator = struct
 
   let apply (T t) ~name:_ ~ctxt x args = Args.apply t.spec args (t.gen ~ctxt x)
 
-  let apply_all ~ctxt entry (name, generators, args) =
+  let apply_all :
+      type a.
+      a Context.t ->
+      ctxt:Ppxlib__Expansion_context.Deriver.t ->
+      'b ->
+      string Location.loc
+      * (a list, 'b) t list
+      * (string * Astlib__Ast_412.Parsetree.expression) list ->
+      a list =
+   fun context ~ctxt entry (name, generators, args) ->
     check_arguments name.txt generators args;
+    let _ = context in
+    let open Context in
     List.concat_map generators ~f:(fun t ->
-        apply t ~name:name.txt ~ctxt entry args)
+        try apply t ~name:name.txt ~ctxt entry args
+        with exn -> (
+          let extension_node =
+            (match Location.Error.of_exn exn with
+            | None ->
+                Location.Error.make ~loc:name.loc
+                  ("(ppx deriver " ^ name.txt ^ ") " ^ Printexc.to_string exn)
+                  ~sub:[]
+            | Some error ->
+                Location.Error.set_message error
+                @@ "(ppx deriver " ^ name.txt ^ ") "
+                ^ Location.Error.message error)
+            |> Location.Error.to_extension
+          in
+          match context with
+          | Str ->
+              [
+                Ast_builder.Default.pstr_extension ~loc:name.loc extension_node
+                  [];
+              ]
+          | Sig ->
+              [
+                Ast_builder.Default.psig_extension ~loc:name.loc extension_node
+                  [];
+              ]))
 
-  let apply_all ~ctxt entry generators =
-    List.concat_map generators ~f:(apply_all ~ctxt entry)
+  let apply_all context ~ctxt entry generators =
+    List.concat_map generators ~f:(apply_all context ~ctxt entry)
 end
 
 module Deriver = struct
@@ -666,7 +713,7 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
      should add a tag [@@unused]. *)
   let generated =
     types_used_by_deriving tds
-    @ Generator.apply_all ~ctxt (rec_flag, tds) generators
+    @ Generator.apply_all Context.Str ~ctxt (rec_flag, tds) generators
   in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -675,7 +722,9 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
 
 let expand_sig_type_decls ~ctxt rec_flag tds values =
   let generators = merge_generators Deriver.Field.sig_type_decl values in
-  let generated = Generator.apply_all ~ctxt (rec_flag, tds) generators in
+  let generated =
+    Generator.apply_all Context.Sig ~ctxt (rec_flag, tds) generators
+  in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -685,7 +734,7 @@ let expand_str_module_type_decl ~ctxt mtd generators =
   let generators =
     Deriver.resolve_all Deriver.Field.str_module_type_decl generators
   in
-  let generated = Generator.apply_all ~ctxt mtd generators in
+  let generated = Generator.apply_all Context.Str ~ctxt mtd generators in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -695,7 +744,7 @@ let expand_sig_module_type_decl ~ctxt mtd generators =
   let generators =
     Deriver.resolve_all Deriver.Field.sig_module_type_decl generators
   in
-  let generated = Generator.apply_all ~ctxt mtd generators in
+  let generated = Generator.apply_all Context.Sig ~ctxt mtd generators in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -703,7 +752,7 @@ let expand_sig_module_type_decl ~ctxt mtd generators =
 
 let expand_str_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.str_exception generators in
-  let generated = Generator.apply_all ~ctxt ec generators in
+  let generated = Generator.apply_all Context.Str ~ctxt ec generators in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -711,7 +760,7 @@ let expand_str_exception ~ctxt ec generators =
 
 let expand_sig_exception ~ctxt ec generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_exception generators in
-  let generated = Generator.apply_all ~ctxt ec generators in
+  let generated = Generator.apply_all Context.Sig ~ctxt ec generators in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -719,7 +768,7 @@ let expand_sig_exception ~ctxt ec generators =
 
 let expand_str_type_ext ~ctxt te generators =
   let generators = Deriver.resolve_all Deriver.Field.str_type_ext generators in
-  let generated = Generator.apply_all ~ctxt te generators in
+  let generated = Generator.apply_all Context.Str ~ctxt te generators in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -727,7 +776,7 @@ let expand_str_type_ext ~ctxt te generators =
 
 let expand_sig_type_ext ~ctxt te generators =
   let generators = Deriver.resolve_all Deriver.Field.sig_type_ext generators in
-  let generated = Generator.apply_all ~ctxt te generators in
+  let generated = Generator.apply_all Context.Sig ~ctxt te generators in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)

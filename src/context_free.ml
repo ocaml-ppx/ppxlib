@@ -197,44 +197,38 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let rec map_node_rec context ts super_call loc base_ctxt x =
+let rec map_node_rec context ts super_call loc base_ctxt x
+    ?(embed_errors = false) =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      match E.For_context.convert ts ~ctxt ext with
+      match E.For_context.convert ts ~ctxt ext embed_errors context x with
       | None -> super_call base_ctxt x
       | Some x ->
           map_node_rec context ts super_call loc base_ctxt
-            (EC.merge_attributes context x attrs))
+            (EC.merge_attributes context x attrs)
+            ~embed_errors)
 
-let map_node (context:'a EC.t) ts super_call loc base_ctxt (x:'a) ~hook ?(embed_errors = false)
-    =
+let map_node (context : 'a EC.t) ts super_call loc base_ctxt (x : 'a) ~hook
+    ?(embed_errors = false) =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
-  | Some (((str_loc, _) as ext), attrs) ->
-      (try
-         match E.For_context.convert ts ~ctxt ext with
-         | None -> super_call base_ctxt x
-         | Some x ->
-             map_node_rec context ts super_call loc base_ctxt
-               (EC.merge_attributes context x attrs)
-       with exn when embed_errors ->
-         let extension_node =
-           Location.Error.make ~loc
-             ("(ppx " ^ str_loc.txt ^ ") " ^ Printexc.to_string exn)
-             ~sub:[]
-           |> Location.Error.to_extension
-         in
-         EC.extension_builder context x ~loc:str_loc.loc extension_node)
-      |> fun generated_code ->
-      Generated_code_hook.replace hook context loc (Single generated_code);
-      generated_code
+  | Some (ext, attrs) -> (
+      match E.For_context.convert ts ~ctxt ext embed_errors context x with
+      | None -> super_call base_ctxt x
+      | Some x ->
+          map_node_rec context ts super_call loc base_ctxt
+            (EC.merge_attributes context x attrs)
+            ~embed_errors
+          |> fun generated_code ->
+          Generated_code_hook.replace hook context loc (Single generated_code);
+          generated_code)
 
 let rec map_nodes context ts super_call get_loc ?(embed_errors = false)
     base_ctxt l ~hook ~in_generated_code =
@@ -257,45 +251,28 @@ let rec map_nodes context ts super_call get_loc ?(embed_errors = false)
             Expansion_context.Extension.make ~extension_point_loc
               ~base:base_ctxt ()
           in
-          try
-            match E.For_context.convert_inline ts ~ctxt ext with
-            | None ->
-                let x = super_call base_ctxt x in
-                let l =
-                  map_nodes context ts super_call get_loc base_ctxt l ~hook
-                    ~in_generated_code ~embed_errors
-                in
-                x :: l
-            | Some x ->
-                assert_no_attributes attrs;
-                let generated_code =
-                  map_nodes context ts super_call get_loc base_ctxt x ~hook
-                    ~in_generated_code:true ~embed_errors
-                in
-                if not in_generated_code then
-                  Generated_code_hook.replace hook context extension_point_loc
-                    (Many generated_code);
-                generated_code
-                @ map_nodes context ts super_call get_loc base_ctxt l ~hook
-                    ~in_generated_code ~embed_errors
-          with exn when embed_errors ->
-            let str_loc, _payload = ext in
-            let extension_node =
-              Location.Error.(
-                make ~loc:extension_point_loc
-                  ("(ppx " ^ str_loc.txt ^ ") " ^ Printexc.to_string exn)
-                  ~sub:[]
-                |> to_extension)
-            in
-            let generated_code =
-              [ EC.extension_builder ~loc:str_loc.loc context x extension_node ]
-            in
-            if not in_generated_code then
-              Generated_code_hook.replace hook context extension_point_loc
-                (Many generated_code);
-            generated_code
-            @ map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~in_generated_code ~embed_errors))
+          match
+            E.For_context.convert_inline ts ~ctxt ext embed_errors context x
+          with
+          | None ->
+              let x = super_call base_ctxt x in
+              let l =
+                map_nodes context ts super_call get_loc base_ctxt l ~hook
+                  ~in_generated_code ~embed_errors
+              in
+              x :: l
+          | Some x ->
+              assert_no_attributes attrs;
+              let generated_code =
+                map_nodes context ts super_call get_loc base_ctxt x ~hook
+                  ~in_generated_code:true ~embed_errors
+              in
+              if not in_generated_code then
+                Generated_code_hook.replace hook context extension_point_loc
+                  (Many generated_code);
+              generated_code
+              @ map_nodes context ts super_call get_loc base_ctxt l ~hook
+                  ~in_generated_code ~embed_errors))
 
 let map_nodes = map_nodes ~in_generated_code:false
 
@@ -611,13 +588,16 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | item :: rest -> (
             let loc = item.pstr_loc in
             match item.pstr_desc with
-            | Pstr_extension (ext, attrs) -> (
+            | Pstr_extension (((_str_loc, _) as ext), attrs) -> (
                 let extension_point_loc = item.pstr_loc in
                 let ctxt =
                   Expansion_context.Extension.make ~extension_point_loc
                     ~base:base_ctxt ()
                 in
-                match E.For_context.convert_inline structure_item ~ctxt ext with
+                match
+                  E.For_context.convert_inline structure_item ~ctxt ext
+                    embed_errors EC.Structure_item item
+                with
                 | None ->
                     let item = super#structure_item base_ctxt item in
                     let rest = self#structure base_ctxt rest in
@@ -713,7 +693,10 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                   Expansion_context.Extension.make ~extension_point_loc
                     ~base:base_ctxt ()
                 in
-                match E.For_context.convert_inline signature_item ~ctxt ext with
+                match
+                  E.For_context.convert_inline signature_item ~ctxt ext
+                    embed_errors EC.Signature_item item
+                with
                 | None ->
                     let item = super#signature_item base_ctxt item in
                     let rest = self#signature base_ctxt rest in
