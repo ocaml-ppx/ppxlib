@@ -50,7 +50,8 @@ module Rule : sig
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t ->
-    (ctxt:Expansion_context.Deriver.t ->
+    (?embed_errors:bool ->
+    ctxt:Expansion_context.Deriver.t ->
     Asttypes.rec_flag ->
     'b list ->
     'c option list ->
@@ -83,7 +84,11 @@ module Rule : sig
 
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t ->
-    (ctxt:Expansion_context.Deriver.t -> 'b -> 'c -> 'a list) ->
+    (?embed_errors:bool ->
+    ctxt:Expansion_context.Deriver.t ->
+    'b ->
+    'c ->
+    'a list) ->
     t
   (** Same as [attr_group_inline] but for elements that are not part of a group,
       such as exceptions and type extensions *)

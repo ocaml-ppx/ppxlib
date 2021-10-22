@@ -37,8 +37,11 @@ is rewritten to contain two of these nodes.
 notifies the first.)
 
 2. Raising a located error. In these tests, such an error is raised
-during the rewritting of the AST. By default, the exception is not
-caught, so no AST is produced.
+during the rewritting of the AST. The exception is caught by the
+driver, and another exception is raised, containing the initial error
+message as well as additionnal information such as the responsible ppx
+name, or the phase of the rewritting it happened. By default, this
+second exception is not caught, so no AST is produced.
 
  In the case of extenders:
 
@@ -71,38 +74,45 @@ caught, so no AST is produced.
   The use of located exception is discouraged in non-instrumentation whole-file transform as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
   [1]
 
-When the argument `-embed-errors` is added, the exception is caught
-and the whole AST is replaced with a single error extension node. The
-first line `let x = 1+1.` is thus not present in the AST, and no error
-can be reported about it.
+When the argument `-embed-errors` is added, or if the executable is
+run as a ppx instead of standalone, the re-raised exception is caught
+and an error extension node is put with the location given by the
+error.
 
- In the case of extenders:
+ In the case of extenders, the exception is put at the extension point
+location:
 
   $ echo "let x = 1+1. " > impl.ml
   $ echo "let _ = [%gen_raise_located_error]" >> impl.ml
   $ ./extender.exe -embed-errors impl.ml
-  [%%ocaml.error
-    "The following located exception was raised during the context-free transformation phase:\nA raised located error"]
+  let x = 1 + 1.
+  let _ = [%ocaml.error "(ppx gen_raise_located_error) A raised located error"]
 
- In the case of derivers
+ In the case of derivers, it is put at the location of the attribute:
 
   $ echo "let x = 1+1. " > impl.ml
   $ echo "type a = int" > impl.ml
   $ echo "type b = int [@@deriving deriver_located_error]" >> impl.ml
   $ ./deriver.exe -embed-errors impl.ml
-  [%%ocaml.error
-    "The following located exception was raised during the context-free transformation phase:\nA raised located error"]
+  type a = int
+  type b = int[@@deriving deriver_located_error]
+  include
+    struct
+      let _ = fun (_ : b) -> ()
+      [%%ocaml.error
+        "(ppx deriver deriver_located_error) A raised located error"]
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
- In the case of whole file transformations:
+ In the case of whole file transformations, it replaces the whole AST:
 
   $ echo "let x = 1+1. " > impl.ml
   $ ./whole_file_located_error.exe -embed-errors impl.ml
   [%%ocaml.error
     "The following located exception was raised during the non-instrumentation whole-file transform phase of the ppx \"raise_exc\":\nA located error in a whole file transform\nThe use of located exception is discouraged in non-instrumentation whole-file transform as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors."]
 
-3. Raising an exception. The exception is caught by the driver, and
-another exception is raised, containing the initial error message as
-well as an explanation of where it comes from.
+3. Raising an exception. The exception is handled by the driver in the
+same ways as for located exceptions, except that it uses a default
+location: the extension point or attribute location.
 
  In the case of extensions:
 
@@ -112,18 +122,23 @@ well as an explanation of where it comes from.
   (Failure "A raised exception")
   [2]
   $ ./extender.exe -embed-errors impl.ml
-  Fatal error: exception The following exception was raised during the context-free transformation phase:
-  (Failure "A raised exception")
-  [2]
+  let _ =
+    ([%ocaml.error "(ppx gen_raise_exc) (Failure \"A raised exception\")"]) +
+      ([%ocaml.error "(ppx gen_raise_exc) (Failure \"A raised exception\")"])
 
  In the case of derivers
 
   $ echo "type a = int" > impl.ml
   $ echo "type b = int [@@deriving deriver_raised_exception]" >> impl.ml
   $ ./deriver.exe -embed-errors impl.ml
-  Fatal error: exception The following exception was raised during the context-free transformation phase:
-  (Failure "A raised exception")
-  [2]
+  type a = int
+  type b = int[@@deriving deriver_raised_exception]
+  include
+    struct
+      let _ = fun (_ : b) -> ()
+      [%%ocaml.error
+        "(ppx deriver deriver_raised_exception) (Failure \"A raised exception\")"]
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
  In the case of whole file transformations:
 

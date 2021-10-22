@@ -12,6 +12,7 @@ module Rule = struct
       attribute : ('b, 'c) Attribute.t;
       expect : bool;
       expand :
+        ?embed_errors:bool ->
         ctxt:Expansion_context.Deriver.t ->
         Asttypes.rec_flag ->
         'b list ->
@@ -31,7 +32,12 @@ module Rule = struct
     type ('a, 'b, 'c) unpacked = {
       attribute : ('b, 'c) Attribute.t;
       expect : bool;
-      expand : ctxt:Expansion_context.Deriver.t -> 'b -> 'c -> 'a list;
+      expand :
+        ?embed_errors:bool ->
+        ctxt:Expansion_context.Deriver.t ->
+        'b ->
+        'c ->
+        'a list;
     }
 
     type ('a, 'b) t = T : ('a, 'b, _) unpacked -> ('a, 'b) t
@@ -103,7 +109,8 @@ module Rule = struct
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t ->
-    (ctxt:Expansion_context.Deriver.t ->
+    (?embed_errors:bool ->
+    ctxt:Expansion_context.Deriver.t ->
     Asttypes.rec_flag ->
     'b list ->
     'c option list ->
@@ -112,7 +119,11 @@ module Rule = struct
 
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t ->
-    (ctxt:Expansion_context.Deriver.t -> 'b -> 'c -> 'a list) ->
+    (?embed_errors:bool ->
+    ctxt:Expansion_context.Deriver.t ->
+    'b ->
+    'c ->
+    'a list) ->
     t
 
   let rec filter : type a. a Field.t -> t list -> a list =
@@ -328,7 +339,8 @@ let sort_attr_inline l =
    This complexity is horrible, but in practice we don't care as [attrs] is always a list
    of one element; it only has [@@deriving].
 *)
-let handle_attr_group_inline attrs rf items ~loc ~base_ctxt =
+let handle_attr_group_inline ?(embed_errors = false) attrs rf items ~loc
+    ~base_ctxt =
   List.fold_left attrs ~init:[] ~f:(fun acc (Rule.Attr_group_inline.T group) ->
       match get_group group.attribute items with
       | None -> acc
@@ -337,10 +349,10 @@ let handle_attr_group_inline attrs rf items ~loc ~base_ctxt =
             Expansion_context.Deriver.make ~derived_item_loc:loc
               ~inline:group.expect ~base:base_ctxt ()
           in
-          let expect_items = group.expand ~ctxt rf items values in
+          let expect_items = group.expand ~embed_errors ~ctxt rf items values in
           expect_items :: acc)
 
-let handle_attr_inline attrs item ~loc ~base_ctxt =
+let handle_attr_inline ?(embed_errors = false) attrs item ~loc ~base_ctxt =
   List.fold_left attrs ~init:[] ~f:(fun acc (Rule.Attr_inline.T a) ->
       match Attribute.get a.attribute item with
       | None -> acc
@@ -349,7 +361,7 @@ let handle_attr_inline attrs item ~loc ~base_ctxt =
             Expansion_context.Deriver.make ~derived_item_loc:loc
               ~inline:a.expect ~base:base_ctxt ()
           in
-          let expect_items = a.expand ~ctxt item value in
+          let expect_items = a.expand ~embed_errors ~ctxt item value in
           expect_items :: acc)
 
 module Expect_mismatch_handler = struct
@@ -614,43 +626,45 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                 match item.pstr_desc with
                 | Pstr_type (rf, tds) ->
                     let extra_items =
-                      handle_attr_group_inline attr_str_type_decls rf tds ~loc
-                        ~base_ctxt
+                      handle_attr_group_inline ~embed_errors attr_str_type_decls
+                        rf tds ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_group_inline attr_str_type_decls_expect rf tds
-                        ~loc ~base_ctxt
+                      handle_attr_group_inline ~embed_errors
+                        attr_str_type_decls_expect rf tds ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
                 | Pstr_modtype mtd ->
                     let extra_items =
-                      handle_attr_inline attr_str_module_type_decls mtd ~loc
-                        ~base_ctxt
+                      handle_attr_inline ~embed_errors
+                        attr_str_module_type_decls mtd ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_inline attr_str_module_type_decls_expect mtd
-                        ~loc ~base_ctxt
+                      handle_attr_inline ~embed_errors
+                        attr_str_module_type_decls_expect mtd ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
                 | Pstr_typext te ->
                     let extra_items =
-                      handle_attr_inline attr_str_type_exts te ~loc ~base_ctxt
+                      handle_attr_inline ~embed_errors attr_str_type_exts te
+                        ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_inline attr_str_type_exts_expect te ~loc
-                        ~base_ctxt
+                      handle_attr_inline ~embed_errors attr_str_type_exts_expect
+                        te ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
                 | Pstr_exception ec ->
                     let extra_items =
-                      handle_attr_inline attr_str_exceptions ec ~loc ~base_ctxt
+                      handle_attr_inline ~embed_errors attr_str_exceptions ec
+                        ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_inline attr_str_exceptions_expect ec ~loc
-                        ~base_ctxt
+                      handle_attr_inline ~embed_errors
+                        attr_str_exceptions_expect ec ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
@@ -713,43 +727,45 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                 match item.psig_desc with
                 | Psig_type (rf, tds) ->
                     let extra_items =
-                      handle_attr_group_inline attr_sig_type_decls rf tds ~loc
-                        ~base_ctxt
+                      handle_attr_group_inline ~embed_errors attr_sig_type_decls
+                        rf tds ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_group_inline attr_sig_type_decls_expect rf tds
-                        ~loc ~base_ctxt
+                      handle_attr_group_inline ~embed_errors
+                        attr_sig_type_decls_expect rf tds ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
                 | Psig_modtype mtd ->
                     let extra_items =
-                      handle_attr_inline attr_sig_module_type_decls mtd ~loc
-                        ~base_ctxt
+                      handle_attr_inline ~embed_errors
+                        attr_sig_module_type_decls mtd ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_inline attr_sig_module_type_decls_expect mtd
-                        ~loc ~base_ctxt
+                      handle_attr_inline ~embed_errors
+                        attr_sig_module_type_decls_expect mtd ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
                 | Psig_typext te ->
                     let extra_items =
-                      handle_attr_inline attr_sig_type_exts te ~loc ~base_ctxt
+                      handle_attr_inline ~embed_errors attr_sig_type_exts te
+                        ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_inline attr_sig_type_exts_expect te ~loc
-                        ~base_ctxt
+                      handle_attr_inline ~embed_errors attr_sig_type_exts_expect
+                        te ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code
                 | Psig_exception ec ->
                     let extra_items =
-                      handle_attr_inline attr_sig_exceptions ec ~loc ~base_ctxt
+                      handle_attr_inline ~embed_errors attr_sig_exceptions ec
+                        ~loc ~base_ctxt
                     in
                     let expect_items =
-                      handle_attr_inline attr_sig_exceptions_expect ec ~loc
-                        ~base_ctxt
+                      handle_attr_inline ~embed_errors
+                        attr_sig_exceptions_expect ec ~loc ~base_ctxt
                     in
                     with_extra_items item ~extra_items ~expect_items ~rest
                       ~in_generated_code

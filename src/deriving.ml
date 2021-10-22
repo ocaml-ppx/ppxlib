@@ -222,14 +222,15 @@ module Generator = struct
       string Location.loc
       * (a list, 'b) t list
       * (string * Astlib__Ast_412.Parsetree.expression) list ->
+      embed_errors:bool ->
       a list =
-   fun context ~ctxt entry (name, generators, args) ->
+   fun context ~ctxt entry (name, generators, args) ~embed_errors ->
     check_arguments name.txt generators args;
     let _ = context in
     let open Context in
     List.concat_map generators ~f:(fun t ->
         try apply t ~name:name.txt ~ctxt entry args
-        with exn -> (
+        with exn when embed_errors -> (
           let extension_node =
             (match Location.Error.of_exn exn with
             | None ->
@@ -254,8 +255,8 @@ module Generator = struct
                   [];
               ]))
 
-  let apply_all context ~ctxt entry generators =
-    List.concat_map generators ~f:(apply_all context ~ctxt entry)
+  let apply_all context ~ctxt entry generators ~embed_errors =
+    List.concat_map generators ~f:(apply_all context ~ctxt entry ~embed_errors)
 end
 
 module Deriver = struct
@@ -365,6 +366,26 @@ module Deriver = struct
         get = (fun t -> t.sig_module_type_decl);
         get_set = (fun t -> t.sig_module_type_decl);
       }
+
+    let type_ext : type a. a Context.t -> (a list, type_extension) t = function
+      | Context.Str -> str_type_ext
+      | Context.Sig -> sig_type_ext
+
+    let type_decl :
+        type a. a Context.t -> (a list, rec_flag * type_declaration list) t =
+      function
+      | Context.Str -> str_type_decl
+      | Context.Sig -> sig_type_decl
+
+    let type_exception : type a. a Context.t -> (a list, type_exception) t =
+      function
+      | Context.Str -> str_exception
+      | Context.Sig -> sig_exception
+
+    let module_type_decl :
+        type a. a Context.t -> (a list, module_type_declaration) t = function
+      | Context.Str -> str_module_type_decl
+      | Context.Sig -> sig_module_type_decl
   end
 
   type t = Actual_deriver of Actual_deriver.t | Alias of Alias.t
@@ -662,6 +683,13 @@ let wrap_sig ~loc ~hide sg =
   in
   if wrap then wrap_sig ~loc ~hide sg else sg
 
+let wrap :
+    type a.
+    a Context.t -> loc:Ppxlib__.Import.location -> hide:bool -> a list -> a list
+    = function
+  | Context.Str -> wrap_str
+  | Context.Sig -> wrap_sig
+
 (* +-----------------------------------------------------------------+
    | Remove attributes used by syntax extensions                     |
    +-----------------------------------------------------------------+ *)
@@ -689,95 +717,76 @@ let remove generators =
    | Main expansion                                                  |
    +-----------------------------------------------------------------+ *)
 
-let types_used_by_deriving (tds : type_declaration list) : structure_item list =
-  if keep_w32_impl () then []
-  else
-    List.map tds ~f:(fun td ->
-        let typ = Common.core_type_of_type_declaration td in
-        let loc = td.ptype_loc in
-        pstr_value ~loc Nonrecursive
-          [
-            value_binding ~loc ~pat:(ppat_any ~loc)
-              ~expr:
-                (pexp_fun ~loc Nolabel None
-                   (ppat_constraint ~loc (ppat_any ~loc) typ)
-                   (eunit ~loc));
-          ])
+let types_used_by_deriving :
+    type a. a Context.t -> type_declaration list -> a list =
+ fun context tds ->
+  match context with
+  | Context.Sig -> []
+  | Context.Str ->
+      if keep_w32_impl () then []
+      else
+        List.map tds ~f:(fun td ->
+            let typ = Common.core_type_of_type_declaration td in
+            let loc = td.ptype_loc in
+            pstr_value ~loc Nonrecursive
+              [
+                value_binding ~loc ~pat:(ppat_any ~loc)
+                  ~expr:
+                    (pexp_fun ~loc Nolabel None
+                       (ppat_constraint ~loc (ppat_any ~loc) typ)
+                       (eunit ~loc));
+              ])
 
 let merge_generators field l =
   List.filter_map l ~f:(fun x -> x) |> List.concat |> Deriver.resolve_all field
 
-let expand_str_type_decls ~ctxt rec_flag tds values =
-  let generators = merge_generators Deriver.Field.str_type_decl values in
+let expand_type_decls context ?(embed_errors = false) ~ctxt rec_flag tds values
+    =
+  let generators = merge_generators (Deriver.Field.type_decl context) values in
   (* TODO: instead of disabling the unused warning for types themselves, we
      should add a tag [@@unused]. *)
   let generated =
-    types_used_by_deriving tds
-    @ Generator.apply_all Context.Str ~ctxt (rec_flag, tds) generators
+    types_used_by_deriving context tds
+    @ Generator.apply_all context ~ctxt (rec_flag, tds) generators ~embed_errors
   in
-  wrap_str
+  wrap context
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
-let expand_sig_type_decls ~ctxt rec_flag tds values =
-  let generators = merge_generators Deriver.Field.sig_type_decl values in
+let expand_module_type_decl context ?(embed_errors = false) ~ctxt mtd generators
+    =
+  let generators =
+    Deriver.resolve_all (Deriver.Field.module_type_decl context) generators
+  in
   let generated =
-    Generator.apply_all Context.Sig ~ctxt (rec_flag, tds) generators
+    Generator.apply_all context ~ctxt mtd generators ~embed_errors
   in
-  wrap_sig
+  wrap context
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
-let expand_str_module_type_decl ~ctxt mtd generators =
+let expand_exception context ?(embed_errors = false) ~ctxt ec generators =
   let generators =
-    Deriver.resolve_all Deriver.Field.str_module_type_decl generators
+    Deriver.resolve_all (Deriver.Field.type_exception context) generators
   in
-  let generated = Generator.apply_all Context.Str ~ctxt mtd generators in
-  wrap_str
+  let generated =
+    Generator.apply_all context ~ctxt ec generators ~embed_errors
+  in
+  wrap context
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
-let expand_sig_module_type_decl ~ctxt mtd generators =
+let expand_type_ext context ?(embed_errors = false) ~ctxt te generators =
   let generators =
-    Deriver.resolve_all Deriver.Field.sig_module_type_decl generators
+    Deriver.resolve_all (Deriver.Field.type_ext context) generators
   in
-  let generated = Generator.apply_all Context.Sig ~ctxt mtd generators in
-  wrap_sig
-    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
-    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
-    generated
-
-let expand_str_exception ~ctxt ec generators =
-  let generators = Deriver.resolve_all Deriver.Field.str_exception generators in
-  let generated = Generator.apply_all Context.Str ~ctxt ec generators in
-  wrap_str
-    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
-    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
-    generated
-
-let expand_sig_exception ~ctxt ec generators =
-  let generators = Deriver.resolve_all Deriver.Field.sig_exception generators in
-  let generated = Generator.apply_all Context.Sig ~ctxt ec generators in
-  wrap_sig
-    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
-    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
-    generated
-
-let expand_str_type_ext ~ctxt te generators =
-  let generators = Deriver.resolve_all Deriver.Field.str_type_ext generators in
-  let generated = Generator.apply_all Context.Str ~ctxt te generators in
-  wrap_str
-    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
-    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
-    generated
-
-let expand_sig_type_ext ~ctxt te generators =
-  let generators = Deriver.resolve_all Deriver.Field.sig_type_ext generators in
-  let generated = Generator.apply_all Context.Sig ~ctxt te generators in
-  wrap_sig
+  let generated =
+    Generator.apply_all context ~ctxt te generators ~embed_errors
+  in
+  wrap context
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
@@ -795,32 +804,36 @@ let rules ~typ ~expand_sig ~expand_str ~rule_str ~rule_sig ~rule_str_expect
   ]
 
 let rules_type_decl =
-  rules ~typ:Type_declaration ~expand_str:expand_str_type_decls
-    ~expand_sig:expand_sig_type_decls
+  rules ~typ:Type_declaration
+    ~expand_str:(expand_type_decls Context.Str)
+    ~expand_sig:(expand_type_decls Context.Sig)
     ~rule_str:Context_free.Rule.attr_str_type_decl
     ~rule_sig:Context_free.Rule.attr_sig_type_decl
     ~rule_str_expect:Context_free.Rule.attr_str_type_decl_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_type_decl_expect
 
 let rules_type_ext =
-  rules ~typ:Type_extension ~expand_str:expand_str_type_ext
-    ~expand_sig:expand_sig_type_ext
+  rules ~typ:Type_extension
+    ~expand_str:(expand_type_ext Context.Str)
+    ~expand_sig:(expand_type_ext Context.Sig)
     ~rule_str:Context_free.Rule.attr_str_type_ext
     ~rule_sig:Context_free.Rule.attr_sig_type_ext
     ~rule_str_expect:Context_free.Rule.attr_str_type_ext_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_type_ext_expect
 
 let rules_exception =
-  rules ~typ:Type_exception ~expand_str:expand_str_exception
-    ~expand_sig:expand_sig_exception
+  rules ~typ:Type_exception
+    ~expand_str:(expand_exception Context.Str)
+    ~expand_sig:(expand_exception Context.Sig)
     ~rule_str:Context_free.Rule.attr_str_exception
     ~rule_sig:Context_free.Rule.attr_sig_exception
     ~rule_str_expect:Context_free.Rule.attr_str_exception_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_exception_expect
 
 let rules_module_type_decl =
-  rules ~typ:Module_type_declaration ~expand_str:expand_str_module_type_decl
-    ~expand_sig:expand_sig_module_type_decl
+  rules ~typ:Module_type_declaration
+    ~expand_str:(expand_module_type_decl Context.Str)
+    ~expand_sig:(expand_module_type_decl Context.Sig)
     ~rule_str:Context_free.Rule.attr_str_module_type_decl
     ~rule_sig:Context_free.Rule.attr_sig_module_type_decl
     ~rule_str_expect:Context_free.Rule.attr_str_module_type_decl_expect
