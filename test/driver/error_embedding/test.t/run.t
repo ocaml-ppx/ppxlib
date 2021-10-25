@@ -8,7 +8,7 @@ is caught and packed into an output AST
 
   $ echo "let _ = [%raise]" > impl.ml
   $ ../raiser.exe -embed-errors impl.ml
-  let _ = [%ocaml.error "(ppx raise) Raising inside the rewriter"]
+  let _ = [%ocaml.error "(ppx extender raise) Raising inside the rewriter"]
 
 The same is true when using the `-as-ppx` mode (note that the error is reported
 by ocaml itself. Due to a change of formatting since 4.08.0, we are forced to

@@ -227,7 +227,8 @@ module Generator = struct
             (match Location.Error.of_exn exn with
             | None ->
                 Location.Error.make ~loc:name.loc
-                  ("(ppx deriver " ^ name.txt ^ ") " ^ Printexc.to_string exn)
+                  ("(ppx deriver " ^ name.txt ^ ") " ^ Printexc.to_string exn ^ {|
+Raising unlocated exceptions are discouraged in derivers. You might want to file an issue to the maintainers of |}^name.txt)
                   ~sub:[]
             | Some error ->
                 Location.Error.set_message error

@@ -86,7 +86,9 @@ location:
   $ echo "let _ = [%gen_raise_located_error]" >> impl.ml
   $ ./extender.exe -embed-errors impl.ml
   let x = 1 + 1.
-  let _ = [%ocaml.error "(ppx gen_raise_located_error) A raised located error"]
+  let _ =
+    [%ocaml.error
+      "(ppx extender gen_raise_located_error) A raised located error"]
 
  In the case of derivers, it is put at the location of the attribute:
 
@@ -116,15 +118,18 @@ location: the extension point or attribute location.
 
  In the case of extensions:
 
-  $ echo "let _ = [%gen_raise_exc] + [%gen_raise_exc]" > impl.ml
+  $ echo "let _ = [%gen_raise_exc \"payload\"] + [%gen_raise_exc \"payload\"]" > impl.ml
   $ ./extender.exe impl.ml
   Fatal error: exception The following exception was raised during the context-free transformation phase:
   (Failure "A raised exception")
   [2]
   $ ./extender.exe -embed-errors impl.ml
   let _ =
-    ([%ocaml.error "(ppx gen_raise_exc) (Failure \"A raised exception\")"]) +
-      ([%ocaml.error "(ppx gen_raise_exc) (Failure \"A raised exception\")"])
+    ([%ocaml.error
+       "(ppx extender gen_raise_exc) (Failure \"A raised exception\")\nRaising unlocated exception in extenders are discouraged. You might want to file an issue to the maintainers of gen_raise_exc"])
+      +
+      ([%ocaml.error
+         "(ppx extender gen_raise_exc) (Failure \"A raised exception\")\nRaising unlocated exception in extenders are discouraged. You might want to file an issue to the maintainers of gen_raise_exc"])
 
  In the case of derivers
 
@@ -137,7 +142,7 @@ location: the extension point or attribute location.
     struct
       let _ = fun (_ : b) -> ()
       [%%ocaml.error
-        "(ppx deriver deriver_raised_exception) (Failure \"A raised exception\")"]
+        "(ppx deriver deriver_raised_exception) (Failure \"A raised exception\")\nRaising unlocated exceptions are discouraged in derivers. You might want to file an issue to the maintainers of deriver_raised_exception"]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
  In the case of whole file transformations:
