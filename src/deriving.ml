@@ -142,6 +142,8 @@ type parsed_args =
 
 module Context = struct
   type 'a t = Str : structure_item t | Sig : signature_item t
+
+  let is_str : type a. a t -> bool = function Str -> true | Sig -> false
 end
 
 module Generator = struct
@@ -633,27 +635,6 @@ let wrap_str ~loc ~hide st =
   in
   [ pstr_include ~loc { include_infos with pincl_attributes } ]
 
-let wrap_str ~loc ~hide st =
-  let loc = { loc with loc_ghost = true } in
-  let warnings, st =
-    if keep_w32_impl () then ([], st)
-    else if not !do_insert_unused_warning_attribute then
-      ([], Ignore_unused_warning.add_dummy_user_for_values#structure st)
-    else ([ 32 ], st)
-  in
-  let warnings, st =
-    if
-      keep_w60_impl ()
-      || not (Ignore_unused_warning.binds_module_names#structure st false)
-    then (warnings, st)
-    else (60 :: warnings, st)
-  in
-  let wrap, st =
-    if List.is_empty warnings then (hide, st)
-    else (true, pstr_attribute ~loc (disable_warnings_attribute warnings) :: st)
-  in
-  if wrap then wrap_str ~loc ~hide st else st
-
 let wrap_sig ~loc ~hide st =
   let include_infos = include_infos ~loc (pmty_signature ~loc st) in
   let pincl_attributes =
@@ -662,28 +643,57 @@ let wrap_sig ~loc ~hide st =
   in
   [ psig_include ~loc { include_infos with pincl_attributes } ]
 
-let wrap_sig ~loc ~hide sg =
+let wrap : type a. a Context.t -> loc:location -> hide:bool -> a list -> a list
+    =
+ fun context ~loc ~hide st ->
+  match context with
+  | Context.Str -> wrap_str ~loc ~hide st
+  | Context.Sig -> wrap_sig ~loc ~hide st
+
+let keep_w32 : type a. a Context.t -> unit -> bool = function
+  | Context.Str -> keep_w32_impl
+  | Context.Sig -> keep_w32_intf
+
+let keep_w60 : type a. a Context.t -> unit -> bool = function
+  | Context.Str -> keep_w60_impl
+  | Context.Sig -> keep_w60_intf
+
+let binds_module_names : type a. a Context.t -> a list -> bool = function
+  | Context.Str ->
+      fun st -> Ignore_unused_warning.binds_module_names#structure st false
+  | Context.Sig ->
+      fun st -> Ignore_unused_warning.binds_module_names#signature st false
+
+let p_attribute : type a. a Context.t -> loc:location -> attribute -> a =
+  function
+  | Context.Str -> pstr_attribute
+  | Context.Sig -> psig_attribute
+
+let add_dummy_user_for_values : type a. a Context.t -> a list -> a list =
+ fun context st ->
+  match context with
+  | Context.Str -> Ignore_unused_warning.add_dummy_user_for_values#structure st
+  | Context.Sig -> st
+
+let wrap context ~loc ~hide st =
   let loc = { loc with loc_ghost = true } in
-  let warnings = if keep_w32_intf () then [] else [ 32 ] in
+  let warnings, st =
+    if keep_w32 context () then ([], st)
+    else if Context.is_str context && not !do_insert_unused_warning_attribute
+    then ([], add_dummy_user_for_values context st)
+    else ([ 32 ], st)
+  in
   let warnings =
-    if
-      keep_w60_intf ()
-      || not (Ignore_unused_warning.binds_module_names#signature sg false)
-    then warnings
+    if keep_w60 context () || not (binds_module_names context st) then warnings
     else 60 :: warnings
   in
-  let wrap, sg =
-    if List.is_empty warnings then (hide, sg)
-    else (true, psig_attribute ~loc (disable_warnings_attribute warnings) :: sg)
+  let wrap_flag, st =
+    if List.is_empty warnings then (hide, st)
+    else
+      ( true,
+        p_attribute context ~loc (disable_warnings_attribute warnings) :: st )
   in
-  if wrap then wrap_sig ~loc ~hide sg else sg
-
-let wrap :
-    type a.
-    a Context.t -> loc:Ppxlib__.Import.location -> hide:bool -> a list -> a list
-    = function
-  | Context.Str -> wrap_str
-  | Context.Sig -> wrap_sig
+  if wrap_flag then wrap context ~loc ~hide st else st
 
 (* +-----------------------------------------------------------------+
    | Remove attributes used by syntax extensions                     |
