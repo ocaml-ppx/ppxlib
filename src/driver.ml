@@ -313,9 +313,13 @@ module Transform = struct
           in
           match Option.map t.instrument ~f with
           | Some (Before, transf) ->
-              ({ reduced_t with impl = Some transf } :: bef_i, aft_i, rest)
+              ( { reduced_t with impl = Some transf; rules = [] } :: bef_i,
+                aft_i,
+                reduced_t :: rest )
           | Some (After, transf) ->
-              (bef_i, { reduced_t with impl = Some transf } :: aft_i, rest)
+              ( bef_i,
+                { reduced_t with impl = Some transf; rules = [] } :: aft_i,
+                reduced_t :: rest )
           | None -> (bef_i, aft_i, reduced_t :: rest))
     in
     ( `Linters
@@ -493,8 +497,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
       |> List.filter ~f:(fun (ct : Transform.t) ->
              match (ct.impl, ct.intf) with None, None -> false | _ -> true)
   in
-  linters @ preprocess @ make_generic before_instrs @ make_generic cts
-  @ make_generic after_instrs
+  linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
     ~hook ~expect_mismatch_handler ~input_name x =
@@ -1185,7 +1188,8 @@ let shared_args =
     ( "-no-merge",
       Arg.Set no_merge,
       " Do not merge context free transformations (better for debugging \
-       rewriters)" );
+       rewriters). As a result, the context-free transformations are not all \
+       applied before all impl and intf." );
     ("-cookie", Arg.String set_cookie, "NAME=EXPR Set the cookie NAME to EXPR");
     ("--cookie", Arg.String set_cookie, " Same as -cookie");
   ]
