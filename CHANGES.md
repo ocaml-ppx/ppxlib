@@ -13,6 +13,7 @@ unreleased
 
 - Improve `name_type_params_in_td` to use prefixes `a`, `b`, ... instead of `v_x`. (#285, @ceastlund)
 
+- Improve error messages in ppx raised exceptions (#292, @panglesd)
 
 0.23.0 (31/08/2021)
 -------------------
