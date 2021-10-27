@@ -3,7 +3,7 @@ unreleased
 
 - Expand nodes before applying derivers or other inline attributes based
   transformation, allowing better interactions between extensions and
-  derivers (#279, @NathanReb)
+  derivers (#279, #297, @NathanReb)
 
 - Add support for registering ppx_import as a pseudo context-free rule (#271, @NathanReb)
 
