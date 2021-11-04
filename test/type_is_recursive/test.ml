@@ -59,7 +59,7 @@ val actually_recursive : rec_flag = Ppxlib__.Import.Recursive
 let ignore_attributes = test_is_recursive [%stri type t = int [@attr: t]]
 
 [%%expect{|
-val ignore_attributes : rec_flag = Ppxlib__.Import.Recursive
+val ignore_attributes : rec_flag = Ppxlib__.Import.Nonrecursive
 |}]
 
 (* Should be Recursive

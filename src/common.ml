@@ -100,6 +100,9 @@ class type_is_recursive rec_flag tds =
       | Pcstr_tuple args -> List.iter args ~f:self#core_type
       | Pcstr_record fields -> List.iter fields ~f:self#label_declaration
 
+    method! attributes _ = (* Don't recurse through attributes *)
+                           ()
+
     method go () =
       match rec_flag with
       | Nonrecursive -> Nonrecursive
