@@ -216,9 +216,8 @@ val y : string = "Payload is an extension point"
    attributes interpreted by other context-free rules. This is a bug introduced
    in https://github.com/ocaml-ppx/ppxlib/pull/279.
 
-   The example below should trigger an error as the [value] argument in the
-   paylaod is expected to be an integer expression and the extension in its
-   payload should NOT be expanded.
+   The example below should report the payload as being an extension point as
+   the [value] argument in the paylaod should NOT be expanded.
 
    Here, just as in extensions, we might eventually provide a callback to expand
    nodes explicitly. *)
