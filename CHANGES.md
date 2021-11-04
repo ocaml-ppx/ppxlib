@@ -5,7 +5,7 @@ unreleased
   transformation, allowing better interactions between extensions and
   derivers (#279, @NathanReb)
 
-- Add support for registering ppx_import as a pseudo context-free rule (#???, @NathanReb)
+- Add support for registering ppx_import as a pseudo context-free rule (#271, @NathanReb)
 
 - Add `input_name` to the `Expansion_context.Extension` and `Expansion_context.Deriver` modules (#284, @tatchi)
 
