@@ -856,6 +856,7 @@ and module_substitution = Parsetree.module_substitution = {
   pms_attributes : attributes;
   pms_loc : location;
 }
+(* S := M *)
 
 and module_type_declaration = Parsetree.module_type_declaration = {
   pmtd_name : string loc;
