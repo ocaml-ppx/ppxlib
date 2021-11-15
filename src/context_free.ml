@@ -611,6 +611,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                 let expanded_item = super#structure_item base_ctxt item in
                 match (item.pstr_desc, expanded_item.pstr_desc) with
                 | Pstr_type (rf, tds), Pstr_type (exp_rf, exp_tds) ->
+                    (* No context-free rule can rewrite rec flags atm, this
+                       assert acts as a failsafe in case it ever changes *)
                     assert (Poly.(rf = exp_rf));
                     let extra_items =
                       handle_attr_group_inline attr_str_type_decls rf ~items:tds
@@ -710,6 +712,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                 let expanded_item = super#signature_item base_ctxt item in
                 match (item.psig_desc, expanded_item.psig_desc) with
                 | Psig_type (rf, tds), Psig_type (exp_rf, exp_tds) ->
+                    (* No context-free rule can rewrite rec flags atm, this
+                       assert acts as a failsafe in case it ever changes *)
                     assert (Poly.(rf = exp_rf));
                     let extra_items =
                       handle_attr_group_inline attr_sig_type_decls rf ~items:tds
