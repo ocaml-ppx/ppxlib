@@ -15,6 +15,10 @@ unreleased
 
 - Improve error messages in ppx raised exceptions (#292, @panglesd)
 
+- Fix a bug in `type_is_recursive` and `really_recursive` where they would
+  consider a type declaration recursive if the type appeared inside an attribute
+  payload (#299, @NathanReb)
+
 0.23.0 (31/08/2021)
 -------------------
 
