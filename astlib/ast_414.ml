@@ -1027,7 +1027,6 @@ module Parsetree = struct
 end
 
 module Config = struct
-  (*FIXME: These are the 4.13 magic numbers. Bump them to 4.14 as soon as the compiler does.*)
-  let ast_impl_magic_number = "Caml1999M030"
-  let ast_intf_magic_number = "Caml1999N030"
+  let ast_impl_magic_number = "Caml1999M031"
+  let ast_intf_magic_number = "Caml1999N031"
 end

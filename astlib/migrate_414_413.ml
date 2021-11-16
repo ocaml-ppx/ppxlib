@@ -2,10 +2,10 @@ open Stdlib0
 module From = Ast_414
 module To = Ast_413
 
-module Def = Migrate_parsetree_def
-
-let migration_error location feature =
-  raise (Def.Migration_error (feature, location))
+let migration_error loc missing_feature =
+  Location.raise_errorf ~loc
+    "migration error: %s is not supported before OCaml 4.13"
+    missing_feature
 
 let rec copy_toplevel_phrase :
   Ast_414.Parsetree.toplevel_phrase -> Ast_413.Parsetree.toplevel_phrase =
@@ -1030,7 +1030,7 @@ and copy_extension_constructor_kind :
       (match x0 with
       | [] -> Ast_413.Parsetree.Pext_decl
         ((copy_constructor_arguments x1), (Option.map copy_core_type x2))
-      | hd :: _ -> migration_error hd.loc Extension_constructor)
+      | hd :: _ -> migration_error hd.loc "type parameters in extension constructors")
   | Ast_414.Parsetree.Pext_rebind x0 ->
       Ast_413.Parsetree.Pext_rebind (copy_loc copy_Longident_t x0)
 and copy_type_declaration :
@@ -1103,7 +1103,7 @@ and copy_constructor_declaration :
         Ast_413.Parsetree.pcd_loc = (copy_location pcd_loc);
         Ast_413.Parsetree.pcd_attributes = (copy_attributes pcd_attributes)
       }
-    | hd :: _ -> migration_error hd.loc Pcd_vars
+    | hd :: _ -> migration_error hd.loc "pcd_vars in constructor declarations"
 
 and copy_constructor_arguments :
   Ast_414.Parsetree.constructor_arguments ->
