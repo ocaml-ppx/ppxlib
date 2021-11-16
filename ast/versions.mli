@@ -127,6 +127,7 @@ module OCaml_410 : OCaml_version with module Ast = Astlib.Ast_410
 module OCaml_411 : OCaml_version with module Ast = Astlib.Ast_411
 module OCaml_412 : OCaml_version with module Ast = Astlib.Ast_412
 module OCaml_413 : OCaml_version with module Ast = Astlib.Ast_413
+module OCaml_414 : OCaml_version with module Ast = Astlib.Ast_414
 (*$*)
 
 (* An alias to the current compiler version *)
