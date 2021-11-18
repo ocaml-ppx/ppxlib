@@ -287,6 +287,13 @@ let table_of_special_functions special_functions =
         (List.find_map_exn special_functions ~f:(fun r ->
              if Poly.equal r.ident ident then Some r.name else None))
 
+(* [get_group attr l] returns the list of the attributes for each
+   node in [l].
+   If [l] is empty or if none of the nodes in [l] have an attribute attached,
+   [get_group] returns [None].
+   If [l] is not empty and at least one of the nodes in [l] has an attribue
+   attached, [get_group] returns the equivalent of
+   [Some (List.map ~f:(Attribute.get attr) l)]. *)
 let rec get_group attr l =
   match l with
   | [] -> None
