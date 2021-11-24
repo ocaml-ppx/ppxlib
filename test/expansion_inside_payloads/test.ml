@@ -226,5 +226,5 @@ type u = unit
 
 [%%expect{|
 type u = t
-val x : string = "Payload is an integer"
+val x : string = "Payload is an extension point"
 |}]
