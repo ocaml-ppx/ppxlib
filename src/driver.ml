@@ -1463,6 +1463,7 @@ let parse_input passed_in_args ~valid_args ~incorrect_input_msg =
       Caml.exit 0
 
 let run_as_ppx_rewriter_main ~standalone_args ~usage input =
+  embed_errors := true;
   let valid_args = get_args ~standalone_args () in
   match List.rev @@ Array.to_list @@ input with
   | output_fn :: input_fn :: flags_and_prog_name
