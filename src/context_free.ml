@@ -12,7 +12,7 @@ module Rule = struct
       attribute : ('b, 'c) Attribute.t;
       expect : bool;
       expand :
-        ?embed_errors:bool ->
+        embed_errors:bool ->
         ctxt:Expansion_context.Deriver.t ->
         Asttypes.rec_flag ->
         'b list ->
@@ -33,7 +33,7 @@ module Rule = struct
       attribute : ('b, 'c) Attribute.t;
       expect : bool;
       expand :
-        ?embed_errors:bool ->
+        embed_errors:bool ->
         ctxt:Expansion_context.Deriver.t ->
         'b ->
         'c ->
@@ -109,7 +109,7 @@ module Rule = struct
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t ->
-    (?embed_errors:bool ->
+    (embed_errors:bool ->
     ctxt:Expansion_context.Deriver.t ->
     Asttypes.rec_flag ->
     'b list ->
@@ -119,7 +119,7 @@ module Rule = struct
 
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t ->
-    (?embed_errors:bool ->
+    (embed_errors:bool ->
     ctxt:Expansion_context.Deriver.t ->
     'b ->
     'c ->
@@ -208,8 +208,7 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let rec map_node_rec ?(embed_errors = false) context ts super_call loc base_ctxt
-    x =
+let rec map_node_rec ~embed_errors context ts super_call loc base_ctxt x =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
@@ -222,8 +221,8 @@ let rec map_node_rec ?(embed_errors = false) context ts super_call loc base_ctxt
           map_node_rec ~embed_errors context ts super_call loc base_ctxt
             (EC.merge_attributes context x attrs))
 
-let map_node ?(embed_errors = false) (context : 'a EC.t) ts super_call loc
-    base_ctxt (x : 'a) ~hook =
+let map_node ~embed_errors (context : 'a EC.t) ts super_call loc base_ctxt
+    (x : 'a) ~hook =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
@@ -240,8 +239,8 @@ let map_node ?(embed_errors = false) (context : 'a EC.t) ts super_call loc
           Generated_code_hook.replace hook context loc (Single generated_code);
           generated_code)
 
-let rec map_nodes context ts super_call get_loc ?(embed_errors = false)
-    base_ctxt l ~hook ~in_generated_code =
+let rec map_nodes context ts super_call get_loc ~embed_errors base_ctxt l ~hook
+    ~in_generated_code =
   match l with
   | [] -> []
   | x :: l -> (
@@ -338,8 +337,7 @@ let sort_attr_inline l =
    This complexity is horrible, but in practice we don't care as [attrs] is always a list
    of one element; it only has [@@deriving].
 *)
-let handle_attr_group_inline ?(embed_errors = false) attrs rf items ~loc
-    ~base_ctxt =
+let handle_attr_group_inline ~embed_errors attrs rf items ~loc ~base_ctxt =
   List.filter_map attrs ~f:(fun (Rule.Attr_group_inline.T group) ->
       Option.map (get_group group.attribute items) ~f:(fun values ->
           let ctxt =
@@ -349,7 +347,7 @@ let handle_attr_group_inline ?(embed_errors = false) attrs rf items ~loc
           let expect_items = group.expand ~embed_errors ~ctxt rf items values in
           expect_items))
 
-let handle_attr_inline ?(embed_errors = false) attrs item ~loc ~base_ctxt =
+let handle_attr_inline ~embed_errors attrs item ~loc ~base_ctxt =
   List.filter_map attrs ~f:(fun (Rule.Attr_inline.T a) ->
       Option.map (Attribute.get a.attribute item) ~f:(fun value ->
           let ctxt =
@@ -368,8 +366,7 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = false) rules
-  =
+  ?(generated_code_hook = Generated_code_hook.nop) ~embed_errors rules =
   let hook = generated_code_hook in
 
   let special_functions =

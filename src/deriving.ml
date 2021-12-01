@@ -745,8 +745,7 @@ let types_used_by_deriving :
 let merge_generators field l =
   List.filter_map l ~f:(fun x -> x) |> List.concat |> Deriver.resolve_all field
 
-let expand_type_decls context ?(embed_errors = false) ~ctxt rec_flag tds values
-    =
+let expand_type_decls context ~embed_errors ~ctxt rec_flag tds values =
   let generators = merge_generators (Deriver.Field.type_decl context) values in
   (* TODO: instead of disabling the unused warning for types themselves, we
      should add a tag [@@unused]. *)
@@ -759,8 +758,7 @@ let expand_type_decls context ?(embed_errors = false) ~ctxt rec_flag tds values
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
-let expand_module_type_decl context ?(embed_errors = false) ~ctxt mtd generators
-    =
+let expand_module_type_decl context ~embed_errors ~ctxt mtd generators =
   let generators =
     Deriver.resolve_all (Deriver.Field.module_type_decl context) generators
   in
@@ -772,7 +770,7 @@ let expand_module_type_decl context ?(embed_errors = false) ~ctxt mtd generators
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
-let expand_exception context ?(embed_errors = false) ~ctxt ec generators =
+let expand_exception context ~embed_errors ~ctxt ec generators =
   let generators =
     Deriver.resolve_all (Deriver.Field.type_exception context) generators
   in
@@ -784,7 +782,7 @@ let expand_exception context ?(embed_errors = false) ~ctxt ec generators =
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
-let expand_type_ext context ?(embed_errors = false) ~ctxt te generators =
+let expand_type_ext context ~embed_errors ~ctxt te generators =
   let generators =
     Deriver.resolve_all (Deriver.Field.type_ext context) generators
   in
