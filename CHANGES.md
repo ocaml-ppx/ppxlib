@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Add support for OCaml 4.14 (#304, @kit-ty-kate)
+
 - Expand nodes before applying derivers or other inline attributes based
   transformation, allowing better interactions between extensions and
   derivers (#279, @NathanReb)
