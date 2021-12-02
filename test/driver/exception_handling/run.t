@@ -49,10 +49,8 @@ second exception is not caught, so no AST is produced.
   $ echo "let _ = [%gen_raise_located_error]" >> impl.ml
   $ export OCAML_ERROR_STYLE=short
   $ ./extender.exe impl.ml
-  File "impl.ml", line 2, characters 8-34:
-  Error: The following located exception was raised during the context-free transformation phase:
-  A raised located error
-  [1]
+  Fatal error: exception (PPX gen_raise_located_error:) A raised located error
+  [2]
 
  In the case of derivers
 
@@ -60,8 +58,7 @@ second exception is not caught, so no AST is produced.
   $ echo "type b = int [@@deriving deriver_located_error]" >> impl.ml
   $ ./deriver.exe impl.ml
   File "impl.ml", line 2, characters 0-47:
-  Error: The following located exception was raised during the context-free transformation phase:
-  A raised located error
+  Error: (Ppxlib context-free phase:) A raised located error
   [1]
 
  In the case of whole file transformations:
@@ -69,9 +66,8 @@ second exception is not caught, so no AST is produced.
   $ echo "let x = 1+1. " > impl.ml
   $ ./whole_file_located_error.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: The following located exception was raised during the non-instrumentation whole-file transform phase of the ppx "raise_exc":
-  A located error in a whole file transform
-  The use of located exception is discouraged in non-instrumentation whole-file transform as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Error: (PPX raise_exc:) A located error in a whole file transform
+  (Ppxlib:) raise_exc has violated the PPX norm on how to report errors.
   [1]
 
 When the argument `-embed-errors` is added, or if the executable is
@@ -86,9 +82,7 @@ location:
   $ echo "let _ = [%gen_raise_located_error]" >> impl.ml
   $ ./extender.exe -embed-errors impl.ml
   let x = 1 + 1.
-  let _ =
-    [%ocaml.error
-      "(ppx extender gen_raise_located_error) A raised located error"]
+  let _ = [%ocaml.error "(PPX gen_raise_located_error) A raised located error"]
 
  In the case of derivers, it is put at the location of the attribute:
 
@@ -101,8 +95,7 @@ location:
   include
     struct
       let _ = fun (_ : b) -> ()
-      [%%ocaml.error
-        "(ppx deriver deriver_located_error) A raised located error"]
+      [%%ocaml.error "(PPX deriver_located_error) A raised located error"]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
  In the case of whole file transformations, it replaces the whole AST:
@@ -110,7 +103,7 @@ location:
   $ echo "let x = 1+1. " > impl.ml
   $ ./whole_file_located_error.exe -embed-errors impl.ml
   [%%ocaml.error
-    "The following located exception was raised during the non-instrumentation whole-file transform phase of the ppx \"raise_exc\":\nA located error in a whole file transform\nThe use of located exception is discouraged in non-instrumentation whole-file transform as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors."]
+    "(PPX raise_exc:) A located error in a whole file transform\n(Ppxlib:) raise_exc has violated the PPX norm on how to report errors."]
 
 3. Raising an exception. The exception is handled by the driver in the
 same ways as for located exceptions, except that it uses a default
@@ -120,16 +113,15 @@ location: the extension point or attribute location.
 
   $ echo "let _ = [%gen_raise_exc \"payload\"] + [%gen_raise_exc \"payload\"]" > impl.ml
   $ ./extender.exe impl.ml
-  Fatal error: exception The following exception was raised during the context-free transformation phase:
-  (Failure "A raised exception")
+  Fatal error: exception (PPX gen_raise_exc:) (Failure "A raised exception") No location of error can be given.
   [2]
   $ ./extender.exe -embed-errors impl.ml
   let _ =
     ([%ocaml.error
-       "(ppx extender gen_raise_exc) (Failure \"A raised exception\")\nRaising unlocated exception in extenders are discouraged. You might want to file an issue to the maintainers of gen_raise_exc"])
+       "(PPX gen_raise_exc:) (Failure \"A raised exception\")\n(Ppxlib:) gen_raise_exc has violated the PPX norm on how to report errors. Precise location of error cannot be given."])
       +
       ([%ocaml.error
-         "(ppx extender gen_raise_exc) (Failure \"A raised exception\")\nRaising unlocated exception in extenders are discouraged. You might want to file an issue to the maintainers of gen_raise_exc"])
+         "(PPX gen_raise_exc:) (Failure \"A raised exception\")\n(Ppxlib:) gen_raise_exc has violated the PPX norm on how to report errors. Precise location of error cannot be given."])
 
  In the case of derivers
 
@@ -142,20 +134,18 @@ location: the extension point or attribute location.
     struct
       let _ = fun (_ : b) -> ()
       [%%ocaml.error
-        "(ppx deriver deriver_raised_exception) (Failure \"A raised exception\")\nRaising unlocated exceptions are discouraged in derivers. You might want to file an issue to the maintainers of deriver_raised_exception"]
+        "(PPX deriver_raised_exception) (Failure \"A raised exception\")\n(Ppxlib:) deriver_raised_exception has violated the PPX norm on how to report errors. Precise location of error cannot be given."]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
  In the case of whole file transformations:
 
   $ ./whole_file_exception.exe impl.ml
-  Fatal error: exception The following exception was raised during the non-instrumentation whole-file transform phase of the ppx "raise_exc":
-  (Failure "An exception in a whole file transform")
-  The use of exception is discouraged in non-instrumentation whole-file transform as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Fatal error: exception (PPX raise_exc:) (Failure "An exception in a whole file transform")
+  (Ppxlib:) raise_exc has violated the PPX norm on how to report errors. No location of error can be given.
   [2]
   $ ./whole_file_exception.exe -embed-errors impl.ml
-  Fatal error: exception The following exception was raised during the non-instrumentation whole-file transform phase of the ppx "raise_exc":
-  (Failure "An exception in a whole file transform")
-  The use of exception is discouraged in non-instrumentation whole-file transform as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Fatal error: exception (PPX raise_exc:) (Failure "An exception in a whole file transform")
+  (Ppxlib:) raise_exc has violated the PPX norm on how to report errors. No location of error can be given.
   [2]
 
 Finally we add some tests for the other phases of rewriting such as
@@ -165,25 +155,21 @@ error.
 
   $ ./linter.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: The following located exception was raised during the linting phase of the ppx "<lint:raise_in_linter>":
-  A located error in a linter
-  The use of located exception is discouraged in linting as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Error: (PPX raise_in_linter:) A located error in a linter
+  (Ppxlib:) raise_in_linter has violated the PPX norm on how to report errors.
   [1]
   $ ./preprocess.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: The following located exception was raised during the preprocessing phase of the ppx "<preprocess:raise_in_preprocess>":
-  A located error in a preprocess
-  The use of located exception is discouraged in preprocessing as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Error: (PPX raise_in_preprocess:) A located error in a preprocess
+  (Ppxlib:) raise_in_preprocess has violated the PPX norm on how to report errors.
   [1]
   $ ./instrument_before.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: The following located exception was raised during the instrumentation (before phase) phase of the ppx "raise_in_instrument":
-  A located error in a preprocess
-  The use of located exception is discouraged in instrumentation (before phase) as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Error: (PPX raise_in_instrument:) A located error in a preprocess
+  (Ppxlib:) raise_in_instrument has violated the PPX norm on how to report errors.
   [1]
   $ ./instrument_after.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: The following located exception was raised during the instrumentation (after phase) phase of the ppx "raise_in_instrument":
-  A located error in a preprocess
-  The use of located exception is discouraged in instrumentation (after phase) as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.
+  Error: (PPX raise_in_instrument:) A located error in a preprocess
+  (Ppxlib:) raise_in_instrument has violated the PPX norm on how to report errors.
   [1]

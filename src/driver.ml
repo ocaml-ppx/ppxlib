@@ -529,42 +529,37 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name
     @ make_generic cts NonInstrumentationWFT
     @ make_generic after_instrs AfterInstrumentation)
 
-exception ExceptionFromPPX of (string * exn * Transform.kind)
+exception ExceptionFromPPX of (string * exn * Transform.kind * string)
 
-let error_message exn owner_name kind =
-  let exn_kind_to_string exn =
-    match Location.Error.of_exn exn with
-    | None -> "exception"
-    | Some _ -> "located exception"
+let error_message tool_name exn owner_name kind =
+  let owner_name, exn =
+    match exn with
+    | Extension.For_context.ContextFreeException (owner_name, exn) ->
+        (owner_name, exn)
+    | _ -> (owner_name, exn)
   in
-  let (transform_kind_to_string : Transform.kind -> string) =
-   fun kind ->
-    match kind with
-    | Transform.ContextFree -> "context-free transformation"
-    | Transform.Linter -> "linting"
-    | Transform.Preprocess -> "preprocessing"
-    | Transform.BeforeInstrumentation -> "instrumentation (before phase)"
-    | Transform.AfterInstrumentation -> "instrumentation (after phase)"
-    | Transform.Unspecialized -> "ppx"
-    | Transform.NonInstrumentationWFT ->
-        "non-instrumentation whole-file transform"
+  let owner_name =
+    let replace_char string ~from ~to_ =
+      string |> String.split_on_char ~sep:from |> String.concat ~sep:to_
+    in
+    if String.contains owner_name ':' then
+      let owner_name =
+        owner_name
+        |> replace_char ~from:'<' ~to_:"< "
+        |> replace_char ~from:'>' ~to_:" >"
+        |> replace_char ~from:':' ~to_:" : "
+      in
+      Scanf.sscanf owner_name "< %s : %s >" (fun p s ->
+          if String.equal p "context-free" then owner_name else s)
+    else owner_name
+  in
+  let is_context_free =
+    match kind with Transform.ContextFree -> true | _ -> false
   in
   let prefix =
-    match kind with
-    | Transform.ContextFree ->
-        Printf.sprintf {|The following %s was raised during the %s phase:
-|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-    | Transform.Linter | Transform.Preprocess | Transform.BeforeInstrumentation
-    | Transform.AfterInstrumentation | Transform.Unspecialized
-    | Transform.NonInstrumentationWFT ->
-        Printf.sprintf
-          {|The following %s was raised during the %s phase of the ppx "%s":
-|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-          owner_name
+    if String.equal owner_name "context-free" then
+      "(Ppxlib context-free phase:) "
+    else Printf.sprintf "(PPX %s:) " owner_name
   in
   let actual_error =
     match Location.Error.of_exn exn with
@@ -572,32 +567,40 @@ let error_message exn owner_name kind =
     | Some error -> Location.Error.message error
   in
   let suffix =
-    match kind with
-    | Transform.ContextFree -> ""
-    | Transform.NonInstrumentationWFT | Transform.Unspecialized
-    | Transform.Linter | Transform.Preprocess | Transform.BeforeInstrumentation
-    | Transform.AfterInstrumentation ->
-        Printf.sprintf
-          {|
-The use of %s is discouraged in %s as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
+    if is_context_free && String.equal tool_name "merlin" then
+      "\n(Ppxlib:) Exception happened during context-free rewriting."
+    else if not is_context_free then
+      Printf.sprintf
+        "\n(Ppxlib:) %s has violated the PPX norm on how to report errors."
+        owner_name
+    else ""
   in
-  prefix ^ actual_error ^ suffix
+  let location_suffix =
+    match Location.Error.of_exn exn with
+    | None -> " No location of error can be given."
+    | Some _ -> ""
+  in
+  let merlin_suffix =
+    if String.equal tool_name "merlin" && not is_context_free then
+      " Other errors can't be reported anymore."
+    else ""
+  in
+  prefix ^ actual_error ^ suffix ^ location_suffix ^ merlin_suffix
 
 let () =
   Printexc.register_printer (fun exn ->
       match exn with
-      | ExceptionFromPPX (owner_name, exn', kind) ->
-          Some (error_message exn' owner_name kind)
+      | ExceptionFromPPX (owner_name, exn', kind, tool_name) ->
+          Some (error_message tool_name exn' owner_name kind)
       | _ -> None)
 
-let process_exn exn owner_name kind =
+let process_exn tool_name exn owner_name kind =
   match Location.Error.of_exn exn with
-  | None -> ExceptionFromPPX (owner_name, exn, kind)
+  | None -> ExceptionFromPPX (owner_name, exn, kind, tool_name)
   | Some error ->
       Location.Error
-        (Location.Error.set_message error (error_message exn owner_name kind))
+        (Location.Error.set_message error
+           (error_message tool_name exn owner_name kind))
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
     ~hook ~expect_mismatch_handler ~input_name ~embed_errors x =
@@ -623,14 +626,14 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
               lint_errors
               @
               try f ctxt x
-              with exn -> raise @@ process_exn exn ct.name ct.kind)
+              with exn -> raise @@ process_exn tool_name exn ct.name ct.kind)
         in
         match field ct with
         | None -> (x, dropped, lint_errors)
         | Some f ->
             let x =
               try f ctxt x
-              with exn -> raise @@ process_exn exn ct.name ct.kind
+              with exn -> raise @@ process_exn tool_name exn ct.name ct.kind
             in
             let dropped =
               if !debug_attribute_drop then (

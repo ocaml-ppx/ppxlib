@@ -228,16 +228,16 @@ module Generator = struct
           let extension_node =
             (match Location.Error.of_exn exn with
             | None ->
-                Location.Error.make ~loc:name.loc
-                  ("(ppx deriver " ^ name.txt ^ ") " ^ Printexc.to_string exn
-                 ^ {|
-Raising unlocated exceptions are discouraged in derivers. You might want to file an issue to the maintainers of |}
-                 ^ name.txt)
-                  ~sub:[]
+                Location.Error.make ~loc:name.loc ~sub:[]
+                @@ Printf.sprintf
+                     "(PPX %s) %s\n\
+                      (Ppxlib:) %s has violated the PPX norm on how to report \
+                      errors. Precise location of error cannot be given."
+                     name.txt (Printexc.to_string exn) name.txt
             | Some error ->
                 Location.Error.set_message error
-                @@ "(ppx deriver " ^ name.txt ^ ") "
-                ^ Location.Error.message error)
+                @@ Printf.sprintf "(PPX %s) %s" name.txt
+                     (Location.Error.message error))
             |> Location.Error.to_extension
           in
           match context with

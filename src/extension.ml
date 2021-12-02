@@ -262,21 +262,22 @@ type 'a expander_result = Simple of 'a | Inline of 'a list
 module For_context = struct
   type 'a t = ('a, 'a expander_result) M.t
 
+  exception ContextFreeException of string * exn
+
   let exn_to_extension exn str =
-    match Location.Error.of_exn exn with
+    (match Location.Error.of_exn exn with
     | None ->
         Location.Error.make ~loc:str.loc
-          ("(ppx extender " ^ str.txt ^ ") " ^ Printexc.to_string exn
-         ^ {|
-Raising unlocated exception in extenders are discouraged. You might want to file an issue to the maintainers of |}
-         ^ str.txt)
+          ("(PPX " ^ str.txt ^ ":) " ^ Printexc.to_string exn ^ "\n"
+         ^ "(Ppxlib:) " ^ str.txt
+         ^ " has violated the PPX norm on how to report errors. Precise \
+            location of error cannot be given.")
           ~sub:[]
-        |> Location.Error.to_extension
     | Some error ->
         Location.Error.set_message error
-        @@ "(ppx extender " ^ str.txt ^ ") "
-        ^ Location.Error.message error
-        |> Location.Error.to_extension
+        @@ "(PPX " ^ str.txt ^ ") "
+        ^ Location.Error.message error)
+    |> Location.Error.to_extension
 
   let convert ?(embed_errors = false) ts ~ctxt ((str, _) as ext) context x =
     let loc = Expansion_context.Extension.extension_point_loc ctxt in
@@ -287,10 +288,12 @@ Raising unlocated exception in extenders are discouraged. You might want to file
           match Ast_pattern.parse pattern loc (snd ext) (f ~ctxt ~arg) with
           | Simple x -> Some x
           | Inline _ -> failwith "Extension.convert"
-        with exn when embed_errors ->
-          let extension_node = exn_to_extension exn str in
-          Some (Context.extension_builder context x ~loc:str.loc extension_node)
-        )
+        with
+        | exn when embed_errors ->
+            let extension_node = exn_to_extension exn str in
+            Some
+              (Context.extension_builder context x ~loc:str.loc extension_node)
+        | exn -> raise @@ ContextFreeException (str.txt, exn))
 
   let convert_inline ?(embed_errors = false) ts ~ctxt ((str, _) as ext) context
       x =

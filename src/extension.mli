@@ -110,6 +110,8 @@ module For_context : sig
 
   type 'a t
 
+  exception ContextFreeException of string * exn
+
   val convert :
     ?embed_errors:bool ->
     'a t list ->
