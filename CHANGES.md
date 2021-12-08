@@ -15,8 +15,6 @@ unreleased
 
 - Improve `name_type_params_in_td` to use prefixes `a`, `b`, ... instead of `v_x`. (#285, @ceastlund)
 
-- Improve error messages in ppx raised exceptions (#292, @panglesd)
-
 - Fix a bug in `type_is_recursive` and `really_recursive` where they would
   consider a type declaration recursive if the type appeared inside an attribute
   payload (#299, @NathanReb)
