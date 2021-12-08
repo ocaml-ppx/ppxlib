@@ -95,15 +95,6 @@ module Instrument = struct
 end
 
 module Transform = struct
-  type kind =
-    | Unspecialized
-    | NonInstrumentationWFT
-    | ContextFree
-    | Linter
-    | Preprocess
-    | BeforeInstrumentation
-    | AfterInstrumentation
-
   type t = {
     name : string;
     aliases : string list;
@@ -138,7 +129,6 @@ module Transform = struct
     instrument : Instrument.t option;
     rules : Context_free.Rule.t list;
     registered_at : Caller_id.t;
-    kind : kind;
   }
 
   let has_name t name =
@@ -179,7 +169,6 @@ module Transform = struct
         lint_intf;
         instrument;
         registered_at = caller_id;
-        kind = Unspecialized;
       }
     in
     all := ct :: !all
@@ -305,7 +294,6 @@ module Transform = struct
         instrument = None;
         rules;
         registered_at = Caller_id.get ~skip:[];
-        kind = ContextFree;
       }
 
   let partition_transformations ts =
@@ -325,23 +313,9 @@ module Transform = struct
           in
           match Option.map t.instrument ~f with
           | Some (Before, transf) ->
-              ( {
-                  reduced_t with
-                  impl = Some transf;
-                  kind = BeforeInstrumentation;
-                }
-                :: bef_i,
-                aft_i,
-                rest )
+              ({ reduced_t with impl = Some transf } :: bef_i, aft_i, rest)
           | Some (After, transf) ->
-              ( bef_i,
-                {
-                  reduced_t with
-                  impl = Some transf;
-                  kind = AfterInstrumentation;
-                }
-                :: aft_i,
-                rest )
+              (bef_i, { reduced_t with impl = Some transf } :: aft_i, rest)
           | None -> (bef_i, aft_i, reduced_t :: rest))
     in
     ( `Linters
@@ -362,7 +336,6 @@ module Transform = struct
                    instrument = None;
                    rules = [];
                    registered_at = t.registered_at;
-                   kind = Linter;
                  }
              else None)),
       `Preprocess
@@ -386,7 +359,6 @@ module Transform = struct
                    instrument = None;
                    rules = [];
                    registered_at = t.registered_at;
-                   kind = Preprocess;
                  }
              else None)),
       `Before_instrs before_instrs,
@@ -477,7 +449,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
      Printf.sprintf "At most one preprocessor is allowed, while got: %s" pp
    in
    failwith err);
-  let make_generic transforms kind =
+  let make_generic transforms =
     if !no_merge then
       List.map transforms
         ~f:
@@ -498,8 +470,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
        and impl_enclosers = get_enclosers ~f:(fun ct -> ct.enclose_impl)
        and intf_enclosers = get_enclosers ~f:(fun ct -> ct.enclose_intf) in
        match (rules, impl_enclosers, intf_enclosers) with
-       | [], [], [] ->
-           transforms |> List.map ~f:(fun ct -> Transform.{ ct with kind })
+       | [], [], [] -> transforms
        | _ ->
            let merge_encloser = function
              | [] -> None
@@ -518,85 +489,12 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
              ~enclose_impl:(merge_encloser impl_enclosers)
              ~enclose_intf:(merge_encloser intf_enclosers)
              ~tool_name ~input_name
-           :: (transforms |> List.map ~f:(fun ct -> Transform.{ ct with kind })))
+           :: transforms)
       |> List.filter ~f:(fun (ct : Transform.t) ->
              match (ct.impl, ct.intf) with None, None -> false | _ -> true)
   in
-  Transform.(
-    linters @ preprocess
-    @ make_generic before_instrs BeforeInstrumentation
-    @ make_generic cts NonInstrumentationWFT
-    @ make_generic after_instrs AfterInstrumentation)
-
-exception ExceptionFromPPX of (string * exn * Transform.kind)
-
-let error_message exn owner_name kind =
-  let exn_kind_to_string exn =
-    match Location.Error.of_exn exn with
-    | None -> "exception"
-    | Some _ -> "located exception"
-  in
-  let (transform_kind_to_string : Transform.kind -> string) =
-   fun kind ->
-    match kind with
-    | Transform.ContextFree -> "context-free transformation"
-    | Transform.Linter -> "linting"
-    | Transform.Preprocess -> "preprocessing"
-    | Transform.BeforeInstrumentation -> "instrumentation (before phase)"
-    | Transform.AfterInstrumentation -> "instrumentation (after phase)"
-    | Transform.Unspecialized -> "ppx"
-    | Transform.NonInstrumentationWFT ->
-        "non-instrumentation whole-file transform"
-  in
-  let prefix =
-    match kind with
-    | Transform.ContextFree ->
-        Printf.sprintf {|The following %s was raised during the %s phase:
-|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-    | Transform.Linter | Transform.Preprocess | Transform.BeforeInstrumentation
-    | Transform.AfterInstrumentation | Transform.Unspecialized
-    | Transform.NonInstrumentationWFT ->
-        Printf.sprintf
-          {|The following %s was raised during the %s phase of the ppx "%s":
-|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-          owner_name
-  in
-  let actual_error =
-    match Location.Error.of_exn exn with
-    | None -> Printexc.to_string exn
-    | Some error -> Location.Error.message error
-  in
-  let suffix =
-    match kind with
-    | Transform.ContextFree -> ""
-    | Transform.NonInstrumentationWFT | Transform.Unspecialized
-    | Transform.Linter | Transform.Preprocess | Transform.BeforeInstrumentation
-    | Transform.AfterInstrumentation ->
-        Printf.sprintf
-          {|
-The use of %s is discouraged in %s as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-  in
-  prefix ^ actual_error ^ suffix
-
-let () =
-  Printexc.register_printer (fun exn ->
-      match exn with
-      | ExceptionFromPPX (owner_name, exn', kind) ->
-          Some (error_message exn' owner_name kind)
-      | _ -> None)
-
-let process_exn exn owner_name kind =
-  match Location.Error.of_exn exn with
-  | None -> ExceptionFromPPX (owner_name, exn, kind)
-  | Some error ->
-      Location.Error
-        (Location.Error.set_message error (error_message exn owner_name kind))
+  linters @ preprocess @ make_generic before_instrs @ make_generic cts
+  @ make_generic after_instrs
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
     ~hook ~expect_mismatch_handler ~input_name x =
@@ -617,19 +515,12 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
         let lint_errors =
           match lint_field ct with
           | None -> lint_errors
-          | Some f -> (
-              lint_errors
-              @
-              try f ctxt x
-              with exn -> raise @@ process_exn exn ct.name ct.kind)
+          | Some f -> lint_errors @ f ctxt x
         in
         match field ct with
         | None -> (x, dropped, lint_errors)
         | Some f ->
-            let x =
-              try f ctxt x
-              with exn -> raise @@ process_exn exn ct.name ct.kind
-            in
+            let x = f ctxt x in
             let dropped =
               if !debug_attribute_drop then (
                 let new_dropped = dropped_so_far x in

@@ -51,8 +51,7 @@ val gen_type_decl : Context_free.Rule.t = <abstr>
 
 [%%expect{|
 Line _, characters 3-19:
-Error: The following located exception was raised during the context-free transformation phase:
-Attributes not allowed here
+Error: Attributes not allowed here
 |}]
 
 (* Generates a [type t = int[@@deriving derived]] *)
