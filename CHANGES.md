@@ -1,5 +1,5 @@
-unreleased
-----------
+0.24.0 (08/12/2021)
+-------------------
 
 - Add support for OCaml 4.14 (#304, @kit-ty-kate)
 
