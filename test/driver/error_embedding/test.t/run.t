@@ -8,8 +8,7 @@ is caught and packed into an output AST
 
   $ echo "let _ = [%raise]" > impl.ml
   $ ../raiser.exe -embed-errors impl.ml
-  [%%ocaml.error
-    "The following located exception was raised during the context-free transformation phase:\nRaising inside the rewriter"]
+  [%%ocaml.error "Raising inside the rewriter"]
 
 The same is true when using the `-as-ppx` mode (note that the error is reported
 by ocaml itself. Due to a change of formatting since 4.08.0, we are forced to
@@ -18,7 +17,7 @@ unify both styles by stripping whitespaces)
   $ ocaml -ppx '../raiser.exe -as-ppx' impl.ml 2> error
   [2]
   $ cat error | awk '{$1=$1};1' |tr '\n' ' '
-  File "./impl.ml", line 1, characters 8-16: Error: The following located exception was raised during the context-free transformation phase: Raising inside the rewriter 
+  File "./impl.ml", line 1, characters 8-16: Error: Raising inside the rewriter 
 
 Also exceptions raised in a preprocessor get embedded into an AST(while the
 error from the preprocessor's stderr also gets reported on the driver's stderr)

@@ -531,58 +531,30 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
 exception ExceptionFromPPX of (string * exn * Transform.kind)
 
 let error_message exn owner_name kind =
-  let exn_kind_to_string exn =
-    match Location.Error.of_exn exn with
-    | None -> "exception"
-    | Some _ -> "located exception"
+  let owner_name =
+    match String.split_on_char owner_name ~sep:':' with
+    | [ owner_name ] -> owner_name
+    | _ :: owner_name :: _ -> String.drop_suffix owner_name 1
+    | _ -> owner_name
   in
-  let (transform_kind_to_string : Transform.kind -> string) =
-   fun kind ->
-    match kind with
-    | Transform.ContextFree -> "context-free transformation"
-    | Transform.Linter -> "linting"
-    | Transform.Preprocess -> "preprocessing"
-    | Transform.BeforeInstrumentation -> "instrumentation (before phase)"
-    | Transform.AfterInstrumentation -> "instrumentation (after phase)"
-    | Transform.Unspecialized -> "ppx"
-    | Transform.NonInstrumentationWFT ->
-        "non-instrumentation whole-file transform"
-  in
-  let prefix =
-    match kind with
-    | Transform.ContextFree ->
-        Printf.sprintf {|The following %s was raised during the %s phase:
-|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-    | Transform.Linter | Transform.Preprocess | Transform.BeforeInstrumentation
-    | Transform.AfterInstrumentation | Transform.Unspecialized
-    | Transform.NonInstrumentationWFT ->
-        Printf.sprintf
-          {|The following %s was raised during the %s phase of the ppx "%s":
-|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-          owner_name
-  in
-  let actual_error =
-    match Location.Error.of_exn exn with
-    | None -> Printexc.to_string exn
-    | Some error -> Location.Error.message error
-  in
-  let suffix =
-    match kind with
-    | Transform.ContextFree -> ""
-    | Transform.NonInstrumentationWFT | Transform.Unspecialized
-    | Transform.Linter | Transform.Preprocess | Transform.BeforeInstrumentation
-    | Transform.AfterInstrumentation ->
-        Printf.sprintf
-          {|
-The use of %s is discouraged in %s as it prevents other errors to be reported. Instead, errors should be embedded in the AST in extension nodes. You might want to file an issue to the ppx authors.|}
-          (exn_kind_to_string exn)
-          (transform_kind_to_string kind)
-  in
-  prefix ^ actual_error ^ suffix
+  match kind with
+  | Transform.ContextFree -> Printexc.to_string exn
+  | _ -> (
+      match Location.Error.of_exn exn with
+      | None ->
+          Printf.sprintf
+            "(%s): %s\n\
+             (ppxlib): the location of the error is undefined and IDE / source \
+             code analysis features aren't available anymore, because %s has \
+             raised.\n"
+            owner_name (Printexc.to_string exn) owner_name
+      | Some error ->
+          Printf.sprintf
+            "(%s): %s\n\
+             (ppxlib): IDE / source code analysis features aren't available \
+             anymore due to PPX error reporting."
+            owner_name
+            (Location.Error.message error))
 
 let () =
   Printexc.register_printer (fun exn ->
