@@ -84,4 +84,8 @@ module Error : sig
 end
 with type location := t
 
+val extensionf : loc:t -> ('a, Format.formatter, unit, extension) format4 -> 'a
+(** Returns an error extension node. When encountered in the AST, the compiler
+    recognizes it and displays the error properly. *)
+
 exception Error of Error.t
