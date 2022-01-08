@@ -109,6 +109,18 @@ val __' : ('a, 'a Loc.t -> 'b, 'b) t
     In the latter case you should use the [pexp_loc] field of the captured
     expression instead. *)
 
+val drop : ('a, 'b, 'b) t
+(** Useful when we don't care about some part of OCaml AST. With [__] the actual
+    value will be passed to success continuation, with [drop] it will be ignore.
+    In normal pattern matching it is called wildcard pattern. *)
+
+val as__ : ('a, 'b, 'c) t -> ('a, 'a -> 'b, 'c) t
+(** As-pattern. Passed the current AST to success continuation.
+
+    Pitfall. The part of AST is being passed before checking that it fits the
+    pattern. It means that success continuation may fire earlier than we realize
+    that pattern argument of [as__] doesn't fit. *)
+
 val alt : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> ('a, 'b, 'c) t
 (** [alt] stands for `alternatives'. It matches either the first pattern or the
     second one. *)

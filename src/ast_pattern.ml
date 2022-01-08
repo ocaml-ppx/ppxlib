@@ -40,6 +40,12 @@ let drop =
       incr_matched ctx;
       k)
 
+let as__ (T f1) =
+  T
+    (fun ctx loc x k ->
+      let k = f1 ctx loc x (k x) in
+      k)
+
 let cst ~to_string ?(equal = Poly.equal) v =
   T
     (fun ctx loc x k ->
