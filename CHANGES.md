@@ -1,3 +1,8 @@
+Unreleased
+----------
+
+- Ast patterns: add `drop` and `as` patterns (#313 by @Kakadu, review by @pitag-ha)
+
 0.24.0 (08/12/2021)
 -------------------
 
