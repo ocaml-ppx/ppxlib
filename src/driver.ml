@@ -500,13 +500,18 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
   linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
-    ~hook ~expect_mismatch_handler ~input_name x =
+    ~hook ~expect_mismatch_handler ~input_name ~f_exception x =
   let cts =
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
   in
-  let x, _dropped, lint_errors =
+  let return (x, _dropped, lint_errors) =
+    ( x,
+      List.map lint_errors ~f:(fun (loc, s) ->
+          Common.attribute_of_warning loc s) )
+  in
+  let acc =
     List.fold_left cts ~init:(x, [], [])
-      ~f:(fun (x, dropped, lint_errors) (ct : Transform.t) ->
+      ~f:(fun ((x, dropped, lint_errors) as acc) (ct : Transform.t) ->
         let input_name =
           match input_name with
           | Some input_name -> input_name
@@ -518,12 +523,16 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
         let lint_errors =
           match lint_field ct with
           | None -> lint_errors
-          | Some f -> lint_errors @ f ctxt x
+          | Some f -> (
+              try lint_errors @ f ctxt x
+              with exn -> raise @@ f_exception (return acc, exn))
         in
         match field ct with
         | None -> (x, dropped, lint_errors)
         | Some f ->
-            let x = f ctxt x in
+            let x =
+              try f ctxt x with exn -> raise @@ f_exception (return acc, exn)
+            in
             let dropped =
               if !debug_attribute_drop then (
                 let new_dropped = dropped_so_far x in
@@ -534,9 +543,7 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
             in
             (x, dropped, lint_errors))
   in
-  ( x,
-    List.map lint_errors ~f:(fun (loc, s) -> Common.attribute_of_warning loc s)
-  )
+  return acc
 
 (* +-----------------------------------------------------------------+
    | Actual rewriting of structure/signatures                        |
@@ -559,92 +566,124 @@ let print_passes () =
       Printf.printf "<builtin:check-unused-extensions>\n")
 
 (*$*)
+
+exception WrapStructureAndLintErrors of (structure * attribute list) * exn
+
+exception WrapStructure of structure * exn
+
 let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
     Attribute.collect#structure st);
+  let lint_and_check lint_errors st =
+    let st =
+      match lint_errors with
+      | [] -> st
+      | _ ->
+          List.map lint_errors
+            ~f:(fun ({ attr_name = { loc; _ }; _ } as attr) ->
+              Ast_builder.Default.pstr_attribute ~loc attr)
+          @ st
+    in
+    Cookies.call_post_handlers T;
+    if !perform_checks then (
+      (* TODO: these two passes could be merged, we now have more passes for
+         checks than for actual rewriting. *)
+      Attribute.check_unused#structure st;
+      if !perform_checks_on_extensions then Extension.check_unused#structure st;
+      Attribute.check_all_seen ();
+      if !perform_locations_check then
+        let open Location_check in
+        ignore
+          ((enforce_invariants !loc_fname)#structure st
+             Non_intersecting_ranges.empty
+            : Non_intersecting_ranges.t));
+    st
+  in
   let st, lint_errors =
     let file_path = File_path.get_default_path_str st in
-    apply_transforms st ~tool_name ~file_path
-      ~field:(fun (ct : Transform.t) -> ct.impl)
-      ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
-      ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
-      ~expect_mismatch_handler ~input_name
+    try
+      apply_transforms st ~tool_name ~file_path
+        ~field:(fun (ct : Transform.t) -> ct.impl)
+        ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
+        ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
+        ~expect_mismatch_handler ~input_name
+        ~f_exception:(fun (a, b) -> WrapStructureAndLintErrors (a, b))
+    with WrapStructureAndLintErrors ((st, lint_errors), exn) ->
+      let st = lint_and_check lint_errors st in
+      raise @@ WrapStructure (st, exn)
   in
-  let st =
-    match lint_errors with
-    | [] -> st
-    | _ ->
-        List.map lint_errors ~f:(fun ({ attr_name = { loc; _ }; _ } as attr) ->
-            Ast_builder.Default.pstr_attribute ~loc attr)
-        @ st
-  in
-  Cookies.call_post_handlers T;
-  if !perform_checks then (
-    (* TODO: these two passes could be merged, we now have more passes for
-       checks than for actual rewriting. *)
-    Attribute.check_unused#structure st;
-    if !perform_checks_on_extensions then Extension.check_unused#structure st;
-    Attribute.check_all_seen ();
-    if !perform_locations_check then
-      let open Location_check in
-      ignore
-        ((enforce_invariants !loc_fname)#structure st
-           Non_intersecting_ranges.empty
-          : Non_intersecting_ranges.t));
-  st
+  lint_and_check lint_errors st
 
 let map_structure st =
-  map_structure_gen st
-    ~tool_name:(Astlib.Ast_metadata.tool_name ())
-    ~hook:Context_free.Generated_code_hook.nop
-    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-    ~input_name:None
+  try
+    map_structure_gen st
+      ~tool_name:(Astlib.Ast_metadata.tool_name ())
+      ~hook:Context_free.Generated_code_hook.nop
+      ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+      ~input_name:None
+  with WrapStructure (_, exn) -> raise exn
 
 (*$ str_to_sig _last_text_block *)
+
+exception WrapSignatureAndLintErrors of (signature * attribute list) * exn
+
+exception WrapSignature of signature * exn
+
 let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
     Attribute.collect#signature sg);
+  let lint_and_check lint_errors sg =
+    let sg =
+      match lint_errors with
+      | [] -> sg
+      | _ ->
+          List.map lint_errors
+            ~f:(fun ({ attr_name = { loc; _ }; _ } as attr) ->
+              Ast_builder.Default.psig_attribute ~loc attr)
+          @ sg
+    in
+    Cookies.call_post_handlers T;
+    if !perform_checks then (
+      (* TODO: these two passes could be merged, we now have more passes for
+         checks than for actual rewriting. *)
+      Attribute.check_unused#signature sg;
+      if !perform_checks_on_extensions then Extension.check_unused#signature sg;
+      Attribute.check_all_seen ();
+      if !perform_locations_check then
+        let open Location_check in
+        ignore
+          ((enforce_invariants !loc_fname)#signature sg
+             Non_intersecting_ranges.empty
+            : Non_intersecting_ranges.t));
+    sg
+  in
   let sg, lint_errors =
     let file_path = File_path.get_default_path_sig sg in
-    apply_transforms sg ~tool_name ~file_path
-      ~field:(fun (ct : Transform.t) -> ct.intf)
-      ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
-      ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
-      ~expect_mismatch_handler ~input_name
+    try
+      apply_transforms sg ~tool_name ~file_path
+        ~field:(fun (ct : Transform.t) -> ct.intf)
+        ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
+        ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
+        ~expect_mismatch_handler ~input_name
+        ~f_exception:(fun (a, b) -> WrapSignatureAndLintErrors (a, b))
+    with WrapSignatureAndLintErrors ((sg, lint_errors), exn) ->
+      let sg = lint_and_check lint_errors sg in
+      raise @@ WrapSignature (sg, exn)
   in
-  let sg =
-    match lint_errors with
-    | [] -> sg
-    | _ ->
-        List.map lint_errors ~f:(fun ({ attr_name = { loc; _ }; _ } as attr) ->
-            Ast_builder.Default.psig_attribute ~loc attr)
-        @ sg
-  in
-  Cookies.call_post_handlers T;
-  if !perform_checks then (
-    (* TODO: these two passes could be merged, we now have more passes for
-       checks than for actual rewriting. *)
-    Attribute.check_unused#signature sg;
-    if !perform_checks_on_extensions then Extension.check_unused#signature sg;
-    Attribute.check_all_seen ();
-    if !perform_locations_check then
-      let open Location_check in
-      ignore
-        ((enforce_invariants !loc_fname)#signature sg
-           Non_intersecting_ranges.empty
-          : Non_intersecting_ranges.t));
-  sg
+  lint_and_check lint_errors sg
 
 let map_signature sg =
-  map_signature_gen sg
-    ~tool_name:(Astlib.Ast_metadata.tool_name ())
-    ~hook:Context_free.Generated_code_hook.nop
-    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-    ~input_name:None
+  try
+    map_signature_gen sg
+      ~tool_name:(Astlib.Ast_metadata.tool_name ())
+      ~hook:Context_free.Generated_code_hook.nop
+      ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+      ~input_name:None
+  with WrapSignature (_, exn) -> raise exn
 
 (*$*)
 
@@ -903,6 +942,28 @@ struct
   let set x = t.data <- Some x
 end
 
+let error_to_str_extension error =
+  let loc = Location.none in
+  let ext = Location.Error.to_extension error in
+  let open Ast_builder.Default in
+  pstr_extension ~loc ext []
+
+let exn_to_str_extension exn =
+  match Location.Error.of_exn exn with
+  | None -> raise exn
+  | Some error -> error_to_str_extension error
+
+let error_to_sig_extension error =
+  let loc = Location.none in
+  let ext = Location.Error.to_extension error in
+  let open Ast_builder.Default in
+  psig_extension ~loc ext []
+
+let exn_to_sig_extension exn =
+  match Location.Error.of_exn exn with
+  | None -> raise exn
+  | Some error -> error_to_sig_extension error
+
 let error_to_extension error ~(kind : Kind.t) =
   let loc = Location.none in
   let ext = Location.Error.to_extension error in
@@ -920,16 +981,26 @@ let exn_to_extension exn ~(kind : Kind.t) =
   | Some error -> error_to_extension error ~kind
 
 let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
-    ~expect_mismatch_handler =
+    ~expect_mismatch_handler ~embed_errors =
   match ast with
   | Intf x ->
       Intf_or_impl.Intf
-        (map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
-           ~input_name:(Some input_name))
+        (try
+           map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
+             ~input_name:(Some input_name)
+         with
+        | WrapSignature (sg, exn) when embed_errors ->
+            exn_to_sig_extension exn :: sg
+        | WrapSignature (_, exn) -> raise exn)
   | Impl x ->
       Intf_or_impl.Impl
-        (map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
-           ~input_name:(Some input_name))
+        (try
+           map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
+             ~input_name:(Some input_name)
+         with
+        | WrapStructure (st, exn) when embed_errors ->
+            exn_to_str_extension exn :: st
+        | WrapStructure (_, exn) -> raise exn)
 
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
     ~embed_errors ~output =
@@ -970,6 +1041,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
           let ast =
             extract_cookies ast
             |> process_ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+                 ~embed_errors
           in
           (input_fname, input_version, ast)
         with exn when embed_errors ->
@@ -1333,6 +1405,7 @@ let rewrite_binary_ast_file input_fn output_fn =
       let hook = Context_free.Generated_code_hook.nop in
       let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
       process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+        ~embed_errors:true
     with exn -> exn_to_extension exn ~kind:(Intf_or_impl.kind ast)
   in
   with_output (Some output_fn) ~binary:true ~f:(fun oc ->
