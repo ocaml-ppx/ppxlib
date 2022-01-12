@@ -942,6 +942,8 @@ struct
   let set x = t.data <- Some x
 end
 
+(*$*)
+
 let error_to_str_extension error =
   let loc = Location.none in
   let ext = Location.Error.to_extension error in
@@ -953,6 +955,8 @@ let exn_to_str_extension exn =
   | None -> raise exn
   | Some error -> error_to_str_extension error
 
+(*$ str_to_sig _last_text_block *)
+
 let error_to_sig_extension error =
   let loc = Location.none in
   let ext = Location.Error.to_extension error in
@@ -963,6 +967,8 @@ let exn_to_sig_extension exn =
   match Location.Error.of_exn exn with
   | None -> raise exn
   | Some error -> error_to_sig_extension error
+
+(*$*)
 
 let error_to_extension error ~(kind : Kind.t) =
   let loc = Location.none in
