@@ -70,7 +70,7 @@ module Error = struct
   let createf ~loc fmt = Format.kasprintf (fun str -> make ~loc ~sub:[] str) fmt
 end
 
-let extensionf ~loc fmt =
+let error_extensionf ~loc fmt =
   Format.kasprintf
     (fun str -> Error.to_extension @@ Error.make ~loc ~sub:[] str)
     fmt

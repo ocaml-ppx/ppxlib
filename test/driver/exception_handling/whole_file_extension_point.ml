@@ -10,7 +10,7 @@ let () =
           | hd :: _ -> hd.pstr_loc
         in
         let extension_node =
-          Location.extensionf ~loc "An error message in an extension node"
+          Location.error_extensionf ~loc "An error message in an extension node"
         in
         [ Ast_builder.Default.pstr_extension ~loc extension_node [] ])
       "raise_exc")

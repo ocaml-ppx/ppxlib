@@ -3,7 +3,7 @@ open Ppxlib
 let generate_impl_extension_node ~ctxt (_rec_flag, _type_declarations) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   let extension_node =
-    Location.extensionf ~loc "An error message in an extension node"
+    Location.error_extensionf ~loc "An error message in an extension node"
   in
   [ Ast_builder.Default.pstr_extension ~loc extension_node [] ]
 
