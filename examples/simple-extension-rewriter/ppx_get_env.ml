@@ -5,8 +5,11 @@ let expand ~ctxt env_var =
   match Sys.getenv env_var with
   | value -> Ast_builder.Default.estring ~loc value
   | exception Not_found ->
-      Location.raise_errorf ~loc "The environement variable %s is unbound"
-        env_var
+      let ext =
+        Location.error_extensionf ~loc "The environement variable %s is unbound"
+          env_var
+      in
+      Ast_builder.Default.pexp_extension ~loc ext
 
 let my_extension =
   Extension.V3.declare "get_env" Extension.Context.expression
