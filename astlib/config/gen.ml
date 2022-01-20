@@ -23,6 +23,9 @@ let () =
     | 4, 12 -> "412"
     | 4, 13 -> "413"
     | 4, 14 -> "414"
+    (* The 414 and the 500 AST coincide.
+       So, to avoid unnecessary AST migrations, we re-use the 414 AST for 500. *)
+    | 5, 00 -> "414"
     | _ ->
         Printf.eprintf "Unkown OCaml version %s\n" ocaml_version_str;
         exit 1)
