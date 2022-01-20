@@ -37,9 +37,13 @@ let generate_impl ~ctxt (_rec_flag, type_declarations) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   List.map type_declarations ~f:(fun (td : type_declaration) ->
       match td with
-      | { ptype_kind = Ptype_abstract | Ptype_variant _ | Ptype_open; _ } ->
+      | {
+       ptype_kind = Ptype_abstract | Ptype_variant _ | Ptype_open;
+       ptype_loc;
+       _;
+      } ->
           let ext =
-            Location.error_extensionf ~loc
+            Location.error_extensionf ~loc:ptype_loc
               "Cannot derive accessors for non record types"
           in
           [ Ast_builder.Default.pstr_extension ~loc ext [] ]
@@ -51,9 +55,13 @@ let generate_intf ~ctxt (_rec_flag, type_declarations) =
   let loc = Expansion_context.Deriver.derived_item_loc ctxt in
   List.map type_declarations ~f:(fun (td : type_declaration) ->
       match td with
-      | { ptype_kind = Ptype_abstract | Ptype_variant _ | Ptype_open; _ } ->
+      | {
+       ptype_kind = Ptype_abstract | Ptype_variant _ | Ptype_open;
+       ptype_loc;
+       _;
+      } ->
           let ext =
-            Location.error_extensionf ~loc
+            Location.error_extensionf ~loc:ptype_loc
               "Cannot derive accessors for non record types"
           in
           [ Ast_builder.Default.psig_extension ~loc ext [] ]
