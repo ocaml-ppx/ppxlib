@@ -110,16 +110,17 @@ val __' : ('a, 'a Loc.t -> 'b, 'b) t
     expression instead. *)
 
 val drop : ('a, 'b, 'b) t
-(** Useful when we don't care about some part of OCaml AST. With [__] the actual
-    value will be passed to success continuation, with [drop] it will be ignore.
-    In normal pattern matching it is called wildcard pattern. *)
+(** Useful when some part of the AST is irrelevant. With [__], the captured
+    value is passed to the continuation, with [drop] it is ignored. In
+    higher-level pattern matching, it is called wildcard pattern. *)
 
 val as__ : ('a, 'b, 'c) t -> ('a, 'a -> 'b, 'c) t
-(** As-pattern. Passed the current AST to success continuation.
+(** As-pattern. Passes the current node to the continuation.
 
-    Pitfall. The part of AST is being passed before checking that it fits the
-    pattern. It means that success continuation may fire earlier than we realize
-    that pattern argument of [as__] doesn't fit. *)
+    Pitfall. In general, the continuation is called step by step by being
+    applied partially to every next captured node in the pattern. That means
+    that the node captured by [as__] is passed to the continuation before
+    checking if the pattern is matched. *)
 
 val alt : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> ('a, 'b, 'c) t
 (** [alt] stands for `alternatives'. It matches either the first pattern or the
