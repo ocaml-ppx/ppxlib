@@ -947,8 +947,7 @@ end
 let error_to_str_extension error =
   let loc = Location.none in
   let ext = Location.Error.to_extension error in
-  let open Ast_builder.Default in
-  pstr_extension ~loc ext []
+  Ast_builder.Default.pstr_extension ~loc ext []
 
 let exn_to_str_extension exn =
   match Location.Error.of_exn exn with
@@ -960,8 +959,7 @@ let exn_to_str_extension exn =
 let error_to_sig_extension error =
   let loc = Location.none in
   let ext = Location.Error.to_extension error in
-  let open Ast_builder.Default in
-  psig_extension ~loc ext []
+  Ast_builder.Default.psig_extension ~loc ext []
 
 let exn_to_sig_extension exn =
   match Location.Error.of_exn exn with
@@ -971,15 +969,9 @@ let exn_to_sig_extension exn =
 (*$*)
 
 let error_to_extension error ~(kind : Kind.t) =
-  let loc = Location.none in
-  let ext = Location.Error.to_extension error in
-  let open Ast_builder.Default in
-  let ast =
-    match kind with
-    | Intf -> Intf_or_impl.Intf [ psig_extension ~loc ext [] ]
-    | Impl -> Intf_or_impl.Impl [ pstr_extension ~loc ext [] ]
-  in
-  ast
+  match kind with
+  | Intf -> Intf_or_impl.Intf [ error_to_sig_extension error ]
+  | Impl -> Intf_or_impl.Impl [ error_to_str_extension error ]
 
 let exn_to_extension exn ~(kind : Kind.t) =
   match Location.Error.of_exn exn with
