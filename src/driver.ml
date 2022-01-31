@@ -639,7 +639,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
   if !perform_checks then (
     Attribute.reset_checks ();
     Attribute.collect#signature sg);
-  let lint_and_check lint_errors sg =
+  let lint lint_errors sg =
     let sg =
       match lint_errors with
       | [] -> sg
@@ -649,6 +649,9 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
               Ast_builder.Default.psig_attribute ~loc attr)
           @ sg
     in
+    sg
+  in
+  let cookies_and_check sg =
     Cookies.call_post_handlers T;
     if !perform_checks then (
       (* TODO: these two passes could be merged, we now have more passes for
@@ -674,10 +677,10 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name =
         ~expect_mismatch_handler ~input_name
         ~f_exception:(fun (a, b) -> WrapSignatureAndLintErrors (a, b))
     with WrapSignatureAndLintErrors ((sg, lint_errors), exn) ->
-      let sg = lint_and_check lint_errors sg in
+      let sg = lint lint_errors sg in
       raise @@ WrapSignature (sg, exn)
   in
-  lint_and_check lint_errors sg
+  sg |> lint lint_errors |> cookies_and_check
 
 let map_signature sg =
   try
