@@ -576,7 +576,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
   if !perform_checks then (
     Attribute.reset_checks ();
     Attribute.collect#structure st);
-  let lint_and_check lint_errors st =
+  let lint lint_errors st =
     let st =
       match lint_errors with
       | [] -> st
@@ -586,6 +586,9 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
               Ast_builder.Default.pstr_attribute ~loc attr)
           @ st
     in
+    st
+  in
+  let cookies_and_check st =
     Cookies.call_post_handlers T;
     if !perform_checks then (
       (* TODO: these two passes could be merged, we now have more passes for
@@ -611,10 +614,10 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name =
         ~expect_mismatch_handler ~input_name
         ~f_exception:(fun (a, b) -> WrapStructureAndLintErrors (a, b))
     with WrapStructureAndLintErrors ((st, lint_errors), exn) ->
-      let st = lint_and_check lint_errors st in
+      let st = lint lint_errors st in
       raise @@ WrapStructure (st, exn)
   in
-  lint_and_check lint_errors st
+  st |> lint lint_errors |> cookies_and_check
 
 let map_structure st =
   try
