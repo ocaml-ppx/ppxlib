@@ -29,6 +29,9 @@ Unreleased
   consider a type declaration recursive if the type appeared inside an attribute
   payload (#299, @NathanReb)
 
+- Append the last valid AST to the error in case of located exception when
+  `embed_errors` is true (#315, @panglesd)
+
 0.23.0 (31/08/2021)
 -------------------
 
