@@ -499,17 +499,12 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
   in
   linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 
-let fold_until ~init ~f ~finish l =
-  let rec fold_until acc l =
-    match (acc, l) with
-    | Error acc, _ -> Error acc
-    | Ok acc, [] -> Ok (finish acc)
-    | Ok acc, t :: q -> fold_until (f acc t) q
-  in
-  fold_until (Ok init) l
-
-let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
-    ~hook ~expect_mismatch_handler ~input_name ~f_exception ~embed_errors x =
+let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
+    ~dropped_so_far ~hook ~expect_mismatch_handler ~input_name ~f_exception
+    ~embed_errors x =
+  let module M = struct
+    exception Wrapper of t list * label loc list * (location * label) list * exn
+  end in
   let cts =
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
   in
@@ -518,47 +513,47 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
       List.map lint_errors ~f:(fun (loc, s) ->
           Common.attribute_of_warning loc s) )
   in
-  fold_until cts ~init:(x, [], []) ~finish:return
-    ~f:(fun ((x, dropped, (lint_errors : _ list)) as acc) (ct : Transform.t) ->
-      let input_name =
-        match input_name with Some input_name -> input_name | None -> "_none_"
-      in
-      let ctxt =
-        Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
-      in
-      let lint_errors =
-        match lint_field ct with
-        | None -> Ok lint_errors
-        | Some f -> (
-            try Ok (lint_errors @ f ctxt x)
-            with exn when embed_errors -> Error exn)
-      in
-      match lint_errors with
-      | Error exn ->
-          let x, l = return acc in
-          Error (f_exception exn :: x, l)
-      | Ok lint_errors -> (
-          match field ct with
-          | None -> Ok (x, dropped, lint_errors)
-          | Some f -> (
-              let x =
-                try Ok (f ctxt x)
+  try
+    let acc =
+      List.fold_left cts ~init:(x, [], [])
+        ~f:(fun (x, dropped, (lint_errors : _ list)) (ct : Transform.t) ->
+          let input_name =
+            match input_name with
+            | Some input_name -> input_name
+            | None -> "_none_"
+          in
+          let ctxt =
+            Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
+          in
+          let lint_errors =
+            match lint_field ct with
+            | None -> lint_errors
+            | Some f -> (
+                try lint_errors @ f ctxt x
                 with exn when embed_errors ->
-                  let x, l = return acc in
-                  Error (f_exception exn :: x, l)
+                  raise @@ M.Wrapper (x, dropped, lint_errors, exn))
+          in
+          match field ct with
+          | None -> (x, dropped, lint_errors)
+          | Some f ->
+              let x =
+                try f ctxt x
+                with exn when embed_errors ->
+                  raise @@ M.Wrapper (x, dropped, lint_errors, exn)
               in
-              match x with
-              | Error x -> Error x
-              | Ok x ->
-                  let dropped =
-                    if !debug_attribute_drop then (
-                      let new_dropped = dropped_so_far x in
-                      debug_dropped_attribute ct.name ~old_dropped:dropped
-                        ~new_dropped;
-                      new_dropped)
-                    else []
-                  in
-                  Ok (x, dropped, lint_errors))))
+              let dropped =
+                if !debug_attribute_drop then (
+                  let new_dropped = dropped_so_far x in
+                  debug_dropped_attribute ct.name ~old_dropped:dropped
+                    ~new_dropped;
+                  new_dropped)
+                else []
+              in
+              (x, dropped, lint_errors))
+    in
+    Ok (return acc)
+  with M.Wrapper (x, dropped, lint_errors, exn) ->
+    Error (return (f_exception exn :: x, dropped, lint_errors))
 
 (*$*)
 
