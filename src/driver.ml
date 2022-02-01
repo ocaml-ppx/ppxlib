@@ -502,9 +502,9 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
 let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
     ~dropped_so_far ~hook ~expect_mismatch_handler ~input_name ~f_exception
     ~embed_errors x =
-  let module M = struct
-    exception Wrapper of t list * label loc list * (location * label) list * exn
-  end in
+  let exception
+    Wrapper of t list * label loc list * (location * label) list * exn
+  in
   let cts =
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
   in
@@ -531,7 +531,7 @@ let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
             | Some f -> (
                 try lint_errors @ f ctxt x
                 with exn when embed_errors ->
-                  raise @@ M.Wrapper (x, dropped, lint_errors, exn))
+                  raise @@ Wrapper (x, dropped, lint_errors, exn))
           in
           match field ct with
           | None -> (x, dropped, lint_errors)
@@ -539,7 +539,7 @@ let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
               let x =
                 try f ctxt x
                 with exn when embed_errors ->
-                  raise @@ M.Wrapper (x, dropped, lint_errors, exn)
+                  raise @@ Wrapper (x, dropped, lint_errors, exn)
               in
               let dropped =
                 if !debug_attribute_drop then (
@@ -552,7 +552,7 @@ let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
               (x, dropped, lint_errors))
     in
     Ok (return acc)
-  with M.Wrapper (x, dropped, lint_errors, exn) ->
+  with Wrapper (x, dropped, lint_errors, exn) ->
     Error (return (f_exception exn :: x, dropped, lint_errors))
 
 (*$*)
