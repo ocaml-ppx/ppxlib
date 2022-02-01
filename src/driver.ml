@@ -657,8 +657,8 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~f_exception:(fun exn -> exn_to_str_extension exn)
       ~embed_errors
   with
-  | Error (st, lint_errors) -> lint lint_errors st
-  | Ok (st, lint_errors) -> st |> lint lint_errors |> cookies_and_check
+  | Error (st, lint_errors) -> Error (lint lint_errors st)
+  | Ok (st, lint_errors) -> Ok (st |> lint lint_errors |> cookies_and_check)
 
 let map_structure st =
   map_structure_gen st
@@ -713,8 +713,8 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~f_exception:(fun exn -> exn_to_sig_extension exn)
       ~embed_errors
   with
-  | Error (sg, lint_errors) -> lint lint_errors sg
-  | Ok (sg, lint_errors) -> sg |> lint lint_errors |> cookies_and_check
+  | Error (sg, lint_errors) -> Error (lint lint_errors sg)
+  | Ok (sg, lint_errors) -> Ok (sg |> lint lint_errors |> cookies_and_check)
 
 let map_signature sg =
   map_signature_gen sg
@@ -984,13 +984,23 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
     ~expect_mismatch_handler ~embed_errors =
   match ast with
   | Intf x ->
-      Intf_or_impl.Intf
-        (map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
-           ~input_name:(Some input_name) ~embed_errors)
+      let ast =
+        match
+          map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
+            ~input_name:(Some input_name) ~embed_errors
+        with
+        | Error ast | Ok ast -> ast
+      in
+      Intf_or_impl.Intf ast
   | Impl x ->
-      Intf_or_impl.Impl
-        (map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
-           ~input_name:(Some input_name) ~embed_errors)
+      let ast =
+        match
+          map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
+            ~input_name:(Some input_name) ~embed_errors
+        with
+        | Error ast | Ok ast -> ast
+      in
+      Intf_or_impl.Impl ast
 
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
     ~embed_errors ~output =
