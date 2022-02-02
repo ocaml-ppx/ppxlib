@@ -1,6 +1,8 @@
 Unreleased
 ----------
 
+- Added `error_extensionf` function to the `Location` module (#316, @panglesd)
+
 - Ast patterns: add `drop` and `as` patterns (#313 by @Kakadu, review by @pitag-ha)
 
 0.24.0 (08/12/2021)
@@ -23,8 +25,6 @@ Unreleased
 - Fix a bug in `type_is_recursive` and `really_recursive` where they would
   consider a type declaration recursive if the type appeared inside an attribute
   payload (#299, @NathanReb)
-
-- Added `error_extensionf` function to the `Locate` module (#316, @panglesd)
 
 0.23.0 (31/08/2021)
 -------------------
