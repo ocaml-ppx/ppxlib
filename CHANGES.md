@@ -5,6 +5,9 @@ Unreleased
 
 - Ast patterns: add `drop` and `as` patterns (#313 by @Kakadu, review by @pitag-ha)
 
+- Fixed a bug resulting in disscarded rewriters in the presence of
+  instrumentations, as well as a wrong order of rewriting (#296, @panglesd)
+
 0.24.0 (08/12/2021)
 -------------------
 
