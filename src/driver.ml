@@ -661,11 +661,14 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
   | Ok (st, lint_errors) -> Ok (st |> lint lint_errors |> cookies_and_check)
 
 let map_structure st =
-  map_structure_gen st
-    ~tool_name:(Astlib.Ast_metadata.tool_name ())
-    ~hook:Context_free.Generated_code_hook.nop
-    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-    ~input_name:None ~embed_errors:false
+  match
+    map_structure_gen st
+      ~tool_name:(Astlib.Ast_metadata.tool_name ())
+      ~hook:Context_free.Generated_code_hook.nop
+      ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+      ~input_name:None ~embed_errors:false
+  with
+  | Ok ast | Error ast -> ast
 
 (*$ str_to_sig _last_text_block *)
 
@@ -717,11 +720,14 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
   | Ok (sg, lint_errors) -> Ok (sg |> lint lint_errors |> cookies_and_check)
 
 let map_signature sg =
-  map_signature_gen sg
-    ~tool_name:(Astlib.Ast_metadata.tool_name ())
-    ~hook:Context_free.Generated_code_hook.nop
-    ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-    ~input_name:None ~embed_errors:false
+  match
+    map_signature_gen sg
+      ~tool_name:(Astlib.Ast_metadata.tool_name ())
+      ~hook:Context_free.Generated_code_hook.nop
+      ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
+      ~input_name:None ~embed_errors:false
+  with
+  | Ok ast | Error ast -> ast
 
 (*$*)
 
