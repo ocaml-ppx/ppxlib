@@ -25,8 +25,8 @@ val init : Lexing.lexbuf -> string -> unit
     named file. *)
 
 val raise_errorf : ?loc:t -> ('a, Caml.Format.formatter, unit, 'b) format4 -> 'a
-(** Raise a located error. Should be avoided as much as possible, in the
-    benefits of {!error_extensionf}. *)
+(** Raise a located error. Should be avoided as much as possible, in favor of
+    {!error_extensionf}. *)
 
 val of_lexbuf : Lexing.lexbuf -> t
 (** Return the location corresponding to the last matched regular expression *)
