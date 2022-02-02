@@ -8,6 +8,9 @@ Unreleased
 - Fixed a bug resulting in disscarded rewriters in the presence of
   instrumentations, as well as a wrong order of rewriting (#296, @panglesd)
 
+- Driver: Append the last valid AST to the error in case of located exception
+  when embedding errors (#315, @panglesd)
+
 0.24.0 (08/12/2021)
 -------------------
 
@@ -29,8 +32,6 @@ Unreleased
   consider a type declaration recursive if the type appeared inside an attribute
   payload (#299, @NathanReb)
 
-- Append the last valid AST to the error in case of located exception when
-  `embed_errors` is true (#315, @panglesd)
 
 0.23.0 (31/08/2021)
 -------------------
