@@ -4,41 +4,23 @@ open Utils
 module Arg = Caml.Arg
 
 let exe_name = Caml.Filename.basename Caml.Sys.executable_name
-
 let args = ref []
-
 let add_arg key spec ~doc = args := (key, spec, doc) :: !args
-
 let loc_fname = ref None
-
 let perform_checks = ref Options.perform_checks
-
 let perform_checks_on_extensions = ref Options.perform_checks_on_extensions
-
 let perform_locations_check = ref Options.perform_locations_check
-
 let debug_attribute_drop = ref false
-
 let apply_list = ref None
-
 let preprocessor = ref None
-
 let no_merge = ref false
-
 let request_print_passes = ref false
-
 let request_print_transformations = ref false
-
 let use_color = ref true
-
 let diff_command = ref Options.diff_command
-
 let pretty = ref false
-
 let styler = ref None
-
 let output_metadata_filename = ref None
-
 let corrected_suffix = ref ".ppx-corrected"
 
 module Lint_error = struct
@@ -61,18 +43,14 @@ module Cookies = struct
     Astlib.Ast_metadata.set_cookie name (Selected_ast.to_ocaml Expression expr)
 
   let handlers = ref []
-
   let add_handler f = handlers := !handlers @ [ f ]
 
   let add_simple_handler name pattern ~f =
     add_handler (fun T -> f (get T name pattern))
 
   let acknowledge_cookies T = List.iter !handlers ~f:(fun f -> f T)
-
   let post_handlers = ref []
-
   let add_post_handler f = post_handlers := !post_handlers @ [ f ]
-
   let call_post_handlers T = List.iter !post_handlers ~f:(fun f -> f T)
 end
 
@@ -937,7 +915,6 @@ let add_cookies (ast : Intf_or_impl.t) : Intf_or_impl.t =
   | Impl x -> Impl (add_cookies_str x)
 
 let corrections = ref []
-
 let add_to_list r x = r := x :: !r
 
 let register_correction ~loc ~repl =
@@ -946,7 +923,6 @@ let register_correction ~loc ~repl =
        ~repl)
 
 let process_file_hooks = ref []
-
 let register_process_file_hook f = add_to_list process_file_hooks f
 
 module File_property = struct
@@ -959,9 +935,7 @@ module File_property = struct
   type packed = T : _ t -> packed
 
   let all = ref []
-
   let register t = add_to_list all (T t)
-
   let reset_all () = List.iter !all ~f:(fun (T t) -> t.data <- None)
 
   let dump_and_reset_all () =
@@ -982,7 +956,6 @@ struct
     { name = Name.name; data = None; sexp_of_t = T.sexp_of_t }
 
   let () = File_property.register t
-
   let set x = t.data <- Some x
 end
 
@@ -1121,13 +1094,9 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
     Caml.exit 1)
 
 let output_mode = ref Pretty_print
-
 let output = ref None
-
 let kind = ref None
-
 let input = ref None
-
 let embed_errors = ref false
 
 let set_input fn =
@@ -1494,7 +1463,5 @@ let enable_checks () =
   perform_checks_on_extensions := true
 
 let enable_location_check () = perform_locations_check := true
-
 let disable_location_check () = perform_locations_check := false
-
 let map_structure st = map_structure st

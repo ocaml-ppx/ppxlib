@@ -17,5 +17,4 @@ let my_extension =
     expand
 
 let rule = Ppxlib.Context_free.Rule.extension my_extension
-
 let () = Driver.register_transformation ~rules:[ rule ] "get_env"
