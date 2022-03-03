@@ -1,5 +1,5 @@
-Unreleased
-----------
+0.25.0 (03/03/2022)
+-------------------
 
 - Added `error_extensionf` function to the `Location` module (#316, @panglesd)
 
