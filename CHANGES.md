@@ -22,6 +22,12 @@ unreleased
 - Documentation: Add a section on reporting errors by embedding extension nodes
   in the AST (#318, @panglesd)
 
+- Driver: In the case of ppxlib internal errors, embed those errors instead of
+  raising to return a meaningful AST (#329, @panglesd)
+
+- API: For each function that could raise a located error, add a function that
+  return a `result` instead (#329, @panglesd)
+
 0.26.0 (21/03/2022)
 -------------------
 

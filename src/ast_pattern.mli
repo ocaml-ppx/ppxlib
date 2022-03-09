@@ -83,7 +83,16 @@ type ('a, 'b, 'c) t = ('a, 'b, 'c) Ast_pattern0.t
 
 val parse :
   ('a, 'b, 'c) t -> Location.t -> ?on_error:(unit -> 'c) -> 'a -> 'b -> 'c
-(** Matches a value against a pattern. *)
+(** Matches a value against a pattern. Raise a located error in case of failure. *)
+
+val parse_res :
+  ('a, 'b, 'c) t ->
+  Location.t ->
+  ?on_error:(unit -> 'c) ->
+  'a ->
+  'b ->
+  ('c, Location.Error.t NonEmptyList.t) result
+(** Matches a value against a pattern and return a result. *)
 
 module Packed : sig
   type ('a, 'b, 'c) pattern = ('a, 'b, 'c) t
@@ -91,6 +100,12 @@ module Packed : sig
 
   val create : ('a, 'b, 'c) pattern -> 'b -> ('a, 'c) t
   val parse : ('a, 'b) t -> Location.t -> 'a -> 'b
+
+  val parse_res :
+    ('a, 'b) t ->
+    Location.t ->
+    'a ->
+    ('b, Location.Error.t NonEmptyList.t) result
 end
 with type ('a, 'b, 'c) pattern := ('a, 'b, 'c) t
 
