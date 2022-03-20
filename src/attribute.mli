@@ -108,7 +108,9 @@ val declare :
     "foo.default" declared in the previous example, on this code it will match
     the [@foo.default 0] attribute:
 
-    {[ type t = { x : int [@default 42] [@foo.default 0] } ]}
+    {[
+      type t = { x : int [@default 42] [@foo.default 0] }
+    ]}
 
     This is to allow the user to specify a [@default] attribute for all
     re-writers that use it but still put a specific one for one specific

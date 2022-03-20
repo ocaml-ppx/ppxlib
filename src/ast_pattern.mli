@@ -13,11 +13,15 @@ open! Import
     To understand how to use it, let's consider the example of ppx_inline_test.
     We want to recognize patterns of the form:
 
-    {[ let%test "name" = expr ]}
+    {[
+      let%test "name" = expr
+    ]}
 
     Which is a syntactic sugar for:
 
-    {[ [%%test let "name" = expr] ]}
+    {[
+      [%%test let "name" = expr]
+    ]}
 
     If we wanted to write a function that recognizes the payload of [%%test]
     using normal pattern matching we would write:
@@ -62,7 +66,9 @@ open! Import
     Notice that the place-holders for [name] and [expr] have been replaced by
     [__]. The following pattern with have type:
 
-    {[ (payload, string -> expression -> 'a, 'a) Ast_pattern.t ]}
+    {[
+      (payload, string -> expression -> 'a, 'a) Ast_pattern.t
+    ]}
 
     which means that it matches values of type [payload] and captures a string
     and expression from it. The two captured elements comes from the use of
@@ -98,11 +104,15 @@ val __' : ('a, 'a Loc.t -> 'b, 'b) t
     Note: this should only be used for types that do not embed a location. For
     instance you can use it to capture a string constant:
 
-    {[ estring __' ]}
+    {[
+      estring __'
+    ]}
 
     but using it to capture an expression would not yield the expected result:
 
-    {[ pair (eint (int 42)) __' ]}
+    {[
+      pair (eint (int 42)) __'
+    ]}
 
     In the latter case you should use the [pexp_loc] field of the captured
     expression instead. *)
