@@ -18,16 +18,49 @@ let expr1 =
 [%%expect{|
 val expr1 : expression =
   {Ppxlib__.Import.pexp_desc =
-    Ppxlib__.Import.Pexp_ident
-     {Ppxlib__.Import.txt = Ppxlib__.Import.Lident "__0";
-      loc =
-       {Ppxlib__.Import.loc_start =
-         {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
-          pos_cnum = -1};
-        loc_end =
-         {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
-          pos_cnum = -1};
-        loc_ghost = true}};
+    Ppxlib__.Import.Pexp_apply
+     ({Ppxlib__.Import.pexp_desc =
+        Ppxlib__.Import.Pexp_ident
+         {Ppxlib__.Import.txt = Ppxlib__.Import.Lident "__0";
+          loc =
+           {Ppxlib__.Import.loc_start =
+             {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+              pos_bol = 0; pos_cnum = -1};
+            loc_end =
+             {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+              pos_bol = 0; pos_cnum = -1};
+            loc_ghost = true}};
+       pexp_loc =
+        {Ppxlib__.Import.loc_start =
+          {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+           pos_cnum = -1};
+         loc_end =
+          {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+           pos_cnum = -1};
+         loc_ghost = true};
+       pexp_loc_stack = []; pexp_attributes = []},
+     [(Ppxlib__.Import.Nolabel,
+       {Ppxlib__.Import.pexp_desc =
+         Ppxlib__.Import.Pexp_construct
+          ({Ppxlib__.Import.txt = Ppxlib__.Import.Lident "()";
+            loc =
+             {Ppxlib__.Import.loc_start =
+               {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+                pos_bol = 0; pos_cnum = -1};
+              loc_end =
+               {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+                pos_bol = 0; pos_cnum = -1};
+              loc_ghost = true}},
+          None);
+        pexp_loc =
+         {Ppxlib__.Import.loc_start =
+           {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+            pos_cnum = -1};
+          loc_end =
+           {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+            pos_cnum = -1};
+          loc_ghost = true};
+        pexp_loc_stack = []; pexp_attributes = []})]);
    pexp_loc =
     {Ppxlib__.Import.loc_start =
       {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
@@ -41,7 +74,7 @@ val expr1 : expression =
 
 Pprintast.string_of_expression expr1;;
 [%%expect{|
-- : string = "__0"
+- : string = "__0 ()"
 |}]
 
 let expr2 =
@@ -50,16 +83,49 @@ let expr2 =
 [%%expect{|
 val expr2 : expression =
   {Ppxlib__.Import.pexp_desc =
-    Ppxlib__.Import.Pexp_ident
-     {Ppxlib__.Import.txt = Ppxlib__.Import.Lident "__1";
-      loc =
-       {Ppxlib__.Import.loc_start =
-         {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
-          pos_cnum = -1};
-        loc_end =
-         {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
-          pos_cnum = -1};
-        loc_ghost = true}};
+    Ppxlib__.Import.Pexp_apply
+     ({Ppxlib__.Import.pexp_desc =
+        Ppxlib__.Import.Pexp_ident
+         {Ppxlib__.Import.txt = Ppxlib__.Import.Lident "__1";
+          loc =
+           {Ppxlib__.Import.loc_start =
+             {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+              pos_bol = 0; pos_cnum = -1};
+            loc_end =
+             {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+              pos_bol = 0; pos_cnum = -1};
+            loc_ghost = true}};
+       pexp_loc =
+        {Ppxlib__.Import.loc_start =
+          {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+           pos_cnum = -1};
+         loc_end =
+          {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+           pos_cnum = -1};
+         loc_ghost = true};
+       pexp_loc_stack = []; pexp_attributes = []},
+     [(Ppxlib__.Import.Nolabel,
+       {Ppxlib__.Import.pexp_desc =
+         Ppxlib__.Import.Pexp_construct
+          ({Ppxlib__.Import.txt = Ppxlib__.Import.Lident "()";
+            loc =
+             {Ppxlib__.Import.loc_start =
+               {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+                pos_bol = 0; pos_cnum = -1};
+              loc_end =
+               {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1;
+                pos_bol = 0; pos_cnum = -1};
+              loc_ghost = true}},
+          None);
+        pexp_loc =
+         {Ppxlib__.Import.loc_start =
+           {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+            pos_cnum = -1};
+          loc_end =
+           {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+            pos_cnum = -1};
+          loc_ghost = true};
+        pexp_loc_stack = []; pexp_attributes = []})]);
    pexp_loc =
     {Ppxlib__.Import.loc_start =
       {Ppxlib__.Import.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
@@ -258,15 +324,15 @@ val quoted : expression =
         Some
          {Ppxlib__.Import.pexp_desc =
            Ppxlib__.Import.Pexp_tuple
-            [{Ppxlib__.Import.pexp_desc = Ppxlib__.Import.Pexp_ident ...;
-               pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...};
-              ...];
-           pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...});
-       pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...});
-    pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...}
+            [{Ppxlib__.Import.pexp_desc = Ppxlib__.Import.Pexp_apply (...);
+              pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...};
+             ...];
+          pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...});
+      pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...});
+   pexp_loc = ...; pexp_loc_stack = ...; pexp_attributes = ...}
 |}]
 
 Pprintast.string_of_expression quoted;;
 [%%expect{|
-- : string = "let rec __1 () = bar\nand __0 () = foo in [__0; __1]"
+- : string = "let rec __1 () = bar\nand __0 () = foo in [__0 (); __1 ()]"
 |}]

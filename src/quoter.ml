@@ -30,4 +30,4 @@ let quote t (e : expression) =
   in
   t.bindings <- binding :: t.bindings;
   t.next_id <- t.next_id + 1;
-  Ast.evar name
+  Ast.eapply (Ast.evar name) [ Ast.eunit ]
