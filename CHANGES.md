@@ -3,6 +3,8 @@ unreleased
 
 - Fix Ast_pattern.many (#333, @nojb)
 
+- Fix quoter and optimize identifier quoting (#327, @sim642)
+
 0.26.0 (21/03/2022)
 -------------------
 
