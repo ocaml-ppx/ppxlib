@@ -87,7 +87,8 @@ let main () =
                 try
                   let phr = apply_rewriters phr in
                   if !Clflags.dump_source then
-                    Format.fprintf ppf "%a@?" Pprintast.top_phrase phr;
+                    Format.fprintf ppf "%a@?" Ppxlib.Pprintast.top_phrase
+                      (Ppxlib.Selected_ast.Of_ocaml.copy_toplevel_phrase phr);
                   ignore (Toploop.execute_phrase true ppf phr : bool)
                 with exn -> Location.report_exception ppf exn));
           Format.fprintf ppf "@?|}]@.");
