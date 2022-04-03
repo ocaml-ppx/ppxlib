@@ -173,7 +173,13 @@ let alt_option some none =
   alt (map1 some ~f:(fun x -> Some x)) (map0 none ~f:None)
 
 let many (T f) =
-  T (fun ctx loc l k -> k (List.map l ~f:(fun x -> f ctx loc x (fun x -> x))))
+  T
+    (fun ctx loc l k ->
+      let rec aux accu = function
+        | [] -> k (List.rev accu)
+        | x :: xs -> f ctx loc x (fun x -> aux (x :: accu) xs)
+      in
+      aux [] l)
 
 let loc (T f) = T (fun ctx _loc (x : _ Loc.t) k -> f ctx x.loc x.txt k)
 let pack0 t = map t ~f:(fun f -> f ())
