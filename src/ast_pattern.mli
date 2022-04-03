@@ -157,7 +157,7 @@ val map2' :
 
 val nil : (_ list, 'a, 'a) t
 val ( ^:: ) : ('a, 'b, 'c) t -> ('a list, 'c, 'd) t -> ('a list, 'b, 'd) t
-val many : ('a, 'b -> 'b, 'c) t -> ('a list, 'c list -> 'd, 'd) t
+val many : ('a, 'b -> 'c, 'c) t -> ('a list, 'b list -> 'c, 'c) t
 val int : int -> (int, 'a, 'a) t
 val char : char -> (char, 'a, 'a) t
 val string : string -> (string, 'a, 'a) t
