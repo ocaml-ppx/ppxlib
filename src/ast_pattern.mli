@@ -68,10 +68,10 @@ open! Import
     and expression from it. The two captured elements comes from the use of
     [__].
 
-    An empty payload (e.g. for an attribute that has no parameter)
-    would be [Ast_pattern.(pstr nil)]. A payload with exactly one
+    An empty payload (e.g. for an attribute that has no payload)
+    is matched by [Ast_pattern.(pstr nil)]. A payload with exactly one
     expression (e.g. to specify a custom function in a deriver)
-    would be [Ast_pattern.(single_expr_payload __)].
+    is matched by [Ast_pattern.(single_expr_payload __)].
 *)
 
 type ('a, 'b, 'c) t = ('a, 'b, 'c) Ast_pattern0.t
