@@ -31,6 +31,7 @@ open Import
    latter by the former. This is so that we can override iteration an the level of a
    longident loc
    - adding a type cases = case list
+   - replacing all occurences of "case list" by "cases"
    - replacing all the (*IF_CURRENT = Foo.bar*) by: = Foo.bar
    - removing the extra values at the end of the file
    - replacing app [type ...] by [and ...] to make everything one recursive block
@@ -380,7 +381,7 @@ and expression_desc = Parsetree.expression_desc =
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN in E] when [flag] is
             {{!Asttypes.rec_flag.Recursive} [Recursive]}. *)
-  | Pexp_function of case list  (** [function P1 -> E1 | ... | Pn -> En] *)
+  | Pexp_function of cases  (** [function P1 -> E1 | ... | Pn -> En] *)
   | Pexp_fun of arg_label * expression option * pattern * expression
       (** [Pexp_fun(lbl, exp0, P, E1)] represents:
 
@@ -412,9 +413,9 @@ and expression_desc = Parsetree.expression_desc =
           argument).
 
           Invariant: [n > 0] *)
-  | Pexp_match of expression * case list
+  | Pexp_match of expression * cases
       (** [match E0 with P1 -> E1 | ... | Pn -> En] *)
-  | Pexp_try of expression * case list
+  | Pexp_try of expression * cases
       (** [try E0 with P1 -> E1 | ... | Pn -> En] *)
   | Pexp_tuple of expression list
       (** Expressions [(E1, ..., En)]
