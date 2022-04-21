@@ -190,8 +190,8 @@ module Parsetree = struct
              - As the {!core_type} of a
             {{!pattern_desc.Ppat_constraint}[Ppat_constraint]} node corresponding
                to a constraint on a let-binding:
-              {[let x : 'a1 ... 'an. T = e ...]}
 
+            {[let x : 'a1 ... 'an. T = e ...]}
              - Under {{!class_field_kind.Cfk_virtual}[Cfk_virtual]} for methods
             (not values).
 
@@ -632,7 +632,7 @@ module Parsetree = struct
             - [C of T1 * ... * Tn] when:
                  {ul {- [existentials] is [[]],}
                      {- [c_args] is [[T1; ...; Tn]],}
-                     {- [t_opt] is [None]}.}
+                     {- [t_opt] is [None].}}
             - [C: T0] when
                  {ul {- [existentials] is [[]],}
                      {- [c_args] is [[]],}

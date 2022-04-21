@@ -217,27 +217,11 @@ and core_type_desc = Parsetree.core_type_desc =
 
           Can only appear in the following context:
 
-          {ul
-           {- As
-              the
-              {!core_type}
-              of
-              a
-              {{!pattern_desc.Ppat_constraint}
-              [Ppat_constraint]}
-              node
-              corresponding
-              to
-              a
-              constraint
-              on
-              a
-              let-binding:
+          - As the {!core_type} of a {{!pattern_desc.Ppat_constraint}
+            [Ppat_constraint]} node corresponding to a constraint on a
+            let-binding:
 
-              {[ let x : 'a1 ... 'an. T = e ... ]}
-           }
-          }
-
+          {[ let x : 'a1 ... 'an. T = e ... ]}
           - Under {{!class_field_kind.Cfk_virtual} [Cfk_virtual]} for methods
             (not values).
 
@@ -636,25 +620,39 @@ and type_exception = Parsetree.type_exception = {
 
 and extension_constructor_kind = Parsetree.extension_constructor_kind =
   | Pext_decl of string loc list * constructor_arguments * core_type option
-      (** [Pext_decl(existentials, c_args, t_opt)]
-            describes a new extension constructor. It can be:
-            - [C of T1 * ... * Tn] when:
-                 {ul {- [existentials] is [[]],}
-                     {- [c_args] is [[T1; ...; Tn]],}
-                     {- [t_opt] is [None]}.}
-            - [C: T0] when
-                 {ul {- [existentials] is [[]],}
-                     {- [c_args] is [[]],}
-                     {- [t_opt] is [Some T0].}}
-            - [C: T1 * ... * Tn -> T0] when
-                 {ul {- [existentials] is [[]],}
-                     {- [c_args] is [[T1; ...; Tn]],}
-                     {- [t_opt] is [Some T0].}}
-            - [C: 'a... . T1 * ... * Tn -> T0] when
-                 {ul {- [existentials] is [['a;...]],}
-                     {- [c_args] is [[T1; ... ; Tn]],}
-                     {- [t_opt] is [Some T0].}}
-         *)
+      (** [Pext_decl(existentials, c_args, t_opt)] describes a new extension
+          constructor. It can be:
+
+          {ul
+           {- [C of T1 * ... * Tn]
+              when:
+
+              - [existentials] is [\[\]],
+              - [c_args] is [\[T1; ...; Tn\]],
+              - [t_opt] is [None].
+           }
+           {- [C: T0]
+              when
+
+              - [existentials] is [\[\]],
+              - [c_args] is [\[\]],
+              - [t_opt] is [Some T0].
+           }
+           {- [C: T1 * ... * Tn -> T0]
+              when
+
+              - [existentials] is [\[\]],
+              - [c_args] is [\[T1; ...; Tn\]],
+              - [t_opt] is [Some T0].
+           }
+           {- [C: 'a... . T1 * ... * Tn -> T0]
+              when
+
+              - [existentials] is [\['a;...\]],
+              - [c_args] is [\[T1; ... ; Tn\]],
+              - [t_opt] is [Some T0].
+           }
+          } *)
   | Pext_rebind of longident_loc
       (** [Pext_rebind(D)] re-export the constructor [D] with the new name [C] *)
 
