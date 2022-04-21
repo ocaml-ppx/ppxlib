@@ -586,3 +586,101 @@ the type of the whole [metaquot] extension point. E.g. you can write:
           let structure_item =
             [%stri let [%p some_pat] : [%t some_type] = [%e some_expr]]
 ]}
+
+{2 Handling errors}
+
+In order to give a nice user experience when reporting errors or failures in a ppx, it is necessary to include as much of the generated content as possible. Most IDE tools, such as Merlin, rely on the AST for their features, such as displaying type, jumping to definition or showing the list of errors.
+
+A common way to report an error is to throw an exception. However, this method interrupts the execution flow of the ppxlib driver and leaves later PPX's unexpanded when handing the AST over to merlin.
+
+Instead, it is better to always return a valid AST, as complete as possible, but with "error extension nodes" at every place where successful code generation was impossible. Error extension nodes are special extension nodes [[%ocaml.error error_message]], which can be embedded into a valid AST and are interpreted later as errors, for instance by the compiler or Merlin. As all extension nodes, they can be put {{:https://ocaml.org/manual/extensionnodes.html}at many places in the AST}, to replace for instance structure items, expressions or patterns.
+
+So whenever you're in doubt if to throw an exception or if to embed the error as an error extension node when writing a ppx rewriter, the answer is most likely: embed the error is the way to go! And whenever you're in doubt about where exactly inside the AST to embed the error, a good rule of thumb is: as deep in the AST as possible.
+
+For instance, suppose a rewriter is supposed to define a new record type, but there is an error in the generation of the type of one field. In order to have the most complete AST as output, the rewriter can still define the type and all of its fields, putting an extension node in place of the type of the faulty field:
+
+{[
+   type long_record = {
+     field_1: int;
+     field_2: [%ocaml.error "field_2 could not be implemented due to foo"];
+   }
+]}
+
+Ppxlib provides a function in its API to create error extension nodes: {!Ppxlib.Location.error_extensionf}. This function creates an extension node, which has then to be transformed in the right kind of node using functions such as for instance {!Ppxlib.Ast_builder.Default.pexp_extension}.
+
+{3 A documented example}
+
+Let us give an example. We will define a deriver on types records, which constructs a default value from a given type. For instance, the derivation on the type [type t = { x:int; y: float; z: string}] would yield [let default_t = {x= 0; y= 0.; z= ""}]. This deriver has two limitations:
+
+1. It does not work on other types than records,
+2. It only works for records containing fields of type [string], [int] or [float].
+
+The rewriter should warn the user about these limitations with a good error reporting. Let us first look at the second point. Here is the function mapping the fields from the type definition to a default expression.
+
+{[
+          let create_record ~loc fields =
+            let declaration_to_instantiation (ld : label_declaration) =
+              let loc = ld.pld_loc in
+              let { pld_type; pld_name; _ } = ld in
+              let e =
+                match pld_type with
+                | { ptyp_desc = Ptyp_constr ({ txt = Lident "string"; _ }, []); _ } ->
+                    pexp_constant ~loc (Pconst_string ("", loc, None))
+                | { ptyp_desc = Ptyp_constr ({ txt = Lident "int"; _ }, []); _ } ->
+                    pexp_constant ~loc (Pconst_integer ("0", None))
+                | { ptyp_desc = Ptyp_constr ({ txt = Lident "float"; _ }, []); _ } ->
+                    pexp_constant ~loc (Pconst_float ("0.", None))
+                | _ ->
+                    pexp_extension ~loc
+                    @@ Location.error_extensionf ~loc
+                         "Default value can only be derived for int, float, and string."
+              in
+              ({ txt = Lident pld_name.txt; loc }, e)
+            in
+            let l = List.map fields ~f:declaration_to_instantiation in
+            pexp_record ~loc l None
+]}
+
+
+When the record definition contains several fields with types other than [int], [float] or [string], several error nodes are added in the AST. Moreover, the location of the error nodes corresponds to the definition of the record fields. This allows tools such as Merlin to report all errors at once, at the right location, resulting in a better workflow than having to recompile everytime one error is corrected to see the next one.
+
+The first limitation is that the deriver cannot work on non record types. However, we decided here to derive a default value even in the case of non-record types, so that it does not appear as undefined in the remaining of the file. This impossible value consists of an error extension node.
+
+{[
+          let generate_impl ~ctxt (_rec_flag, type_declarations) =
+            let loc = Expansion_context.Deriver.derived_item_loc ctxt in
+            List.map type_declarations ~f:(fun (td : type_declaration) ->
+                let e, name =
+                  match td with
+                  | { ptype_kind = Ptype_record fields; ptype_name; ptype_loc; _ } ->
+                      (create_record ~loc:ptype_loc fields, ptype_name)
+                  | { ptype_name; ptype_loc; _ } ->
+                      ( pexp_extension ~loc
+                        @@ Location.error_extensionf ~loc:ptype_loc
+                             "Cannot derive accessors for non record type %s"
+                             ptype_name.txt,
+                        ptype_name )
+                in
+                [
+                  pstr_value ~loc Nonrecursive
+                    [
+                      {
+                        pvb_pat = ppat_var ~loc { txt = "default_" ^ name.txt; loc };
+                        pvb_expr = e;
+                        pvb_attributes = [];
+                        pvb_loc = loc;
+                      };
+                    ];
+                ])
+            |> List.concat
+]}
+
+{3 In case of panic}
+
+In some rare cases, it might happen that a whole file rewriter is not able to output a meaningful AST. In this case, they might be tempted to raise a located error: an exception that includes the location of the error. Moreover, this has historically been what was suggested to do by ppxlib examples, but is now discouraged in most of the cases, as it prevent Merlin features to work well.
+
+If such an exception is uncaught, the binary will return with an error code and the exeption be pretty-printed, including the location. When the driver is spawned with the [-embed-errors] or [-as-ppx] flags, the driver will look for located error. If it catches one, it will stop its chain of rewriting at this point, and output an AST consisting of the located error followed by the last valid AST: the one passed to the raising rewriter.
+
+Even more in context-free rewriters, raising should be avoided, in favour of outputting a single error node when a finer grained reporting is not needed or possible. As the whole context-free rewriting is done in one traverse of the AST, a single raise will cancel both the context-free pass and upcoming rewriters, and the AST prior to the context-free pass will be outputted together with the error.
+
+The function provided by the API to raise located errors is {!Ppxlib.Location.raise_errorf}.
