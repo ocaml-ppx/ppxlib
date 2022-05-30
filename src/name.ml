@@ -92,6 +92,8 @@ module Allowlisted = struct
         "ocaml.warn_on_literal_pattern";
         "ocaml.warnerror";
         "ocaml.warning";
+        "ocaml.toplevel_printer" (*Interpreted by the toplevel/utop*);
+        "toplevel_printer" (*Interpreted by the toplevel/utop*);
       ]
 
   (* Allow list the following extensions.
