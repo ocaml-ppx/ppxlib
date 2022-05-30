@@ -92,6 +92,8 @@ module Whitelisted = struct
         "ocaml.warn_on_literal_pattern";
         "ocaml.warnerror";
         "ocaml.warning";
+        "ocaml.toplevel_printer" (*Interpreted by the toplevel/utop*);
+        "toplevel_printer" (*Interpreted by the toplevel/utop*);
       ]
 
   (* White list the following extensions.

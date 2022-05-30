@@ -5,6 +5,8 @@ unreleased
 
 - Fix quoter and optimize identifier quoting (#327, @sim642)
 
+- Driver, when run with `--check`: Allow `toplevel_printer` attributes (#340, @pitag-ha)
+
 0.26.0 (21/03/2022)
 -------------------
 
