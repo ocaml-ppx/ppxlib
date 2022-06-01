@@ -416,12 +416,12 @@ end
 let check_attribute registrar context name =
   if
     (not
-       (Name.Whitelisted.is_whitelisted ~kind:`Attribute name.txt
+       (Name.Allowlisted.is_allowlisted ~kind:`Attribute name.txt
        || Name.ignore_checks name.txt))
     && Attribute_table.mem not_seen name
   then
-    let white_list = Name.Whitelisted.get_attribute_list () in
-    Name.Registrar.raise_errorf registrar context ~white_list
+    let allowlist = Name.Allowlisted.get_attribute_list () in
+    Name.Registrar.raise_errorf registrar context ~allowlist
       "Attribute `%s' was not used" name
 
 let check_unused =
