@@ -185,7 +185,7 @@ val check_all_seen : unit -> unit
 (** Check that all attributes collected by {!freshen_and_collect} have been:
 
     - matched at least once by one of: {!get}, {!consume} or {!Floating.convert}
-    - seen by [check_unused] (to allow white-listed attributed to pass through)
+    - seen by [check_unused] (to allow allowlisted attributed to pass through)
 
     This helps with faulty ppx rewriters that silently drop attributes. *)
 

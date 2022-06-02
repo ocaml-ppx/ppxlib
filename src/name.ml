@@ -49,8 +49,8 @@ let get_outer_namespace name =
   | None -> None
   | Some i -> Some (String.sub name ~pos:0 ~len:i)
 
-module Whitelisted = struct
-  (* White list the following attributes, as well as all their dot suffixes.
+module Allowlisted = struct
+  (* Allow list the following attributes, as well as all their dot suffixes.
 
      Since these attributes are interpreted by the compiler itself, we cannot check
      at the level of a ppx rewriter that they have been properly interpreted, so
@@ -94,7 +94,7 @@ module Whitelisted = struct
         "ocaml.warning";
       ]
 
-  (* White list the following extensions.
+  (* Allow list the following extensions.
 
      Since these extensions are interpreted by the compiler itself, we cannot check
      at the level of a ppx rewriter that they have been properly interpreted, so
@@ -102,7 +102,7 @@ module Whitelisted = struct
   *)
   let extensions = create_set [ "ocaml.error"; "ocaml.extension_constructor" ]
 
-  let is_whitelisted ~kind name =
+  let is_allowlisted ~kind name =
     match kind with
     | `Attribute -> String.Set.mem name attributes
     | `Extension -> String.Set.mem name extensions
@@ -128,8 +128,8 @@ module Reserved_namespaces = struct
   let check_not_reserved ~kind name =
     let kind, list =
       match kind with
-      | `Attribute -> ("attribute", Whitelisted.attributes)
-      | `Extension -> ("extension", Whitelisted.extensions)
+      | `Attribute -> ("attribute", Allowlisted.attributes)
+      | `Extension -> ("extension", Allowlisted.extensions)
     in
     if String.Set.mem name list then
       Printf.ksprintf failwith
@@ -206,12 +206,12 @@ module Registrar = struct
       fold_dot_suffixes name ~init:all.all ~f:(fun name acc ->
           String.Map.add name t acc)
 
-  let spellcheck t context ?(white_list = []) name =
+  let spellcheck t context ?(allowlist = []) name =
     let all =
       let all = get_all_for_context t context in
       String.Map.fold (fun key _ acc -> key :: acc) all.all []
     in
-    match Spellcheck.spellcheck (all @ white_list) name with
+    match Spellcheck.spellcheck (all @ allowlist) name with
     | Some _ as x -> x
     | None -> (
         let other_contexts =
@@ -258,12 +258,12 @@ module Registrar = struct
                       Format.fprintf ppf ",@ "))
                  others pp_text last current_context))
 
-  (* TODO: hint spelling errors regarding reserved namespaces names and white
-     listed names instead of taking an optional [white_list] parameter. *)
-  let raise_errorf t context ?white_list fmt (name : string Loc.t) =
+  (* TODO: hint spelling errors regarding reserved namespaces names and allowlisted
+     names instead of taking an optional [allowlist] parameter. *)
+  let raise_errorf t context ?allowlist fmt (name : string Loc.t) =
     Printf.ksprintf
       (fun msg ->
-        match spellcheck t context name.txt ?white_list with
+        match spellcheck t context name.txt ?allowlist with
         | None -> Location.raise_errorf ~loc:name.loc "%s" msg
         | Some s -> Location.raise_errorf ~loc:name.loc "%s.\n%s" msg s)
       fmt name.txt

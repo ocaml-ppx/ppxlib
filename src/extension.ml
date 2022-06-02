@@ -274,7 +274,7 @@ let rec filter_by_context :
 let fail ctx (name, _) =
   if
     not
-      (Name.Whitelisted.is_whitelisted ~kind:`Extension name.txt
+      (Name.Allowlisted.is_allowlisted ~kind:`Extension name.txt
       || Name.ignore_checks name.txt)
   then
     Name.Registrar.raise_errorf registrar (Context.T ctx)
