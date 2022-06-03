@@ -677,9 +677,9 @@ The first limitation is that the deriver cannot work on non record types. Howeve
 
 {3 In case of panic}
 
-In some rare cases, it might happen that a whole file rewriter is not able to output a meaningful AST. In this case, they might be tempted to raise a located error: an exception that includes the location of the error. Moreover, this has historically been what was suggested to do by ppxlib examples, but is now discouraged in most of the cases, as it prevent Merlin features to work well.
+In some rare cases, it might happen that a whole file rewriter is not able to output a meaningful AST. In this case, they might be tempted to raise a located error: an exception that includes the location of the error. Moreover, this has historically been what was suggested to do by ppxlib examples, but is now discouraged in most of the cases, as it prevents Merlin features to work well.
 
-If such an exception is uncaught, the binary will return with an error code and the exeption be pretty-printed, including the location. When the driver is spawned with the [-embed-errors] or [-as-ppx] flags, the driver will look for located error. If it catches one, it will stop its chain of rewriting at this point, and output an AST consisting of the located error followed by the last valid AST: the one passed to the raising rewriter.
+If such an exception is uncaught, the ppx driver will return with an error code and the exception will be pretty-printed, including the location (that's the case when the driver is called by dune). When the driver is spawned with the [-embed-errors] or [-as-ppx] flags (that's the case when the driver is called by merlin), the driver will look for located error. If it catches one, it will stop its chain of rewriting at this point, and output an AST consisting of the located error followed by the last valid AST: the one passed to the raising rewriter.
 
 Even more in context-free rewriters, raising should be avoided, in favour of outputting a single error node when a finer grained reporting is not needed or possible. As the whole context-free rewriting is done in one traverse of the AST, a single raise will cancel both the context-free pass and upcoming rewriters, and the AST prior to the context-free pass will be outputted together with the error.
 
