@@ -3,6 +3,8 @@ unreleased
 
 - Add `Code_path.enclosing_module` (#346, @ceastlund)
 
+- Fix typo in description field of dune-project (#343, @ceastlund)
+
 - Fix Ast_pattern.many (#333, @nojb)
 
 - Fix quoter and optimize identifier quoting (#327, @sim642)
