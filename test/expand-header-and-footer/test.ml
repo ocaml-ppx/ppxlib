@@ -21,6 +21,7 @@ let _ =
 let b = 2
 
 [%%expect{|
-Line _:
-Error: Uninterpreted extension 'include'.
+val a : int = 1
+val b : int = 2
+val c : int = 3
 |}]

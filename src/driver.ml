@@ -221,9 +221,7 @@ module Transform = struct
               in
               gen_header_and_footer Structure_item whole_loc (f base_ctxt)
         in
-        let attrs = map#structure base_ctxt attrs in
-        let st = map#structure base_ctxt st in
-        List.concat [ attrs; header; st; footer ]
+        map#structure base_ctxt (List.concat [ attrs; header; st; footer ])
       in
       match impl with None -> st | Some f -> f ctxt st
     in
@@ -247,9 +245,7 @@ module Transform = struct
               in
               gen_header_and_footer Signature_item whole_loc (f base_ctxt)
         in
-        let attrs = map#signature base_ctxt attrs in
-        let sg = map#signature base_ctxt sg in
-        List.concat [ attrs; header; sg; footer ]
+        map#signature base_ctxt (List.concat [ attrs; header; sg; footer ])
       in
       match intf with None -> sg | Some f -> f ctxt sg
     in
