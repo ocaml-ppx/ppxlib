@@ -31,7 +31,7 @@
   base-effects)
  (synopsis "Standard library for ppx rewriters")
  (description "Ppxlib is the standard library for ppx rewriters and other programs
-that manipulate the in-memory reprensation of OCaml programs, a.k.a
+that manipulate the in-memory representation of OCaml programs, a.k.a
 the \"Parsetree\".
 
 It also comes bundled with two ppx rewriters that are commonly used to
