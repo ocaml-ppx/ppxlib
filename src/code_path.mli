@@ -14,6 +14,9 @@ val submodule_path : t -> string list
 (** Return the path within the main module this code path represents as a list
     of module names. *)
 
+val enclosing_module : t -> string
+(** Return the nearest enclosing module name. Does descend into expressions. *)
+
 val value : t -> string option
 (** Return the name of the value to which this code path leads or [None] if it
     leads to the toplevel of a module or submodule. *)

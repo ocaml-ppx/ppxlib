@@ -4,6 +4,7 @@ type t = {
   file_path : string;
   main_module_name : string;
   submodule_path : string loc list;
+  enclosing_module : string;
   value : string loc option;
   in_expr : bool;
 }
@@ -17,12 +18,14 @@ let top_level ~file_path =
     file_path;
     main_module_name;
     submodule_path = [];
+    enclosing_module = main_module_name;
     value = None;
     in_expr = false;
   }
 
 let file_path t = t.file_path
 let main_module_name t = t.main_module_name
+let enclosing_module t = t.enclosing_module
 
 let submodule_path t =
   List.rev_map ~f:(fun located -> located.txt) t.submodule_path
@@ -40,9 +43,12 @@ let fully_qualified_path t =
 let enter_expr t = { t with in_expr = true }
 
 let enter_module ~loc module_name t =
-  if t.in_expr then t
+  if t.in_expr then { t with enclosing_module = module_name }
   else
-    { t with submodule_path = { txt = module_name; loc } :: t.submodule_path }
+    { t with
+      submodule_path = { txt = module_name; loc } :: t.submodule_path;
+      enclosing_module = module_name;
+    }
 
 let enter_value ~loc value_name t =
   if t.in_expr then t else { t with value = Some { txt = value_name; loc } }
