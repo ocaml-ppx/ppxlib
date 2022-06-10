@@ -62,3 +62,36 @@ let module M = struct
 - : string =
 "(code_path(main_module_name Test)(submodule_path())(value())(fully_qualified_path Test))"
 |}]
+
+module Outer = struct
+  module Inner = struct
+    let code_path = [%code_path]
+  end
+end
+let _ = Outer.Inner.code_path
+[%%expect{|
+module Outer : sig module Inner : sig val code_path : string end end
+- : string =
+"(code_path(main_module_name Test)(submodule_path(Outer Inner))(value(code_path))(fully_qualified_path Test.Outer.Inner.code_path))"
+|}]
+
+module Functor() = struct
+  let code_path = ref ""
+  module _ = struct
+    let x =
+      let module First_class = struct
+        code_path := [%code_path]
+      end in
+      let module _ = First_class in
+      ()
+    ;;
+
+    ignore x
+  end
+end
+let _ = let module M = Functor() in !M.code_path
+[%%expect{|
+module Functor : functor () -> sig val code_path : string ref end
+- : string =
+"(code_path(main_module_name Test)(submodule_path(Functor _))(value(x))(fully_qualified_path Test.Functor._.x))"
+|}]
