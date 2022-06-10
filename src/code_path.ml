@@ -45,7 +45,8 @@ let enter_expr t = { t with in_expr = true }
 let enter_module ~loc module_name t =
   if t.in_expr then { t with enclosing_module = module_name }
   else
-    { t with
+    {
+      t with
       submodule_path = { txt = module_name; loc } :: t.submodule_path;
       enclosing_module = module_name;
     }
