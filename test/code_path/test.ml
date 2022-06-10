@@ -61,7 +61,7 @@ let module M = struct
   M.m
 [%%expect{|
 - : string =
-"(code_path(main_module_name Test)(submodule_path())(enclosing_module Test)(value())(fully_qualified_path Test))"
+"(code_path(main_module_name Test)(submodule_path())(enclosing_module M)(value())(fully_qualified_path Test))"
 |}]
 
 module Outer = struct
@@ -94,5 +94,5 @@ let _ = let module M = Functor() in !M.code_path
 [%%expect{|
 module Functor : functor () -> sig val code_path : string ref end
 - : string =
-"(code_path(main_module_name Test)(submodule_path(Functor _))(enclosing_module _)(value(x))(fully_qualified_path Test.Functor._.x))"
+"(code_path(main_module_name Test)(submodule_path(Functor _))(enclosing_module First_class)(value(x))(fully_qualified_path Test.Functor._.x))"
 |}]
