@@ -94,17 +94,20 @@ class map_with_expansion_context =
   object (self)
     inherit [Expansion_context.Base.t] map_with_context as super
 
-    method! expression ctxt { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } =
+    method! expression ctxt
+        { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } =
       let ctxt = Expansion_context.Base.enter_expr ctxt in
       let pexp_desc =
         match pexp_desc with
         | Pexp_letmodule (name, module_expr, body) ->
-          let name = self#loc (self#option self#string) ctxt name in
-          let module_expr =
-            self#module_expr (ec_enter_module_opt ~loc:name.loc name.txt ctxt) module_expr
-          in
-          let body = self#expression ctxt body in
-          Pexp_letmodule (name, module_expr, body)
+            let name = self#loc (self#option self#string) ctxt name in
+            let module_expr =
+              self#module_expr
+                (ec_enter_module_opt ~loc:name.loc name.txt ctxt)
+                module_expr
+            in
+            let body = self#expression ctxt body in
+            Pexp_letmodule (name, module_expr, body)
         | _ -> self#expression_desc ctxt pexp_desc
       in
       let pexp_loc = self#location ctxt pexp_loc in
