@@ -21,6 +21,11 @@ val value : t -> string option
 (** Return the name of the value to which this code path leads or [None] if it
     leads to the toplevel of a module or submodule. *)
 
+val enclosing_value : t -> string option
+(** Like [value], returns the name of an enclosing value definition. Unlike
+    [value], includes names inside expressions, not just names that the code
+    path can reach from the toplevel module. *)
+
 val fully_qualified_path : t -> string
 (** Return the fully qualified path to the module or value this code path leads
     to, eg ["Some_main_module.Some_submodule.some_value"]. Note that the fully
