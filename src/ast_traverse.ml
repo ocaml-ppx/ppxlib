@@ -103,7 +103,7 @@ class map_with_expansion_context =
             let name = self#loc (self#option self#string) ctxt name in
             let module_expr =
               self#module_expr
-                (ec_enter_module_opt ~loc:name.loc name.txt ctxt)
+                (ec_enter_module_opt ~loc:module_expr.pmod_loc name.txt ctxt)
                 module_expr
             in
             let body = self#expression ctxt body in
