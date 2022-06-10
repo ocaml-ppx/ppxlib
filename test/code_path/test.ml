@@ -9,6 +9,7 @@ let sexp_of_code_path code_path =
     [ "main_module_name", sexp_of_string (Code_path.main_module_name code_path)
     ; "submodule_path", sexp_of_list sexp_of_string (Code_path.submodule_path code_path)
     ; "enclosing_module", sexp_of_string (Code_path.enclosing_module code_path)
+    ; "enclosing_value", sexp_of_option sexp_of_string (Code_path.enclosing_value code_path)
     ; "value", sexp_of_option sexp_of_string (Code_path.value code_path)
     ; "fully_qualified_path", sexp_of_string (Code_path.fully_qualified_path code_path)
     ]
@@ -51,7 +52,7 @@ let s =
 ;;
 [%%expect{|
 val s : string =
-  "(code_path(main_module_name Test)(submodule_path())(enclosing_module C')(value(s))(fully_qualified_path Test.s))"
+  "(code_path(main_module_name Test)(submodule_path())(enclosing_module C')(enclosing_value(c))(value(s))(fully_qualified_path Test.s))"
 |}]
 
 let module M = struct
@@ -61,7 +62,7 @@ let module M = struct
   M.m
 [%%expect{|
 - : string =
-"(code_path(main_module_name Test)(submodule_path())(enclosing_module M)(value())(fully_qualified_path Test))"
+"(code_path(main_module_name Test)(submodule_path())(enclosing_module M)(enclosing_value(m))(value())(fully_qualified_path Test))"
 |}]
 
 module Outer = struct
@@ -73,7 +74,7 @@ let _ = Outer.Inner.code_path
 [%%expect{|
 module Outer : sig module Inner : sig val code_path : string end end
 - : string =
-"(code_path(main_module_name Test)(submodule_path(Outer Inner))(enclosing_module Inner)(value(code_path))(fully_qualified_path Test.Outer.Inner.code_path))"
+"(code_path(main_module_name Test)(submodule_path(Outer Inner))(enclosing_module Inner)(enclosing_value(code_path))(value(code_path))(fully_qualified_path Test.Outer.Inner.code_path))"
 |}]
 
 module Functor() = struct
@@ -94,5 +95,5 @@ let _ = let module M = Functor() in !M.code_path
 [%%expect{|
 module Functor : functor () -> sig val code_path : string ref end
 - : string =
-"(code_path(main_module_name Test)(submodule_path(Functor _))(enclosing_module First_class)(value(x))(fully_qualified_path Test.Functor._.x))"
+"(code_path(main_module_name Test)(submodule_path(Functor _))(enclosing_module First_class)(enclosing_value(x))(value(x))(fully_qualified_path Test.Functor._.x))"
 |}]
