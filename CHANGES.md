@@ -15,6 +15,9 @@ unreleased
 
 - Driver, when run with `--check`: Allow `toplevel_printer` attributes (#340, @pitag-ha)
 
+- Documentation: Add a section on reporting errors by embedding extension nodes
+  in the AST (#318, @panglesd)
+
 0.26.0 (21/03/2022)
 -------------------
 
