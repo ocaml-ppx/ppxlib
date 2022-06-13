@@ -139,11 +139,10 @@ class map_with_expansion_context =
 
     method! value_binding ctxt { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } =
       let all_var_names = var_names_of#pattern pvb_pat [] in
-      let var_name = Stdppx.List.last all_var_names in
       let in_binding_ctxt =
-        match var_name with
-        | None -> ctxt
-        | Some var_name ->
+        match all_var_names with
+        | [] | _ :: _ :: _ -> ctxt
+        | [ var_name ] ->
             Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt
       in
       let pvb_pat = self#pattern ctxt pvb_pat in
