@@ -1,6 +1,9 @@
 unreleased
 ------------
 
+- Update expansion context to leave out value name when multiple are
+  defined at once. (#351, @ceastlund)
+
 - Add support for OCaml 5.0 (#348, @pitag-ha)
 
 - Add `Code_path.enclosing_value` (#349, @ceastlund)
