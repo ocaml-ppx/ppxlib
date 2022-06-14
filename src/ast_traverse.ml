@@ -61,6 +61,46 @@ let var_names_of =
 let ec_enter_module_opt ~loc name_opt ctxt =
   Expansion_context.Base.enter_module ~loc (module_name name_opt) ctxt
 
+let enter_value =
+  Attribute.declare "ppxlib.enter_value" Expression
+    Ast_pattern.(single_expr_payload (pexp_ident (lident __')))
+    Fn.id
+
+let enter_module =
+  Attribute.declare "ppxlib.enter_module" Module_expr
+    Ast_pattern.(single_expr_payload (pexp_construct (lident __') none))
+    Fn.id
+
+let do_not_enter_value_binding =
+  Attribute.declare "ppxlib.do_not_enter_value" Value_binding
+    Ast_pattern.(pstr nil)
+    ()
+
+let do_not_enter_value_description =
+  Attribute.declare "ppxlib.do_not_enter_value" Value_description
+    Ast_pattern.(pstr nil)
+    ()
+
+let do_not_enter_module_binding =
+  Attribute.declare "ppxlib.do_not_enter_module" Module_binding
+    Ast_pattern.(pstr nil)
+    ()
+
+let do_not_enter_module_declaration =
+  Attribute.declare "ppxlib.do_not_enter_module" Module_declaration
+    Ast_pattern.(pstr nil)
+    ()
+
+let do_not_enter_module_type_declaration =
+  Attribute.declare "ppxlib.do_not_enter_module" Module_type_declaration
+    Ast_pattern.(pstr nil)
+    ()
+
+let do_not_enter_let_module =
+  Attribute.declare "ppxlib.do_not_enter_module" Expression
+    Ast_pattern.(pstr nil)
+    ()
+
 class map_with_expansion_context_and_errors =
   let return _ctx x = (x, []) in
   object (self)
@@ -95,7 +135,12 @@ class map_with_expansion_context_and_errors =
     method tuple _ctx l = List.concat l
 
     method! expression ctxt
-        { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } =
+        ({ pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } as expr) =
+      let ctxt =
+        match Attribute.get enter_value expr with
+        | None -> ctxt
+        | Some { loc; txt } -> Expansion_context.Base.enter_value ~loc txt ctxt
+      in
       let ctxt = Expansion_context.Base.enter_expr ctxt in
       let pexp_desc, desc_errors =
         match pexp_desc with
@@ -104,9 +149,13 @@ class map_with_expansion_context_and_errors =
               self#loc (self#option self#string) ctxt name
             in
             let module_expr, module_expr_errors =
-              self#module_expr
-                (ec_enter_module_opt ~loc:module_expr.pmod_loc name.txt ctxt)
-                module_expr
+              let ctxt =
+                match Attribute.get do_not_enter_let_module expr with
+                | Some () -> ctxt
+                | None ->
+                    ec_enter_module_opt ~loc:module_expr.pmod_loc name.txt ctxt
+              in
+              self#module_expr ctxt module_expr
             in
             let body, body_errors = self#expression ctxt body in
             let errors =
@@ -132,52 +181,79 @@ class map_with_expansion_context_and_errors =
             ("attributes", attributes_errors);
           ] )
 
+    method! module_expr ctxt me =
+      let ctxt =
+        match Attribute.get enter_module me with
+        | None -> ctxt
+        | Some { loc; txt } -> Expansion_context.Base.enter_module ~loc txt ctxt
+      in
+      super#module_expr ctxt me
+
     method! module_binding ctxt mb =
-      super#module_binding
-        (ec_enter_module_opt ~loc:mb.pmb_loc mb.pmb_name.txt ctxt)
-        mb
+      let ctxt =
+        match Attribute.get do_not_enter_module_binding mb with
+        | Some () -> ctxt
+        | None -> ec_enter_module_opt ~loc:mb.pmb_loc mb.pmb_name.txt ctxt
+      in
+      super#module_binding ctxt mb
 
     method! module_declaration ctxt md =
-      super#module_declaration
-        (ec_enter_module_opt ~loc:md.pmd_loc md.pmd_name.txt ctxt)
-        md
+      let ctxt =
+        match Attribute.get do_not_enter_module_declaration md with
+        | Some () -> ctxt
+        | None -> ec_enter_module_opt ~loc:md.pmd_loc md.pmd_name.txt ctxt
+      in
+      super#module_declaration ctxt md
 
     method! module_type_declaration ctxt mtd =
-      super#module_type_declaration
-        (Expansion_context.Base.enter_module ~loc:mtd.pmtd_loc mtd.pmtd_name.txt
-           ctxt)
-        mtd
+      let ctxt =
+        match Attribute.get do_not_enter_module_type_declaration mtd with
+        | Some () -> ctxt
+        | None ->
+            Expansion_context.Base.enter_module ~loc:mtd.pmtd_loc
+              mtd.pmtd_name.txt ctxt
+      in
+      super#module_type_declaration ctxt mtd
 
     method! value_description ctxt vd =
-      super#value_description
-        (Expansion_context.Base.enter_value ~loc:vd.pval_loc vd.pval_name.txt
-           ctxt)
-        vd
+      let ctxt =
+        match Attribute.get do_not_enter_value_description vd with
+        | Some () -> ctxt
+        | None ->
+            Expansion_context.Base.enter_value ~loc:vd.pval_loc vd.pval_name.txt
+              ctxt
+      in
+      super#value_description ctxt vd
 
-    method! value_binding ctxt { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } =
-      let all_var_names = var_names_of#pattern pvb_pat [] in
-      let in_binding_ctxt =
-        match all_var_names with
-        | [] | _ :: _ :: _ -> ctxt
-        | [ var_name ] ->
-            Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt
-      in
-      let pvb_pat, pat_errors = self#pattern ctxt pvb_pat in
-      let pvb_expr, expr_errors = self#expression in_binding_ctxt pvb_expr in
-      let pvb_attributes, attributes_errors =
-        self#attributes in_binding_ctxt pvb_attributes
-      in
-      let pvb_loc, loc_errors = self#location ctxt pvb_loc in
-      let errors =
-        self#record ctxt
-          [
-            ("pvb_pat", pat_errors);
-            ("pvb_expr", expr_errors);
-            ("pvb_attributes", attributes_errors);
-            ("pvb_loc", loc_errors);
-          ]
-      in
-      ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, errors)
+    method! value_binding ctxt
+        ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc } as vb) =
+      match Attribute.get do_not_enter_value_binding vb with
+      | Some () -> super#value_binding ctxt vb
+      | None ->
+          let in_binding_ctxt =
+            match var_names_of#pattern pvb_pat [] with
+            | [] | _ :: _ :: _ -> ctxt
+            | [ var_name ] ->
+                Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt
+          in
+          let pvb_pat, pat_errors = self#pattern ctxt pvb_pat in
+          let pvb_expr, expr_errors =
+            self#expression in_binding_ctxt pvb_expr
+          in
+          let pvb_attributes, attributes_errors =
+            self#attributes in_binding_ctxt pvb_attributes
+          in
+          let pvb_loc, loc_errors = self#location ctxt pvb_loc in
+          let errors =
+            self#record ctxt
+              [
+                ("pvb_pat", pat_errors);
+                ("pvb_expr", expr_errors);
+                ("pvb_attributes", attributes_errors);
+                ("pvb_loc", loc_errors);
+              ]
+          in
+          ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, errors)
   end
 
 class sexp_of =
