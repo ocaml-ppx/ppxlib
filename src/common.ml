@@ -97,7 +97,7 @@ exception Type_is_recursive
 
 class type_is_recursive rec_flag tds =
   object (self)
-    inherit Ast_traverse.iter as super
+    inherit Ast_traverse0.iter as super
     val type_names : string list = List.map tds ~f:(fun td -> td.ptype_name.txt)
     method return_true () = raise_notrace Type_is_recursive
 
@@ -185,7 +185,7 @@ let attributes_errors =
 
 let collect_attributes_errors =
   object
-    inherit [Location.Error.t list] Ast_traverse.fold
+    inherit [Location.Error.t list] Ast_traverse0.fold
     method! attribute a acc = attributes_errors [ a ] @ acc
   end
 
@@ -196,7 +196,7 @@ let assert_no_attributes l =
 
 let assert_no_attributes_in =
   object
-    inherit Ast_traverse.iter
+    inherit Ast_traverse0.iter
     method! attribute a = assert_no_attributes [ a ]
   end
 

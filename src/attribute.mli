@@ -192,17 +192,17 @@ module Floating : sig
   val convert : ('a, 'b) t list -> 'a -> 'b option
 end
 
-val explicitly_drop : Ast_traverse.iter
+val explicitly_drop : Ast_traverse0.iter
 (** Code that is voluntarily dropped by a rewriter needs to be given to this
     object. All attributes inside will be marked as handled. *)
 
-val check_unused : Ast_traverse.iter
+val check_unused : Ast_traverse0.iter
 (** Raise if there are unused attributes. *)
 
-val collect_unused_attributes_errors : Location.Error.t list Ast_traverse.fold
+val collect_unused_attributes_errors : Location.Error.t list Ast_traverse0.fold
 (** Collect all errors due to unused attributes. *)
 
-val collect : Ast_traverse.iter
+val collect : Ast_traverse0.iter
 (** Collect all attribute names. To be used in conjunction with
     {!check_all_seen}. *)
 
