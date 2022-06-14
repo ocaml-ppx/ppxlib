@@ -1,5 +1,5 @@
-unreleased
-------------
+0.27.0 (14/06/2022)
+-------------------
 
 - Update expansion context to leave out value name when multiple are
   defined at once. (#351, @ceastlund)
