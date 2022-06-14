@@ -1,2 +1,153 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Expr (ppxlib.Ppxlib_metaquot.Expr)</title><link rel="stylesheet" href="../../../odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc 1.5.2"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body><div class="content"><header><nav><a href="../index.html">Up</a> – <a href="../../index.html">ppxlib</a> &#x00BB; <a href="../index.html">Ppxlib_metaquot</a> &#x00BB; Expr</nav><h1>Module <code>Ppxlib_metaquot.Expr</code></h1></header><dl><dt class="spec value" id="val-lift"><a href="#val-lift" class="anchor"></a><code><span class="keyword">val</span> lift : <a href="../../Ppxlib/index.html#type-location">Ppxlib.location</a> <span>&#45;&gt;</span> <span><a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a> <a href="../../Ppxlib/Ast_traverse/class-lift/index.html">Ppxlib.Ast_traverse.lift</a></span></code></dt></dl></div></body></html>
+<html xmlns="http://www.w3.org/1999/xhtml"><head><title>Expr (ppxlib.Ppxlib_metaquot.Expr)</title><link rel="stylesheet" href="../../../odoc.css"/><meta charset="utf-8"/><meta name="generator" content="odoc %%VERSION%%"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/><script src="../../../highlight.pack.js"></script><script>hljs.initHighlightingOnLoad();</script></head><body class="odoc"><nav class="odoc-nav"><a href="../index.html">Up</a> – <a href="../../index.html">ppxlib</a> &#x00BB; <a href="../index.html">Ppxlib_metaquot</a> &#x00BB; Expr</nav><header class="odoc-preamble"><h1>Module <code><span>Ppxlib_metaquot.Expr</span></code></h1></header><div class="odoc-content"><div class="odoc-spec"><div class="spec value anchored" id="val-lift"><a href="#val-lift" class="anchor"></a><code><span><span class="keyword">val</span> lift : 
+  <span><a href="../../Ppxlib/index.html#type-location">Ppxlib.location</a> <span class="arrow">&#45;&gt;</span></span>
+  <span>&lt; arg_label : <span><a href="../../Ppxlib_ast/Ast/index.html#type-arg_label">Ppxlib_ast.Ast.arg_label</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; array : 
+    'a. <span><span><span>(<span class="type-var">'a</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span>(<span><span class="type-var">'a</span> array</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; attribute : <span><a href="../../Ppxlib_ast/Ast/index.html#type-attribute">Ppxlib_ast.Ast.attribute</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; attributes : <span><a href="../../Ppxlib_ast/Ast/index.html#type-attributes">Ppxlib_ast.Ast.attributes</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; binding_op : <span><a href="../../Ppxlib_ast/Ast/index.html#type-binding_op">Ppxlib_ast.Ast.binding_op</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; bool : <span><span>(bool, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; case : <span><a href="../../Ppxlib_ast/Ast/index.html#type-case">Ppxlib_ast.Ast.case</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; cases : <span><a href="../../Ppxlib_ast/Ast/index.html#type-cases">Ppxlib_ast.Ast.cases</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; char : <span><span>(char, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; class_declaration : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_declaration">Ppxlib_ast.Ast.class_declaration</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_description : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_description">Ppxlib_ast.Ast.class_description</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_expr : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_expr">Ppxlib_ast.Ast.class_expr</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_expr_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_expr_desc">Ppxlib_ast.Ast.class_expr_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_field : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_field">Ppxlib_ast.Ast.class_field</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_field_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_field_desc">Ppxlib_ast.Ast.class_field_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_field_kind : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_field_kind">Ppxlib_ast.Ast.class_field_kind</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_infos : 
+    'a. <span><span>(<span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span class="type-var">'a</span> <a href="../../Ppxlib_ast/Ast/index.html#type-class_infos">Ppxlib_ast.Ast.class_infos</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_signature : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_signature">Ppxlib_ast.Ast.class_signature</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_structure : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_structure">Ppxlib_ast.Ast.class_structure</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_type : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_type">Ppxlib_ast.Ast.class_type</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_type_declaration : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_type_declaration">Ppxlib_ast.Ast.class_type_declaration</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_type_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_type_desc">Ppxlib_ast.Ast.class_type_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_type_field : <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_type_field">Ppxlib_ast.Ast.class_type_field</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; class_type_field_desc : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-class_type_field_desc">Ppxlib_ast.Ast.class_type_field_desc</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; closed_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-closed_flag">Ppxlib_ast.Ast.closed_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; constant : <span><a href="../../Ppxlib_ast/Ast/index.html#type-constant">Ppxlib_ast.Ast.constant</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; constr : <span>string <span class="arrow">&#45;&gt;</span></span> <span><span><a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a> list</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; constructor_arguments : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-constructor_arguments">Ppxlib_ast.Ast.constructor_arguments</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; constructor_declaration : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-constructor_declaration">Ppxlib_ast.Ast.constructor_declaration</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; core_type : <span><a href="../../Ppxlib_ast/Ast/index.html#type-core_type">Ppxlib_ast.Ast.core_type</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; core_type_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-core_type_desc">Ppxlib_ast.Ast.core_type_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; direction_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-direction_flag">Ppxlib_ast.Ast.direction_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; directive_argument : <span><a href="../../Ppxlib_ast/Ast/index.html#type-directive_argument">Ppxlib_ast.Ast.directive_argument</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; directive_argument_desc : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-directive_argument_desc">Ppxlib_ast.Ast.directive_argument_desc</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; expression : <span><a href="../../Ppxlib_ast/Ast/index.html#type-expression">Ppxlib_ast.Ast.expression</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; expression_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-expression_desc">Ppxlib_ast.Ast.expression_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; extension : <span><a href="../../Ppxlib_ast/Ast/index.html#type-extension">Ppxlib_ast.Ast.extension</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; extension_constructor : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-extension_constructor">Ppxlib_ast.Ast.extension_constructor</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; extension_constructor_kind : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-extension_constructor_kind">Ppxlib_ast.Ast.extension_constructor_kind</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; float : <span><span>(float, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; functor_parameter : <span><a href="../../Ppxlib_ast/Ast/index.html#type-functor_parameter">Ppxlib_ast.Ast.functor_parameter</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; include_declaration : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-include_declaration">Ppxlib_ast.Ast.include_declaration</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; include_description : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-include_description">Ppxlib_ast.Ast.include_description</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; include_infos : 
+    'a. <span><span>(<span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span class="type-var">'a</span> <a href="../../Ppxlib_ast/Ast/index.html#type-include_infos">Ppxlib_ast.Ast.include_infos</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; injectivity : <span><a href="../../Ppxlib_ast/Ast/index.html#type-injectivity">Ppxlib_ast.Ast.injectivity</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; int : <span><span>(int, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; int32 : <span><span>(int32, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; int64 : <span><span>(int64, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; label : <span><a href="../../Ppxlib_ast/Ast/index.html#type-label">Ppxlib_ast.Ast.label</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; label_declaration : <span><a href="../../Ppxlib_ast/Ast/index.html#type-label_declaration">Ppxlib_ast.Ast.label_declaration</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; letop : <span><a href="../../Ppxlib_ast/Ast/index.html#type-letop">Ppxlib_ast.Ast.letop</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; list : 
+    'a. <span><span><span>(<span class="type-var">'a</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span>(<span><span class="type-var">'a</span> list</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; loc : 
+    'a. <span><span>(<span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span class="type-var">'a</span> <a href="../../Ppxlib_ast/Ast/index.html#type-loc">Ppxlib_ast.Ast.loc</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; location : <span><a href="../../Ppxlib_ast/Ast/index.html#type-location">Ppxlib_ast.Ast.location</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; location_stack : <span><a href="../../Ppxlib_ast/Ast/index.html#type-location_stack">Ppxlib_ast.Ast.location_stack</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; longident : <span><a href="../../Ppxlib_ast/Ast/index.html#type-longident">Ppxlib_ast.Ast.longident</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; longident_loc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-longident_loc">Ppxlib_ast.Ast.longident_loc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_binding : <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_binding">Ppxlib_ast.Ast.module_binding</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_declaration : <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_declaration">Ppxlib_ast.Ast.module_declaration</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_expr : <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_expr">Ppxlib_ast.Ast.module_expr</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_expr_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_expr_desc">Ppxlib_ast.Ast.module_expr_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_substitution : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_substitution">Ppxlib_ast.Ast.module_substitution</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_type : <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_type">Ppxlib_ast.Ast.module_type</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_type_declaration : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_type_declaration">Ppxlib_ast.Ast.module_type_declaration</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; module_type_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-module_type_desc">Ppxlib_ast.Ast.module_type_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; mutable_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-mutable_flag">Ppxlib_ast.Ast.mutable_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; nativeint : <span><span>(nativeint, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; object_field : <span><a href="../../Ppxlib_ast/Ast/index.html#type-object_field">Ppxlib_ast.Ast.object_field</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; object_field_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-object_field_desc">Ppxlib_ast.Ast.object_field_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; open_declaration : <span><a href="../../Ppxlib_ast/Ast/index.html#type-open_declaration">Ppxlib_ast.Ast.open_declaration</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; open_description : <span><a href="../../Ppxlib_ast/Ast/index.html#type-open_description">Ppxlib_ast.Ast.open_description</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; open_infos : 
+    'a. <span><span>(<span><span class="type-var">'a</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span><span class="type-var">'a</span> <a href="../../Ppxlib_ast/Ast/index.html#type-open_infos">Ppxlib_ast.Ast.open_infos</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; option : 
+    'a. <span><span><span>(<span class="type-var">'a</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span> <span class="arrow">&#45;&gt;</span></span>
+    <span><span>(<span><span class="type-var">'a</span> option</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; other : 'a. <span><span>(<span class="type-var">'a</span>, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; override_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-override_flag">Ppxlib_ast.Ast.override_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; package_type : <span><a href="../../Ppxlib_ast/Ast/index.html#type-package_type">Ppxlib_ast.Ast.package_type</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; pattern : <span><a href="../../Ppxlib_ast/Ast/index.html#type-pattern">Ppxlib_ast.Ast.pattern</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; pattern_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-pattern_desc">Ppxlib_ast.Ast.pattern_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; payload : <span><a href="../../Ppxlib_ast/Ast/index.html#type-payload">Ppxlib_ast.Ast.payload</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; position : <span><a href="../../Ppxlib_ast/Ast/index.html#type-position">Ppxlib_ast.Ast.position</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; private_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-private_flag">Ppxlib_ast.Ast.private_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; rec_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-rec_flag">Ppxlib_ast.Ast.rec_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; record : <span><span><span>(string * <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> list</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; row_field : <span><a href="../../Ppxlib_ast/Ast/index.html#type-row_field">Ppxlib_ast.Ast.row_field</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; row_field_desc : <span><a href="../../Ppxlib_ast/Ast/index.html#type-row_field_desc">Ppxlib_ast.Ast.row_field_desc</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; signature : <span><a href="../../Ppxlib_ast/Ast/index.html#type-signature">Ppxlib_ast.Ast.signature</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; signature_item : <span><a href="../../Ppxlib_ast/Ast/index.html#type-signature_item">Ppxlib_ast.Ast.signature_item</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; signature_item_desc : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-signature_item_desc">Ppxlib_ast.Ast.signature_item_desc</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; string : <span><span>(string, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; structure : <span><a href="../../Ppxlib_ast/Ast/index.html#type-structure">Ppxlib_ast.Ast.structure</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; structure_item : <span><a href="../../Ppxlib_ast/Ast/index.html#type-structure_item">Ppxlib_ast.Ast.structure_item</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; structure_item_desc : 
+    <span><a href="../../Ppxlib_ast/Ast/index.html#type-structure_item_desc">Ppxlib_ast.Ast.structure_item_desc</a> <span class="arrow">&#45;&gt;</span></span>
+    <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; toplevel_directive : <span><a href="../../Ppxlib_ast/Ast/index.html#type-toplevel_directive">Ppxlib_ast.Ast.toplevel_directive</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; toplevel_phrase : <span><a href="../../Ppxlib_ast/Ast/index.html#type-toplevel_phrase">Ppxlib_ast.Ast.toplevel_phrase</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; tuple : <span><span><a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a> list</span> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; type_declaration : <span><a href="../../Ppxlib_ast/Ast/index.html#type-type_declaration">Ppxlib_ast.Ast.type_declaration</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; type_exception : <span><a href="../../Ppxlib_ast/Ast/index.html#type-type_exception">Ppxlib_ast.Ast.type_exception</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; type_extension : <span><a href="../../Ppxlib_ast/Ast/index.html#type-type_extension">Ppxlib_ast.Ast.type_extension</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; type_kind : <span><a href="../../Ppxlib_ast/Ast/index.html#type-type_kind">Ppxlib_ast.Ast.type_kind</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; typed : <span><a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a> <span class="arrow">&#45;&gt;</span></span> <span>string <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; unit : <span><span>(unit, <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>)</span> <a href="../../Ppxlib_traverse_builtins/T/index.html#type-lift">Ppxlib_traverse_builtins.T.lift</a></span>
+  ; value_binding : <span><a href="../../Ppxlib_ast/Ast/index.html#type-value_binding">Ppxlib_ast.Ast.value_binding</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; value_description : <span><a href="../../Ppxlib_ast/Ast/index.html#type-value_description">Ppxlib_ast.Ast.value_description</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; variance : <span><a href="../../Ppxlib_ast/Ast/index.html#type-variance">Ppxlib_ast.Ast.variance</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; virtual_flag : <span><a href="../../Ppxlib_ast/Ast/index.html#type-virtual_flag">Ppxlib_ast.Ast.virtual_flag</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a>
+  ; with_constraint : <span><a href="../../Ppxlib_ast/Ast/index.html#type-with_constraint">Ppxlib_ast.Ast.with_constraint</a> <span class="arrow">&#45;&gt;</span></span> <a href="../../Ppxlib/index.html#type-expression">Ppxlib.expression</a> &gt;</span></span></code></div></div></div></body></html>
