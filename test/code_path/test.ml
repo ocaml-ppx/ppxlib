@@ -130,7 +130,7 @@ let _ =
 "(code_path(main_module_name Test)(submodule_path())(enclosing_module Test)(enclosing_value(code_path))(value())(fully_qualified_path Test))"
 |}]
 
-let _ = (([%code_path] : string) [@ppxlib.enter_value dummy])
+let _ = ([%code_path] [@ppxlib.enter_value dummy])
 [%%expect{|
 - : string =
 "(code_path(main_module_name Test)(submodule_path())(enclosing_module Test)(enclosing_value(dummy))(value(dummy))(fully_qualified_path Test.dummy))"
