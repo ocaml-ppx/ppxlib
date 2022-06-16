@@ -464,6 +464,15 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
       map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
 
     method! expression base_ctxt e =
+      let base_ctxt, e =
+        (* Make sure code-path attribute is applied before expanding. *)
+        match Attribute.get Ast_traverse.enter_value e with
+        | None -> (base_ctxt, e)
+        | Some { loc; txt } ->
+            ( Expansion_context.Base.enter_value ~loc txt base_ctxt,
+              Attribute.remove_seen Expression [ T Ast_traverse.enter_value ] e
+            )
+      in
       let e =
         match e.pexp_desc with
         | Pexp_extension _ ->
@@ -552,6 +561,16 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         x
 
     method! module_expr base_ctxt x =
+      let base_ctxt, x =
+        (* Make sure code-path attribute is applied before expanding. *)
+        match Attribute.get Ast_traverse.enter_module x with
+        | None -> (base_ctxt, x)
+        | Some { loc; txt } ->
+            ( Expansion_context.Base.enter_module ~loc txt base_ctxt,
+              Attribute.remove_seen Module_expr
+                [ T Ast_traverse.enter_module ]
+                x )
+      in
       map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
         x
 
