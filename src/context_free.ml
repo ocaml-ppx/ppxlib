@@ -464,16 +464,22 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
       map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
 
     method! expression base_ctxt e =
-      let base_ctxt, e =
+      let with_context =
         (* Make sure code-path attribute is applied before expanding. *)
-        match Attribute.get Ast_traverse.enter_value e with
-        | None -> (base_ctxt, e)
+        Attribute.get_res Ast_traverse.enter_value e |> of_result ~default:None
+        >>= fun option ->
+        match option with
+        | None -> return (base_ctxt, e)
         | Some { loc; txt } ->
-            ( Expansion_context.Base.enter_value ~loc txt base_ctxt,
-              Attribute.remove_seen Expression [ T Ast_traverse.enter_value ] e
-            )
+            Attribute.remove_seen_res Expression
+              [ T Ast_traverse.enter_value ]
+              e
+            |> of_result ~default:e
+            >>| fun e ->
+            (Expansion_context.Base.enter_value ~loc txt base_ctxt, e)
       in
-      let e =
+      with_context >>= fun (base_ctxt, e) ->
+      let expanded =
         match e.pexp_desc with
         | Pexp_extension _ ->
             map_node EC.expression expression
@@ -481,7 +487,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               e.pexp_loc base_ctxt e
         | _ -> return e
       in
-      e >>= fun e ->
+      expanded >>= fun e ->
       let expand_constant kind char text =
         match Hashtbl.find_opt constants (char, kind) with
         | None -> super#expression base_ctxt e
@@ -561,16 +567,19 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         x
 
     method! module_expr base_ctxt x =
-      let base_ctxt, x =
-        (* Make sure code-path attribute is applied before expanding. *)
-        match Attribute.get Ast_traverse.enter_module x with
-        | None -> (base_ctxt, x)
+      ( (* Make sure code-path attribute is applied before expanding. *)
+        Attribute.get_res Ast_traverse.enter_module x |> of_result ~default:None
+      >>= fun option ->
+        match option with
+        | None -> return (base_ctxt, x)
         | Some { loc; txt } ->
-            ( Expansion_context.Base.enter_module ~loc txt base_ctxt,
-              Attribute.remove_seen Module_expr
-                [ T Ast_traverse.enter_module ]
-                x )
-      in
+            Attribute.remove_seen_res Module_expr
+              [ T Ast_traverse.enter_module ]
+              x
+            |> of_result ~default:x
+            >>| fun x ->
+            (Expansion_context.Base.enter_module ~loc txt base_ctxt, x) )
+      >>= fun (base_ctxt, x) ->
       map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
         x
 
