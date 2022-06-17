@@ -1,5 +1,5 @@
-unreleased
-------------
+0.25.1 (17/06/2022)
+-------------------
 
 - Add support for OCaml 5.0 (#355, @pitag-ha)
 
