@@ -209,7 +209,7 @@ val collect : Ast_traverse.iter
 val collect_unseen_errors : unit -> Location.Error.t list
 
 val check_all_seen : unit -> unit
-(** Check that all attributes collected by {!freshen_and_collect} have been:
+(** Check that all attributes collected by {!collect_unseen_errors} have been:
 
     - matched at least once by one of: {!get}, {!consume} or {!Floating.convert}
     - seen by [check_unused] (to allow allowlisted attributed to pass through)
