@@ -104,7 +104,7 @@ val declare_inline_with_path_arg :
   t
 
 module For_context : sig
-  (** This module is used to implement {!Context_free.V1.map_top_down} *)
+  (** This module is used to implement {!Context_free.map_top_down} *)
 
   type 'a t
 
