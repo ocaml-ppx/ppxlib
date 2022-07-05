@@ -150,3 +150,11 @@ class map_top_down :
        Generated_code_hook.t (* default: Generated_code_hook.nop *)
   -> Rule.t list
   -> Ast_traverse.map_with_expansion_context
+
+class map_top_down_with_errors :
+  ?expect_mismatch_handler:
+    Expect_mismatch_handler.t (* default: Expect_mismatch_handler.nop *)
+  -> ?generated_code_hook:
+       Generated_code_hook.t (* default: Generated_code_hook.nop *)
+  -> Rule.t list
+  -> Ast_traverse.map_with_expansion_context_and_errors
