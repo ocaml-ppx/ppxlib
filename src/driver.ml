@@ -175,7 +175,7 @@ module Transform = struct
       ~input_name =
     let { rules; enclose_impl; enclose_intf; impl; intf; _ } = t in
     let map =
-      new Context_free.map_top_down
+      new Context_free.map_top_down_with_errors
         rules ~generated_code_hook:hook ~expect_mismatch_handler
     in
     let gen_header_and_footer context whole_loc f =
@@ -212,7 +212,7 @@ module Transform = struct
       match input_name with Some input_name -> input_name | None -> "_none_"
     in
     let map_impl ctxt st_with_attrs =
-      let st =
+      let st, errors =
         let attrs, st =
           List.split_while st_with_attrs ~f:(function
             | { pstr_desc = Pstr_attribute _; _ } -> true
@@ -231,12 +231,21 @@ module Transform = struct
               in
               gen_header_and_footer Structure_item whole_loc (f base_ctxt)
         in
-        map#structure base_ctxt (List.concat [ attrs; header; st; footer ])
+        map#structure base_ctxt (List.concat [ attrs; header; st; footer ]) []
+      in
+      let st =
+        (errors
+        |> List.map ~f:Location.Error.to_extension
+        |> List.map
+             ~f:
+               (Extension.Context.node_of_extension
+                  Extension.Context.structure_item))
+        @ st
       in
       match impl with None -> st | Some f -> f ctxt st
     in
     let map_intf ctxt sg_with_attrs =
-      let sg =
+      let sg, errors =
         let attrs, sg =
           List.split_while sg_with_attrs ~f:(function
             | { psig_desc = Psig_attribute _; _ } -> true
@@ -255,7 +264,16 @@ module Transform = struct
               in
               gen_header_and_footer Signature_item whole_loc (f base_ctxt)
         in
-        map#signature base_ctxt (List.concat [ attrs; header; sg; footer ])
+        map#signature base_ctxt (List.concat [ attrs; header; sg; footer ]) []
+      in
+      let sg =
+        (errors
+        |> List.map ~f:Location.Error.to_extension
+        |> List.map
+             ~f:
+               (Extension.Context.node_of_extension
+                  Extension.Context.signature_item))
+        @ sg
       in
       match intf with None -> sg | Some f -> f ctxt sg
     in
