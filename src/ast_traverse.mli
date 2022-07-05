@@ -66,6 +66,9 @@ class ['ctx, 'acc] fold_map_with_context :
 class map_with_path : [string] map_with_context
 class map_with_expansion_context : [Expansion_context.Base.t] map_with_context
 
+class map_with_expansion_context_and_errors :
+  [Expansion_context.Base.t, Location.Error.t list] fold_map_with_context
+
 class virtual ['res] lift :
   object
     inherit ['res] Ppxlib_traverse_builtins.lift
