@@ -6915,6 +6915,1421 @@ class virtual ['ctx] map_with_context =
     method cases : 'ctx -> cases -> cases = self#list self#case
   end
 
+class virtual ['ctx, 'acc] fold_map_with_context =
+  object (self)
+    method virtual bool : 'ctx -> bool -> 'acc -> bool * 'acc
+    method virtual char : 'ctx -> char -> 'acc -> char * 'acc
+    method virtual int : 'ctx -> int -> 'acc -> int * 'acc
+
+    method virtual list
+        : 'a.
+          ('ctx -> 'a -> 'acc -> 'a * 'acc) ->
+          'ctx ->
+          'a list ->
+          'acc ->
+          'a list * 'acc
+
+    method virtual option
+        : 'a.
+          ('ctx -> 'a -> 'acc -> 'a * 'acc) ->
+          'ctx ->
+          'a option ->
+          'acc ->
+          'a option * 'acc
+
+    method virtual string : 'ctx -> string -> 'acc -> string * 'acc
+
+    method position : 'ctx -> position -> 'acc -> position * 'acc =
+      fun ctx { pos_fname; pos_lnum; pos_bol; pos_cnum } acc ->
+        let pos_fname, acc = self#string ctx pos_fname acc in
+        let pos_lnum, acc = self#int ctx pos_lnum acc in
+        let pos_bol, acc = self#int ctx pos_bol acc in
+        let pos_cnum, acc = self#int ctx pos_cnum acc in
+        ({ pos_fname; pos_lnum; pos_bol; pos_cnum }, acc)
+
+    method location : 'ctx -> location -> 'acc -> location * 'acc =
+      fun ctx { loc_start; loc_end; loc_ghost } acc ->
+        let loc_start, acc = self#position ctx loc_start acc in
+        let loc_end, acc = self#position ctx loc_end acc in
+        let loc_ghost, acc = self#bool ctx loc_ghost acc in
+        ({ loc_start; loc_end; loc_ghost }, acc)
+
+    method location_stack
+        : 'ctx -> location_stack -> 'acc -> location_stack * 'acc =
+      self#list self#location
+
+    method loc
+        : 'a.
+          ('ctx -> 'a -> 'acc -> 'a * 'acc) ->
+          'ctx ->
+          'a loc ->
+          'acc ->
+          'a loc * 'acc =
+      fun _a ctx { txt; loc } acc ->
+        let txt, acc = _a ctx txt acc in
+        let loc, acc = self#location ctx loc acc in
+        ({ txt; loc }, acc)
+
+    method longident : 'ctx -> longident -> 'acc -> longident * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Lident a ->
+            let a, acc = self#string ctx a acc in
+            (Lident a, acc)
+        | Ldot (a, b) ->
+            let a, acc = self#longident ctx a acc in
+            let b, acc = self#string ctx b acc in
+            (Ldot (a, b), acc)
+        | Lapply (a, b) ->
+            let a, acc = self#longident ctx a acc in
+            let b, acc = self#longident ctx b acc in
+            (Lapply (a, b), acc)
+
+    method longident_loc : 'ctx -> longident_loc -> 'acc -> longident_loc * 'acc
+        =
+      self#loc self#longident
+
+    method rec_flag : 'ctx -> rec_flag -> 'acc -> rec_flag * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method direction_flag
+        : 'ctx -> direction_flag -> 'acc -> direction_flag * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method private_flag : 'ctx -> private_flag -> 'acc -> private_flag * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method mutable_flag : 'ctx -> mutable_flag -> 'acc -> mutable_flag * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method virtual_flag : 'ctx -> virtual_flag -> 'acc -> virtual_flag * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method override_flag : 'ctx -> override_flag -> 'acc -> override_flag * 'acc
+        =
+      fun _ctx x acc -> (x, acc)
+
+    method closed_flag : 'ctx -> closed_flag -> 'acc -> closed_flag * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method label : 'ctx -> label -> 'acc -> label * 'acc = self#string
+
+    method arg_label : 'ctx -> arg_label -> 'acc -> arg_label * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Nolabel -> (Nolabel, acc)
+        | Labelled a ->
+            let a, acc = self#string ctx a acc in
+            (Labelled a, acc)
+        | Optional a ->
+            let a, acc = self#string ctx a acc in
+            (Optional a, acc)
+
+    method variance : 'ctx -> variance -> 'acc -> variance * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method injectivity : 'ctx -> injectivity -> 'acc -> injectivity * 'acc =
+      fun _ctx x acc -> (x, acc)
+
+    method constant : 'ctx -> constant -> 'acc -> constant * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pconst_integer (a, b) ->
+            let a, acc = self#string ctx a acc in
+            let b, acc = self#option self#char ctx b acc in
+            (Pconst_integer (a, b), acc)
+        | Pconst_char a ->
+            let a, acc = self#char ctx a acc in
+            (Pconst_char a, acc)
+        | Pconst_string (a, b, c) ->
+            let a, acc = self#string ctx a acc in
+            let b, acc = self#location ctx b acc in
+            let c, acc = self#option self#string ctx c acc in
+            (Pconst_string (a, b, c), acc)
+        | Pconst_float (a, b) ->
+            let a, acc = self#string ctx a acc in
+            let b, acc = self#option self#char ctx b acc in
+            (Pconst_float (a, b), acc)
+
+    method attribute : 'ctx -> attribute -> 'acc -> attribute * 'acc =
+      fun ctx { attr_name; attr_payload; attr_loc } acc ->
+        let attr_name, acc = self#loc self#string ctx attr_name acc in
+        let attr_payload, acc = self#payload ctx attr_payload acc in
+        let attr_loc, acc = self#location ctx attr_loc acc in
+        ({ attr_name; attr_payload; attr_loc }, acc)
+
+    method extension : 'ctx -> extension -> 'acc -> extension * 'acc =
+      fun ctx (a, b) acc ->
+        let a, acc = self#loc self#string ctx a acc in
+        let b, acc = self#payload ctx b acc in
+        ((a, b), acc)
+
+    method attributes : 'ctx -> attributes -> 'acc -> attributes * 'acc =
+      self#list self#attribute
+
+    method payload : 'ctx -> payload -> 'acc -> payload * 'acc =
+      fun ctx x acc ->
+        match x with
+        | PStr a ->
+            let a, acc = self#structure ctx a acc in
+            (PStr a, acc)
+        | PSig a ->
+            let a, acc = self#signature ctx a acc in
+            (PSig a, acc)
+        | PTyp a ->
+            let a, acc = self#core_type ctx a acc in
+            (PTyp a, acc)
+        | PPat (a, b) ->
+            let a, acc = self#pattern ctx a acc in
+            let b, acc = self#option self#expression ctx b acc in
+            (PPat (a, b), acc)
+
+    method core_type : 'ctx -> core_type -> 'acc -> core_type * 'acc =
+      fun ctx { ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes } acc ->
+        let ptyp_desc, acc = self#core_type_desc ctx ptyp_desc acc in
+        let ptyp_loc, acc = self#location ctx ptyp_loc acc in
+        let ptyp_loc_stack, acc = self#location_stack ctx ptyp_loc_stack acc in
+        let ptyp_attributes, acc = self#attributes ctx ptyp_attributes acc in
+        ({ ptyp_desc; ptyp_loc; ptyp_loc_stack; ptyp_attributes }, acc)
+
+    method core_type_desc
+        : 'ctx -> core_type_desc -> 'acc -> core_type_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Ptyp_any -> (Ptyp_any, acc)
+        | Ptyp_var a ->
+            let a, acc = self#string ctx a acc in
+            (Ptyp_var a, acc)
+        | Ptyp_arrow (a, b, c) ->
+            let a, acc = self#arg_label ctx a acc in
+            let b, acc = self#core_type ctx b acc in
+            let c, acc = self#core_type ctx c acc in
+            (Ptyp_arrow (a, b, c), acc)
+        | Ptyp_tuple a ->
+            let a, acc = self#list self#core_type ctx a acc in
+            (Ptyp_tuple a, acc)
+        | Ptyp_constr (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#list self#core_type ctx b acc in
+            (Ptyp_constr (a, b), acc)
+        | Ptyp_object (a, b) ->
+            let a, acc = self#list self#object_field ctx a acc in
+            let b, acc = self#closed_flag ctx b acc in
+            (Ptyp_object (a, b), acc)
+        | Ptyp_class (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#list self#core_type ctx b acc in
+            (Ptyp_class (a, b), acc)
+        | Ptyp_alias (a, b) ->
+            let a, acc = self#core_type ctx a acc in
+            let b, acc = self#string ctx b acc in
+            (Ptyp_alias (a, b), acc)
+        | Ptyp_variant (a, b, c) ->
+            let a, acc = self#list self#row_field ctx a acc in
+            let b, acc = self#closed_flag ctx b acc in
+            let c, acc = self#option (self#list self#label) ctx c acc in
+            (Ptyp_variant (a, b, c), acc)
+        | Ptyp_poly (a, b) ->
+            let a, acc = self#list (self#loc self#string) ctx a acc in
+            let b, acc = self#core_type ctx b acc in
+            (Ptyp_poly (a, b), acc)
+        | Ptyp_package a ->
+            let a, acc = self#package_type ctx a acc in
+            (Ptyp_package a, acc)
+        | Ptyp_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Ptyp_extension a, acc)
+
+    method package_type : 'ctx -> package_type -> 'acc -> package_type * 'acc =
+      fun ctx (a, b) acc ->
+        let a, acc = self#longident_loc ctx a acc in
+        let b, acc =
+          self#list
+            (fun ctx (a, b) acc ->
+              let a, acc = self#longident_loc ctx a acc in
+              let b, acc = self#core_type ctx b acc in
+              ((a, b), acc))
+            ctx b acc
+        in
+        ((a, b), acc)
+
+    method row_field : 'ctx -> row_field -> 'acc -> row_field * 'acc =
+      fun ctx { prf_desc; prf_loc; prf_attributes } acc ->
+        let prf_desc, acc = self#row_field_desc ctx prf_desc acc in
+        let prf_loc, acc = self#location ctx prf_loc acc in
+        let prf_attributes, acc = self#attributes ctx prf_attributes acc in
+        ({ prf_desc; prf_loc; prf_attributes }, acc)
+
+    method row_field_desc
+        : 'ctx -> row_field_desc -> 'acc -> row_field_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Rtag (a, b, c) ->
+            let a, acc = self#loc self#label ctx a acc in
+            let b, acc = self#bool ctx b acc in
+            let c, acc = self#list self#core_type ctx c acc in
+            (Rtag (a, b, c), acc)
+        | Rinherit a ->
+            let a, acc = self#core_type ctx a acc in
+            (Rinherit a, acc)
+
+    method object_field : 'ctx -> object_field -> 'acc -> object_field * 'acc =
+      fun ctx { pof_desc; pof_loc; pof_attributes } acc ->
+        let pof_desc, acc = self#object_field_desc ctx pof_desc acc in
+        let pof_loc, acc = self#location ctx pof_loc acc in
+        let pof_attributes, acc = self#attributes ctx pof_attributes acc in
+        ({ pof_desc; pof_loc; pof_attributes }, acc)
+
+    method object_field_desc
+        : 'ctx -> object_field_desc -> 'acc -> object_field_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Otag (a, b) ->
+            let a, acc = self#loc self#label ctx a acc in
+            let b, acc = self#core_type ctx b acc in
+            (Otag (a, b), acc)
+        | Oinherit a ->
+            let a, acc = self#core_type ctx a acc in
+            (Oinherit a, acc)
+
+    method pattern : 'ctx -> pattern -> 'acc -> pattern * 'acc =
+      fun ctx { ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes } acc ->
+        let ppat_desc, acc = self#pattern_desc ctx ppat_desc acc in
+        let ppat_loc, acc = self#location ctx ppat_loc acc in
+        let ppat_loc_stack, acc = self#location_stack ctx ppat_loc_stack acc in
+        let ppat_attributes, acc = self#attributes ctx ppat_attributes acc in
+        ({ ppat_desc; ppat_loc; ppat_loc_stack; ppat_attributes }, acc)
+
+    method pattern_desc : 'ctx -> pattern_desc -> 'acc -> pattern_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Ppat_any -> (Ppat_any, acc)
+        | Ppat_var a ->
+            let a, acc = self#loc self#string ctx a acc in
+            (Ppat_var a, acc)
+        | Ppat_alias (a, b) ->
+            let a, acc = self#pattern ctx a acc in
+            let b, acc = self#loc self#string ctx b acc in
+            (Ppat_alias (a, b), acc)
+        | Ppat_constant a ->
+            let a, acc = self#constant ctx a acc in
+            (Ppat_constant a, acc)
+        | Ppat_interval (a, b) ->
+            let a, acc = self#constant ctx a acc in
+            let b, acc = self#constant ctx b acc in
+            (Ppat_interval (a, b), acc)
+        | Ppat_tuple a ->
+            let a, acc = self#list self#pattern ctx a acc in
+            (Ppat_tuple a, acc)
+        | Ppat_construct (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc =
+              self#option
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#list (self#loc self#string) ctx a acc in
+                  let b, acc = self#pattern ctx b acc in
+                  ((a, b), acc))
+                ctx b acc
+            in
+            (Ppat_construct (a, b), acc)
+        | Ppat_variant (a, b) ->
+            let a, acc = self#label ctx a acc in
+            let b, acc = self#option self#pattern ctx b acc in
+            (Ppat_variant (a, b), acc)
+        | Ppat_record (a, b) ->
+            let a, acc =
+              self#list
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#longident_loc ctx a acc in
+                  let b, acc = self#pattern ctx b acc in
+                  ((a, b), acc))
+                ctx a acc
+            in
+            let b, acc = self#closed_flag ctx b acc in
+            (Ppat_record (a, b), acc)
+        | Ppat_array a ->
+            let a, acc = self#list self#pattern ctx a acc in
+            (Ppat_array a, acc)
+        | Ppat_or (a, b) ->
+            let a, acc = self#pattern ctx a acc in
+            let b, acc = self#pattern ctx b acc in
+            (Ppat_or (a, b), acc)
+        | Ppat_constraint (a, b) ->
+            let a, acc = self#pattern ctx a acc in
+            let b, acc = self#core_type ctx b acc in
+            (Ppat_constraint (a, b), acc)
+        | Ppat_type a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Ppat_type a, acc)
+        | Ppat_lazy a ->
+            let a, acc = self#pattern ctx a acc in
+            (Ppat_lazy a, acc)
+        | Ppat_unpack a ->
+            let a, acc = self#loc (self#option self#string) ctx a acc in
+            (Ppat_unpack a, acc)
+        | Ppat_exception a ->
+            let a, acc = self#pattern ctx a acc in
+            (Ppat_exception a, acc)
+        | Ppat_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Ppat_extension a, acc)
+        | Ppat_open (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#pattern ctx b acc in
+            (Ppat_open (a, b), acc)
+
+    method expression : 'ctx -> expression -> 'acc -> expression * 'acc =
+      fun ctx { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } acc ->
+        let pexp_desc, acc = self#expression_desc ctx pexp_desc acc in
+        let pexp_loc, acc = self#location ctx pexp_loc acc in
+        let pexp_loc_stack, acc = self#location_stack ctx pexp_loc_stack acc in
+        let pexp_attributes, acc = self#attributes ctx pexp_attributes acc in
+        ({ pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes }, acc)
+
+    method expression_desc
+        : 'ctx -> expression_desc -> 'acc -> expression_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pexp_ident a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Pexp_ident a, acc)
+        | Pexp_constant a ->
+            let a, acc = self#constant ctx a acc in
+            (Pexp_constant a, acc)
+        | Pexp_let (a, b, c) ->
+            let a, acc = self#rec_flag ctx a acc in
+            let b, acc = self#list self#value_binding ctx b acc in
+            let c, acc = self#expression ctx c acc in
+            (Pexp_let (a, b, c), acc)
+        | Pexp_function a ->
+            let a, acc = self#cases ctx a acc in
+            (Pexp_function a, acc)
+        | Pexp_fun (a, b, c, d) ->
+            let a, acc = self#arg_label ctx a acc in
+            let b, acc = self#option self#expression ctx b acc in
+            let c, acc = self#pattern ctx c acc in
+            let d, acc = self#expression ctx d acc in
+            (Pexp_fun (a, b, c, d), acc)
+        | Pexp_apply (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc =
+              self#list
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#arg_label ctx a acc in
+                  let b, acc = self#expression ctx b acc in
+                  ((a, b), acc))
+                ctx b acc
+            in
+            (Pexp_apply (a, b), acc)
+        | Pexp_match (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#cases ctx b acc in
+            (Pexp_match (a, b), acc)
+        | Pexp_try (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#cases ctx b acc in
+            (Pexp_try (a, b), acc)
+        | Pexp_tuple a ->
+            let a, acc = self#list self#expression ctx a acc in
+            (Pexp_tuple a, acc)
+        | Pexp_construct (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#option self#expression ctx b acc in
+            (Pexp_construct (a, b), acc)
+        | Pexp_variant (a, b) ->
+            let a, acc = self#label ctx a acc in
+            let b, acc = self#option self#expression ctx b acc in
+            (Pexp_variant (a, b), acc)
+        | Pexp_record (a, b) ->
+            let a, acc =
+              self#list
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#longident_loc ctx a acc in
+                  let b, acc = self#expression ctx b acc in
+                  ((a, b), acc))
+                ctx a acc
+            in
+            let b, acc = self#option self#expression ctx b acc in
+            (Pexp_record (a, b), acc)
+        | Pexp_field (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#longident_loc ctx b acc in
+            (Pexp_field (a, b), acc)
+        | Pexp_setfield (a, b, c) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#longident_loc ctx b acc in
+            let c, acc = self#expression ctx c acc in
+            (Pexp_setfield (a, b, c), acc)
+        | Pexp_array a ->
+            let a, acc = self#list self#expression ctx a acc in
+            (Pexp_array a, acc)
+        | Pexp_ifthenelse (a, b, c) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            let c, acc = self#option self#expression ctx c acc in
+            (Pexp_ifthenelse (a, b, c), acc)
+        | Pexp_sequence (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Pexp_sequence (a, b), acc)
+        | Pexp_while (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Pexp_while (a, b), acc)
+        | Pexp_for (a, b, c, d, e) ->
+            let a, acc = self#pattern ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            let c, acc = self#expression ctx c acc in
+            let d, acc = self#direction_flag ctx d acc in
+            let e, acc = self#expression ctx e acc in
+            (Pexp_for (a, b, c, d, e), acc)
+        | Pexp_constraint (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#core_type ctx b acc in
+            (Pexp_constraint (a, b), acc)
+        | Pexp_coerce (a, b, c) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#option self#core_type ctx b acc in
+            let c, acc = self#core_type ctx c acc in
+            (Pexp_coerce (a, b, c), acc)
+        | Pexp_send (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#loc self#label ctx b acc in
+            (Pexp_send (a, b), acc)
+        | Pexp_new a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Pexp_new a, acc)
+        | Pexp_setinstvar (a, b) ->
+            let a, acc = self#loc self#label ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Pexp_setinstvar (a, b), acc)
+        | Pexp_override a ->
+            let a, acc =
+              self#list
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#loc self#label ctx a acc in
+                  let b, acc = self#expression ctx b acc in
+                  ((a, b), acc))
+                ctx a acc
+            in
+            (Pexp_override a, acc)
+        | Pexp_letmodule (a, b, c) ->
+            let a, acc = self#loc (self#option self#string) ctx a acc in
+            let b, acc = self#module_expr ctx b acc in
+            let c, acc = self#expression ctx c acc in
+            (Pexp_letmodule (a, b, c), acc)
+        | Pexp_letexception (a, b) ->
+            let a, acc = self#extension_constructor ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Pexp_letexception (a, b), acc)
+        | Pexp_assert a ->
+            let a, acc = self#expression ctx a acc in
+            (Pexp_assert a, acc)
+        | Pexp_lazy a ->
+            let a, acc = self#expression ctx a acc in
+            (Pexp_lazy a, acc)
+        | Pexp_poly (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#option self#core_type ctx b acc in
+            (Pexp_poly (a, b), acc)
+        | Pexp_object a ->
+            let a, acc = self#class_structure ctx a acc in
+            (Pexp_object a, acc)
+        | Pexp_newtype (a, b) ->
+            let a, acc = self#loc self#string ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Pexp_newtype (a, b), acc)
+        | Pexp_pack a ->
+            let a, acc = self#module_expr ctx a acc in
+            (Pexp_pack a, acc)
+        | Pexp_open (a, b) ->
+            let a, acc = self#open_declaration ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Pexp_open (a, b), acc)
+        | Pexp_letop a ->
+            let a, acc = self#letop ctx a acc in
+            (Pexp_letop a, acc)
+        | Pexp_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pexp_extension a, acc)
+        | Pexp_unreachable -> (Pexp_unreachable, acc)
+
+    method case : 'ctx -> case -> 'acc -> case * 'acc =
+      fun ctx { pc_lhs; pc_guard; pc_rhs } acc ->
+        let pc_lhs, acc = self#pattern ctx pc_lhs acc in
+        let pc_guard, acc = self#option self#expression ctx pc_guard acc in
+        let pc_rhs, acc = self#expression ctx pc_rhs acc in
+        ({ pc_lhs; pc_guard; pc_rhs }, acc)
+
+    method letop : 'ctx -> letop -> 'acc -> letop * 'acc =
+      fun ctx { let_; ands; body } acc ->
+        let let_, acc = self#binding_op ctx let_ acc in
+        let ands, acc = self#list self#binding_op ctx ands acc in
+        let body, acc = self#expression ctx body acc in
+        ({ let_; ands; body }, acc)
+
+    method binding_op : 'ctx -> binding_op -> 'acc -> binding_op * 'acc =
+      fun ctx { pbop_op; pbop_pat; pbop_exp; pbop_loc } acc ->
+        let pbop_op, acc = self#loc self#string ctx pbop_op acc in
+        let pbop_pat, acc = self#pattern ctx pbop_pat acc in
+        let pbop_exp, acc = self#expression ctx pbop_exp acc in
+        let pbop_loc, acc = self#location ctx pbop_loc acc in
+        ({ pbop_op; pbop_pat; pbop_exp; pbop_loc }, acc)
+
+    method value_description
+        : 'ctx -> value_description -> 'acc -> value_description * 'acc =
+      fun ctx { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } acc ->
+        let pval_name, acc = self#loc self#string ctx pval_name acc in
+        let pval_type, acc = self#core_type ctx pval_type acc in
+        let pval_prim, acc = self#list self#string ctx pval_prim acc in
+        let pval_attributes, acc = self#attributes ctx pval_attributes acc in
+        let pval_loc, acc = self#location ctx pval_loc acc in
+        ({ pval_name; pval_type; pval_prim; pval_attributes; pval_loc }, acc)
+
+    method type_declaration
+        : 'ctx -> type_declaration -> 'acc -> type_declaration * 'acc =
+      fun ctx
+          {
+            ptype_name;
+            ptype_params;
+            ptype_cstrs;
+            ptype_kind;
+            ptype_private;
+            ptype_manifest;
+            ptype_attributes;
+            ptype_loc;
+          } acc ->
+        let ptype_name, acc = self#loc self#string ctx ptype_name acc in
+        let ptype_params, acc =
+          self#list
+            (fun ctx (a, b) acc ->
+              let a, acc = self#core_type ctx a acc in
+              let b, acc =
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#variance ctx a acc in
+                  let b, acc = self#injectivity ctx b acc in
+                  ((a, b), acc))
+                  ctx b acc
+              in
+              ((a, b), acc))
+            ctx ptype_params acc
+        in
+        let ptype_cstrs, acc =
+          self#list
+            (fun ctx (a, b, c) acc ->
+              let a, acc = self#core_type ctx a acc in
+              let b, acc = self#core_type ctx b acc in
+              let c, acc = self#location ctx c acc in
+              ((a, b, c), acc))
+            ctx ptype_cstrs acc
+        in
+        let ptype_kind, acc = self#type_kind ctx ptype_kind acc in
+        let ptype_private, acc = self#private_flag ctx ptype_private acc in
+        let ptype_manifest, acc =
+          self#option self#core_type ctx ptype_manifest acc
+        in
+        let ptype_attributes, acc = self#attributes ctx ptype_attributes acc in
+        let ptype_loc, acc = self#location ctx ptype_loc acc in
+        ( {
+            ptype_name;
+            ptype_params;
+            ptype_cstrs;
+            ptype_kind;
+            ptype_private;
+            ptype_manifest;
+            ptype_attributes;
+            ptype_loc;
+          },
+          acc )
+
+    method type_kind : 'ctx -> type_kind -> 'acc -> type_kind * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Ptype_abstract -> (Ptype_abstract, acc)
+        | Ptype_variant a ->
+            let a, acc = self#list self#constructor_declaration ctx a acc in
+            (Ptype_variant a, acc)
+        | Ptype_record a ->
+            let a, acc = self#list self#label_declaration ctx a acc in
+            (Ptype_record a, acc)
+        | Ptype_open -> (Ptype_open, acc)
+
+    method label_declaration
+        : 'ctx -> label_declaration -> 'acc -> label_declaration * 'acc =
+      fun ctx { pld_name; pld_mutable; pld_type; pld_loc; pld_attributes } acc ->
+        let pld_name, acc = self#loc self#string ctx pld_name acc in
+        let pld_mutable, acc = self#mutable_flag ctx pld_mutable acc in
+        let pld_type, acc = self#core_type ctx pld_type acc in
+        let pld_loc, acc = self#location ctx pld_loc acc in
+        let pld_attributes, acc = self#attributes ctx pld_attributes acc in
+        ({ pld_name; pld_mutable; pld_type; pld_loc; pld_attributes }, acc)
+
+    method constructor_declaration
+        : 'ctx ->
+          constructor_declaration ->
+          'acc ->
+          constructor_declaration * 'acc =
+      fun ctx { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }
+          acc ->
+        let pcd_name, acc = self#loc self#string ctx pcd_name acc in
+        let pcd_vars, acc = self#list (self#loc self#string) ctx pcd_vars acc in
+        let pcd_args, acc = self#constructor_arguments ctx pcd_args acc in
+        let pcd_res, acc = self#option self#core_type ctx pcd_res acc in
+        let pcd_loc, acc = self#location ctx pcd_loc acc in
+        let pcd_attributes, acc = self#attributes ctx pcd_attributes acc in
+        ({ pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }, acc)
+
+    method constructor_arguments
+        : 'ctx -> constructor_arguments -> 'acc -> constructor_arguments * 'acc
+        =
+      fun ctx x acc ->
+        match x with
+        | Pcstr_tuple a ->
+            let a, acc = self#list self#core_type ctx a acc in
+            (Pcstr_tuple a, acc)
+        | Pcstr_record a ->
+            let a, acc = self#list self#label_declaration ctx a acc in
+            (Pcstr_record a, acc)
+
+    method type_extension
+        : 'ctx -> type_extension -> 'acc -> type_extension * 'acc =
+      fun ctx
+          {
+            ptyext_path;
+            ptyext_params;
+            ptyext_constructors;
+            ptyext_private;
+            ptyext_loc;
+            ptyext_attributes;
+          } acc ->
+        let ptyext_path, acc = self#longident_loc ctx ptyext_path acc in
+        let ptyext_params, acc =
+          self#list
+            (fun ctx (a, b) acc ->
+              let a, acc = self#core_type ctx a acc in
+              let b, acc =
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#variance ctx a acc in
+                  let b, acc = self#injectivity ctx b acc in
+                  ((a, b), acc))
+                  ctx b acc
+              in
+              ((a, b), acc))
+            ctx ptyext_params acc
+        in
+        let ptyext_constructors, acc =
+          self#list self#extension_constructor ctx ptyext_constructors acc
+        in
+        let ptyext_private, acc = self#private_flag ctx ptyext_private acc in
+        let ptyext_loc, acc = self#location ctx ptyext_loc acc in
+        let ptyext_attributes, acc =
+          self#attributes ctx ptyext_attributes acc
+        in
+        ( {
+            ptyext_path;
+            ptyext_params;
+            ptyext_constructors;
+            ptyext_private;
+            ptyext_loc;
+            ptyext_attributes;
+          },
+          acc )
+
+    method extension_constructor
+        : 'ctx -> extension_constructor -> 'acc -> extension_constructor * 'acc
+        =
+      fun ctx { pext_name; pext_kind; pext_loc; pext_attributes } acc ->
+        let pext_name, acc = self#loc self#string ctx pext_name acc in
+        let pext_kind, acc =
+          self#extension_constructor_kind ctx pext_kind acc
+        in
+        let pext_loc, acc = self#location ctx pext_loc acc in
+        let pext_attributes, acc = self#attributes ctx pext_attributes acc in
+        ({ pext_name; pext_kind; pext_loc; pext_attributes }, acc)
+
+    method type_exception
+        : 'ctx -> type_exception -> 'acc -> type_exception * 'acc =
+      fun ctx { ptyexn_constructor; ptyexn_loc; ptyexn_attributes } acc ->
+        let ptyexn_constructor, acc =
+          self#extension_constructor ctx ptyexn_constructor acc
+        in
+        let ptyexn_loc, acc = self#location ctx ptyexn_loc acc in
+        let ptyexn_attributes, acc =
+          self#attributes ctx ptyexn_attributes acc
+        in
+        ({ ptyexn_constructor; ptyexn_loc; ptyexn_attributes }, acc)
+
+    method extension_constructor_kind
+        : 'ctx ->
+          extension_constructor_kind ->
+          'acc ->
+          extension_constructor_kind * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pext_decl (a, b, c) ->
+            let a, acc = self#list (self#loc self#string) ctx a acc in
+            let b, acc = self#constructor_arguments ctx b acc in
+            let c, acc = self#option self#core_type ctx c acc in
+            (Pext_decl (a, b, c), acc)
+        | Pext_rebind a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Pext_rebind a, acc)
+
+    method class_type : 'ctx -> class_type -> 'acc -> class_type * 'acc =
+      fun ctx { pcty_desc; pcty_loc; pcty_attributes } acc ->
+        let pcty_desc, acc = self#class_type_desc ctx pcty_desc acc in
+        let pcty_loc, acc = self#location ctx pcty_loc acc in
+        let pcty_attributes, acc = self#attributes ctx pcty_attributes acc in
+        ({ pcty_desc; pcty_loc; pcty_attributes }, acc)
+
+    method class_type_desc
+        : 'ctx -> class_type_desc -> 'acc -> class_type_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pcty_constr (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#list self#core_type ctx b acc in
+            (Pcty_constr (a, b), acc)
+        | Pcty_signature a ->
+            let a, acc = self#class_signature ctx a acc in
+            (Pcty_signature a, acc)
+        | Pcty_arrow (a, b, c) ->
+            let a, acc = self#arg_label ctx a acc in
+            let b, acc = self#core_type ctx b acc in
+            let c, acc = self#class_type ctx c acc in
+            (Pcty_arrow (a, b, c), acc)
+        | Pcty_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pcty_extension a, acc)
+        | Pcty_open (a, b) ->
+            let a, acc = self#open_description ctx a acc in
+            let b, acc = self#class_type ctx b acc in
+            (Pcty_open (a, b), acc)
+
+    method class_signature
+        : 'ctx -> class_signature -> 'acc -> class_signature * 'acc =
+      fun ctx { pcsig_self; pcsig_fields } acc ->
+        let pcsig_self, acc = self#core_type ctx pcsig_self acc in
+        let pcsig_fields, acc =
+          self#list self#class_type_field ctx pcsig_fields acc
+        in
+        ({ pcsig_self; pcsig_fields }, acc)
+
+    method class_type_field
+        : 'ctx -> class_type_field -> 'acc -> class_type_field * 'acc =
+      fun ctx { pctf_desc; pctf_loc; pctf_attributes } acc ->
+        let pctf_desc, acc = self#class_type_field_desc ctx pctf_desc acc in
+        let pctf_loc, acc = self#location ctx pctf_loc acc in
+        let pctf_attributes, acc = self#attributes ctx pctf_attributes acc in
+        ({ pctf_desc; pctf_loc; pctf_attributes }, acc)
+
+    method class_type_field_desc
+        : 'ctx -> class_type_field_desc -> 'acc -> class_type_field_desc * 'acc
+        =
+      fun ctx x acc ->
+        match x with
+        | Pctf_inherit a ->
+            let a, acc = self#class_type ctx a acc in
+            (Pctf_inherit a, acc)
+        | Pctf_val a ->
+            let a, acc =
+              (fun ctx (a, b, c, d) acc ->
+                let a, acc = self#loc self#label ctx a acc in
+                let b, acc = self#mutable_flag ctx b acc in
+                let c, acc = self#virtual_flag ctx c acc in
+                let d, acc = self#core_type ctx d acc in
+                ((a, b, c, d), acc))
+                ctx a acc
+            in
+            (Pctf_val a, acc)
+        | Pctf_method a ->
+            let a, acc =
+              (fun ctx (a, b, c, d) acc ->
+                let a, acc = self#loc self#label ctx a acc in
+                let b, acc = self#private_flag ctx b acc in
+                let c, acc = self#virtual_flag ctx c acc in
+                let d, acc = self#core_type ctx d acc in
+                ((a, b, c, d), acc))
+                ctx a acc
+            in
+            (Pctf_method a, acc)
+        | Pctf_constraint a ->
+            let a, acc =
+              (fun ctx (a, b) acc ->
+                let a, acc = self#core_type ctx a acc in
+                let b, acc = self#core_type ctx b acc in
+                ((a, b), acc))
+                ctx a acc
+            in
+            (Pctf_constraint a, acc)
+        | Pctf_attribute a ->
+            let a, acc = self#attribute ctx a acc in
+            (Pctf_attribute a, acc)
+        | Pctf_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pctf_extension a, acc)
+
+    method class_infos
+        : 'a.
+          ('ctx -> 'a -> 'acc -> 'a * 'acc) ->
+          'ctx ->
+          'a class_infos ->
+          'acc ->
+          'a class_infos * 'acc =
+      fun _a ctx
+          { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes }
+          acc ->
+        let pci_virt, acc = self#virtual_flag ctx pci_virt acc in
+        let pci_params, acc =
+          self#list
+            (fun ctx (a, b) acc ->
+              let a, acc = self#core_type ctx a acc in
+              let b, acc =
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#variance ctx a acc in
+                  let b, acc = self#injectivity ctx b acc in
+                  ((a, b), acc))
+                  ctx b acc
+              in
+              ((a, b), acc))
+            ctx pci_params acc
+        in
+        let pci_name, acc = self#loc self#string ctx pci_name acc in
+        let pci_expr, acc = _a ctx pci_expr acc in
+        let pci_loc, acc = self#location ctx pci_loc acc in
+        let pci_attributes, acc = self#attributes ctx pci_attributes acc in
+        ( { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes },
+          acc )
+
+    method class_description
+        : 'ctx -> class_description -> 'acc -> class_description * 'acc =
+      self#class_infos self#class_type
+
+    method class_type_declaration
+        : 'ctx ->
+          class_type_declaration ->
+          'acc ->
+          class_type_declaration * 'acc =
+      self#class_infos self#class_type
+
+    method class_expr : 'ctx -> class_expr -> 'acc -> class_expr * 'acc =
+      fun ctx { pcl_desc; pcl_loc; pcl_attributes } acc ->
+        let pcl_desc, acc = self#class_expr_desc ctx pcl_desc acc in
+        let pcl_loc, acc = self#location ctx pcl_loc acc in
+        let pcl_attributes, acc = self#attributes ctx pcl_attributes acc in
+        ({ pcl_desc; pcl_loc; pcl_attributes }, acc)
+
+    method class_expr_desc
+        : 'ctx -> class_expr_desc -> 'acc -> class_expr_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pcl_constr (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#list self#core_type ctx b acc in
+            (Pcl_constr (a, b), acc)
+        | Pcl_structure a ->
+            let a, acc = self#class_structure ctx a acc in
+            (Pcl_structure a, acc)
+        | Pcl_fun (a, b, c, d) ->
+            let a, acc = self#arg_label ctx a acc in
+            let b, acc = self#option self#expression ctx b acc in
+            let c, acc = self#pattern ctx c acc in
+            let d, acc = self#class_expr ctx d acc in
+            (Pcl_fun (a, b, c, d), acc)
+        | Pcl_apply (a, b) ->
+            let a, acc = self#class_expr ctx a acc in
+            let b, acc =
+              self#list
+                (fun ctx (a, b) acc ->
+                  let a, acc = self#arg_label ctx a acc in
+                  let b, acc = self#expression ctx b acc in
+                  ((a, b), acc))
+                ctx b acc
+            in
+            (Pcl_apply (a, b), acc)
+        | Pcl_let (a, b, c) ->
+            let a, acc = self#rec_flag ctx a acc in
+            let b, acc = self#list self#value_binding ctx b acc in
+            let c, acc = self#class_expr ctx c acc in
+            (Pcl_let (a, b, c), acc)
+        | Pcl_constraint (a, b) ->
+            let a, acc = self#class_expr ctx a acc in
+            let b, acc = self#class_type ctx b acc in
+            (Pcl_constraint (a, b), acc)
+        | Pcl_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pcl_extension a, acc)
+        | Pcl_open (a, b) ->
+            let a, acc = self#open_description ctx a acc in
+            let b, acc = self#class_expr ctx b acc in
+            (Pcl_open (a, b), acc)
+
+    method class_structure
+        : 'ctx -> class_structure -> 'acc -> class_structure * 'acc =
+      fun ctx { pcstr_self; pcstr_fields } acc ->
+        let pcstr_self, acc = self#pattern ctx pcstr_self acc in
+        let pcstr_fields, acc =
+          self#list self#class_field ctx pcstr_fields acc
+        in
+        ({ pcstr_self; pcstr_fields }, acc)
+
+    method class_field : 'ctx -> class_field -> 'acc -> class_field * 'acc =
+      fun ctx { pcf_desc; pcf_loc; pcf_attributes } acc ->
+        let pcf_desc, acc = self#class_field_desc ctx pcf_desc acc in
+        let pcf_loc, acc = self#location ctx pcf_loc acc in
+        let pcf_attributes, acc = self#attributes ctx pcf_attributes acc in
+        ({ pcf_desc; pcf_loc; pcf_attributes }, acc)
+
+    method class_field_desc
+        : 'ctx -> class_field_desc -> 'acc -> class_field_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pcf_inherit (a, b, c) ->
+            let a, acc = self#override_flag ctx a acc in
+            let b, acc = self#class_expr ctx b acc in
+            let c, acc = self#option (self#loc self#string) ctx c acc in
+            (Pcf_inherit (a, b, c), acc)
+        | Pcf_val a ->
+            let a, acc =
+              (fun ctx (a, b, c) acc ->
+                let a, acc = self#loc self#label ctx a acc in
+                let b, acc = self#mutable_flag ctx b acc in
+                let c, acc = self#class_field_kind ctx c acc in
+                ((a, b, c), acc))
+                ctx a acc
+            in
+            (Pcf_val a, acc)
+        | Pcf_method a ->
+            let a, acc =
+              (fun ctx (a, b, c) acc ->
+                let a, acc = self#loc self#label ctx a acc in
+                let b, acc = self#private_flag ctx b acc in
+                let c, acc = self#class_field_kind ctx c acc in
+                ((a, b, c), acc))
+                ctx a acc
+            in
+            (Pcf_method a, acc)
+        | Pcf_constraint a ->
+            let a, acc =
+              (fun ctx (a, b) acc ->
+                let a, acc = self#core_type ctx a acc in
+                let b, acc = self#core_type ctx b acc in
+                ((a, b), acc))
+                ctx a acc
+            in
+            (Pcf_constraint a, acc)
+        | Pcf_initializer a ->
+            let a, acc = self#expression ctx a acc in
+            (Pcf_initializer a, acc)
+        | Pcf_attribute a ->
+            let a, acc = self#attribute ctx a acc in
+            (Pcf_attribute a, acc)
+        | Pcf_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pcf_extension a, acc)
+
+    method class_field_kind
+        : 'ctx -> class_field_kind -> 'acc -> class_field_kind * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Cfk_virtual a ->
+            let a, acc = self#core_type ctx a acc in
+            (Cfk_virtual a, acc)
+        | Cfk_concrete (a, b) ->
+            let a, acc = self#override_flag ctx a acc in
+            let b, acc = self#expression ctx b acc in
+            (Cfk_concrete (a, b), acc)
+
+    method class_declaration
+        : 'ctx -> class_declaration -> 'acc -> class_declaration * 'acc =
+      self#class_infos self#class_expr
+
+    method module_type : 'ctx -> module_type -> 'acc -> module_type * 'acc =
+      fun ctx { pmty_desc; pmty_loc; pmty_attributes } acc ->
+        let pmty_desc, acc = self#module_type_desc ctx pmty_desc acc in
+        let pmty_loc, acc = self#location ctx pmty_loc acc in
+        let pmty_attributes, acc = self#attributes ctx pmty_attributes acc in
+        ({ pmty_desc; pmty_loc; pmty_attributes }, acc)
+
+    method module_type_desc
+        : 'ctx -> module_type_desc -> 'acc -> module_type_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pmty_ident a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Pmty_ident a, acc)
+        | Pmty_signature a ->
+            let a, acc = self#signature ctx a acc in
+            (Pmty_signature a, acc)
+        | Pmty_functor (a, b) ->
+            let a, acc = self#functor_parameter ctx a acc in
+            let b, acc = self#module_type ctx b acc in
+            (Pmty_functor (a, b), acc)
+        | Pmty_with (a, b) ->
+            let a, acc = self#module_type ctx a acc in
+            let b, acc = self#list self#with_constraint ctx b acc in
+            (Pmty_with (a, b), acc)
+        | Pmty_typeof a ->
+            let a, acc = self#module_expr ctx a acc in
+            (Pmty_typeof a, acc)
+        | Pmty_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pmty_extension a, acc)
+        | Pmty_alias a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Pmty_alias a, acc)
+
+    method functor_parameter
+        : 'ctx -> functor_parameter -> 'acc -> functor_parameter * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Unit -> (Unit, acc)
+        | Named (a, b) ->
+            let a, acc = self#loc (self#option self#string) ctx a acc in
+            let b, acc = self#module_type ctx b acc in
+            (Named (a, b), acc)
+
+    method signature : 'ctx -> signature -> 'acc -> signature * 'acc =
+      self#list self#signature_item
+
+    method signature_item
+        : 'ctx -> signature_item -> 'acc -> signature_item * 'acc =
+      fun ctx { psig_desc; psig_loc } acc ->
+        let psig_desc, acc = self#signature_item_desc ctx psig_desc acc in
+        let psig_loc, acc = self#location ctx psig_loc acc in
+        ({ psig_desc; psig_loc }, acc)
+
+    method signature_item_desc
+        : 'ctx -> signature_item_desc -> 'acc -> signature_item_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Psig_value a ->
+            let a, acc = self#value_description ctx a acc in
+            (Psig_value a, acc)
+        | Psig_type (a, b) ->
+            let a, acc = self#rec_flag ctx a acc in
+            let b, acc = self#list self#type_declaration ctx b acc in
+            (Psig_type (a, b), acc)
+        | Psig_typesubst a ->
+            let a, acc = self#list self#type_declaration ctx a acc in
+            (Psig_typesubst a, acc)
+        | Psig_typext a ->
+            let a, acc = self#type_extension ctx a acc in
+            (Psig_typext a, acc)
+        | Psig_exception a ->
+            let a, acc = self#type_exception ctx a acc in
+            (Psig_exception a, acc)
+        | Psig_module a ->
+            let a, acc = self#module_declaration ctx a acc in
+            (Psig_module a, acc)
+        | Psig_modsubst a ->
+            let a, acc = self#module_substitution ctx a acc in
+            (Psig_modsubst a, acc)
+        | Psig_recmodule a ->
+            let a, acc = self#list self#module_declaration ctx a acc in
+            (Psig_recmodule a, acc)
+        | Psig_modtype a ->
+            let a, acc = self#module_type_declaration ctx a acc in
+            (Psig_modtype a, acc)
+        | Psig_modtypesubst a ->
+            let a, acc = self#module_type_declaration ctx a acc in
+            (Psig_modtypesubst a, acc)
+        | Psig_open a ->
+            let a, acc = self#open_description ctx a acc in
+            (Psig_open a, acc)
+        | Psig_include a ->
+            let a, acc = self#include_description ctx a acc in
+            (Psig_include a, acc)
+        | Psig_class a ->
+            let a, acc = self#list self#class_description ctx a acc in
+            (Psig_class a, acc)
+        | Psig_class_type a ->
+            let a, acc = self#list self#class_type_declaration ctx a acc in
+            (Psig_class_type a, acc)
+        | Psig_attribute a ->
+            let a, acc = self#attribute ctx a acc in
+            (Psig_attribute a, acc)
+        | Psig_extension (a, b) ->
+            let a, acc = self#extension ctx a acc in
+            let b, acc = self#attributes ctx b acc in
+            (Psig_extension (a, b), acc)
+
+    method module_declaration
+        : 'ctx -> module_declaration -> 'acc -> module_declaration * 'acc =
+      fun ctx { pmd_name; pmd_type; pmd_attributes; pmd_loc } acc ->
+        let pmd_name, acc =
+          self#loc (self#option self#string) ctx pmd_name acc
+        in
+        let pmd_type, acc = self#module_type ctx pmd_type acc in
+        let pmd_attributes, acc = self#attributes ctx pmd_attributes acc in
+        let pmd_loc, acc = self#location ctx pmd_loc acc in
+        ({ pmd_name; pmd_type; pmd_attributes; pmd_loc }, acc)
+
+    method module_substitution
+        : 'ctx -> module_substitution -> 'acc -> module_substitution * 'acc =
+      fun ctx { pms_name; pms_manifest; pms_attributes; pms_loc } acc ->
+        let pms_name, acc = self#loc self#string ctx pms_name acc in
+        let pms_manifest, acc = self#longident_loc ctx pms_manifest acc in
+        let pms_attributes, acc = self#attributes ctx pms_attributes acc in
+        let pms_loc, acc = self#location ctx pms_loc acc in
+        ({ pms_name; pms_manifest; pms_attributes; pms_loc }, acc)
+
+    method module_type_declaration
+        : 'ctx ->
+          module_type_declaration ->
+          'acc ->
+          module_type_declaration * 'acc =
+      fun ctx { pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc } acc ->
+        let pmtd_name, acc = self#loc self#string ctx pmtd_name acc in
+        let pmtd_type, acc = self#option self#module_type ctx pmtd_type acc in
+        let pmtd_attributes, acc = self#attributes ctx pmtd_attributes acc in
+        let pmtd_loc, acc = self#location ctx pmtd_loc acc in
+        ({ pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc }, acc)
+
+    method open_infos
+        : 'a.
+          ('ctx -> 'a -> 'acc -> 'a * 'acc) ->
+          'ctx ->
+          'a open_infos ->
+          'acc ->
+          'a open_infos * 'acc =
+      fun _a ctx { popen_expr; popen_override; popen_loc; popen_attributes } acc ->
+        let popen_expr, acc = _a ctx popen_expr acc in
+        let popen_override, acc = self#override_flag ctx popen_override acc in
+        let popen_loc, acc = self#location ctx popen_loc acc in
+        let popen_attributes, acc = self#attributes ctx popen_attributes acc in
+        ({ popen_expr; popen_override; popen_loc; popen_attributes }, acc)
+
+    method open_description
+        : 'ctx -> open_description -> 'acc -> open_description * 'acc =
+      self#open_infos self#longident_loc
+
+    method open_declaration
+        : 'ctx -> open_declaration -> 'acc -> open_declaration * 'acc =
+      self#open_infos self#module_expr
+
+    method include_infos
+        : 'a.
+          ('ctx -> 'a -> 'acc -> 'a * 'acc) ->
+          'ctx ->
+          'a include_infos ->
+          'acc ->
+          'a include_infos * 'acc =
+      fun _a ctx { pincl_mod; pincl_loc; pincl_attributes } acc ->
+        let pincl_mod, acc = _a ctx pincl_mod acc in
+        let pincl_loc, acc = self#location ctx pincl_loc acc in
+        let pincl_attributes, acc = self#attributes ctx pincl_attributes acc in
+        ({ pincl_mod; pincl_loc; pincl_attributes }, acc)
+
+    method include_description
+        : 'ctx -> include_description -> 'acc -> include_description * 'acc =
+      self#include_infos self#module_type
+
+    method include_declaration
+        : 'ctx -> include_declaration -> 'acc -> include_declaration * 'acc =
+      self#include_infos self#module_expr
+
+    method with_constraint
+        : 'ctx -> with_constraint -> 'acc -> with_constraint * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pwith_type (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#type_declaration ctx b acc in
+            (Pwith_type (a, b), acc)
+        | Pwith_module (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#longident_loc ctx b acc in
+            (Pwith_module (a, b), acc)
+        | Pwith_modtype (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#module_type ctx b acc in
+            (Pwith_modtype (a, b), acc)
+        | Pwith_modtypesubst (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#module_type ctx b acc in
+            (Pwith_modtypesubst (a, b), acc)
+        | Pwith_typesubst (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#type_declaration ctx b acc in
+            (Pwith_typesubst (a, b), acc)
+        | Pwith_modsubst (a, b) ->
+            let a, acc = self#longident_loc ctx a acc in
+            let b, acc = self#longident_loc ctx b acc in
+            (Pwith_modsubst (a, b), acc)
+
+    method module_expr : 'ctx -> module_expr -> 'acc -> module_expr * 'acc =
+      fun ctx { pmod_desc; pmod_loc; pmod_attributes } acc ->
+        let pmod_desc, acc = self#module_expr_desc ctx pmod_desc acc in
+        let pmod_loc, acc = self#location ctx pmod_loc acc in
+        let pmod_attributes, acc = self#attributes ctx pmod_attributes acc in
+        ({ pmod_desc; pmod_loc; pmod_attributes }, acc)
+
+    method module_expr_desc
+        : 'ctx -> module_expr_desc -> 'acc -> module_expr_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pmod_ident a ->
+            let a, acc = self#longident_loc ctx a acc in
+            (Pmod_ident a, acc)
+        | Pmod_structure a ->
+            let a, acc = self#structure ctx a acc in
+            (Pmod_structure a, acc)
+        | Pmod_functor (a, b) ->
+            let a, acc = self#functor_parameter ctx a acc in
+            let b, acc = self#module_expr ctx b acc in
+            (Pmod_functor (a, b), acc)
+        | Pmod_apply (a, b) ->
+            let a, acc = self#module_expr ctx a acc in
+            let b, acc = self#module_expr ctx b acc in
+            (Pmod_apply (a, b), acc)
+        | Pmod_constraint (a, b) ->
+            let a, acc = self#module_expr ctx a acc in
+            let b, acc = self#module_type ctx b acc in
+            (Pmod_constraint (a, b), acc)
+        | Pmod_unpack a ->
+            let a, acc = self#expression ctx a acc in
+            (Pmod_unpack a, acc)
+        | Pmod_extension a ->
+            let a, acc = self#extension ctx a acc in
+            (Pmod_extension a, acc)
+
+    method structure : 'ctx -> structure -> 'acc -> structure * 'acc =
+      self#list self#structure_item
+
+    method structure_item
+        : 'ctx -> structure_item -> 'acc -> structure_item * 'acc =
+      fun ctx { pstr_desc; pstr_loc } acc ->
+        let pstr_desc, acc = self#structure_item_desc ctx pstr_desc acc in
+        let pstr_loc, acc = self#location ctx pstr_loc acc in
+        ({ pstr_desc; pstr_loc }, acc)
+
+    method structure_item_desc
+        : 'ctx -> structure_item_desc -> 'acc -> structure_item_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pstr_eval (a, b) ->
+            let a, acc = self#expression ctx a acc in
+            let b, acc = self#attributes ctx b acc in
+            (Pstr_eval (a, b), acc)
+        | Pstr_value (a, b) ->
+            let a, acc = self#rec_flag ctx a acc in
+            let b, acc = self#list self#value_binding ctx b acc in
+            (Pstr_value (a, b), acc)
+        | Pstr_primitive a ->
+            let a, acc = self#value_description ctx a acc in
+            (Pstr_primitive a, acc)
+        | Pstr_type (a, b) ->
+            let a, acc = self#rec_flag ctx a acc in
+            let b, acc = self#list self#type_declaration ctx b acc in
+            (Pstr_type (a, b), acc)
+        | Pstr_typext a ->
+            let a, acc = self#type_extension ctx a acc in
+            (Pstr_typext a, acc)
+        | Pstr_exception a ->
+            let a, acc = self#type_exception ctx a acc in
+            (Pstr_exception a, acc)
+        | Pstr_module a ->
+            let a, acc = self#module_binding ctx a acc in
+            (Pstr_module a, acc)
+        | Pstr_recmodule a ->
+            let a, acc = self#list self#module_binding ctx a acc in
+            (Pstr_recmodule a, acc)
+        | Pstr_modtype a ->
+            let a, acc = self#module_type_declaration ctx a acc in
+            (Pstr_modtype a, acc)
+        | Pstr_open a ->
+            let a, acc = self#open_declaration ctx a acc in
+            (Pstr_open a, acc)
+        | Pstr_class a ->
+            let a, acc = self#list self#class_declaration ctx a acc in
+            (Pstr_class a, acc)
+        | Pstr_class_type a ->
+            let a, acc = self#list self#class_type_declaration ctx a acc in
+            (Pstr_class_type a, acc)
+        | Pstr_include a ->
+            let a, acc = self#include_declaration ctx a acc in
+            (Pstr_include a, acc)
+        | Pstr_attribute a ->
+            let a, acc = self#attribute ctx a acc in
+            (Pstr_attribute a, acc)
+        | Pstr_extension (a, b) ->
+            let a, acc = self#extension ctx a acc in
+            let b, acc = self#attributes ctx b acc in
+            (Pstr_extension (a, b), acc)
+
+    method value_binding : 'ctx -> value_binding -> 'acc -> value_binding * 'acc
+        =
+      fun ctx { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } acc ->
+        let pvb_pat, acc = self#pattern ctx pvb_pat acc in
+        let pvb_expr, acc = self#expression ctx pvb_expr acc in
+        let pvb_attributes, acc = self#attributes ctx pvb_attributes acc in
+        let pvb_loc, acc = self#location ctx pvb_loc acc in
+        ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, acc)
+
+    method module_binding
+        : 'ctx -> module_binding -> 'acc -> module_binding * 'acc =
+      fun ctx { pmb_name; pmb_expr; pmb_attributes; pmb_loc } acc ->
+        let pmb_name, acc =
+          self#loc (self#option self#string) ctx pmb_name acc
+        in
+        let pmb_expr, acc = self#module_expr ctx pmb_expr acc in
+        let pmb_attributes, acc = self#attributes ctx pmb_attributes acc in
+        let pmb_loc, acc = self#location ctx pmb_loc acc in
+        ({ pmb_name; pmb_expr; pmb_attributes; pmb_loc }, acc)
+
+    method toplevel_phrase
+        : 'ctx -> toplevel_phrase -> 'acc -> toplevel_phrase * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Ptop_def a ->
+            let a, acc = self#structure ctx a acc in
+            (Ptop_def a, acc)
+        | Ptop_dir a ->
+            let a, acc = self#toplevel_directive ctx a acc in
+            (Ptop_dir a, acc)
+
+    method toplevel_directive
+        : 'ctx -> toplevel_directive -> 'acc -> toplevel_directive * 'acc =
+      fun ctx { pdir_name; pdir_arg; pdir_loc } acc ->
+        let pdir_name, acc = self#loc self#string ctx pdir_name acc in
+        let pdir_arg, acc =
+          self#option self#directive_argument ctx pdir_arg acc
+        in
+        let pdir_loc, acc = self#location ctx pdir_loc acc in
+        ({ pdir_name; pdir_arg; pdir_loc }, acc)
+
+    method directive_argument
+        : 'ctx -> directive_argument -> 'acc -> directive_argument * 'acc =
+      fun ctx { pdira_desc; pdira_loc } acc ->
+        let pdira_desc, acc = self#directive_argument_desc ctx pdira_desc acc in
+        let pdira_loc, acc = self#location ctx pdira_loc acc in
+        ({ pdira_desc; pdira_loc }, acc)
+
+    method directive_argument_desc
+        : 'ctx ->
+          directive_argument_desc ->
+          'acc ->
+          directive_argument_desc * 'acc =
+      fun ctx x acc ->
+        match x with
+        | Pdir_string a ->
+            let a, acc = self#string ctx a acc in
+            (Pdir_string a, acc)
+        | Pdir_int (a, b) ->
+            let a, acc = self#string ctx a acc in
+            let b, acc = self#option self#char ctx b acc in
+            (Pdir_int (a, b), acc)
+        | Pdir_ident a ->
+            let a, acc = self#longident ctx a acc in
+            (Pdir_ident a, acc)
+        | Pdir_bool a ->
+            let a, acc = self#bool ctx a acc in
+            (Pdir_bool a, acc)
+
+    method cases : 'ctx -> cases -> 'acc -> cases * 'acc = self#list self#case
+  end
+
 class virtual ['res] lift =
   object (self)
     method virtual record : (string * 'res) list -> 'res

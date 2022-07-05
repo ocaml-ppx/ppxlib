@@ -30,6 +30,12 @@ class ['ctx] map_with_context =
     inherit ['ctx] Ast.map_with_context
   end
 
+class ['ctx, 'acc] fold_map_with_context =
+  object
+    inherit ['ctx, 'acc] Ppxlib_traverse_builtins.fold_map_with_context
+    inherit ['ctx, 'acc] Ast.fold_map_with_context
+  end
+
 class virtual ['res] lift =
   object
     inherit ['res] Ppxlib_traverse_builtins.lift

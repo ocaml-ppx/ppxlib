@@ -4,6 +4,7 @@ module T = struct
   type ('a, 'acc) fold = 'a -> 'acc -> 'acc
   type ('a, 'acc) fold_map = 'a -> 'acc -> 'a * 'acc
   type ('ctx, 'a) map_with_context = 'ctx -> 'a -> 'a
+  type ('ctx, 'a, 'acc) fold_map_with_context = 'ctx -> 'a -> 'acc -> 'a * 'acc
   type ('a, 'res) lift = 'a -> 'res
 end
 
@@ -129,6 +130,58 @@ class ['ctx] map_with_context =
         : 'a.
           ('ctx, 'a) T.map_with_context -> ('ctx, 'a array) T.map_with_context =
       fun f ctx a -> Array.map (f ctx) a
+  end
+
+class ['ctx, 'acc] fold_map_with_context =
+  let any _ x acc = (x, acc) in
+  object
+    method int : ('ctx, int, 'acc) T.fold_map_with_context = any
+    method string : ('ctx, string, 'acc) T.fold_map_with_context = any
+    method bool : ('ctx, bool, 'acc) T.fold_map_with_context = any
+    method char : ('ctx, char, 'acc) T.fold_map_with_context = any
+
+    method option
+        : 'a.
+          ('ctx, 'a, 'acc) T.fold_map_with_context ->
+          ('ctx, 'a option, 'acc) T.fold_map_with_context =
+      fun f ctx x acc ->
+        match x with
+        | None -> (None, acc)
+        | Some x ->
+            let x, acc = f ctx x acc in
+            (Some x, acc)
+
+    method list
+        : 'a.
+          ('ctx, 'a, 'acc) T.fold_map_with_context ->
+          ('ctx, 'a list, 'acc) T.fold_map_with_context =
+      let rec loop f ctx l acc =
+        match l with
+        | [] -> ([], acc)
+        | x :: l ->
+            let x, acc = f ctx x acc in
+            let l, acc = loop f ctx l acc in
+            (x :: l, acc)
+      in
+      loop
+
+    method array
+        : 'a.
+          ('ctx, 'a, 'acc) T.fold_map_with_context ->
+          ('ctx, 'a array, 'acc) T.fold_map_with_context =
+      fun f ctx a acc ->
+        let len = Array.length a in
+        if len = 0 then (a, acc)
+        else
+          let x, acc = f ctx (Array.unsafe_get a 0) acc in
+          let a' = Array.make len x in
+          let r = ref acc in
+          for i = 1 to len - 1 do
+            let x, acc = f ctx (Array.unsafe_get a i) !r in
+            Array.unsafe_set a' i x;
+            r := acc
+          done;
+          (a', !r)
   end
 
 class virtual ['res] lift =

@@ -185,6 +185,38 @@ module Backends = struct
               [%e acc]])
     end
 
+  let fold_mapper_with_context : what =
+    let uses_ctx = uses_var "ctx" in
+    object
+      method name = "fold_map_with_context"
+      inherit reconstructors
+
+      method class_params ~loc =
+        [
+          (ptyp_var ~loc "ctx", (NoVariance, NoInjectivity));
+          (ptyp_var ~loc "acc", (NoVariance, NoInjectivity));
+        ]
+
+      method apply ~loc expr args =
+        eapply ~loc expr ((evar ~loc "ctx" :: args) @ [ evar ~loc "acc" ])
+
+      method abstract ~loc patt expr =
+        if uses_ctx expr then
+          eabstract ~loc [ pvar ~loc "ctx"; patt; pvar ~loc "acc" ] expr
+        else eabstract ~loc [ pvar ~loc "_ctx"; patt; pvar ~loc "acc" ] expr
+
+      method typ ~loc ty = [%type: 'ctx -> [%t ty] -> 'acc -> [%t ty] * 'acc]
+      method any ~loc = [%expr fun _ctx x acc -> (x, acc)]
+
+      method combine ~loc combinators ~reconstruct =
+        List.fold_right combinators
+          ~init:[%expr [%e reconstruct], acc]
+          ~f:(fun (v, expr) acc ->
+            [%expr
+              let [%p pvar_of_var v], acc = [%e expr] in
+              [%e acc]])
+    end
+
   let string_of_lid id = String.concat ~sep:"." (Longident.flatten_exn id)
 
   let lifter : what =
@@ -224,7 +256,15 @@ module Backends = struct
     end
 
   let all =
-    [ mapper; iterator; folder; fold_mapper; mapper_with_context; lifter ]
+    [
+      mapper;
+      iterator;
+      folder;
+      fold_mapper;
+      mapper_with_context;
+      fold_mapper_with_context;
+      lifter;
+    ]
 end
 
 type what = Backends.what

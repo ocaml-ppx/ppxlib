@@ -38,6 +38,12 @@ class virtual ['ctx] map_with_context :
     method t : 'ctx -> t -> t
     method u : 'ctx -> u -> u
   end
+class virtual ['ctx, 'acc] fold_map_with_context :
+  object
+    method virtual int : 'ctx -> int -> 'acc -> int * 'acc
+    method t : 'ctx -> t -> 'acc -> t * 'acc
+    method u : 'ctx -> u -> 'acc -> u * 'acc
+  end
 class virtual ['res] lift :
   object
     method virtual constr : string -> 'res list -> 'res
