@@ -17,6 +17,21 @@ let evars_of_vars = List.map ~f:evar_of_var
 let pvars_of_vars = List.map ~f:pvar_of_var
 let tvars_of_vars = List.map ~f:tvar_of_var
 
+let methods_of_class_exn = function
+  | {
+      pstr_desc =
+        Pstr_class
+          [
+            {
+              pci_expr = { pcl_desc = Pcl_structure { pcstr_fields = l; _ }; _ };
+              _;
+            };
+          ];
+      _;
+    } ->
+      l
+  | _ -> assert false
+
 module Backends = struct
   class reconstructors =
     object
@@ -36,6 +51,8 @@ module Backends = struct
 
       method class_params :
         loc:Location.t -> (core_type * (variance * injectivity)) list
+
+      method virtual_methods : loc:Location.t -> class_field list
 
       method apply :
         loc:Location.t -> expression -> expression list -> expression
@@ -58,6 +75,7 @@ module Backends = struct
       method name = "map"
       inherit reconstructors
       method class_params ~loc:_ = []
+      method virtual_methods ~loc:_ = []
       method apply ~loc expr args = eapply ~loc expr args
       method abstract ~loc patt expr = pexp_fun ~loc Nolabel None patt expr
       method typ ~loc ty = ptyp_arrow ~loc Nolabel ty ty
@@ -75,6 +93,7 @@ module Backends = struct
       method name = "iter"
       inherit reconstructors
       method class_params ~loc:_ = []
+      method virtual_methods ~loc:_ = []
       method apply ~loc expr args = eapply ~loc expr args
       method abstract ~loc patt expr = pexp_fun ~loc Nolabel None patt expr
       method typ ~loc ty = [%type: [%t ty] -> unit]
@@ -96,6 +115,7 @@ module Backends = struct
       method class_params ~loc =
         [ (ptyp_var ~loc "acc", (NoVariance, NoInjectivity)) ]
 
+      method virtual_methods ~loc:_ = []
       method apply ~loc expr args = eapply ~loc expr (args @ [ evar ~loc "acc" ])
 
       method abstract ~loc patt expr =
@@ -123,6 +143,7 @@ module Backends = struct
       method class_params ~loc =
         [ (ptyp_var ~loc "acc", (NoVariance, NoInjectivity)) ]
 
+      method virtual_methods ~loc:_ = []
       method apply ~loc expr args = eapply ~loc expr (args @ [ evar ~loc "acc" ])
 
       method abstract ~loc patt expr =
@@ -169,6 +190,7 @@ module Backends = struct
       method class_params ~loc =
         [ (ptyp_var ~loc "ctx", (NoVariance, NoInjectivity)) ]
 
+      method virtual_methods ~loc:_ = []
       method apply ~loc expr args = eapply ~loc expr (evar ~loc "ctx" :: args)
 
       method abstract ~loc patt expr =
@@ -193,6 +215,17 @@ module Backends = struct
 
       method class_params ~loc =
         [ (ptyp_var ~loc "res", (NoVariance, NoInjectivity)) ]
+
+      method virtual_methods ~loc =
+        methods_of_class_exn
+          [%stri
+            class virtual blah =
+              object
+                method virtual record : (string * 'res) list -> 'res
+                method virtual constr : string -> 'res list -> 'res
+                method virtual tuple : 'res list -> 'res
+                method virtual other : 'a. 'a -> 'res
+              end]
 
       method apply ~loc expr args = eapply ~loc expr args
       method abstract ~loc patt expr = pexp_fun ~loc Nolabel None patt expr
@@ -429,7 +462,7 @@ let type_deps =
     in
     Longident.Map.bindings map
 
-let lift_virtual_methods ~loc methods =
+let filter_virtual_methods ~methods ~virtual_methods =
   let collect =
     object
       inherit [String.Set.t] Ast_traverse.fold as super
@@ -445,32 +478,7 @@ let lift_virtual_methods ~loc methods =
     end
   in
   let used = collect#list collect#class_field methods String.Set.empty in
-  let all_virtual_methods =
-    match
-      [%stri
-        class virtual blah =
-          object
-            method virtual record : (string * 'res) list -> 'res
-            method virtual constr : string -> 'res list -> 'res
-            method virtual tuple : 'res list -> 'res
-            method virtual other : 'a. 'a -> 'res
-          end]
-    with
-    | {
-     pstr_desc =
-       Pstr_class
-         [
-           {
-             pci_expr = { pcl_desc = Pcl_structure { pcstr_fields = l; _ }; _ };
-             _;
-           };
-         ];
-     _;
-    } ->
-        l
-    | _ -> assert false
-  in
-  List.filter all_virtual_methods ~f:(fun m ->
+  List.filter virtual_methods ~f:(fun m ->
       match m.pcf_desc with
       | Pcf_method (s, _, _) -> String.Set.mem s.txt used
       | _ -> false)
@@ -500,9 +508,8 @@ let gen_class ~(what : what) ~loc tds =
         pcf_method ~loc (td.ptype_name, Public, Cfk_concrete (Fresh, mapper)))
   in
   let virtual_methods =
-    if String.equal what#name "lift" then
-      lift_virtual_methods ~loc methods @ virtual_methods
-    else virtual_methods
+    filter_virtual_methods ~methods ~virtual_methods:(what#virtual_methods ~loc)
+    @ virtual_methods
   in
   let virt = if List.is_empty virtual_methods then Concrete else Virtual in
   class_infos ~loc ~virt ~params:class_params ~name:{ loc; txt = what#name }
