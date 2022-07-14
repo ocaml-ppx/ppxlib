@@ -16,6 +16,8 @@ let tvar_of_var { txt; loc } = ptyp_var ~loc txt
 let evars_of_vars = List.map ~f:evar_of_var
 let pvars_of_vars = List.map ~f:pvar_of_var
 let tvars_of_vars = List.map ~f:tvar_of_var
+let fst_expr ~loc expr = [%expr Stdlib.fst [%e expr]]
+let snd_expr ~loc expr = [%expr Stdlib.snd [%e expr]]
 
 let methods_of_class_exn = function
   | {
@@ -256,8 +258,96 @@ module Backends = struct
       method tuple ~loc es = [%expr self#tuple [%e elist ~loc es]]
     end
 
+  let lift_mapper_with_context : what =
+    let uses_ctx = uses_var "ctx" in
+    object
+      method name = "lift_map_with_context"
+
+      method class_params ~loc =
+        [
+          (ptyp_var ~loc "ctx", (NoVariance, NoInjectivity));
+          (ptyp_var ~loc "res", (NoVariance, NoInjectivity));
+        ]
+
+      method virtual_methods ~loc =
+        methods_of_class_exn
+          [%stri
+            class virtual blah =
+              object
+                method virtual record : 'ctx -> (string * 'res) list -> 'res
+                method virtual constr : 'ctx -> string -> 'res list -> 'res
+                method virtual tuple : 'ctx -> 'res list -> 'res
+                method virtual other : 'a. 'ctx -> 'a -> 'res
+              end]
+
+      method apply ~loc expr args = eapply ~loc expr (evar ~loc "ctx" :: args)
+
+      method abstract ~loc patt expr =
+        let ctx_pat =
+          if uses_ctx expr then pvar ~loc "ctx" else pvar ~loc "_ctx"
+        in
+        eabstract ~loc [ ctx_pat; patt ] expr
+
+      method typ ~loc ty = [%type: 'ctx -> [%t ty] -> [%t ty] * 'res]
+      method any ~loc = [%expr fun ctx x -> (x, self#other ctx x)]
+
+      method combine ~loc combinators ~reconstruct =
+        List.fold_right combinators ~init:reconstruct ~f:(fun (v, expr) acc ->
+            pexp_let ~loc Nonrecursive
+              [ value_binding ~loc ~pat:(pvar_of_var v) ~expr ]
+              acc)
+
+      method record ~loc flds =
+        let record =
+          pexp_record ~loc
+            (List.map flds ~f:(fun (lab, e) -> (lab, fst_expr ~loc e)))
+            None
+        in
+        let flds =
+          elist ~loc
+            (List.map flds ~f:(fun (lab, e) ->
+                 pexp_tuple
+                   ~loc:{ lab.loc with loc_end = e.pexp_loc.loc_end }
+                   [
+                     estring ~loc:lab.loc (string_of_lid lab.txt);
+                     snd_expr ~loc e;
+                   ]))
+        in
+        [%expr [%e record], self#record ctx [%e flds]]
+
+      method construct ~loc id args =
+        let constr =
+          pexp_construct ~loc id
+            (pexp_tuple_opt ~loc (List.map args ~f:(fst_expr ~loc)))
+        in
+        let res =
+          let args = elist ~loc (List.map args ~f:(snd_expr ~loc)) in
+          [%expr
+            self#constr ctx
+              [%e estring ~loc:id.loc (string_of_lid id.txt)]
+              [%e args]]
+        in
+        [%expr [%e constr], [%e res]]
+
+      method tuple ~loc es =
+        let tuple = pexp_tuple ~loc (List.map es ~f:(fst_expr ~loc)) in
+        let res =
+          [%expr
+            self#tuple ctx [%e elist ~loc (List.map es ~f:(snd_expr ~loc))]]
+        in
+        [%expr [%e tuple], [%e res]]
+    end
+
   let all =
-    [ mapper; iterator; folder; fold_mapper; mapper_with_context; lifter ]
+    [
+      mapper;
+      iterator;
+      folder;
+      fold_mapper;
+      mapper_with_context;
+      lifter;
+      lift_mapper_with_context;
+    ]
 end
 
 type what = Backends.what
