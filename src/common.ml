@@ -253,3 +253,22 @@ let mk_named_sig ~loc ~sg_name ~handle_polymorphic_variant = function
                   (pmty_ident ~loc (Located.lident mty ~loc))
                   [ Pwith_typesubst (Located.lident ~loc "t", for_subst) ]))
   | _ -> None
+
+module With_errors = struct
+  type 'a t = 'a * Location.Error.t list
+
+  let return e = (e, [])
+
+  let ( >>= ) (x, errors1) f =
+    let y, errors2 = f x in
+    (y, errors1 @ errors2)
+
+  let ( >>| ) (x, errors) f = (f x, errors)
+
+  let of_result result ~default =
+    match result with
+    | Ok x -> (x, [])
+    | Error errors -> (default, NonEmptyList.to_list errors)
+
+  let combine_errors list = (List.map list ~f:fst, List.concat_map list ~f:snd)
+end

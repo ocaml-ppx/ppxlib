@@ -1,3 +1,4 @@
+open Stdppx
 open Ppxlib
 
 let pprint_ctxt ctxt =
@@ -11,7 +12,7 @@ let pprint_ctxt ctxt =
 
 let side_print_ctxt =
   object
-    inherit Ast_traverse.map_with_expansion_context as super
+    inherit Ast_traverse.lift_map_with_expansion_context_and_errors as super
 
     method! structure ctxt st =
       pprint_ctxt ctxt;
@@ -24,5 +25,17 @@ let side_print_ctxt =
 
 let () =
   Driver.V2.(
-    register_transformation ~impl:side_print_ctxt#structure
-      ~intf:side_print_ctxt#signature "print_ctxt")
+    register_transformation
+      ~impl:(fun ctxt structure ->
+        let structure, errors = side_print_ctxt#structure ctxt structure in
+        (errors
+        |> List.map ~f:Location.Error.to_extension
+        |> List.map ~f:(Extension.Context.node_of_extension Structure_item))
+        @ structure)
+      ~intf:(fun ctxt signature ->
+        let signature, errors = side_print_ctxt#signature ctxt signature in
+        (errors
+        |> List.map ~f:Location.Error.to_extension
+        |> List.map ~f:(Extension.Context.node_of_extension Signature_item))
+        @ signature)
+      "print_ctxt")

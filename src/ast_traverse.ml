@@ -36,6 +36,12 @@ class virtual ['res] lift =
     inherit ['res] Ast.lift
   end
 
+class virtual ['ctx, 'res] lift_map_with_context =
+  object
+    inherit ['ctx, 'res] Ppxlib_traverse_builtins.lift_map_with_context
+    inherit ['ctx, 'res] Ast.lift_map_with_context
+  end
+
 let module_name = function None -> "_" | Some name -> name
 let enter name path = if String.is_empty path then name else path ^ "." ^ name
 let enter_opt name_opt path = enter (module_name name_opt) path
@@ -90,30 +96,74 @@ let var_names_of =
 let ec_enter_module_opt ~loc name_opt ctxt =
   Expansion_context.Base.enter_module ~loc (module_name name_opt) ctxt
 
-class map_with_expansion_context =
+class lift_map_with_expansion_context_and_errors =
+  let return _ctx x = (x, []) in
   object (self)
-    inherit [Expansion_context.Base.t] map_with_context as super
+    inherit
+      [Expansion_context.Base.t, Location.Error.t list] lift_map_with_context as super
+
+    method int = return
+    method string = return
+    method bool = return
+    method char = return
+    method float = return
+    method int32 = return
+    method int64 = return
+    method nativeint = return
+    method unit = return
+
+    method array
+        : 'a.
+          (Expansion_context.Base.t -> 'a -> 'a * Location.Error.t list) ->
+          Expansion_context.Base.t ->
+          'a array ->
+          'a array * Location.Error.t list =
+      fun f ctx a ->
+        let list, res = self#list f ctx (Array.to_list a) in
+        (Array.of_list list, res)
+
+    method other : 'a. Expansion_context.Base.t -> 'a -> Location.Error.t list =
+      fun _ _ -> []
+
+    method record _ctx fields = List.concat_map fields ~f:snd
+    method constr _ctx _tag args = List.concat args
+    method tuple _ctx l = List.concat l
 
     method! expression ctxt
         { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } =
       let ctxt = Expansion_context.Base.enter_expr ctxt in
-      let pexp_desc =
+      let pexp_desc, desc_res =
         match pexp_desc with
         | Pexp_letmodule (name, module_expr, body) ->
-            let name = self#loc (self#option self#string) ctxt name in
-            let module_expr =
+            let name, name_res = self#loc (self#option self#string) ctxt name in
+            let module_expr, module_expr_res =
               self#module_expr
                 (ec_enter_module_opt ~loc:module_expr.pmod_loc name.txt ctxt)
                 module_expr
             in
-            let body = self#expression ctxt body in
-            Pexp_letmodule (name, module_expr, body)
+            let body, body_res = self#expression ctxt body in
+            let res =
+              self#constr ctxt "Pexp_letmodule"
+                [ name_res; module_expr_res; body_res ]
+            in
+            (Pexp_letmodule (name, module_expr, body), res)
         | _ -> self#expression_desc ctxt pexp_desc
       in
-      let pexp_loc = self#location ctxt pexp_loc in
-      let pexp_loc_stack = self#list self#location ctxt pexp_loc_stack in
-      let pexp_attributes = self#attributes ctxt pexp_attributes in
-      { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes }
+      let pexp_loc, loc_res = self#location ctxt pexp_loc in
+      let pexp_loc_stack, loc_stack_res =
+        self#list self#location ctxt pexp_loc_stack
+      in
+      let pexp_attributes, attributes_res =
+        self#attributes ctxt pexp_attributes
+      in
+      ( { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes },
+        self#record ctxt
+          [
+            ("pexp_desc", desc_res);
+            ("pexp_loc", loc_res);
+            ("pexp_loc_stack", loc_stack_res);
+            ("attributes", attributes_res);
+          ] )
 
     method! module_binding ctxt mb =
       super#module_binding
@@ -145,11 +195,22 @@ class map_with_expansion_context =
         | [ var_name ] ->
             Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt
       in
-      let pvb_pat = self#pattern ctxt pvb_pat in
-      let pvb_expr = self#expression in_binding_ctxt pvb_expr in
-      let pvb_attributes = self#attributes in_binding_ctxt pvb_attributes in
-      let pvb_loc = self#location ctxt pvb_loc in
-      { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
+      let pvb_pat, pat_res = self#pattern ctxt pvb_pat in
+      let pvb_expr, expr_res = self#expression in_binding_ctxt pvb_expr in
+      let pvb_attributes, attributes_res =
+        self#attributes in_binding_ctxt pvb_attributes
+      in
+      let pvb_loc, loc_res = self#location ctxt pvb_loc in
+      let res =
+        self#record ctxt
+          [
+            ("pvb_pat", pat_res);
+            ("pvb_expr", expr_res);
+            ("pvb_attributes", attributes_res);
+            ("pvb_loc", loc_res);
+          ]
+      in
+      ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, res)
   end
 
 class sexp_of =

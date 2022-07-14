@@ -85,3 +85,16 @@ val mk_named_sig :
     - there are no constraints on the type parameters
 
     It will take care of giving fresh names to unnamed type parameters. *)
+
+module With_errors : sig
+  type 'a t = 'a * Location.Error.t list
+
+  val return : 'a -> 'a t
+  val ( >>= ) : 'a t -> ('a -> 'b t) -> 'b t
+  val ( >>| ) : 'a t -> ('a -> 'b) -> 'b t
+
+  val of_result :
+    ('a, Location.Error.t NonEmptyList.t) result -> default:'a -> 'a t
+
+  val combine_errors : 'a t list -> 'a list t
+end
