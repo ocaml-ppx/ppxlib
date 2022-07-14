@@ -172,7 +172,6 @@ class virtual ['ctx, 'res] lift_map_with_context =
 
     method virtual array
         : 'a.
-          'ctx ->
           ('ctx, 'a, 'res) T.lift_map_with_context ->
           ('ctx, 'a array, 'res) T.lift_map_with_context
 
@@ -227,4 +226,37 @@ class type ['res] std_lifters =
     method unit : (unit, 'res) T.lift
     method option : 'a. ('a, 'res) T.lift -> ('a option, 'res) T.lift
     method list : 'a. ('a, 'res) T.lift -> ('a list, 'res) T.lift
+  end
+
+class type ['ctx, 'res] std_lift_mappers_with_context =
+  object
+    method other : 'a. 'ctx -> 'a -> 'res
+    method int : ('ctx, int, 'res) T.lift_map_with_context
+    method string : ('ctx, string, 'res) T.lift_map_with_context
+    method bool : ('ctx, bool, 'res) T.lift_map_with_context
+    method char : ('ctx, char, 'res) T.lift_map_with_context
+
+    method array :
+      'a.
+      ('ctx, 'a, 'res) T.lift_map_with_context ->
+      ('ctx, 'a array, 'res) T.lift_map_with_context
+
+    method record : 'ctx -> (string * 'res) list -> 'res
+    method constr : 'ctx -> string -> 'res list -> 'res
+    method tuple : 'ctx -> 'res list -> 'res
+    method float : ('ctx, float, 'res) T.lift_map_with_context
+    method int32 : ('ctx, int32, 'res) T.lift_map_with_context
+    method int64 : ('ctx, int64, 'res) T.lift_map_with_context
+    method nativeint : ('ctx, nativeint, 'res) T.lift_map_with_context
+    method unit : ('ctx, unit, 'res) T.lift_map_with_context
+
+    method option :
+      'a.
+      ('ctx, 'a, 'res) T.lift_map_with_context ->
+      ('ctx, 'a option, 'res) T.lift_map_with_context
+
+    method list :
+      'a.
+      ('ctx, 'a, 'res) T.lift_map_with_context ->
+      ('ctx, 'a list, 'res) T.lift_map_with_context
   end
