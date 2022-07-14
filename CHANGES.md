@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Update context-free rules to collect expansion errors and propagate
+  them to top level without failing. (#358, @ceastlund)
 
 0.27.0 (14/06/2022)
 -------------------
