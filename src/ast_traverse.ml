@@ -96,7 +96,7 @@ let var_names_of =
 let ec_enter_module_opt ~loc name_opt ctxt =
   Expansion_context.Base.enter_module ~loc (module_name name_opt) ctxt
 
-class lift_map_with_expansion_context_and_errors =
+class map_with_expansion_context_and_errors =
   let return _ctx x = (x, []) in
   object (self)
     inherit

@@ -1,6 +1,7 @@
 (*$ open Ppxlib_cinaps_helpers $*)
 open! Import
 open Common
+open With_errors
 module E = Extension
 module EC = Extension.Context
 module A = Attribute
@@ -197,7 +198,6 @@ module Generated_code_hook = struct
 end
 
 let rec map_node_rec context ts super_call loc base_ctxt x =
-  let open With_errors in
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
@@ -215,7 +215,6 @@ let rec map_node_rec context ts super_call loc base_ctxt x =
           >>= fun x -> map_node_rec context ts super_call loc base_ctxt x)
 
 let map_node context ts super_call loc base_ctxt x ~hook =
-  let open With_errors in
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
@@ -236,7 +235,6 @@ let map_node context ts super_call loc base_ctxt x ~hook =
 
 let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
     ~in_generated_code =
-  let open With_errors in
   match l with
   | [] -> return []
   | x :: l -> (
@@ -300,7 +298,6 @@ let table_of_special_functions special_functions =
    attached, [get_group] returns the equivalent of
    [Some (List.map ~f:(Attribute.get attr) l)]. *)
 let rec get_group attr l =
-  let open With_errors in
   match l with
   | [] -> return None
   | x :: l -> (
@@ -345,7 +342,6 @@ let context_free_attribute_modification ~loc =
    of one element; it only has [@@deriving].
 *)
 let handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt =
-  let open With_errors in
   List.fold_left attrs ~init:(return [])
     ~f:(fun acc (Rule.Attr_group_inline.T group) ->
       acc >>= fun acc ->
@@ -364,7 +360,6 @@ let handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt =
           return (expect_items :: acc))
 
 let handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt =
-  let open With_errors in
   List.fold_left attrs ~init:(return []) ~f:(fun acc (Rule.Attr_inline.T a) ->
       acc >>= fun acc ->
       Attribute.get_res a.attribute item |> of_result ~default:None
@@ -456,9 +451,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   let map_node = map_node ~hook in
   let map_nodes = map_nodes ~hook in
 
-  let open With_errors in
   object (self)
-    inherit Ast_traverse.lift_map_with_expansion_context_and_errors as super
+    inherit Ast_traverse.map_with_expansion_context_and_errors as super
 
     (* No point recursing into every location *)
     method! location _ x = return x
@@ -590,7 +584,6 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     (* TODO: try to factorize #structure and #signature without meta-programming *)
     (*$*)
     method! structure base_ctxt st =
-      let open With_errors in
       let rec with_extra_items item ~extra_items ~expect_items ~rest
           ~in_generated_code =
         loop (rev_concat extra_items) ~in_generated_code:true
@@ -686,7 +679,6 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     (*$ str_to_sig _last_text_block *)
     method! signature base_ctxt sg =
-      let open With_errors in
       let rec with_extra_items item ~extra_items ~expect_items ~rest
           ~in_generated_code =
         loop (rev_concat extra_items) ~in_generated_code:true

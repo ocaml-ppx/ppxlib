@@ -71,7 +71,7 @@ class virtual ['ctx, 'res] lift_map_with_context :
     inherit ['ctx, 'res] Ast.lift_map_with_context
   end
 
-class lift_map_with_expansion_context_and_errors :
+class map_with_expansion_context_and_errors :
   object
     inherit
       [Expansion_context.Base.t, Location.Error.t list] Ppxlib_traverse_builtins
