@@ -1,4 +1,5 @@
 open! Import
+open Common.With_errors
 include Ast_traverse0
 
 class virtual ['ctx, 'res] lift_map_with_context =
@@ -136,11 +137,13 @@ class map_with_expansion_context_and_errors =
 
     method! expression ctxt
         ({ pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } as expr) =
-      let ctxt =
-        match Attribute.get enter_value expr with
+      let with_value =
+        Attribute.get_res enter_value expr |> of_result ~default:None
+        >>| function
         | None -> ctxt
         | Some { loc; txt } -> Expansion_context.Base.enter_value ~loc txt ctxt
       in
+      with_value >>= fun ctxt ->
       let ctxt = Expansion_context.Base.enter_expr ctxt in
       let pexp_desc, desc_errors =
         match pexp_desc with
@@ -149,13 +152,15 @@ class map_with_expansion_context_and_errors =
               self#loc (self#option self#string) ctxt name
             in
             let module_expr, module_expr_errors =
-              let ctxt =
-                match Attribute.get do_not_enter_let_module expr with
+              let with_let_module =
+                Attribute.get_res do_not_enter_let_module expr
+                |> of_result ~default:None
+                >>| function
                 | Some () -> ctxt
                 | None ->
                     ec_enter_module_opt ~loc:module_expr.pmod_loc name.txt ctxt
               in
-              self#module_expr ctxt module_expr
+              with_let_module >>= fun ctxt -> self#module_expr ctxt module_expr
             in
             let body, body_errors = self#expression ctxt body in
             let errors =
@@ -182,52 +187,63 @@ class map_with_expansion_context_and_errors =
           ] )
 
     method! module_expr ctxt me =
-      let ctxt =
-        match Attribute.get enter_module me with
+      let with_module_expr =
+        Attribute.get_res enter_module me |> of_result ~default:None
+        >>| function
         | None -> ctxt
         | Some { loc; txt } -> Expansion_context.Base.enter_module ~loc txt ctxt
       in
-      super#module_expr ctxt me
+      with_module_expr >>= fun ctxt -> super#module_expr ctxt me
 
     method! module_binding ctxt mb =
-      let ctxt =
-        match Attribute.get do_not_enter_module_binding mb with
+      let with_module_binding =
+        Attribute.get_res do_not_enter_module_binding mb
+        |> of_result ~default:None
+        >>| function
         | Some () -> ctxt
         | None -> ec_enter_module_opt ~loc:mb.pmb_loc mb.pmb_name.txt ctxt
       in
-      super#module_binding ctxt mb
+      with_module_binding >>= fun ctxt -> super#module_binding ctxt mb
 
     method! module_declaration ctxt md =
-      let ctxt =
-        match Attribute.get do_not_enter_module_declaration md with
+      let with_module_declaration =
+        Attribute.get_res do_not_enter_module_declaration md
+        |> of_result ~default:None
+        >>| function
         | Some () -> ctxt
         | None -> ec_enter_module_opt ~loc:md.pmd_loc md.pmd_name.txt ctxt
       in
-      super#module_declaration ctxt md
+      with_module_declaration >>= fun ctxt -> super#module_declaration ctxt md
 
     method! module_type_declaration ctxt mtd =
-      let ctxt =
-        match Attribute.get do_not_enter_module_type_declaration mtd with
+      let with_module_type_declaration =
+        Attribute.get_res do_not_enter_module_type_declaration mtd
+        |> of_result ~default:None
+        >>| function
         | Some () -> ctxt
         | None ->
             Expansion_context.Base.enter_module ~loc:mtd.pmtd_loc
               mtd.pmtd_name.txt ctxt
       in
+      with_module_type_declaration >>= fun ctxt ->
       super#module_type_declaration ctxt mtd
 
     method! value_description ctxt vd =
-      let ctxt =
-        match Attribute.get do_not_enter_value_description vd with
+      let with_value_description =
+        Attribute.get_res do_not_enter_value_description vd
+        |> of_result ~default:None
+        >>| function
         | Some () -> ctxt
         | None ->
             Expansion_context.Base.enter_value ~loc:vd.pval_loc vd.pval_name.txt
               ctxt
       in
-      super#value_description ctxt vd
+      with_value_description >>= fun ctxt -> super#value_description ctxt vd
 
     method! value_binding ctxt
         ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc } as vb) =
-      match Attribute.get do_not_enter_value_binding vb with
+      Attribute.get_res do_not_enter_value_binding vb |> of_result ~default:None
+      >>= function
       | Some () -> super#value_binding ctxt vb
       | None ->
           let in_binding_ctxt =
