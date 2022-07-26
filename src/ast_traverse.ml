@@ -119,8 +119,8 @@ class map_with_expansion_context_and_errors =
           'a array ->
           'a array * Location.Error.t list =
       fun f ctx a ->
-        let list, res = self#list f ctx (Array.to_list a) in
-        (Array.of_list list, res)
+        let list, errors = self#list f ctx (Array.to_list a) in
+        (Array.of_list list, errors)
 
     method other : 'a. Expansion_context.Base.t -> 'a -> Location.Error.t list =
       fun _ _ -> []
@@ -132,37 +132,39 @@ class map_with_expansion_context_and_errors =
     method! expression ctxt
         { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes } =
       let ctxt = Expansion_context.Base.enter_expr ctxt in
-      let pexp_desc, desc_res =
+      let pexp_desc, desc_errors =
         match pexp_desc with
         | Pexp_letmodule (name, module_expr, body) ->
-            let name, name_res = self#loc (self#option self#string) ctxt name in
-            let module_expr, module_expr_res =
+            let name, name_errors =
+              self#loc (self#option self#string) ctxt name
+            in
+            let module_expr, module_expr_errors =
               self#module_expr
                 (ec_enter_module_opt ~loc:module_expr.pmod_loc name.txt ctxt)
                 module_expr
             in
-            let body, body_res = self#expression ctxt body in
-            let res =
+            let body, body_errors = self#expression ctxt body in
+            let errors =
               self#constr ctxt "Pexp_letmodule"
-                [ name_res; module_expr_res; body_res ]
+                [ name_errors; module_expr_errors; body_errors ]
             in
-            (Pexp_letmodule (name, module_expr, body), res)
+            (Pexp_letmodule (name, module_expr, body), errors)
         | _ -> self#expression_desc ctxt pexp_desc
       in
-      let pexp_loc, loc_res = self#location ctxt pexp_loc in
-      let pexp_loc_stack, loc_stack_res =
+      let pexp_loc, loc_errors = self#location ctxt pexp_loc in
+      let pexp_loc_stack, loc_stack_errors =
         self#list self#location ctxt pexp_loc_stack
       in
-      let pexp_attributes, attributes_res =
+      let pexp_attributes, attributes_errors =
         self#attributes ctxt pexp_attributes
       in
       ( { pexp_desc; pexp_loc; pexp_loc_stack; pexp_attributes },
         self#record ctxt
           [
-            ("pexp_desc", desc_res);
-            ("pexp_loc", loc_res);
-            ("pexp_loc_stack", loc_stack_res);
-            ("attributes", attributes_res);
+            ("pexp_desc", desc_errors);
+            ("pexp_loc", loc_errors);
+            ("pexp_loc_stack", loc_stack_errors);
+            ("attributes", attributes_errors);
           ] )
 
     method! module_binding ctxt mb =
@@ -195,22 +197,22 @@ class map_with_expansion_context_and_errors =
         | [ var_name ] ->
             Expansion_context.Base.enter_value ~loc:pvb_loc var_name ctxt
       in
-      let pvb_pat, pat_res = self#pattern ctxt pvb_pat in
-      let pvb_expr, expr_res = self#expression in_binding_ctxt pvb_expr in
-      let pvb_attributes, attributes_res =
+      let pvb_pat, pat_errors = self#pattern ctxt pvb_pat in
+      let pvb_expr, expr_errors = self#expression in_binding_ctxt pvb_expr in
+      let pvb_attributes, attributes_errors =
         self#attributes in_binding_ctxt pvb_attributes
       in
-      let pvb_loc, loc_res = self#location ctxt pvb_loc in
-      let res =
+      let pvb_loc, loc_errors = self#location ctxt pvb_loc in
+      let errors =
         self#record ctxt
           [
-            ("pvb_pat", pat_res);
-            ("pvb_expr", expr_res);
-            ("pvb_attributes", attributes_res);
-            ("pvb_loc", loc_res);
+            ("pvb_pat", pat_errors);
+            ("pvb_expr", expr_errors);
+            ("pvb_attributes", attributes_errors);
+            ("pvb_loc", loc_errors);
           ]
       in
-      ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, res)
+      ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, errors)
   end
 
 class sexp_of =
