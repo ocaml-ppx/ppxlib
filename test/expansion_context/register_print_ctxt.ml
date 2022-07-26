@@ -28,14 +28,18 @@ let () =
     register_transformation
       ~impl:(fun ctxt structure ->
         let structure, errors = side_print_ctxt#structure ctxt structure in
-        (errors
-        |> List.map ~f:Location.Error.to_extension
-        |> List.map ~f:(Extension.Context.node_of_extension Structure_item))
+        List.map errors ~f:(fun error ->
+            Ast_builder.Default.pstr_extension
+              ~loc:(Location.Error.get_location error)
+              (Location.Error.to_extension error)
+              [])
         @ structure)
       ~intf:(fun ctxt signature ->
         let signature, errors = side_print_ctxt#signature ctxt signature in
-        (errors
-        |> List.map ~f:Location.Error.to_extension
-        |> List.map ~f:(Extension.Context.node_of_extension Signature_item))
+        List.map errors ~f:(fun error ->
+            Ast_builder.Default.psig_extension
+              ~loc:(Location.Error.get_location error)
+              (Location.Error.to_extension error)
+              [])
         @ signature)
       "print_ctxt")

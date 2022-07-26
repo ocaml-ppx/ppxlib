@@ -234,9 +234,11 @@ module Transform = struct
         map#structure base_ctxt (List.concat [ attrs; header; st; footer ])
       in
       let st =
-        (errors
-        |> List.map ~f:Location.Error.to_extension
-        |> List.map ~f:(Extension.Context.node_of_extension Structure_item))
+        List.map errors ~f:(fun error ->
+            Ast_builder.Default.pstr_extension
+              ~loc:(Location.Error.get_location error)
+              (Location.Error.to_extension error)
+              [])
         @ st
       in
       match impl with None -> st | Some f -> f ctxt st
@@ -264,9 +266,11 @@ module Transform = struct
         map#signature base_ctxt (List.concat [ attrs; header; sg; footer ])
       in
       let sg =
-        (errors
-        |> List.map ~f:Location.Error.to_extension
-        |> List.map ~f:(Extension.Context.node_of_extension Signature_item))
+        List.map errors ~f:(fun error ->
+            Ast_builder.Default.psig_extension
+              ~loc:(Location.Error.get_location error)
+              (Location.Error.to_extension error)
+              [])
         @ sg
       in
       match intf with None -> sg | Some f -> f ctxt sg
