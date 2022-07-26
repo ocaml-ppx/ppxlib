@@ -23,6 +23,12 @@ let styler = ref None
 let output_metadata_filename = ref None
 let corrected_suffix = ref ".ppx-corrected"
 
+let ghost =
+  object
+    inherit Ast_traverse.map
+    method! location loc = { loc with loc_ghost = true }
+  end
+
 module Lint_error = struct
   type t = Location.t * string
 
@@ -238,7 +244,8 @@ module Transform = struct
             Ast_builder.Default.pstr_extension
               ~loc:(Location.Error.get_location error)
               (Location.Error.to_extension error)
-              [])
+              []
+            |> ghost#structure_item)
         @ st
       in
       match impl with None -> st | Some f -> f ctxt st
@@ -270,7 +277,8 @@ module Transform = struct
             Ast_builder.Default.psig_extension
               ~loc:(Location.Error.get_location error)
               (Location.Error.to_extension error)
-              [])
+              []
+            |> ghost#signature_item)
         @ sg
       in
       match intf with None -> sg | Some f -> f ctxt sg
