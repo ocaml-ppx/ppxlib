@@ -12,7 +12,7 @@ let pprint_ctxt ctxt =
 
 let side_print_ctxt =
   object
-    inherit Ast_traverse.lift_map_with_expansion_context_and_errors as super
+    inherit Ast_traverse.map_with_expansion_context_and_errors as super
 
     method! structure ctxt st =
       pprint_ctxt ctxt;
