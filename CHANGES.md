@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Make `esequence` right-associative. (#366, @ceastlund)
+
 - Deprecate unused attributes in `Deriving.Generator` (#368, @sim642)
 
 - Remove a pattern match on mutable state in a function argument. (#362, @ceastlund)
