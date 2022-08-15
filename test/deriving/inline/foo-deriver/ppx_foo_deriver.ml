@@ -3,6 +3,8 @@ open Ppxlib
 (*
    [[@@deriving foo]] expands to:
    {[
+     module Foo = struct end
+
      let _ = [%foo]
    ]}
 
