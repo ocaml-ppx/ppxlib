@@ -24,16 +24,28 @@ open! Import
 
     {[
       let match_payload = function
-        | PStr [ { pstr_desc =
-                    Pstr_value (Nonrecursive,
-                      [ { pvb_pat =
-                            { ppat_desc = Ppat_constant (Pconst_string (name, _, None))
-                            ; _
-                            }
-                        ; pvb_expr = e
-                        ; _ } ])
-                 ; _ } ] ->
-          (name, e)
+        | PStr
+            [
+              {
+                pstr_desc =
+                  Pstr_value
+                    ( Nonrecursive,
+                      [
+                        {
+                          pvb_pat =
+                            {
+                              ppat_desc =
+                                Ppat_constant (Pconst_string (name, _, None));
+                              _;
+                            };
+                          pvb_expr = e;
+                          _;
+                        };
+                      ] );
+                _;
+              };
+            ] ->
+            (name, e)
         | _ -> Location.raise_errorf ""
     ]}
 
@@ -48,7 +60,9 @@ open! Import
         let (module B) = Ast_builder.make loc in
         let open B in
         Parsetree.PStr
-          [ pstr_value Nonrecursive [value_binding ~pat:(pstring name) ~expr] ]
+          [
+            pstr_value Nonrecursive [ value_binding ~pat:(pstring name) ~expr ];
+          ]
     ]}
 
     Constructing a first class pattern is almost as simple as replacing
@@ -58,14 +72,14 @@ open! Import
       let payload_pattern () =
         let open Ast_pattern in
         pstr
-          (pstr_value nonrecursive (value_binding ~pat:(pstring __) ~expr:__
-            ^:: nil)
+          (pstr_value nonrecursive
+             (value_binding ~pat:(pstring __) ~expr:__ ^:: nil)
           ^:: nil)
     ]}
 
     Notice that the place-holders for [name] and [expr] have been replaced by
-    [__]. An extra unit argument appears because of value restriction.
-    The function above would create a pattern with type:
+    [__]. An extra unit argument appears because of value restriction. The
+    function above would create a pattern with type:
 
     {[ (payload, string -> expression -> 'a, 'a) Ast_pattern.t ]}
 
