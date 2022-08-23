@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Deprecate unused attributes in `Deriving.Generator` (#368, @sim642)
+
 - Remove a pattern match on mutable state in a function argument. (#362, @ceastlund)
 
 - Add code-path manipulation attributes. (#352, @ceastlund)
