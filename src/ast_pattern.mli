@@ -47,7 +47,8 @@ open! Import
       let build_payload ~loc name expr =
         let (module B) = Ast_builder.make loc in
         let open B in
-        [ pstr_value Nonrecursive [value_binding ~pat:(pstring name) ~expr] ]
+        Parsetree.PStr
+          [ pstr_value Nonrecursive [value_binding ~pat:(pstring name) ~expr] ]
     ]}
 
     Constructing a first class pattern is almost as simple as replacing
