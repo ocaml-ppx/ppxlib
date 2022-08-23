@@ -28,14 +28,29 @@ open! Import
 
     {[
       let match_payload = function
-        | Pstr [ { pstr_desc = Pstr_value (Nonrecursive,
-                                           [ { pvb_pat = Ppat_constant (Constant_string
-                                                                          (name, None))
-                                             ; pvb_expr = e
-                                             ; _ } ])
-                 ; _ } ] ->
-          (name, e)
-        | _ -> Location.raisef ...
+        | PStr
+            [
+              {
+                pstr_desc =
+                  Pstr_value
+                    ( Nonrecursive,
+                      [
+                        {
+                          pvb_pat =
+                            {
+                              ppat_desc =
+                                Ppat_constant (Pconst_string (name, _, None));
+                              _;
+                            };
+                          pvb_expr = e;
+                          _;
+                        };
+                      ] );
+                _;
+              };
+            ] ->
+            (name, e)
+        | _ -> Location.raise_errorf ""
     ]}
 
     This is quite cumbersome, and this is still not right: this function drops
@@ -46,25 +61,29 @@ open! Import
 
     {[
       let build_payload ~loc name expr =
-        let (module B) = Ast_builder.with_loc loc in
+        let (module B) = Ast_builder.make loc in
         let open B in
-        pstr
-          [ pstr_value Nonrecursive (value_binding ~pat:(pstring name) ~expr) ]
+        Parsetree.PStr
+          [
+            pstr_value Nonrecursive [ value_binding ~pat:(pstring name) ~expr ];
+          ]
     ]}
 
     Constructing a first class pattern is almost as simple as replacing
     [Ast_builder] by [Ast_pattern]:
 
     {[
-      let payload_pattern name expr =
+      let payload_pattern () =
         let open Ast_pattern in
         pstr
-          (pstr_value nonrecursive (value_binding ~pat:(pstring __) ~expr:__)
+          (pstr_value nonrecursive
+             (value_binding ~pat:(pstring __) ~expr:__ ^:: nil)
           ^:: nil)
     ]}
 
     Notice that the place-holders for [name] and [expr] have been replaced by
-    [__]. The following pattern with have type:
+    [__]. An extra unit argument appears because of value restriction. The
+    function above would create a pattern with type:
 
     {[
       (payload, string -> expression -> 'a, 'a) Ast_pattern.t
