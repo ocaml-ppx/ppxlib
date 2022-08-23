@@ -221,7 +221,9 @@ and core_type_desc = Parsetree.core_type_desc =
             [Ppat_constraint]} node corresponding to a constraint on a
             let-binding:
 
-          {[ let x : 'a1 ... 'an. T = e ... ]}
+          {[
+            let x : 'a1 ... 'an. T = e ...
+          ]}
           - Under {{!class_field_kind.Cfk_virtual} [Cfk_virtual]} for methods
             (not values).
 
