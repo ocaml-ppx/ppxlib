@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Add `Ppxlib.Mangle` with name mangling utilities from ppx_deriving (#<PR_NUMBER>, @sim642)
+
 - Make `esequence` right-associative. (#366, @ceastlund)
 
 - Deprecate unused attributes in `Deriving.Generator` (#368, @sim642)

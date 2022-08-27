@@ -59,6 +59,7 @@ module Keyword = Keyword
 module Loc = Loc
 module Location = Location
 module Longident = Longident
+module Mangle = Mangle
 module Merlin_helpers = Merlin_helpers
 module Reserved_namespaces = Name.Reserved_namespaces
 module Spellcheck = Spellcheck
