@@ -1,7 +1,7 @@
 unreleased
 -------------------
 
-- Add `Ppxlib.Mangle` with name mangling utilities from ppx_deriving (#<PR_NUMBER>, @sim642)
+- Add `Ppxlib.Mangle` with name mangling utilities from ppx_deriving (#370, @sim642)
 
 - Make `esequence` right-associative. (#366, @ceastlund)
 
