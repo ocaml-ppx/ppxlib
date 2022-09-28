@@ -1,3 +1,0 @@
-(alias
- (name DEFAULT)
- (deps %{workspace_root}/.ppx/ppx_jane/ppx.exe))
