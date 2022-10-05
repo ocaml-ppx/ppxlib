@@ -1,4 +1,4 @@
-unreleased
+0.28.0 (05/10/2022)
 -------------------
 
 - Make `esequence` right-associative. (#366, @ceastlund)
