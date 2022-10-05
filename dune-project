@@ -41,3 +41,15 @@ OCaml syntax directly and `ppxlib.traverse` which provides various
 ways of automatically traversing values of a given type, in particular
 allowing to inject a complex structured value into generated code.
 "))
+
+(package
+ (name ppxlib-bench)
+ (synopsis "Run ppxlib benchmarks")
+ (description "Third-party code in benchmarks depends on later versions of the ocaml
+than ppxlib itself. Also the benchmark runner has dependencies that ppxlib doesn't
+have.")
+ (depends
+  (ocaml (>= 4.04.1))
+  (ppxlib (= :version))
+  (base (and (>= v0.15) (< v0.16)))
+  yojson))
