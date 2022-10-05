@@ -30,5 +30,9 @@ opam-release:
 	dune-release opam pkg
 	dune-release opam submit
 
-.PHONY: default install uninstall reinstall clean test doc
+bench:
+	dune build bench --profile release
+	dune exec bench/bench.exe
+
+.PHONY: default install uninstall reinstall clean test doc bench
 .PHONY: all-supported-ocaml-versions opam-release
