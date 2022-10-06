@@ -6,12 +6,12 @@ open Import
 
 (** Derive mangled names from type names in a deriver. *)
 
-type affix =
-  [ `Prefix of string  (** [`Prefix p] adds prefix [p]. *)
-  | `Suffix of string  (** [`Suffix s] adds suffix [s]. *)
-  | `PrefixSuffix of string * string
-    (** [`PrefixSuffix (p, s)] adds both prefix [p] and suffix [s]. *) ]
 (** Specification for name mangling. *)
+type affix =
+  | Prefix of string  (** [Prefix p] adds prefix [p]. *)
+  | Suffix of string  (** [Suffix s] adds suffix [s]. *)
+  | PrefixSuffix of string * string
+      (** [PrefixSuffix (p, s)] adds both prefix [p] and suffix [s]. *)
 
 val mangle : ?fixpoint:string -> affix -> string -> string
 (** [mangle ~fixpoint affix s] derives a mangled name from [s] with the mangling

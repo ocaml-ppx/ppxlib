@@ -1,15 +1,17 @@
 open Import
 
 type affix =
-  [ `Prefix of string | `Suffix of string | `PrefixSuffix of string * string ]
+  | Prefix of string
+  | Suffix of string
+  | PrefixSuffix of string * string
 
 let mangle ?(fixpoint = "t") affix name =
   match (String.(name = fixpoint), affix) with
-  | true, (`Prefix x | `Suffix x) -> x
-  | true, `PrefixSuffix (p, s) -> p ^ "_" ^ s
-  | false, `PrefixSuffix (p, s) -> p ^ "_" ^ name ^ "_" ^ s
-  | false, `Prefix x -> x ^ "_" ^ name
-  | false, `Suffix x -> name ^ "_" ^ x
+  | true, (Prefix x | Suffix x) -> x
+  | true, PrefixSuffix (p, s) -> p ^ "_" ^ s
+  | false, PrefixSuffix (p, s) -> p ^ "_" ^ name ^ "_" ^ s
+  | false, Prefix x -> x ^ "_" ^ name
+  | false, Suffix x -> name ^ "_" ^ x
 
 let mangle_type_decl ?fixpoint affix { ptype_name = { txt = name; _ }; _ } =
   mangle ?fixpoint affix name
