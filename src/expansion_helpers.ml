@@ -18,4 +18,4 @@ let mangle_lid ?fixpoint affix lid =
   match lid with
   | Lident s -> Lident (mangle ?fixpoint affix s)
   | Ldot (p, s) -> Ldot (p, mangle ?fixpoint affix s)
-  | Lapply _ -> invalid_arg "Ppxlib.Mangle.mangle_lid: Lapply"
+  | Lapply _ -> invalid_arg "Ppxlib.Expansion_helpers.mangle_lid: Lapply"

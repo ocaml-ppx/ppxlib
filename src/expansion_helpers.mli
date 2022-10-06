@@ -1,6 +1,10 @@
-(** Derive mangled names from type names in a deriver. *)
+(** Various helpers for expansion. *)
 
 open Import
+
+(** {2 Mangling} *)
+
+(** Derive mangled names from type names in a deriver. *)
 
 type affix =
   [ `Prefix of string  (** [`Prefix p] adds prefix [p]. *)
