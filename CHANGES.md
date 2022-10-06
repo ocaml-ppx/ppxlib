@@ -5,7 +5,7 @@ unreleased
 0.28.0 (05/10/2022)
 -------------------
 
-- Add `Ppxlib.Mangle` with name mangling utilities from ppx_deriving (#370, @sim642)
+- Add `Ppxlib.Expansion_helpers` with name mangling utilities from ppx_deriving (#370, @sim642)
 
 - Make `esequence` right-associative. (#366, @ceastlund)
 
