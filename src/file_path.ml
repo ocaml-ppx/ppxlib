@@ -6,7 +6,9 @@ let chop_prefix ~prefix x =
   else None
 
 let get_default_path (loc : Location.t) =
-  let fname = loc.loc_start.pos_fname in
+  let fname = match loc.loc_start.pos_fname with
+    | "" -> !Astlib.Location.input_name
+    | fname -> fname in
   match chop_prefix ~prefix:"./" fname with
   | Some fname -> fname
   | None -> fname

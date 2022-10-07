@@ -10,6 +10,9 @@ type t = Ocaml_common.Location.t = {
 type 'a loc = 'a Ocaml_common.Location.loc = { txt : 'a; loc : t }
 (** A located type *)
 
+val input_name : string ref
+(** The name of the current input file. From Ocaml.common.Location.input_file *)
+
 module Error : sig
   type location
 
