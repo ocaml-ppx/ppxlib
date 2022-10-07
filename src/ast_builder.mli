@@ -8,8 +8,8 @@ open! Import
     {3 Locations}
 
     [Ast_helper] uses a global variable for the default locations, we found that
-    to it makes it quite easy to mess up locations. Instead this modules forces
-    you to provide a location argument.
+    it makes it quite easy to mess up locations. Instead this modules forces you
+    to provide a location argument.
 
     For building fragment using the same location everywhere, a functor is
     provided.

@@ -1,28 +1,28 @@
-{0 Ppxlib's user manual}
+{0 [ppxlib]'s user manual}
 
 {1 Overview}
 
-This is the user manual and api for ppxlib, the core of the ppx meta-programming
-system for {{:https://ocaml.org/}OCaml} and its derivatives such as
-{{:https://reasonml.github.io/}Reason}. This manual is aimed at both users and
-authors of ppx rewriters and contains everything one should know in order to use
-or write ppx rewriters.
-
-It is assumed in this manual that the user is familiar with the
-{{:https://dune.build/}Dune} build system. In particular, all the examples in
-this manual referring to the build system will present
-{{:https://dune.build/}Dune} configurations files and commands. It is possible
-to use ppxlib with other build systems, however this is not covered by this
-manual.
+This is the user manual and API for [ppxlib], the core of the PPX meta-programming
+system for {{:https://ocaml.org/}OCaml} and its derivatives, such as
+{{:https://reasonml.github.io/}Reason}. For a good introduction on PPXs, what
+they are, and how to use them, see the
+{{:https://ocaml.org/docs/metaprogramming}OCaml official guide} on PPXs. This
+manual is mostly aimed at authors of PPX rewriters and contains everything one
+should know in order to write PPX rewriters.
 
 {1 Manual}
 
-The {{!page-manual}manual} consists of three main sections:
-
-- {{!page-manual."what-is-ppx"}What is ppx}
-- {{!page-manual."ppxlib-for-end-users"}Ppxlib for end users}
-- {{!page-manual."ppxlib-for-plugin-authors"}Ppxlib for plugin authors}
-
+The manual consists of several sections. It can be read linearly, but you can also jump directly to your section of interest:
+{ol
+{li {{!page-"quick_intro"}An introduction to [ppxlib]}}
+{li {{!page-"driver"}How [ppxlib] works internally}}
+{li {{!page-"writing-ppxs"}Registering a transformation}}
+{li {{!page-"generating-code"}Generating AST nodes}}
+{li {{!page-"matching-code"}Destructing AST nodes}}
+{li {{!page-"ast-traversal"}Traversing the AST}}
+{li {{!page-"good-practices"}Good practices}}
+{li {{!page-"examples"}Examples}}
+}
 {1 API}
 
 The API exposes the following modules:
