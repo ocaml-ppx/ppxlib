@@ -51,5 +51,5 @@ have.")
  (depends
   (ocaml (>= 4.04.1))
   (ppxlib (= :version))
-  (base (and (>= v0.15) (< v0.16)))
+  base
   yojson))
