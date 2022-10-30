@@ -1,6 +1,7 @@
 unreleased
 ------------------
 
+- Ensure get_default_path isn't empty when loc_start.pos_fname is empty (#380, @davesnx)
 
 0.28.0 (05/10/2022)
 -------------------
