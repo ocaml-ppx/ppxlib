@@ -1,0 +1,4 @@
+(executable
+  (libraries ocaml-version)
+  (modules gen)
+  (name gen))

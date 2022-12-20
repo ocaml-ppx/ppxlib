@@ -36,6 +36,7 @@ module Ast_412 = Ast_412
 module Ast_413 = Ast_413
 module Ast_414 = Ast_414
 module Ast_500 = Ast_500
+module Ast_501 = Ast_501
 (*$*)
 
 (* Manual migration between versions *)
@@ -70,6 +71,8 @@ module Migrate_413_414 = Migrate_413_414
 module Migrate_414_413 = Migrate_414_413
 module Migrate_414_500 = Migrate_414_500
 module Migrate_500_414 = Migrate_500_414
+module Migrate_500_501 = Migrate_500_501
+module Migrate_501_500 = Migrate_501_500
 (*$*)
 
 (* Compiler modules *)
