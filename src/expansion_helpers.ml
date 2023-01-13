@@ -21,3 +21,5 @@ let mangle_lid ?fixpoint affix lid =
   | Lident s -> Lident (mangle ?fixpoint affix s)
   | Ldot (p, s) -> Ldot (p, mangle ?fixpoint affix s)
   | Lapply _ -> invalid_arg "Ppxlib.Expansion_helpers.mangle_lid: Lapply"
+
+module Quoter = Quoter

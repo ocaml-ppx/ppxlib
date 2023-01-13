@@ -42,6 +42,8 @@ module Ast_io : sig
   val write : out_channel -> t -> add_ppx_context:bool -> unit
 
   module Read_bin : sig
+    (** A small module to help read [bin-annots] generated files. *)
+
     type ast = Intf of signature | Impl of structure
     type t
 

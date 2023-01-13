@@ -306,27 +306,30 @@ which does not even type-check! The problem is that the payload is expected to
 be evaluated in some environment where [debug] has some value and type, but the
 rewriting modifies this environment and shadows the [debug] name.
 
-"Quoting" is a mechanism to prevent this problem from happenning. In [ppxlib], it
-is done through the {{!Ppxlib.Quoter}[Quoter]} module in several steps:
 
-- First, create a quoter using the {{!Ppxlib.Quoter.create}[Quoter.create]} function:
+
+"Quoting" is a mechanism to prevent this problem from happenning. In [ppxlib], it
+is done through the {{!Ppxlib.Expansion_helpers.Quoter}[Expansion_helpers.Quoter]} module in several steps:
+
+- First, create a quoter using the {{!Ppxlib.Expansion_helpers.Quoter.create}[create]} function:
 
 {[
-  # let quoter = Quoter.create ()
+  # open Expansion_helper ;;
+  #s let quoter = Quoter.create () ;;
   val quoter : Quoter.t = <abstr>
 ]}
 
-- Then, use {{!Ppxlib.Quoter.quote}[Quoter.quote]} to quote all the expressions that are given from the user, might rely on a context, and that you want "intact."
+- Then, use {{!Ppxlib.Expansion_helpers.Quoter.quote}[Expansion_helpers.Quoter.quote]} to quote all the expressions that are given from the user, might rely on a context, and that you want "intact."
 
 {[
-  # let quoted_part = Quoter.quote quoter part_to_quote
+  # let quoted_part = Quoter.quote quoter part_to_quote ;;
   val quoted_payload : expression =
 ]}
 
-- Finally, call {{!Ppxlib.Quoter.sanitize}[Quoter.sanitize]} on the whole expression (with quoted parts).
+- Finally, call {{!Ppxlib.Expansion_helpers.Quoter.sanitize}[Expansion_helpers.Quoter.sanitize]} on the whole expression (with quoted parts).
 
 {[
-  # let result = Quoter.sanitize ~quoter rewritten_expression
+  # let result = Expansion_helpers.Quoter.sanitize ~quoter rewritten_expression ;;
   val result : expression =
   ...
 ]}

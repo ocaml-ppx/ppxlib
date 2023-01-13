@@ -3,7 +3,10 @@
     The idea is that whenever we want to refer to an expression in generated
     code we first quote it. The result will be an identifier that is guaranteed
     to refer to the expression it was created from. This way it is impossible
-    for quoted fragments to refer to newly introduced expressions. *)
+    for quoted fragments to refer to newly introduced expressions.
+
+    For more information, see the {{!"good-practices".quoting} section on
+    quoting} in the good practices section. *)
 
 open Import
 

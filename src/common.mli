@@ -1,3 +1,5 @@
+(** Common functions *)
+
 open! Import
 
 val lident : string -> Longident.t

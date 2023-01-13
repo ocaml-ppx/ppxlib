@@ -1,4 +1,12 @@
-(** AST traversal classes *)
+(** This module provides AST traversal classes, such as maps, iterations, folds,
+    etc. on the {!Parsetree} types.
+
+    {1 Link to the tutorial}
+
+    For a detailed explanation on this module, refer to the {{!"ast-traversal"}
+    relevant} part of the manual.
+
+    {1 API} *)
 
 open! Import
 

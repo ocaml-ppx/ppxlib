@@ -200,7 +200,7 @@ We can finally turn the extender into a rule (using
 {[
   # let extender_rule = Context_free.Rule.extension my_extender ;;
   val extender_rule : Context_free.Rule.t = <abstr>
-  # Driver.register_transformation ~rules:[extender_rule] "rien" ;;
+  # Driver.register_transformation ~rules:[extender_rule] "name_only_for_debug_purpose" ;;
   - : unit = ()
 ]}
 
@@ -512,7 +512,7 @@ depth in the next chapters of this documentation:
 This documentation also includes some {{!"good-practices"}guidelines} on how to generate nice code.
 We encourage you to read and follow it to produce high quality PPXs:
 
-- A section on good {{!page-"good-practices"."handling-errors"}error reporting}
+- A section on good {{!page-"good-practices"."handling_errors"}error reporting}
 - A section on the {{!page-"good-practices"."quoting"}mechanism}
 - A section on how to {{!page-"good-practices"."testing-your-ppx"}test} your PPX
 - A section on how to collaborate with Merlin effectively by being careful with {{!page-"good-practices"."testing-your-ppx"}locations}

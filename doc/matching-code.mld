@@ -244,9 +244,10 @@ string. No values are extracted from this matching. The functions for creating
 such values are {{!Ppxlib.Ast_pattern.int}[Ast_pattern.int]}, {{!Ppxlib.Ast_pattern.string}[Ast_pattern.string]}, {{!Ppxlib.Ast_pattern.bool}[Ast_pattern.bool]}, ...
 
 {b The common deconstructors}. Many usual common constructors have
-"deconstructors" in {{!Ppxlib.Ast_pattern}[Ast_pattern]}. For instance, [some __],
-[__ ^:: drop ^:: nil] corresponds to [Some a] and [a :: _ :: []] ; [pair __ __]
-corresponds to [(a,b)], etc.
+"deconstructors" in {{!Ppxlib.Ast_pattern}[Ast_pattern]}. For instance:
+-  [some __] corresponds to [Some a],
+- [__ ^:: drop ^:: nil] correspnds to [a :: _ :: []],
+-  [pair __ __] (or equivalently [__ ** __]) corresponds to [(a,b)], etc.
 
 {b The Parsetree deconstructors}. All constructors from {{!Ppxlib.Ast_builder}[Ast_builder]} have a
 "deconstructor" in {{!Ppxlib.Ast_pattern}[Ast_pattern]} with the same name. For instance, since

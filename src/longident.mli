@@ -1,4 +1,4 @@
-(** Overrides the Longident module of OCaml *)
+(** Overrides the [Longident] module of OCaml *)
 
 open! Import
 
