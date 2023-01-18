@@ -31,6 +31,25 @@ let ghost =
     method! location loc = { loc with loc_ghost = true }
   end
 
+let chop_prefix ~prefix x =
+  if String.is_prefix ~prefix x then
+    Some (String.drop_prefix x (String.length prefix))
+  else None
+
+let get_default_path (loc : Location.t) =
+  let fname = loc.loc_start.pos_fname in
+  match chop_prefix ~prefix:"./" fname with
+  | Some fname -> fname
+  | None -> fname
+
+let get_default_path_str : structure -> string = function
+  | [] -> ""
+  | { pstr_loc = loc; _ } :: _ -> get_default_path loc
+
+let get_default_path_sig : signature -> string = function
+  | [] -> ""
+  | { psig_loc = loc; _ } :: _ -> get_default_path loc
+
 module Lint_error = struct
   type t = Location.t * string
 
@@ -245,7 +264,7 @@ module Transform = struct
           | { pstr_desc = Pstr_attribute _; _ } -> true
           | _ -> false)
       in
-      let file_path = File_path.get_default_path_str st in
+      let file_path = get_default_path_str st in
       let base_ctxt =
         Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
       in
@@ -267,7 +286,7 @@ module Transform = struct
           | { psig_desc = Psig_attribute _; _ } -> true
           | _ -> false)
       in
-      let file_path = File_path.get_default_path_sig sg in
+      let file_path = get_default_path_sig sg in
       let base_ctxt =
         Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
       in
@@ -681,7 +700,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
     in
     with_errors errors st
   in
-  let file_path = File_path.get_default_path_str st in
+  let file_path = get_default_path_str st in
   match
     apply_transforms st ~tool_name ~file_path
       ~field:(fun (ct : Transform.t) -> ct.impl)
@@ -761,7 +780,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
     in
     with_errors errors sg
   in
-  let file_path = File_path.get_default_path_sig sg in
+  let file_path = get_default_path_sig sg in
   match
     apply_transforms sg ~tool_name ~file_path
       ~field:(fun (ct : Transform.t) -> ct.intf)

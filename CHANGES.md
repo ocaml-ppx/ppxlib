@@ -1,6 +1,7 @@
 unreleased
 ------------------
 
+- Remove `File_path` exports. (#381, @ceastlund)
 
 0.28.0 (05/10/2022)
 -------------------

@@ -55,7 +55,6 @@ module Driver = Driver
 module Expansion_context = Expansion_context
 module Expansion_helpers = Expansion_helpers
 module Extension = Extension
-module File_path = File_path
 module Keyword = Keyword
 module Loc = Loc
 module Location = Location
