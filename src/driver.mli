@@ -1,3 +1,9 @@
+(** Interaction with the driver, such as getting/seeting cookies, adding
+    arguments.
+
+    The relevant part in the manual is {{!driver.driver_execution} the section
+    on its execution}. *)
+
 open Import
 
 val add_arg : Caml.Arg.key -> Caml.Arg.spec -> doc:string -> unit
@@ -87,25 +93,11 @@ val register_transformation :
   unit
 (** [register_transformation name] registers a code transformation.
 
-    [name] is a logical name for the transformation (such as [sexp_conv] or
-    [bin_prot]). It is mostly used for debugging purposes.
+    [name] is a logical name for the set of transformations (such as [sexp_conv]
+    or [bin_prot]). It is mostly used for debugging purposes.
 
     [rules] is a list of context independent rewriting rules, such as extension
-    point expanders. This is what most code transformation should use. Rules
-    from all registered transformations are all applied at the same time, before
-    any other transformations. Moreover they are applied in a top-down manner,
-    giving more control to extensions on how they interpret their payload.
-
-    For instance:
-
-    - some extensions capture a pretty-print of the payload in their expansion
-      and using top-down ensures that the payload is as close as possible to the
-      original code
-    - some extensions process other extension in a special way inside their
-      payload. For instance [%here] (from ppx_here) will normally expand to a
-      record of type [Lexing.position]. However when used inside [%sexp] (from
-      ppx_sexp_value) it will expand to the human-readable sexp representation
-      of a source code position.
+    point expanders. This is what most code transformation should use.
 
     [extensions] is a special cases of [rules] and is deprecated. It is only
     kept for backward compatibility.
@@ -123,11 +115,6 @@ val register_transformation :
     when the other mechanism are not enough. For instance if the transformation
     expands extension points that depend on the context.
 
-    If no rewriter is using [impl] and [intf], then the whole transformation is
-    completely independent of the order in which the various rewriter are
-    specified. Moreover the resulting driver will be faster as it will do only
-    one pass (excluding safety checks) on the whole AST.
-
     [lint_impl] and [lint_intf] are applied to the unprocessed source. Errors
     they return will be reported to the user as preprocessor warnings.
 
@@ -136,17 +123,8 @@ val register_transformation :
     [impl] is that you can specify if it should be applied before or after all
     rewriters defined through [rules], [impl] or [intf] are applied.
 
-    Rewritings are applied in the following order:
-
-    - linters ([lint_impl], [lint_intf])
-    - preprocessing ([preprocess_impl], [preprocess_intf])
-    - "before" instrumentations ([instrument], where instrument =
-      [Instrument.make ~position:Before (...)])
-    - context-independent rules ([rules], [extensions])
-    - non-instrumentation whole-file transformations ([impl], [intf],
-      [enclose_impl], [enclose_intf])
-    - "after" instrumentations ([instrument], where instrument =
-      [Instrument.make ~position:After (...)]) *)
+    More information on each phase, and their relative order, can be found in
+    the {{!driver.driver_execution} manual}. *)
 
 val register_transformation_using_ocaml_current_ast :
   ?impl:

@@ -1,3 +1,5 @@
+(** The context given to rewriting rules when expanding. *)
+
 module Base : sig
   type t
   (** Type for the location independent parts of the expansion context *)

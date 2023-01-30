@@ -1,4 +1,5 @@
-(** Context free rewriting *)
+(** Context free rewriting, to define local rewriting rules that will all be
+    applied at once by the driver. *)
 
 open! Import
 

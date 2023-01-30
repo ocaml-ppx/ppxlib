@@ -1,7 +1,10 @@
-(** Overrides the Location module of OCaml *)
+(** Overrides the [Location] module of OCaml *)
 
 (** There are less functions in this module. However the API should be more
-    stable than the Location module of OCaml. *)
+    stable than the Location module of OCaml.
+
+    For a detailled presentation of good practices regarding locations, refer to
+    the {{!"good-practices".resp_loc} section} in the manual. *)
 
 open! Import
 
@@ -26,7 +29,8 @@ val init : Lexing.lexbuf -> string -> unit
 
 val raise_errorf : ?loc:t -> ('a, Caml.Format.formatter, unit, 'b) format4 -> 'a
 (** Raise a located error. Should be avoided as much as possible, in favor of
-    {!error_extensionf}. *)
+    {!error_extensionf}. See the {{!"good-practices".handling_errors} relevant}
+    part of the tutorial. *)
 
 val of_lexbuf : Lexing.lexbuf -> t
 (** Return the location corresponding to the last matched regular expression *)
@@ -46,6 +50,10 @@ val compare : t -> t -> int
 
 module Error : sig
   type location = t
+
+  (** For a detailed explanation on error reporting, refer to the
+      {{!"good-practices".handling_errors} relevant} part of the tutorial.*)
+
   type t
 
   val make : loc:location -> string -> sub:(location * string) list -> t
@@ -82,6 +90,9 @@ with type location := t
 val error_extensionf :
   loc:t -> ('a, Format.formatter, unit, extension) format4 -> 'a
 (** Returns an error extension node. When encountered in the AST, the compiler
-    recognizes it and displays the error properly. *)
+    recognizes it and displays the error properly.
+
+    For a detailed explanation on error reporting, refer to the
+    {{!"good-practices".handling_errors} relevant} part of the tutorial. *)
 
 exception Error of Error.t

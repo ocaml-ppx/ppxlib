@@ -1,10 +1,13 @@
-(** Various helpers for expansion. *)
+(** Various helpers for expansion, such as quoting expressions in their context,
+    or mangling names. *)
 
 open Import
 
 (** {2 Mangling} *)
 
-(** Derive mangled names from type names in a deriver. *)
+(** Derive mangled names from type names in a deriver. For instance, the [t] can
+    be turned into [t_of_yojson] or [yojson_of_t] with the functions from this
+    module. *)
 
 (** Specification for name mangling. *)
 type affix =
@@ -25,3 +28,7 @@ val mangle_type_decl : ?fixpoint:string -> affix -> type_declaration -> string
 val mangle_lid : ?fixpoint:string -> affix -> Longident.t -> Longident.t
 (** [mangle_lid ~fixpoint affix lid] does the same as {!mangle}, but for the
     last component of [lid]. *)
+
+(** {2 Quoting} *)
+
+module Quoter = Quoter

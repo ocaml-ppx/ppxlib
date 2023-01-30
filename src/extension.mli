@@ -1,3 +1,5 @@
+(** Declare extenders to rewrite extension nodes. *)
+
 open! Import
 
 type (_, _) equality = Eq : ('a, 'a) equality | Ne : (_, _) equality

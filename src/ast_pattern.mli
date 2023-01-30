@@ -1,102 +1,16 @@
-(** First class AST patterns *)
+(** This module implements first class AST patterns. It allows to destruct and
+    extract values from AST fragments. This gives the same functionality as a
+    pattern-match, but with simpler syntax and more stability than directly
+    pattern-matching on the {!Parsetree} constructors. *)
 
 open! Import
 
-(** PPX rewriters often need to recognize fragments the OCaml AST, for instance
-    to parse the payload of an attribute/expression. You can do that with a
-    pattern matching and manual error reporting when the input is not what you
-    expect but this has proven to quickly become extremely verbose and
-    unreadable.
+(** {1 Link to the tutorial}
 
-    This module aims to help with that by providing first class AST patterns.
+    For a detailed explanation on this module, refer to the
+    {{!"matching-code".ast_pattern_intro} relevant} part of the manual.
 
-    To understand how to use it, let's consider the example of ppx_inline_test.
-    We want to recognize patterns of the form:
-
-    {[
-      let%test "name" = expr
-    ]}
-
-    Which is a syntactic sugar for:
-
-    {[
-      [%%test let "name" = expr]
-    ]}
-
-    If we wanted to write a function that recognizes the payload of [%%test]
-    using normal pattern matching we would write:
-
-    {[
-      let match_payload = function
-        | PStr
-            [
-              {
-                pstr_desc =
-                  Pstr_value
-                    ( Nonrecursive,
-                      [
-                        {
-                          pvb_pat =
-                            {
-                              ppat_desc =
-                                Ppat_constant (Pconst_string (name, _, None));
-                              _;
-                            };
-                          pvb_expr = e;
-                          _;
-                        };
-                      ] );
-                _;
-              };
-            ] ->
-            (name, e)
-        | _ -> Location.raise_errorf ""
-    ]}
-
-    This is quite cumbersome, and this is still not right: this function drops
-    all attributes without notice.
-
-    Now let's imagine we wanted to construct the payload instead, using
-    [Ast_builder] one would write:
-
-    {[
-      let build_payload ~loc name expr =
-        let (module B) = Ast_builder.make loc in
-        let open B in
-        Parsetree.PStr
-          [
-            pstr_value Nonrecursive [ value_binding ~pat:(pstring name) ~expr ];
-          ]
-    ]}
-
-    Constructing a first class pattern is almost as simple as replacing
-    [Ast_builder] by [Ast_pattern]:
-
-    {[
-      let payload_pattern () =
-        let open Ast_pattern in
-        pstr
-          (pstr_value nonrecursive
-             (value_binding ~pat:(pstring __) ~expr:__ ^:: nil)
-          ^:: nil)
-    ]}
-
-    Notice that the place-holders for [name] and [expr] have been replaced by
-    [__]. An extra unit argument appears because of value restriction. The
-    function above would create a pattern with type:
-
-    {[
-      (payload, string -> expression -> 'a, 'a) Ast_pattern.t
-    ]}
-
-    which means that it matches values of type [payload] and captures a string
-    and expression from it. The two captured elements comes from the use of
-    [__].
-
-    An empty payload (e.g. for an attribute that has no payload) is matched by
-    [Ast_pattern.(pstr nil)]. A payload with exactly one expression (e.g. to
-    specify a custom function in a deriver) is matched by
-    [Ast_pattern.(single_expr_payload __)]. *)
+    {1 API} *)
 
 type ('a, 'b, 'c) t = ('a, 'b, 'c) Ast_pattern0.t
 (** Type of a pattern:

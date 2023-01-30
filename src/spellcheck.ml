@@ -1,3 +1,5 @@
+(** Helpers to provide hints to PPX users for typos or spellchecks. *)
+
 open! Import
 
 exception Cutoff_met

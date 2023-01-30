@@ -1,6 +1,7 @@
 #require "base";;
 
 open Ppxlib
+open Expansion_helpers
 
 module Ast = Ast_builder.Default
 [%%expect{|

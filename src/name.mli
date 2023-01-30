@@ -98,6 +98,8 @@ module Allowlisted : sig
 end
 
 module Reserved_namespaces : sig
+  (** Small module to reserve namespaces in attribute names. *)
+
   val reserve : string -> unit
   (** [reserve "foo"] has two implications:
 

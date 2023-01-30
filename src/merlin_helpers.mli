@@ -1,5 +1,8 @@
 (** Some helpers to annotate the AST so merlin can decide which branches to look
-    at and which branches to ignore. *)
+    at and which branches to ignore.
+
+    More information can be found in the section of the manual about
+    {{!"good-practices".resp_loc} locations}. *)
 
 open! Import
 

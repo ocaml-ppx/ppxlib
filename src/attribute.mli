@@ -1,5 +1,3 @@
-(** Attribute hygiene *)
-
 (** This module provides hygiene for attributes. The goal is to report misuses
     of attributes to the user as soon as possible so that no mistyped attribute
     get silently ignored. *)

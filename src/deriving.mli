@@ -1,4 +1,4 @@
-(** Deriving code from type declarations *)
+(** Deriving code from type declarations. *)
 
 open Import
 

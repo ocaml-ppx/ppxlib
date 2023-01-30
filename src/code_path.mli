@@ -1,3 +1,6 @@
+(** This module contains type and functions for representing and manipulating
+    path to AST nodes. *)
+
 open! Import
 
 type t
