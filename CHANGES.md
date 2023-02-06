@@ -1,12 +1,12 @@
-unreleased
+0.29.0 (06/02/2023)
 ------------------
 
 - Remove `File_path` exports. (#381, @ceastlund)
 
+- Add `Ppxlib.Expansion_helpers` with name mangling utilities from ppx_deriving (#370, @sim642)
+
 0.28.0 (05/10/2022)
 -------------------
-
-- Add `Ppxlib.Expansion_helpers` with name mangling utilities from ppx_deriving (#370, @sim642)
 
 - Make `esequence` right-associative. (#366, @ceastlund)
 
