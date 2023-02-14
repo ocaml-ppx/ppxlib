@@ -1,7 +1,7 @@
 unreleased
 ------------------
 
-
+- Allow users to vendor `ppxlib` as-is, as well as `ppx_sexp_conv` in the same project (#386, @kit-ty-kate)
 
 0.29.0 (06/02/2023)
 ------------------
