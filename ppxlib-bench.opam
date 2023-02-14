@@ -17,6 +17,7 @@ depends: [
   "ppxlib" {= version}
   "base"
   "yojson"
+  "ppx_sexp_conv" {= "v0.15.1"}
   "odoc" {with-doc}
 ]
 build: [
