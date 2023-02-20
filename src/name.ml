@@ -119,6 +119,8 @@ module Reserved_namespaces = struct
   let () = reserve "merlin"
   let () = reserve "reason"
   let () = reserve "refmt"
+  let () = reserve "ns"
+  let () = reserve "res"
   let () = reserve "metaocaml"
   let () = reserve "ocamlformat"
 
