@@ -118,9 +118,9 @@ module Reserved_namespaces = struct
   let reserve ns = Hashtbl.add_exn tbl ~key:ns ~data:()
   let () = reserve "merlin"
   let () = reserve "reason"
-  let () = reserve "refmt"
-  let () = reserve "ns"
-  let () = reserve "res"
+  let () = reserve "refmt" (* reason *)
+  let () = reserve "ns" (* rescript *)
+  let () = reserve "res" (* rescript *)
   let () = reserve "metaocaml"
   let () = reserve "ocamlformat"
 
