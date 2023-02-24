@@ -16,8 +16,16 @@ let tvar_of_var { txt; loc } = ptyp_var ~loc txt
 let evars_of_vars = List.map ~f:evar_of_var
 let pvars_of_vars = List.map ~f:pvar_of_var
 let tvars_of_vars = List.map ~f:tvar_of_var
-let fst_expr ~loc expr = [%expr Stdlib.fst [%e expr]]
-let snd_expr ~loc expr = [%expr Stdlib.snd [%e expr]]
+
+let fst_expr ~loc expr =
+  match expr.pexp_desc with
+  | Pexp_tuple [ fst; _ ] -> fst
+  | _ -> [%expr Stdlib.fst [%e expr]]
+
+let snd_expr ~loc expr =
+  match expr.pexp_desc with
+  | Pexp_tuple [ _; snd ] -> snd
+  | _ -> [%expr Stdlib.snd [%e expr]]
 
 let methods_of_class_exn = function
   | {
