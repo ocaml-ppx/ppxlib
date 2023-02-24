@@ -82,3 +82,12 @@ class virtual iter :
     method t : t -> unit
   end
 |}]
+
+type t =
+  | X
+  | Arrow of { label : string option; domain : t; range : t }
+[@@deriving traverse]
+[%%expect{|
+Line _, characters 2-61:
+Error: This constructor expects an inlined record argument.
+|}]
