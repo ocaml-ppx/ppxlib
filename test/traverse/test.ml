@@ -83,12 +83,10 @@ class virtual iter :
   end
 |}]
 
-type t =
-  | X
-  | Arrow of { label : string option; domain : t; range : t }
+type t = Inline of { a : string option; b : t }
 [@@deriving traverse]
 [%%expect{|
-type t = X | Arrow of { label : string option; domain : t; range : t; }
+type t = Inline of { a : string option; b : t; }
 class virtual map :
   object
     method virtual option : ('a -> 'a) -> 'a option -> 'a option
