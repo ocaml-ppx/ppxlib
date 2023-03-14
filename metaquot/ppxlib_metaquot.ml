@@ -125,12 +125,19 @@ module Patt = Make (struct
 
   let annotate p core_type = ppat_constraint ~loc:core_type.ptyp_loc p core_type
 
-  let cast ext =
-    match snd ext with
-    | PPat (p, None) -> p
-    | PPat (_, Some e) ->
-        Location.raise_errorf ~loc:e.pexp_loc "guard not expected here"
-    | _ -> Location.raise_errorf ~loc:(loc_of_extension ext) "pattern expected"
+
+  let cast ext = 
+  match snd ext with
+  | PPat (p, None) -> p
+  | PPat (_, Some e) ->
+      Location.Error.createf ~loc:e.pexp_loc "guard not expected here"
+      |> Location.Error.to_extension
+      |> Ast_builder.Default.Extension_constructor.create "Error" "pattern_expected" []
+  | _ ->
+      Location.Error.createf ~loc "pattern expected"
+      |> Location.Error.to_extension
+      |> Ast_builder.Default.extension
+          (Location.mknoloc (Longident.Lident "Error.pattern_expected")) []
 end)
 
 let () =
