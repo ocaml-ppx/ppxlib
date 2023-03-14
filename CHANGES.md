@@ -1,6 +1,8 @@
 unreleased
 ------------------
 
+- Add `Attribute.declare_with_attr_loc` (#396, @dvulakh)
+
 - Add "ns" and "res" as reserved namespaces(#388, @davesnx)
 
 0.29.1 (14/02/2023)
