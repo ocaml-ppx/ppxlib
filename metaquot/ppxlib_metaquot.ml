@@ -108,10 +108,10 @@ module Expr = Make (struct
         assert_no_attributes attrs;
         e
     | _ ->
-      Ast_builder.Default.(
-        pexp_extension ~loc:(loc_of_extension ext)
-          (Location.error_extensionf ~loc:(loc_of_extension ext) "expression expected")
-      )
+        Ast_builder.Default.(
+          pexp_extension ~loc:(loc_of_extension ext)
+            (Location.error_extensionf ~loc:(loc_of_extension ext)
+               "expression expected"))
 end)
 
 module Patt = Make (struct
@@ -127,18 +127,19 @@ module Patt = Make (struct
   class std_lifters = Ppxlib_metaquot_lifters.pattern_lifters
 
   let annotate p core_type = ppat_constraint ~loc:core_type.ptyp_loc p core_type
-  
 
-let cast ext : Ppxlib.pattern =
-  match snd ext with
-  | PPat (p, None) -> p
-  | PPat (_, Some e) -> 
-      Ast_builder.Default.(ppat_extension ~loc:e.pexp_loc 
-        (Location.error_extensionf ~loc:e.pexp_loc "guard not expected here"))
-  | _ -> Ast_builder.Default.(ppat_extension ~loc:(loc_of_extension ext) 
-        (Location.error_extensionf ~loc:(loc_of_extension ext) "pattern expected"))
-
-
+  let cast ext : Ppxlib.pattern =
+    match snd ext with
+    | PPat (p, None) -> p
+    | PPat (_, Some e) ->
+        Ast_builder.Default.(
+          ppat_extension ~loc:e.pexp_loc
+            (Location.error_extensionf ~loc:e.pexp_loc "guard not expected here"))
+    | _ ->
+        Ast_builder.Default.(
+          ppat_extension ~loc:(loc_of_extension ext)
+            (Location.error_extensionf ~loc:(loc_of_extension ext)
+               "pattern expected"))
 end)
 
 let () =
