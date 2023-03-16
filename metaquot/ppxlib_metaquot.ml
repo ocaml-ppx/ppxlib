@@ -124,18 +124,16 @@ module Patt = Make (struct
   class std_lifters = Ppxlib_metaquot_lifters.pattern_lifters
 
   let annotate p core_type = ppat_constraint ~loc:core_type.ptyp_loc p core_type
-  let error_extensionf ~loc message = 
-    Location.raise_errorf ~loc "%s" message
-
+  
 
 let cast ext : Ppxlib.pattern =
   match snd ext with
   | PPat (p, None) -> p
   | PPat (_, Some e) -> 
       Ast_builder.Default.(ppat_extension ~loc:e.pexp_loc 
-        (error_extensionf ~loc:e.pexp_loc "guard not expected here"))
+        (Location.error_extensionf ~loc:e.pexp_loc "guard not expected here"))
   | _ -> Ast_builder.Default.(ppat_extension ~loc:(loc_of_extension ext) 
-        (error_extensionf ~loc:(loc_of_extension ext) "pattern expected"))
+        (Location.error_extensionf ~loc:(loc_of_extension ext) "pattern expected"))
 
 
 end)
