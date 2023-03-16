@@ -128,7 +128,7 @@ module Patt = Make (struct
 
   let annotate p core_type = ppat_constraint ~loc:core_type.ptyp_loc p core_type
 
-  let cast ext : Ppxlib.pattern =
+  let cast ext =
     match snd ext with
     | PPat (p, None) -> p
     | PPat (_, Some e) ->
