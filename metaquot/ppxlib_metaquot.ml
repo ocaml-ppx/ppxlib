@@ -108,7 +108,10 @@ module Expr = Make (struct
         assert_no_attributes attrs;
         e
     | _ ->
-        Location.raise_errorf ~loc:(loc_of_extension ext) "expression expected"
+      Ast_builder.Default.(
+        pexp_extension ~loc:(loc_of_extension ext)
+          (Location.error_extensionf ~loc:(loc_of_extension ext) "expression expected")
+      )
 end)
 
 module Patt = Make (struct
