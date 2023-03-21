@@ -1,22 +1,22 @@
-## unreleased
+unreleased
+------------------
 
 - multiple errors are now reported in `metaquot`. (#397, @burnleydev1)
 
-## 0.29.1 (14/02/2023)
+0.29.1 (14/02/2023)
+------------------
 
 - Allow users to vendor `ppxlib` as-is, as well as `ppx_sexp_conv` in the same project (#386, @kit-ty-kate)
 
-  0.29.0 (06/02/2023)
-
----
+0.29.0 (06/02/2023)
+------------------
 
 - Remove `File_path` exports. (#381, @ceastlund)
 
 - Add `Ppxlib.Expansion_helpers` with name mangling utilities from ppx_deriving (#370, @sim642)
 
-  0.28.0 (05/10/2022)
-
----
+0.28.0 (05/10/2022)
+-------------------
 
 - Make `esequence` right-associative. (#366, @ceastlund)
 
@@ -31,9 +31,8 @@
 
 - Add driver benchmarks (#376, @gridbugs)
 
-  0.27.0 (14/06/2022)
-
----
+0.27.0 (14/06/2022)
+-------------------
 
 - Update expansion context to leave out value name when multiple are
   defined at once. (#351, @ceastlund)
@@ -65,21 +64,18 @@
 - API: For each function that could raise a located error, add a function that
   return a `result` instead (#329, @panglesd)
 
-  0.26.0 (21/03/2022)
-
----
+0.26.0 (21/03/2022)
+-------------------
 
 - Bump ppxlib's AST to 4.14/5.00 (#320, @pitag-ha)
 
-  0.25.1 (17/06/2022)
-
----
+0.25.1 (17/06/2022)
+-------------------
 
 - Add support for OCaml 5.0 (#355, @pitag-ha)
 
-  0.25.0 (03/03/2022)
-
----
+0.25.0 (03/03/2022)
+-------------------
 
 - Added `error_extensionf` function to the `Location` module (#316, @panglesd)
 
@@ -91,9 +87,8 @@
 - Driver: Append the last valid AST to the error in case of located exception
   when embedding errors (#315, @panglesd)
 
-  0.24.0 (08/12/2021)
-
----
+0.24.0 (08/12/2021)
+-------------------
 
 - Add support for OCaml 4.14 (#304, @kit-ty-kate)
 
@@ -113,9 +108,9 @@
   consider a type declaration recursive if the type appeared inside an attribute
   payload (#299, @NathanReb)
 
-  0.23.0 (31/08/2021)
 
----
+0.23.0 (31/08/2021)
+-------------------
 
 - Drop `Parser` from the API (#263, @pitag-ha)
 
@@ -164,35 +159,30 @@
   expressions e.g. `do_a (); do_b (); ...`. (#264, @matthewelse)
 
 - Expose a part of `Ast_io` in order to allow reading AST values from binary
-  files (#270, @arozovyk)
+ files (#270, @arozovyk)
 
-  0.22.2 (23/06/2021)
-
----
+0.22.2 (23/06/2021)
+-------------------
 
 - Make ppxlib compatible with 4.13 compiler (#260, @kit-ty-kate)
 
-  0.22.1 (10/06/2021)
-
----
+0.22.1 (10/06/2021)
+-------------------
 
 - Fix location in parse error reporting (#257, @pitag-ha)
 
-  0.21.1 (09/06/2021)
-
----
+0.21.1 (09/06/2021)
+-------------------
 
 - Fix location in parse error reporting (#256, @pitag-ha)
 
-  0.22.0 (04/02/2021)
-
----
+0.22.0 (04/02/2021)
+-------------------
 
 - Bump ppxlib's AST to 4.12 (#193, @NathanReb)
 
-  0.21.0 (22/01/2021)
-
----
+0.21.0 (22/01/2021)
+-------------------
 
 - Fix ppxlib.traverse declaration and make it a deriver and not a rewriter
   (#213, @NathanReb)
@@ -215,44 +205,38 @@
 - Location.Error: add functions `raise` and `update_loc`
   (#205, @pitag-ha)
 
-  0.20.0 (16/11/2020)
-
----
+0.20.0 (16/11/2020)
+-------------------
 
 - Expose `Ppxlib.Driver.map_signature` (#194, @kit-ty-kate)
 
-  0.19.0 (23/10/2020)
-
----
+0.19.0 (23/10/2020)
+-------------------
 
 - Make ppxlib compatible with 4.12 compiler (#191, @kit-ty-kate)
 
-  0.18.0 (06/10/2020)
-
----
+0.18.0 (06/10/2020)
+-------------------
 
 - Bump ppxlib's AST to 4.11 (#180, @NathanReb)
 
-  0.17.0 (17/09/2020)
-
----
+0.17.0 (17/09/2020)
+-------------------
 
 - Add accessors for `code_path` and `tool_name` to `Expansion_context.Base`
   (#173, @jberdine)
 - Add `cases` methods to traversal classes in `Ast_traverse` (#183, @pitag-ha)
 
-  0.16.0 (18/08/2020)
-
----
+0.16.0 (18/08/2020)
+-------------------
 
 - `Driver.register_transformation`: add optional parameter `~instrument`
   (#161, @pitag-ha)
 - Add missing `Location.init` (#165, @pitag-ha)
 - Upgrade to ocaml-migrate-parsetree.2.0.0 (#164, @ceastlund)
 
-  0.15.0 (04/08/2020)
-
----
+0.15.0 (04/08/2020)
+-------------------
 
 - Remove `base` and `stdio` dependencies (#151, @ceastlund)
 
@@ -262,9 +246,8 @@
 
 - Implement name mangling for `ppxlib_traverse` (#159, @ceastlund)
 
-  0.14.0 (08/07/2020)
-
----
+0.14.0 (08/07/2020)
+-------------------
 
 - Bump ppxlib's AST to 4.10 (#130, @NathanReb)
 
@@ -275,9 +258,8 @@
   `structure` instead of a `Migrate_parsetree.Driver.some_structure`.
   (#153, @NathanReb)
 
-  0.13.0 (04/15/2020)
-
----
+0.13.0 (04/15/2020)
+-------------------
 
 - Add 'metaquot.' prefix to disambiguate metaquote extensions (#121,
   @ceastlund)
@@ -285,21 +267,18 @@
 - Bump dune language to 1.11 since the cinaps extension requires at
   least Dune 1.11 (#126, @diml)
 
-  0.12.0 (01/07/2020)
-
----
+0.12.0 (01/07/2020)
+-------------------
 
 - Support for OCaml 4.10 (#109, @xclerc)
 
-  0.11.0 (01/07/2020)
-
----
+0.11.0 (01/07/2020)
+-------------------
 
 - Invariant check on locations (#107, @trefis)
 
-  0.10.0 (11/21/2019)
-
----
+0.10.0 (11/21/2019)
+-------------------
 
 - Do not produce a suprious empty correction when deriving_inline
   expands into an extension that undergoes further expansion (#86,
@@ -313,31 +292,27 @@
 
 - Fix parsing long idenitifiers. (#98, @NathanReb)
 
-  0.9.0
-
----
+0.9.0
+-----
 
 - Bump AST to 4.08 (#80, @xclerc)
 
-  0.8.1
-
----
+0.8.1
+-----
 
 ### Fixed
 
 - Report errors according to the value of `OCAML_ERROR_STYLE` and
   `OCAML_COLOR` in the standalone driver (#83, @NathanReb)
 
-  0.6.0
-
----
+0.6.0
+-----
 
 - Set `Location.input_name` to the original filename when reading a
   binary AST (#.., @diml)
 
-  0.5.0
-
----
+0.5.0
+-----
 
 - Add an `(** @inline *)` to the include generated when silencing
   warning 32 (#58, @trefis)
@@ -345,9 +320,8 @@
 - Add `Ppxlib.mk_named_sig` and `Ppxlib.is_polymorphic_variant` (#57,
   @trefis)
 
-  0.4.0
-
----
+0.4.0
+-----
 
 - Do not report errors about dropped or uninterpreted attributes
   starting with `_` (#46, fix #40, @diml)
@@ -369,9 +343,8 @@
 
 - Preserve the filename in the output (#56, @hhugo)
 
-  0.3.1
-
----
+0.3.1
+-----
 
 - Add `Attribute.declare_with_name_loc` (#33, @diml)
 
@@ -379,9 +352,8 @@
 
 - Update the AST to 4.06 (#8, @xclerc)
 
-  0.3.0
-
----
+0.3.0
+-----
 
 - Update the AST to 4.06 (#8, @xclerc)
 
@@ -396,9 +368,8 @@
 
 - Restore compatibility with OCaml 4.04.x (#16, @xclerc)
 
-  0.2.0
-
----
+0.2.0
+-----
 
 - Make sure to import command line arguments registered with
   ocaml-migrate-parsetree (#5, @diml)
@@ -406,8 +377,8 @@
 - Fix an issue where cookies set from the command line sometimes
   disappeared (#6, @diml)
 
-  0.1.0
-
----
+0.1.0
+-----
 
 Initial release.
+
