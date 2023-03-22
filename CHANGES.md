@@ -7,6 +7,8 @@ unreleased
 
 - Add "ns" and "res" as reserved namespaces(#388, @davesnx)
 
+- Make quoter `let` binding non-recursive (#401, @sim642)
+
 0.29.1 (14/02/2023)
 ------------------
 
