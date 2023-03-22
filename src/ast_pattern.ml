@@ -65,6 +65,7 @@ let int32 v = cst ~to_string:Int32.to_string v
 let int64 v = cst ~to_string:Int64.to_string v
 let nativeint v = cst ~to_string:Nativeint.to_string v
 let bool v = cst ~to_string:Bool.to_string v
+let ebool (T func) = T (fun ctx loc x k -> func ctx loc (bool_of_string x) k)
 
 let false_ =
   T
@@ -158,7 +159,6 @@ let alt (T f1) (T f2) =
 
 let ( ||| ) = alt
 let map (T func) ~f = T (fun ctx loc x k -> func ctx loc x (f k))
-let map_value (T func) ~f = T (fun ctx loc x k -> func ctx loc (f x) k)
 let map' (T func) ~f = T (fun ctx loc x k -> func ctx loc x (f loc k))
 let map_result (T func) ~f = T (fun ctx loc x k -> f (func ctx loc x k))
 let ( >>| ) t f = map t ~f
@@ -175,6 +175,9 @@ let map1' (T func) ~f =
 
 let map2' (T func) ~f =
   T (fun ctx loc x k -> func ctx loc x (fun a b -> k (f loc a b)))
+
+let map_value (T func) ~f = T (fun ctx loc x k -> func ctx loc (f x) k)
+let map_value' (T func) ~f = T (fun ctx loc x k -> func ctx loc (f loc x) k)
 
 let alt_option some none =
   alt (map1 some ~f:(fun x -> Some x)) (map0 none ~f:None)

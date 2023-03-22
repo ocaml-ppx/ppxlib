@@ -96,7 +96,6 @@ val ( ||| ) : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> ('a, 'b, 'c) t
 (** Same as [alt] *)
 
 val map : ('a, 'b, 'c) t -> f:('d -> 'b) -> ('a, 'd, 'c) t
-val map_value : ('a, 'b, 'c) t -> f:('d -> 'a) -> ('d, 'b, 'c) t
 val map' : ('a, 'b, 'c) t -> f:(Location.t -> 'd -> 'b) -> ('a, 'd, 'c) t
 val map_result : ('a, 'b, 'c) t -> f:('c -> 'd) -> ('a, 'b, 'd) t
 
@@ -119,6 +118,8 @@ val map2' :
   f:(Location.t -> 'v1 -> 'v2 -> 'v) ->
   ('a, 'v -> 'b, 'c) t
 
+val map_value : ('a, 'b, 'c) t -> f:('d -> 'a) -> ('d, 'b, 'c) t
+val map_value' : ('a, 'b, 'c) t -> f:(location -> 'd -> 'a) -> ('d, 'b, 'c) t
 val nil : (_ list, 'a, 'a) t
 val ( ^:: ) : ('a, 'b, 'c) t -> ('a list, 'c, 'd) t -> ('a list, 'b, 'd) t
 val many : ('a, 'b -> 'c, 'c) t -> ('a list, 'b list -> 'c, 'c) t
@@ -130,6 +131,7 @@ val int32 : int32 -> (int32, 'a, 'a) t
 val int64 : int64 -> (int64, 'a, 'a) t
 val nativeint : nativeint -> (nativeint, 'a, 'a) t
 val bool : bool -> (bool, 'a, 'a) t
+val ebool : (bool, 'a, 'b) t -> (label, 'a, 'b) t
 
 val cst :
   to_string:('a -> string) -> ?equal:('a -> 'a -> bool) -> 'a -> ('a, 'b, 'b) t
