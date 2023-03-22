@@ -158,6 +158,7 @@ let alt (T f1) (T f2) =
 
 let ( ||| ) = alt
 let map (T func) ~f = T (fun ctx loc x k -> func ctx loc x (f k))
+let map_value (T func) ~f = T (fun ctx loc x k -> func ctx loc (f x) k)
 let map' (T func) ~f = T (fun ctx loc x k -> func ctx loc x (f loc k))
 let map_result (T func) ~f = T (fun ctx loc x k -> f (func ctx loc x k))
 let ( >>| ) t f = map t ~f
