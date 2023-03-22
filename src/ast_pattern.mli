@@ -96,7 +96,7 @@ val ( ||| ) : ('a, 'b, 'c) t -> ('a, 'b, 'c) t -> ('a, 'b, 'c) t
 (** Same as [alt] *)
 
 val map : ('a, 'b, 'c) t -> f:('d -> 'b) -> ('a, 'd, 'c) t
-val map_value : ('a, 'b, 'c)t -> f:('d -> 'a) -> ('d, 'b, 'c)t
+val map_value : ('a, 'b, 'c) t -> f:('d -> 'a) -> ('d, 'b, 'c) t
 val map' : ('a, 'b, 'c) t -> f:(Location.t -> 'd -> 'b) -> ('a, 'd, 'c) t
 val map_result : ('a, 'b, 'c) t -> f:('c -> 'd) -> ('a, 'b, 'd) t
 
