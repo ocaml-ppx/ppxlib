@@ -7,7 +7,6 @@ unreleased
 
 - Add "ns" and "res" as reserved namespaces(#388, @davesnx)
 
-
 0.29.1 (14/02/2023)
 ------------------
 
@@ -386,4 +385,3 @@ unreleased
 -----
 
 Initial release.
-
