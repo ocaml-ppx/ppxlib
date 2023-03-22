@@ -143,7 +143,7 @@ let quoted =
 [%%expect{|
 val quoted : expression =
   {Ppxlib__.Import.pexp_desc =
-    Ppxlib__.Import.Pexp_let (Ppxlib__.Import.Recursive,
+    Ppxlib__.Import.Pexp_let (Ppxlib__.Import.Nonrecursive,
      [{Ppxlib__.Import.pvb_pat =
         {Ppxlib__.Import.ppat_desc =
           Ppxlib__.Import.Ppat_var
@@ -338,5 +338,5 @@ val quoted : expression =
 Pprintast.string_of_expression quoted;;
 [%%expect{|
 - : string =
-"let rec __2 () = foo ()\nand __1 = bar\nand __0 = foo in [__0; __1; __2 ()]"
+"let __2 () = foo ()\nand __1 = bar\nand __0 = foo in [__0; __1; __2 ()]"
 |}]
