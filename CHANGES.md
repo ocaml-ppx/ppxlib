@@ -1,6 +1,8 @@
 unreleased
 ------------------
 
+- multiple errors are now reported in `metaquot`. (#397, @burnleydev1)
+
 - Add `Attribute.declare_with_attr_loc` (#396, @dvulakh)
 
 - Add "ns" and "res" as reserved namespaces(#388, @davesnx)
