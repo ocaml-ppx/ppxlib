@@ -131,7 +131,9 @@ val int32 : int32 -> (int32, 'a, 'a) t
 val int64 : int64 -> (int64, 'a, 'a) t
 val nativeint : nativeint -> (nativeint, 'a, 'a) t
 val bool : bool -> (bool, 'a, 'a) t
-val ebool : (bool, 'a, 'b) t -> (label, 'a, 'b) t
+val bool' : (bool, 'a, 'b) t -> (label, 'a, 'b) t
+(* val ebool : (bool, 'a, 'b) t -> (expression, 'c, 'd) t
+   val pbool : (bool, 'a, 'b) t -> (pattern, 'c, 'd) t *)
 
 val cst :
   to_string:('a -> string) -> ?equal:('a -> 'a -> bool) -> 'a -> ('a, 'b, 'b) t

@@ -65,7 +65,14 @@ let int32 v = cst ~to_string:Int32.to_string v
 let int64 v = cst ~to_string:Int64.to_string v
 let nativeint v = cst ~to_string:Nativeint.to_string v
 let bool v = cst ~to_string:Bool.to_string v
-let ebool (T func) = T (fun ctx loc x k -> func ctx loc (bool_of_string x) k)
+
+let bool' (T func) =
+  T
+    (fun ctx loc x k ->
+      match x with
+      | "true" -> func ctx loc true k
+      | "false" -> func ctx loc false k
+      | _ -> fail loc "Bool")
 
 let false_ =
   T
