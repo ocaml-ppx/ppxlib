@@ -63,4 +63,4 @@ among supported parsetree versions to have meaning. The compiler bumps
 the magic number at the very end of a release cycle. Before, the `trunk`
 magic number coincides with the magic number of the last stable parsetree.
 Therefore it's impossible for Ppxlib to support both the latest stable
-parsetree and the compiler parsetree at the same time.
+parsetree and the `trunk` parsetree at the same time.
