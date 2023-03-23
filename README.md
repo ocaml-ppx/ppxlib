@@ -16,7 +16,7 @@ you'd like to have here, so that we rebase.
 
 Ppxlib supporting `trunk` can be interpreted in two different ways.
 
-### User perspective
+### User perspective on the difference
 
 One notion of `trunk`-support is that a project depending on Ppxlib can
 be compiled with `trunk` _under the assumption_ that the project
@@ -29,7 +29,7 @@ in a project which depends on Ppxlib and that you compile with `trunk`.
 It's not unlikely that you'll get a Ppxlib runtime error (i.e. project
 compile time error), if you try to use this branch in that situation.
 
-### Ppxlib behavior perspective
+### Ppxlib behavior perspective on the difference
 
 The Ppxlib behavior in the situation of `trunk` support is: The parsetree
 version exposed by Ppxlib is still the one from the latest stable compiler
