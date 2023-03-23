@@ -1,44 +1,66 @@
-# Ppxlib - Meta-programming for OCaml
+# Non-continuous `trunk`-support for Ppxlib
 
-[![ocaml-ci status][ocaml-ci-img]][ocaml-ci] [![AppVeyor status][appveyor-img]][appveyor]
+On this branch, we provide a Ppxlib version, which can be compiled with
+OCaml's `trunk` branch. Whenever you want to compile a project that
+(transitively) depends on PPXs with `trunk`, please pin Ppxlib to
+this branch.
 
-[ocaml-ci]: https://ci.ocamllabs.io/github/ocaml-ppx/ppxlib
-[ocaml-ci-img]: https://img.shields.io/endpoint?url=https%3A%2F%2Fci.ocamllabs.io%2Fbadge%2Focaml-ppx%2Fppxlib%2Fmain&logo=ocaml
-[appveyor]:       https://ci.appveyor.com/project/diml/ppxlib/branch/main
-[appveyor-img]:   https://ci.appveyor.com/api/projects/status/bogbsm33uvh083jx?svg=true
+The branch is maintained manually. So each time the compiler adds a new
+syntax feature, first we need to bring this branch back in sync with
+`trunk` and then you'll need to re-pin your Ppxlib. Please, open an
+issue or a PR, if this branch doesn't compile with `trunk`. Also open
+an issue, if there's a feature/bug-fix on Ppxlib's `main` branch that
+you'd like to have here, so that we rebase.
 
-[Ppxlib documentation][doc]
+## `trunk`-support vs `trunk`-feature support
 
-# Overview
+Ppxlib supporting `trunk` can be interpreted in two different ways.
 
-Ppxlib is the standard library for ppx rewriters and other programs
-that manipulate the in-memory representation of OCaml programs, a.k.a
-the "Parsetree".
+### User perspective
 
-It also comes bundled with two ppx rewriters that are commonly used to
-write tools that manipulate and/or generate Parsetree values;
-`ppxlib.metaquot` which allows to construct Parsetree values using the
-OCaml syntax directly and `ppxlib.traverse` which provides various
-ways of automatically traversing values of a given type, in particular
-allowing to inject a complex structured value into generated code.
+One notion of `trunk`-support is that a project depending on Ppxlib can
+be compiled with `trunk` _under the assumption_ that the project
+doesn't use the new syntax features in `trunk`. That's what this branch
+provides.
 
-For more information about ppxlib and how to use it, please consult the
-[documentation][doc].
+The other notion of `trunk`-support should actually be called
+`trunk`-feature support: you can use the new `trunk` syntax features
+in a project which depends on Ppxlib and that you compile with `trunk`.
+It's not unlikely that you'll get a Ppxlib runtime error (i.e. project
+compile time error), if you try to use this branch in that situation.
 
-# What is the relation between ppxlib and other ppx libraries?
+### Ppxlib behavior perspective
 
-The ppx world has a long historied history, and if you look around you
-may find other projects that offer functionalities similar to
-ppxlib. The following [blog post][future-of-ppx] gives a good overview
-of the various libraries that have been developed over time. At this
-point, ppxlib is considered as the de facto library for writing ppx
-rewriters.
+The Ppxlib behavior in the situation of `trunk` support is: The parsetree
+version exposed by Ppxlib is still the one from the latest stable compiler
+and all PPXs are defined against that one. However, Ppxlib has hold of
+`trunk`'s parsetree version and knows how to migrate between that
+parsetree version and the parsetree version of the latest stable compiler.
+You can find those parsetrees and parsertree migration modules in Ppxlib's
+`Astlib` library. So, when compiling a file with `trunk`, the Ppxlib driver
+will parse the file into the `trunk` parsetree, migrate down to the latest
+stable parsetree, do the PPX expansions and migrate back to `trunk`'s
+parsetree. The downward migration will error, if the parsetree contains a
+feature that isn't well-defined in the latest stable parsetree version.
 
-# History of the project
+The behavior in the case of `trunk`-feature support would be different.
+In that case, Ppxlib would have to expose the `trunk` parsetree, so that
+the PPXs would be defined against that one. So, Ppxlib would have to bump
+its internal parsetree to the `trunk` parsetree. Bumping the Ppxlib parsetree
+always means potentially breaking PPXs. When bumping the Ppxlib parsetree
+to the parsetree of an about-to-be-released stable compiler version, we
+create a work-space with all opam PPXs and send patch PRs to the ones we
+break. However, for `trunk` we wouldn't do such an effort.
 
-This repository was created by merging several older smaller projects
-that were developed at Jane Street. See [the history](HISTORY.md) for
-more details.
+## Incompatibility with stable compiler versions
 
-[doc]: https://ocaml-ppx.github.io/ppxlib/ppxlib/index.html
-[future-of-ppx]: https://discuss.ocaml.org/t/the-future-of-ppx/3766
+This branch is incompatible with stable compiler versions. The reason
+for that is that Ppxlib has different input modes. One possibility is
+to receive a marchalled parsetree. Marshalled parsetrees contain meta-data
+reflecting the parsetree version they correspond to. That meta-data is
+called the parsetree magic number. The magic number needs to be unique
+among supported parsetree versions to have meaning. The compiler bumps
+the magic number at the very end of a release cycle. Before, the `trunk`
+magic number coincides with the magic number of the last stable parsetree.
+Therefore it's impossible for Ppxlib to support both the latest stable
+parsetree and the compiler parsetree at the same time.
