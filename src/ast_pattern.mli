@@ -133,7 +133,7 @@ val nativeint : nativeint -> (nativeint, 'a, 'a) t
 val bool : bool -> (bool, 'a, 'a) t
 val bool' : (bool, 'a, 'b) t -> (label, 'a, 'b) t
 val ebool : (bool, 'a, 'b) t -> (expression, 'a, 'b) t
-(*val pbool : (bool, 'a, 'b) t -> (pattern, 'c, 'd) t *)
+val pbool : (bool, 'a, 'b) t -> (pattern, 'a, 'b) t
 
 val cst :
   to_string:('a -> string) -> ?equal:('a -> 'a -> bool) -> 'a -> ('a, 'b, 'b) t
