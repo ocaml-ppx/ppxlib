@@ -233,6 +233,8 @@ let pnativeint t = ppat_constant (const_nativeint t)
 let single_expr_payload t = pstr (pstr_eval t nil ^:: nil)
 let no_label t = cst Asttypes.Nolabel ~to_string:(fun _ -> "Nolabel") ** t
 
+let ebool t = pexp_construct (lident (bool' t) )none
+
 let extension (T f1) (T f2) =
   T
     (fun ctx loc ((name : _ Loc.t), payload) k ->
