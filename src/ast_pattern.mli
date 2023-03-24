@@ -131,7 +131,6 @@ val int32 : int32 -> (int32, 'a, 'a) t
 val int64 : int64 -> (int64, 'a, 'a) t
 val nativeint : nativeint -> (nativeint, 'a, 'a) t
 val bool : bool -> (bool, 'a, 'a) t
-val bool' : (bool, 'a, 'b) t -> (label, 'a, 'b) t
 val ebool : (bool, 'a, 'b) t -> (expression, 'a, 'b) t
 val pbool : (bool, 'a, 'b) t -> (pattern, 'a, 'b) t
 
