@@ -1,6 +1,8 @@
 unreleased
 ------------------
 
+- Ast_pattern now has ebool, pbool helper, and a new map.(#402, @burnleydev1)
+
 - multiple errors are now reported in `metaquot`. (#397, @burnleydev1)
 
 - Add `Attribute.declare_with_attr_loc` (#396, @dvulakh)
