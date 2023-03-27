@@ -1031,10 +1031,17 @@ module Parsetree = struct
     | Pstr_attribute of attribute  (** [[\@\@\@id]] *)
     | Pstr_extension of extension * attributes  (** [[%%id]] *)
 
+  and poly_constraint (*IF_CURRENT = Parsetree.poly_constraint *) =
+    {
+      locally_abstract_univars:string loc list;
+      typ:core_type;
+    }
+
   and value_binding (*IF_CURRENT = Parsetree.value_binding *) =
     {
       pvb_pat: pattern;
       pvb_expr: expression;
+      pvb_constraint: poly_constraint option;
       pvb_attributes: attributes;
       pvb_loc: Location.t;
     }

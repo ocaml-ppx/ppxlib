@@ -226,6 +226,7 @@ and copy_value_binding :
   {
     Ast_501.Parsetree.pvb_pat = copy_pattern pvb_pat;
     Ast_501.Parsetree.pvb_expr = copy_expression pvb_expr;
+    Ast_501.Parsetree.pvb_constraint = None;
     Ast_501.Parsetree.pvb_attributes = copy_attributes pvb_attributes;
     Ast_501.Parsetree.pvb_loc = copy_location pvb_loc;
   }
