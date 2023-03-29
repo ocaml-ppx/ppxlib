@@ -11,6 +11,9 @@ unreleased
 
 - Make quoter `let` binding non-recursive (#401, @sim642)
 
+- Fix failure of 'lift_map_with_context' in traverse by compile-time
+  evaluation of 'fst' and 'snd' (#390, @smuenzel)
+
 0.29.1 (14/02/2023)
 ------------------
 
