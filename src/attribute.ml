@@ -841,3 +841,16 @@ let dropped_so_far_signature sg =
   Attribute_table.fold
     (fun name loc acc -> { txt = name.txt; loc } :: acc)
     table []
+
+let declare_flag name context =
+  let payload_pattern = Ast_pattern.(pstr nil) in
+  let continuation ~attr_loc:_ ~name_loc:_ = () in
+  declare_with_all_args name context payload_pattern continuation
+
+let has_flag (attr : ('a, unit) t) ?(mark_as_seen = false) x =
+  let seen = ref false in
+  match get attr x with
+  | Some () ->
+      if mark_as_seen then seen := true;
+      true
+  | None -> false

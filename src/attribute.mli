@@ -248,3 +248,6 @@ val pattern_res :
     'b option -> 'c,
     ('d, Location.Error.t NonEmptyList.t) result )
   Ast_pattern.t
+
+val declare_flag : string -> 'a Context.t -> ('a, unit) t
+val has_flag : ('a, unit) t -> ?mark_as_seen:bool -> 'a -> bool
