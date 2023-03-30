@@ -75,6 +75,10 @@ module Context : sig
   val object_type_field : object_field t
 end
 
+val declare_flag : string -> 'a Context.t -> ('a, unit) t
+(*takes a string and context containing values of type 'a as input and returns
+   a data structure t that can store elements of type 'a along with associated flags. *)
+
 val declare :
   string -> 'a Context.t -> (payload, 'b, 'c) Ast_pattern.t -> 'b -> ('a, 'c) t
 (** [declare fully_qualified_name context payload_pattern k] declares an
@@ -117,9 +121,6 @@ val declare :
     It is not allowed to declare an attribute with a name that matches a
     previously-defined one on the same context. For instance trying to declare
     the same attribute twice will fail. *)
-val declare_flag : string -> 'a Context.t -> ('a, unit) t
-(*takes a string and context containing values of type 'a as input and returns 
-   a data structure t that can store elements of type 'a along with associated flags. *)
 
 val declare_with_name_loc :
   string ->
@@ -152,10 +153,9 @@ val get_res :
 val get :
   ('a, 'b) t -> ?mark_as_seen:bool (** default [true] *) -> 'a -> 'b option
 (** See {!get_res}. Raises a located error if the attribute is duplicated *)
-  
+
 val has_flag : ('a, unit) t -> ?mark_as_seen:bool -> 'a -> bool
 (* takes data structure as  input,returns a boolean with an optional named argument mark_as_seen. *)
-
 
 val consume_res :
   ('a, 'b) t -> 'a -> (('a * 'b) option, Location.Error.t NonEmptyList.t) result
@@ -255,4 +255,3 @@ val pattern_res :
     'b option -> 'c,
     ('d, Location.Error.t NonEmptyList.t) result )
   Ast_pattern.t
-
