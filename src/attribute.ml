@@ -841,6 +841,7 @@ let dropped_so_far_signature sg =
   Attribute_table.fold
     (fun name loc acc -> { txt = name.txt; loc } :: acc)
     table []
+(* changes *)
 
 let declare_flag name context =
   let payload_pattern = Ast_pattern.(pstr nil) in
