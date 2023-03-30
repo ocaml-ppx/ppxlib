@@ -841,12 +841,14 @@ let dropped_so_far_signature sg =
   Attribute_table.fold
     (fun name loc acc -> { txt = name.txt; loc } :: acc)
     table []
-(* changes *)
 
 let declare_flag name context =
   let payload_pattern = Ast_pattern.(pstr nil) in
   let continuation ~attr_loc:_ ~name_loc:_ = () in
   declare_with_all_args name context payload_pattern continuation
+(* registers a flag using Ast_pattern with an empty pattern,
+   a continuation function that doesn't perform any operations,
+    and declare_with_all_args function *)
 
 let has_flag (attr : ('a, unit) t) ?(mark_as_seen = false) x =
   let seen = ref false in
@@ -855,3 +857,6 @@ let has_flag (attr : ('a, unit) t) ?(mark_as_seen = false) x =
       if mark_as_seen then seen := true;
       true
   | None -> false
+(* takes a data structure attr of type ('a, unit) t, an element x of type 'a,
+   and an optional boolean argument mark_as_seen, and returns a boolean indicating
+    whether the element x has a flag in the data structure *)
