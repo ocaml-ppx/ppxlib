@@ -14,6 +14,10 @@ unreleased
 - Fix failure of 'lift_map_with_context' in traverse by compile-time
   evaluation of 'fst' and 'snd' (#390, @smuenzel)
 
+- Bias the mapping from magic to version towards the current version,
+  as it is usually the common case and it helps when magic numbers are
+  ambiguous (such as on development versions) (#409, @shym)
+
 0.29.1 (14/02/2023)
 ------------------
 

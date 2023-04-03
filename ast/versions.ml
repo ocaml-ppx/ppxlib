@@ -577,5 +577,10 @@ module Find_version = struct
           else
             loop tail
     in
-    loop all_versions
+    (* First check whether it could be the current version, probably
+       the most common use case.
+       This bias towards the current version also provides a way to
+       choose wisely between, say, `trunk` and the latest stable
+       release, for which the magic numbers are not distinguished *)
+    loop @@ ((module OCaml_current : OCaml_version) :: all_versions)
 end
