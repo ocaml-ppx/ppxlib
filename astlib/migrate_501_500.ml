@@ -220,12 +220,51 @@ and copy_value_binding :
  fun {
        Ast_501.Parsetree.pvb_pat;
        Ast_501.Parsetree.pvb_expr;
+       Ast_501.Parsetree.pvb_constraint;
        Ast_501.Parsetree.pvb_attributes;
        Ast_501.Parsetree.pvb_loc;
      } ->
+  let pvb_pat = copy_pattern pvb_pat and pvb_expr = copy_expression pvb_expr in
+  let pvb_pat, pvb_expr =
+    match pvb_constraint with
+    | None -> (pvb_pat, pvb_expr)
+    | Some { locally_abstract_univars; typ } ->
+        let typ = copy_core_type typ in
+        let typ_poly =
+          {
+            typ with
+            ptyp_attributes = [];
+            ptyp_desc =
+              Ast_500.Parsetree.Ptyp_poly (locally_abstract_univars, typ);
+          }
+        in
+        let pvb_pat =
+          {
+            pvb_pat with
+            ppat_attributes = [];
+            ppat_desc = Ast_500.Parsetree.Ppat_constraint (pvb_pat, typ_poly);
+          }
+        and pvb_expr =
+          List.fold_left
+            (fun expr var ->
+              {
+                expr with
+                pexp_attributes = [];
+                Ast_500.Parsetree.pexp_desc =
+                  Ast_500.Parsetree.Pexp_newtype (var, expr);
+              })
+            {
+              pvb_expr with
+              pexp_attributes = [];
+              pexp_desc = Pexp_constraint (pvb_expr, typ);
+            }
+            (List.rev locally_abstract_univars)
+        in
+        (pvb_pat, pvb_expr)
+  in
   {
-    Ast_500.Parsetree.pvb_pat = copy_pattern pvb_pat;
-    Ast_500.Parsetree.pvb_expr = copy_expression pvb_expr;
+    Ast_500.Parsetree.pvb_pat;
+    Ast_500.Parsetree.pvb_expr;
     Ast_500.Parsetree.pvb_attributes = copy_attributes pvb_attributes;
     Ast_500.Parsetree.pvb_loc = copy_location pvb_loc;
   }
