@@ -1,5 +1,7 @@
 # Non-continuous `trunk`-support for Ppxlib
 
+[![Build on `trunk`](https://github.com/ocaml-ppx/ppxlib/actions/workflows/build.yml/badge.svg?branch=trunk-support)](https://github.com/ocaml-ppx/ppxlib/actions/workflows/build.yml)
+
 On this branch, we provide a Ppxlib version, which can be compiled with
 OCaml's `trunk` branch. Whenever you want to compile a project that
 (transitively) depends on PPXs with `trunk`, please pin Ppxlib to
