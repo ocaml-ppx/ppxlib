@@ -66,6 +66,14 @@ let int64 v = cst ~to_string:Int64.to_string v
 let nativeint v = cst ~to_string:Nativeint.to_string v
 let bool v = cst ~to_string:Bool.to_string v
 
+let bool' (T func) =
+  T
+    (fun ctx loc x k ->
+      match x with
+      | "true" -> func ctx loc true k
+      | "false" -> func ctx loc false k
+      | _ -> fail loc "Bool")
+
 let false_ =
   T
     (fun ctx loc x k ->
@@ -175,6 +183,9 @@ let map1' (T func) ~f =
 let map2' (T func) ~f =
   T (fun ctx loc x k -> func ctx loc x (fun a b -> k (f loc a b)))
 
+let map_value (T func) ~f = T (fun ctx loc x k -> func ctx loc (f x) k)
+let map_value' (T func) ~f = T (fun ctx loc x k -> func ctx loc (f loc x) k)
+
 let alt_option some none =
   alt (map1 some ~f:(fun x -> Some x)) (map0 none ~f:None)
 
@@ -221,6 +232,8 @@ let pint64 t = ppat_constant (const_int64 t)
 let pnativeint t = ppat_constant (const_nativeint t)
 let single_expr_payload t = pstr (pstr_eval t nil ^:: nil)
 let no_label t = cst Asttypes.Nolabel ~to_string:(fun _ -> "Nolabel") ** t
+let ebool t = pexp_construct (lident (bool' t)) none
+let pbool t = ppat_construct (lident (bool' t)) none
 
 let extension (T f1) (T f2) =
   T

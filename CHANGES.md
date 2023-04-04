@@ -1,9 +1,22 @@
 unreleased
 ------------------
 
+- Ast_pattern now has ebool, pbool helper, and a new map.(#402, @burnleydev1)
+
+- multiple errors are now reported in `metaquot`. (#397, @burnleydev1)
+
 - Add `Attribute.declare_with_attr_loc` (#396, @dvulakh)
 
 - Add "ns" and "res" as reserved namespaces(#388, @davesnx)
+
+- Make quoter `let` binding non-recursive (#401, @sim642)
+
+- Fix failure of 'lift_map_with_context' in traverse by compile-time
+  evaluation of 'fst' and 'snd' (#390, @smuenzel)
+
+- Driver: Bias the mapping from magic to version towards the current version,
+  as it is usually the common case and it helps when magic numbers are
+  ambiguous (such as on development versions) (#409, @shym)
 
 0.29.1 (14/02/2023)
 ------------------

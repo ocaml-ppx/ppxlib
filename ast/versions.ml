@@ -587,10 +587,10 @@ module Find_version = struct
           else
             loop tail
     in
-    (* Traverse the versions from last to first:
-       if the magic numbers aren't unique among versions,
-       we want the latest version with a magic number match.
-       The situation in mind is trunk support. *)
-      let all_versions_top_down = List.rev all_versions in
-      loop all_versions_top_down
+    (* First check whether it could be the current version, probably
+       the most common use case.
+       This bias towards the current version also provides a way to
+       choose wisely between, say, `trunk` and the latest stable
+       release, for which the magic numbers are not distinguished *)
+    loop @@ ((module OCaml_current : OCaml_version) :: all_versions)
 end

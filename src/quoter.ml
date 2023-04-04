@@ -12,7 +12,7 @@ let sanitize t e =
   | [] -> e
   | bindings ->
       let (module Ast) = Ast_builder.make e.pexp_loc in
-      Ast.pexp_let Recursive bindings e
+      Ast.pexp_let Nonrecursive bindings e
 
 let quote t (e : expression) =
   let loc = e.pexp_loc in
