@@ -15,7 +15,7 @@
 (package
  (name ppxlib)
  (depends
-  (ocaml (= 5.1.0))
+  (ocaml (>= 4.04.1))
   (ocaml-compiler-libs (>= v0.11.0))
   (ppx_derivers (>= 1.0))
   (sexplib0 (>= v0.12))
