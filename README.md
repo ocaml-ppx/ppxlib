@@ -53,16 +53,3 @@ always means potentially breaking PPXs. When bumping the Ppxlib parsetree
 to the parsetree of an about-to-be-released stable compiler version, we
 create a work-space with all opam PPXs and send patch PRs to the ones we
 break. However, for `trunk` we wouldn't do such an effort.
-
-## Incompatibility with stable compiler versions
-
-This branch is incompatible with stable compiler versions. The reason
-for that is that Ppxlib has different input modes. One possibility is
-to receive a marchalled parsetree. Marshalled parsetrees contain meta-data
-reflecting the parsetree version they correspond to. That meta-data is
-called the parsetree magic number. The magic number needs to be unique
-among supported parsetree versions to have meaning. The compiler bumps
-the magic number at the very end of a release cycle. Before, the `trunk`
-magic number coincides with the magic number of the last stable parsetree.
-Therefore it's impossible for Ppxlib to support both the latest stable
-parsetree and the `trunk` parsetree at the same time.
