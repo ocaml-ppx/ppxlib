@@ -26,7 +26,7 @@ jobs:
       - name: Install OCaml compiler
         uses: ocaml/setup-ocaml@v2
         with:
-          ocaml-compiler: 'ocaml-variants.5.1.0+trunk'
+          ocaml-compiler: 'ocaml-variants.5.2.0+trunk'
           dune-cache: true
           cache-prefix: ${{ steps.setup.outputs.cache_prefix }}
 
