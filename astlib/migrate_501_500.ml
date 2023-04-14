@@ -1274,16 +1274,6 @@ and copy_location : Location.t -> Location.t =
     Location.loc_ghost;
   }
 
-and copy_position : Stdlib.Lexing.position -> Stdlib.Lexing.position =
- fun {
-       Stdlib.Lexing.pos_fname;
-       Stdlib.Lexing.pos_lnum;
-       Stdlib.Lexing.pos_bol;
-       Stdlib.Lexing.pos_cnum;
-     } ->
-  {
-    Stdlib.Lexing.pos_fname;
-    Stdlib.Lexing.pos_lnum;
-    Stdlib.Lexing.pos_bol;
-    Stdlib.Lexing.pos_cnum;
-  }
+and copy_position : Lexing.position -> Lexing.position =
+ fun { Lexing.pos_fname; Lexing.pos_lnum; Lexing.pos_bol; Lexing.pos_cnum } ->
+  { Lexing.pos_fname; Lexing.pos_lnum; Lexing.pos_bol; Lexing.pos_cnum }
