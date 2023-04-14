@@ -37,7 +37,7 @@ On the other hand, the
 proper PPX, as it will read and output a {{!Ppxlib.Parsetree}[Parsetree]} marshalled
 value directly. This version is suitable for use with the [-ppx] {{:https://v2.ocaml.org/releases/5.0/htmlman/comp.html#s:comp-options}option} of the OCaml
 compiler, as well as any tool that requires control of parsing the file.
-For instance, {{:https://merlin.com}Merlin} includes an OCaml parser that tries
+For instance, {{:https://ocaml.github.io/merlin/}Merlin} includes an OCaml parser that tries
 hard to recover from errors in order to generate a valid AST most of the time.
 
 Several arguments can be passed to the driver when executing it. Those arguments
