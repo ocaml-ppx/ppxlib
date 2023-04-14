@@ -297,6 +297,13 @@ let declare_with_attr_loc name context pattern k =
   declare_with_all_args name context pattern (fun ~attr_loc ~name_loc:_ ->
       k ~attr_loc)
 
+type 'a flag = ('a, unit) t
+
+let declare_flag name context =
+  let payload_pattern = Ast_pattern.(pstr nil) in
+  let continuation ~attr_loc:_ ~name_loc:_ = () in
+  declare_with_all_args name context payload_pattern continuation
+
 module Attribute_table = Caml.Hashtbl.Make (struct
   type t = string loc
 
@@ -354,6 +361,16 @@ let get_res t ?mark_as_seen:do_mark_as_seen x =
 
 let get t ?mark_as_seen:do_mark_as_seen x =
   get_res t ?mark_as_seen:do_mark_as_seen x
+  |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err)
+
+let has_flag_res t ?mark_as_seen x =
+  match get_res ?mark_as_seen t x with
+  | Ok (Some ()) -> Ok true
+  | Ok None -> Ok false
+  | Error _ as e -> e
+
+let has_flag t ?mark_as_seen x =
+  has_flag_res t ?mark_as_seen x
   |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err)
 
 let consume_res t x =
@@ -841,22 +858,3 @@ let dropped_so_far_signature sg =
   Attribute_table.fold
     (fun name loc acc -> { txt = name.txt; loc } :: acc)
     table []
-
-let declare_flag name context =
-  let payload_pattern = Ast_pattern.(pstr nil) in
-  let continuation ~attr_loc:_ ~name_loc:_ = () in
-  declare_with_all_args name context payload_pattern continuation
-(* registers a flag using Ast_pattern with an empty pattern,
-   a continuation function that doesn't perform any operations,
-    and declare_with_all_args function *)
-
-let has_flag (attr : ('a, unit) t) ?(mark_as_seen = false) x =
-  let seen = ref false in
-  match get attr x with
-  | Some () ->
-      if mark_as_seen then seen := true;
-      true
-  | None -> false
-(* takes a data structure attr of type ('a, unit) t, an element x of type 'a,
-   and an optional boolean argument mark_as_seen, and returns a boolean indicating
-    whether the element x has a flag in the data structure *)
