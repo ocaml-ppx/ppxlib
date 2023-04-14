@@ -26,9 +26,13 @@ ast/versions.mli
 # Currently our expect-test lexer is too strict for our expect tests to
 # work well with ocamlformat
 test/base/test.ml
+test/base/test_510.ml
 test/code_path/test.ml
+test/code_path/test_510.ml
 test/deriving/test.ml
+test/deriving/test_510.ml
 test/driver/attributes/test.ml
+test/driver/attributes/test_510.ml
 test/driver/instrument/test.ml
 test/driver/non-compressible-suffix/test.ml
 test/driver/transformations/test.ml
@@ -36,8 +40,10 @@ test/expand-header-and-footer/test.ml
 test/expansion_helpers/mangle/test.ml
 test/expansion_inside_payloads/test.ml
 test/extensions_and_deriving/test.ml
+test/extensions_and_deriving/test_510.ml
 test/location/exception/test.ml
 test/metaquot/test.ml
+test/metaquot/test_510.ml
 test/ppx_import_support/test.ml
 test/quoter/test.ml
 test/traverse/test.ml
