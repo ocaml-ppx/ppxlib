@@ -230,13 +230,69 @@ and copy_value_binding :
     match pvb_constraint with
     | None -> (pvb_pat, pvb_expr)
     | Some { locally_abstract_univars; typ } ->
+        (* Copied and adapted from OCaml 5.0 Ast_helper *)
+        let varify_constructors var_names t =
+          let var_names = List.map (fun v -> v.Location.txt) var_names in
+          let rec loop t =
+            let desc =
+              match t.Ast_500.Parsetree.ptyp_desc with
+              | Ast_500.Parsetree.Ptyp_any -> Ast_500.Parsetree.Ptyp_any
+              | Ptyp_var x -> Ptyp_var x
+              | Ptyp_arrow (label, core_type, core_type') ->
+                  Ptyp_arrow (label, loop core_type, loop core_type')
+              | Ptyp_tuple lst -> Ptyp_tuple (List.map loop lst)
+              | Ptyp_constr ({ txt = Longident.Lident s }, [])
+                when List.mem s var_names ->
+                  Ptyp_var s
+              | Ptyp_constr (longident, lst) ->
+                  Ptyp_constr (longident, List.map loop lst)
+              | Ptyp_object (lst, o) ->
+                  Ptyp_object (List.map loop_object_field lst, o)
+              | Ptyp_class (longident, lst) ->
+                  Ptyp_class (longident, List.map loop lst)
+              | Ptyp_alias (core_type, string) ->
+                  Ptyp_alias (loop core_type, string)
+              | Ptyp_variant (row_field_list, flag, lbl_lst_option) ->
+                  Ptyp_variant
+                    ( List.map loop_row_field row_field_list,
+                      flag,
+                      lbl_lst_option )
+              | Ptyp_poly (string_lst, core_type) ->
+                  Ptyp_poly (string_lst, loop core_type)
+              | Ptyp_package (longident, lst) ->
+                  Ptyp_package
+                    (longident, List.map (fun (n, typ) -> (n, loop typ)) lst)
+              | Ptyp_extension (s, arg) -> Ptyp_extension (s, arg)
+            in
+            { t with ptyp_desc = desc }
+          and loop_row_field field =
+            let prf_desc =
+              match field.prf_desc with
+              | Ast_500.Parsetree.Rtag (label, flag, lst) ->
+                  Ast_500.Parsetree.Rtag (label, flag, List.map loop lst)
+              | Rinherit t -> Rinherit (loop t)
+            in
+            { field with prf_desc }
+          and loop_object_field field =
+            let pof_desc =
+              match field.pof_desc with
+              | Ast_500.Parsetree.Otag (label, t) ->
+                  Ast_500.Parsetree.Otag (label, loop t)
+              | Oinherit t -> Oinherit (loop t)
+            in
+            { field with pof_desc }
+          in
+          loop t
+        in
         let typ = copy_core_type typ in
         let typ_poly =
           {
             typ with
             ptyp_attributes = [];
             ptyp_desc =
-              Ast_500.Parsetree.Ptyp_poly (locally_abstract_univars, typ);
+              Ast_500.Parsetree.Ptyp_poly
+                ( locally_abstract_univars,
+                  varify_constructors locally_abstract_univars typ );
           }
         in
         let pvb_pat =

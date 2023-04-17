@@ -224,19 +224,14 @@ and copy_value_binding :
        Ast_500.Parsetree.pvb_attributes;
        Ast_500.Parsetree.pvb_loc;
      } ->
-  (* Copied from OCaml 5.0 Ast_helper *)
+  (* Copied and adapted from OCaml 5.0 Ast_helper *)
   let varify_constructors var_names t =
-    let check_variable vl loc v =
-      if List.mem v vl then raise Syntaxerr.(Error (Variable_in_scope (loc, v)))
-    in
     let var_names = List.map (fun v -> v.Location.txt) var_names in
     let rec loop t =
       let desc =
         match t.Ast_500.Parsetree.ptyp_desc with
         | Ast_500.Parsetree.Ptyp_any -> Ast_500.Parsetree.Ptyp_any
-        | Ptyp_var x ->
-            check_variable var_names t.ptyp_loc x;
-            Ptyp_var x
+        | Ptyp_var x -> Ptyp_var x
         | Ptyp_arrow (label, core_type, core_type') ->
             Ptyp_arrow (label, loop core_type, loop core_type')
         | Ptyp_tuple lst -> Ptyp_tuple (List.map loop lst)
@@ -248,16 +243,11 @@ and copy_value_binding :
         | Ptyp_object (lst, o) -> Ptyp_object (List.map loop_object_field lst, o)
         | Ptyp_class (longident, lst) ->
             Ptyp_class (longident, List.map loop lst)
-        | Ptyp_alias (core_type, string) ->
-            check_variable var_names t.ptyp_loc string;
-            Ptyp_alias (loop core_type, string)
+        | Ptyp_alias (core_type, string) -> Ptyp_alias (loop core_type, string)
         | Ptyp_variant (row_field_list, flag, lbl_lst_option) ->
             Ptyp_variant
               (List.map loop_row_field row_field_list, flag, lbl_lst_option)
         | Ptyp_poly (string_lst, core_type) ->
-            List.iter
-              (fun v -> check_variable var_names t.ptyp_loc v.Location.txt)
-              string_lst;
             Ptyp_poly (string_lst, loop core_type)
         | Ptyp_package (longident, lst) ->
             Ptyp_package
