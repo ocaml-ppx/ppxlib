@@ -227,9 +227,9 @@ and copy_value_binding :
      } ->
   let pvb_pat = copy_pattern pvb_pat and pvb_expr = copy_expression pvb_expr in
   let pvb_pat, pvb_expr =
-    match pvb_constraint with
-    | None -> (pvb_pat, pvb_expr)
-    | Some { locally_abstract_univars; typ } ->
+    match (pvb_constraint, pvb_pat) with
+    | ( Some { locally_abstract_univars; typ },
+        { Ast_500.Parsetree.ppat_desc = Ppat_var _; ppat_attributes = [] } ) ->
         (* Copied and adapted from OCaml 5.0 Ast_helper *)
         let varify_constructors var_names t =
           let var_names = List.map (fun v -> v.Location.txt) var_names in
@@ -318,6 +318,17 @@ and copy_value_binding :
             (List.rev locally_abstract_univars)
         in
         (pvb_pat, pvb_expr)
+    | Some { locally_abstract_univars = []; typ }, _ ->
+        let typ = copy_core_type typ in
+        let pvb_pat =
+          {
+            pvb_pat with
+            ppat_attributes = [];
+            ppat_desc = Ast_500.Parsetree.Ppat_constraint (pvb_pat, typ);
+          }
+        in
+        (pvb_pat, pvb_expr)
+    | _ -> (pvb_pat, pvb_expr)
   in
   {
     Ast_500.Parsetree.pvb_pat;

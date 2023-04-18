@@ -287,7 +287,12 @@ and copy_value_binding :
              { ptyp_desc = Ptyp_poly (args_tyvars, rt) } );
        ppat_attributes = [];
       } ->
-          Some (pat, args_tyvars, rt)
+          Some (pat, args_tyvars, rt, `Var)
+      | {
+       Ast_500.Parsetree.ppat_desc = Ppat_constraint (pat, rt);
+       ppat_attributes = [];
+      } ->
+          Some (pat, [], rt, `NonVar)
       | _ -> None
     in
     let rec gadt_exp tyvars e =
@@ -303,10 +308,11 @@ and copy_value_binding :
     in
     let gadt_exp = gadt_exp [] e in
     match (gadt_pattern, gadt_exp) with
-    | Some (p, pt_tyvars, pt_ct), Some (e_tyvars, e, e_ct)
+    | Some (p, pt_tyvars, pt_ct, `Var), Some (e_tyvars, e, e_ct)
       when tyvars_str pt_tyvars = tyvars_str e_tyvars ->
         let ety = varify_constructors e_tyvars e_ct in
         if ety = pt_ct then Some (p, pt_tyvars, e_ct, e) else None
+    | Some (p, [], pt_ct, `NonVar), _ -> Some (p, [], pt_ct, e)
     | _ -> None
   in
   let pvb_pat, pvb_expr, pvb_constraint =
@@ -322,7 +328,7 @@ and copy_value_binding :
   {
     Ast_501.Parsetree.pvb_pat = copy_pattern pvb_pat;
     Ast_501.Parsetree.pvb_expr = copy_expression pvb_expr;
-    Ast_501.Parsetree.pvb_constraint = None;
+    Ast_501.Parsetree.pvb_constraint;
     Ast_501.Parsetree.pvb_attributes = copy_attributes pvb_attributes;
     Ast_501.Parsetree.pvb_loc = copy_location pvb_loc;
   }
