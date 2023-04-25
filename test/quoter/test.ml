@@ -1,5 +1,3 @@
-#require "base";;
-
 open Ppxlib
 open Expansion_helpers
 

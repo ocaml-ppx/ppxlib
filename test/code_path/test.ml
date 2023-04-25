@@ -1,17 +1,14 @@
-#require "base";;
-
-open Base
 open Ppxlib
 
 let sexp_of_code_path code_path =
-  Sexp.message
+  Sexplib0.Sexp.message
     "code_path"
-    [ "main_module_name", sexp_of_string (Code_path.main_module_name code_path)
-    ; "submodule_path", sexp_of_list sexp_of_string (Code_path.submodule_path code_path)
-    ; "enclosing_module", sexp_of_string (Code_path.enclosing_module code_path)
-    ; "enclosing_value", sexp_of_option sexp_of_string (Code_path.enclosing_value code_path)
-    ; "value", sexp_of_option sexp_of_string (Code_path.value code_path)
-    ; "fully_qualified_path", sexp_of_string (Code_path.fully_qualified_path code_path)
+    [ "main_module_name", Sexplib0.Sexp_conv.sexp_of_string (Code_path.main_module_name code_path)
+    ; "submodule_path", Sexplib0.Sexp_conv.sexp_of_list Sexplib0.Sexp_conv.sexp_of_string (Code_path.submodule_path code_path)
+    ; "enclosing_module", Sexplib0.Sexp_conv.sexp_of_string (Code_path.enclosing_module code_path)
+    ; "enclosing_value", Sexplib0.Sexp_conv.sexp_of_option Sexplib0.Sexp_conv.sexp_of_string (Code_path.enclosing_value code_path)
+    ; "value", Sexplib0.Sexp_conv.sexp_of_option Sexplib0.Sexp_conv.sexp_of_string (Code_path.value code_path)
+    ; "fully_qualified_path", Sexplib0.Sexp_conv.sexp_of_string (Code_path.fully_qualified_path code_path)
     ]
 
 let () =
@@ -24,10 +21,10 @@ let () =
            let loc = Expansion_context.Extension.extension_point_loc ctxt in
            let code_path = Expansion_context.Extension.code_path ctxt in
            Ast_builder.Default.estring ~loc
-             (Sexp.to_string (sexp_of_code_path code_path)))
+             (Sexplib0.Sexp.to_string (sexp_of_code_path code_path)))
     ]
 [%%expect{|
-val sexp_of_code_path : Code_path.t -> Sexp.t = <fun>
+val sexp_of_code_path : Code_path.t -> Sexplib0.Sexp.t = <fun>
 |}]
 
 let s =
