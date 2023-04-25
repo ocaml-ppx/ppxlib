@@ -1,6 +1,3 @@
-#require "base";;
-#require "stdio";;
-
 open Ppxlib;;
 open Ast_builder.Default;;
 
