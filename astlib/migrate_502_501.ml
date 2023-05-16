@@ -1240,24 +1240,4 @@ and copy_loc :
  fun f0 { Ast_502.Asttypes.txt; Ast_502.Asttypes.loc } ->
   { Ast_501.Asttypes.txt = f0 txt; Ast_501.Asttypes.loc = copy_location loc }
 
-and copy_location : Location.t -> Location.t =
- fun { Location.loc_start; Location.loc_end; Location.loc_ghost } ->
-  {
-    Location.loc_start = copy_position loc_start;
-    Location.loc_end = copy_position loc_end;
-    Location.loc_ghost;
-  }
-
-and copy_position : Stdlib.Lexing.position -> Stdlib.Lexing.position =
- fun {
-       Stdlib.Lexing.pos_fname;
-       Stdlib.Lexing.pos_lnum;
-       Stdlib.Lexing.pos_bol;
-       Stdlib.Lexing.pos_cnum;
-     } ->
-  {
-    Stdlib.Lexing.pos_fname;
-    Stdlib.Lexing.pos_lnum;
-    Stdlib.Lexing.pos_bol;
-    Stdlib.Lexing.pos_cnum;
-  }
+and copy_location : Location.t -> Location.t = fun x -> x
