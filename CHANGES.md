@@ -20,6 +20,9 @@ unreleased
 
 - Remove unnecessary test dependencies towards base and stdio (#421, @kit-ty-kate)
 
+- Update description to reflect that `ppxlib` contains more than a library
+  (#422, @pitag-ha)
+
 0.29.1 (14/02/2023)
 ------------------
 
