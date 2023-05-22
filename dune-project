@@ -27,10 +27,10 @@
  (conflicts
   (ocaml-migrate-parsetree (< 2.0.0))
   base-effects)
- (synopsis "Standard library for ppx rewriters")
- (description "Ppxlib is the standard library for ppx rewriters and other programs
-that manipulate the in-memory representation of OCaml programs, a.k.a
-the \"Parsetree\".
+ (synopsis "Standard infrastructure for ppx rewriters")
+ (description "Ppxlib is the standard infrastructure for ppx rewriters
+and other programs that manipulate the in-memory representation of
+OCaml programs, a.k.a the \"Parsetree\".
 
 It also comes bundled with two ppx rewriters that are commonly used to
 write tools that manipulate and/or generate Parsetree values;
