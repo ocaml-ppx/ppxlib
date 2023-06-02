@@ -1,0 +1,15 @@
+(executable
+ (name identity_driver)
+ (modules identity_driver)
+ (libraries ppxlib))
+
+(executable
+ (name compare_on)
+ (libraries unix)
+ (modules compare_on))
+
+(cram
+ (enabled_if
+  (= %{ocaml_version} "5.01.0"))
+ (applies_to forth_back_migrations)
+ (deps identity_driver.exe compare_on.exe))
