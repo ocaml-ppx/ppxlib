@@ -10,6 +10,14 @@
 
 (cram
  (enabled_if
-  (= %{ocaml_version} "5.01.0"))
+  (= %{ocaml_version} "5.1.0"))
  (applies_to forth_back_migrations)
+ (deps identity_driver.exe compare_on.exe))
+
+(cram
+ (enabled_if
+  (or
+   (= %{ocaml_version} "5.1.0")
+   (= %{ocaml_version} "5.0.0")))
+ (applies_to one_migration)
  (deps identity_driver.exe compare_on.exe))
