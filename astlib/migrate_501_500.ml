@@ -328,6 +328,33 @@ and copy_value_binding :
           }
         in
         (pvb_pat, pvb_expr)
+    | Some (Pvc_coercion { ground; coercion }), _ ->
+      let coercion = copy_core_type coercion in
+      let typ =
+        {
+          coercion with
+          ptyp_attributes = [];
+          (* location is wrong. attrs might also be wrong. *)
+          ptyp_desc = Ast_500.Parsetree.Ptyp_poly ([], coercion);
+        }
+      in
+      let pvb_pat =
+        {
+          pvb_pat with
+          ppat_attributes = [];
+          ppat_desc = Ast_500.Parsetree.Ppat_constraint (pvb_pat, typ);
+        }
+      in
+      let ground = Option.map copy_core_type ground in
+      let pvb_expr =
+        {
+          pvb_expr with
+          pexp_attributes = [];
+          (* location is wrong. attrs might also be wrong. *)
+          pexp_desc = Ast_500.Parsetree.Pexp_coerce (pvb_expr, ground, coercion);
+        }
+      in
+      (pvb_pat, pvb_expr)
     | _ -> (pvb_pat, pvb_expr)
   in
   {
