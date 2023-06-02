@@ -229,7 +229,7 @@ and copy_value_binding :
     Ast_501.Parsetree.pvb_pat = copy_pattern pvb_pat;
     Ast_501.Parsetree.pvb_expr = copy_expression pvb_expr;
     Ast_501.Parsetree.pvb_constraint =
-      Option.map copy_poly_constraint pvb_constraint;
+      Option.map copy_value_constraint pvb_constraint;
     Ast_501.Parsetree.pvb_attributes = copy_attributes pvb_attributes;
     Ast_501.Parsetree.pvb_loc = copy_location pvb_loc;
   }
@@ -299,14 +299,22 @@ and copy_pattern_desc :
   | Ast_502.Parsetree.Ppat_open (x0, x1) ->
       Ast_501.Parsetree.Ppat_open (copy_loc copy_Longident_t x0, copy_pattern x1)
 
-and copy_poly_constraint :
-    Ast_502.Parsetree.poly_constraint -> Ast_501.Parsetree.poly_constraint =
- fun { Ast_502.Parsetree.locally_abstract_univars; Ast_502.Parsetree.typ } ->
-  {
-    Ast_501.Parsetree.locally_abstract_univars =
-      List.map (copy_loc (fun x -> x)) locally_abstract_univars;
-    Ast_501.Parsetree.typ = copy_core_type typ;
-  }
+and copy_value_constraint :
+    Ast_502.Parsetree.value_constraint -> Ast_501.Parsetree.value_constraint =
+  function
+  | Ast_502.Parsetree.Pvc_constraint { locally_abstract_univars; typ } ->
+      Ast_501.Parsetree.Pvc_constraint
+        {
+          locally_abstract_univars =
+            List.map (copy_loc (fun x -> x)) locally_abstract_univars;
+          typ = copy_core_type typ;
+        }
+  | Ast_502.Parsetree.Pvc_coercion { ground; coercion } ->
+      Ast_501.Parsetree.Pvc_coercion
+        {
+          ground = Option.map copy_core_type ground;
+          coercion = copy_core_type coercion;
+        }
 
 and copy_core_type : Ast_502.Parsetree.core_type -> Ast_501.Parsetree.core_type
     =
