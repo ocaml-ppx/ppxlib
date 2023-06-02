@@ -1031,17 +1031,18 @@ module Parsetree = struct
     | Pstr_attribute of attribute  (** [[\@\@\@id]] *)
     | Pstr_extension of extension * attributes  (** [[%%id]] *)
 
-  and poly_constraint (*IF_CURRENT = Parsetree.poly_constraint *) =
-    {
+  and value_constraint (*IF_CURRENT = Parsetree.value_constraint *) =
+    | Pvc_constraint of {
       locally_abstract_univars:string loc list;
       typ:core_type;
-    }
+      }
+    | Pvc_coercion of {ground:core_type option; coercion:core_type }
 
   and value_binding (*IF_CURRENT = Parsetree.value_binding *) =
     {
       pvb_pat: pattern;
       pvb_expr: expression;
-      pvb_constraint: poly_constraint option;
+      pvb_constraint: value_constraint option;
       pvb_attributes: attributes;
       pvb_loc: Location.t;
     }

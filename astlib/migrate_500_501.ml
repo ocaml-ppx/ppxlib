@@ -320,7 +320,8 @@ and copy_value_binding :
     | Some (p, ty_vars, typ, e) ->
         let typ = copy_core_type typ in
         let pvb_constraint =
-          Some { Ast_501.Parsetree.locally_abstract_univars = ty_vars; typ }
+          Some (Ast_501.Parsetree.Pvc_constraint
+          { locally_abstract_univars = ty_vars; typ })
         in
         (p, e, pvb_constraint)
     | None -> (pvb_pat, pvb_expr, None)
