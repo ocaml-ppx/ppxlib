@@ -8,10 +8,16 @@ We only expect a diff in one special case.
   $ echo "let x : int = 5" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
+  $ echo "let _ : int = 5" > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
   $ echo "let f : type a b c. a -> b -> c = fun x y -> assert false" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
   $ echo "let f = (fun (type a) (type b) (type c) -> (fun x y -> assert false : a -> b -> c))" > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
+  $ echo "let _ = (fun (type a) (type b) (type c) -> (fun x y -> assert false : a -> b -> c))" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
   $ echo "let f : type a . a -> a = fun x -> x" > file.ml
