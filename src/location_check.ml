@@ -161,7 +161,7 @@ let should_ignore loc attrs =
 
 let rec extract_constraint e =
   match e.pexp_desc with
-  | Pexp_constraint (e, ct) | Pexp_coerce (e, None, ct) -> Some (e, ct)
+  | Pexp_constraint (e, ct) | Pexp_coerce (e, _, ct) -> Some (e, ct)
   | Pexp_newtype (name, exp) ->
       Option.map (extract_constraint exp) ~f:(fun (exp, ct) ->
           ( {
