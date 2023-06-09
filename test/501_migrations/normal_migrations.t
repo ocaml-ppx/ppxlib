@@ -26,6 +26,51 @@ We only expect a diff in one special case.
   $ echo "let (x, y) : (int * int) = assert false" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
+Here might be a problem in the upward migration: the 5.1.0 parser parses the constraint as a pattern constraint.
+However, the upward migration makes a value binding constraint out of it.
+  $ echo "let ((x,y) : (int*int)) = (assert false: int * int)" > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+  6,25c6,23
+  <         pattern (file.ml[1,0+4]..[1,0+23])
+  <           Ppat_constraint
+  <           pattern (file.ml[1,0+5]..[1,0+10])
+  <             Ppat_tuple
+  <             [
+  <               pattern (file.ml[1,0+6]..[1,0+7])
+  <                 Ppat_var "x" (file.ml[1,0+6]..[1,0+7])
+  <               pattern (file.ml[1,0+8]..[1,0+9])
+  <                 Ppat_var "y" (file.ml[1,0+8]..[1,0+9])
+  <             ]
+  <           core_type (file.ml[1,0+14]..[1,0+21])
+  <             Ptyp_tuple
+  <             [
+  <               core_type (file.ml[1,0+14]..[1,0+17])
+  <                 Ptyp_constr "int" (file.ml[1,0+14]..[1,0+17])
+  <                 []
+  <               core_type (file.ml[1,0+18]..[1,0+21])
+  <                 Ptyp_constr "int" (file.ml[1,0+18]..[1,0+21])
+  <                 []
+  <             ]
+  ---
+  >         pattern (file.ml[1,0+5]..[1,0+10])
+  >           Ppat_tuple
+  >           [
+  >             pattern (file.ml[1,0+6]..[1,0+7])
+  >               Ppat_var "x" (file.ml[1,0+6]..[1,0+7])
+  >             pattern (file.ml[1,0+8]..[1,0+9])
+  >               Ppat_var "y" (file.ml[1,0+8]..[1,0+9])
+  >           ]
+  >         core_type (file.ml[1,0+14]..[1,0+21])
+  >           Ptyp_tuple
+  >           [
+  >             core_type (file.ml[1,0+14]..[1,0+17])
+  >               Ptyp_constr "int" (file.ml[1,0+14]..[1,0+17])
+  >               []
+  >             core_type (file.ml[1,0+18]..[1,0+21])
+  >               Ptyp_constr "int" (file.ml[1,0+18]..[1,0+21])
+  >               []
+  >           ]
+
   $ echo "let f: type a. a option -> _ = assert false" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
