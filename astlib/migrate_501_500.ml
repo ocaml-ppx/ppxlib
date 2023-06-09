@@ -225,9 +225,28 @@ and copy_value_binding :
        Ast_501.Parsetree.pvb_attributes;
        Ast_501.Parsetree.pvb_loc;
      } ->
-  let pvb_pat = copy_pattern pvb_pat and pvb_expr = copy_expression pvb_expr in
+   let pvb_pat = copy_pattern pvb_pat and pvb_expr = copy_expression pvb_expr in
+   let constrain_pat typ pat expr =
+     let typ = copy_core_type typ in
+     let pvb_pat =
+       {
+         pvb_pat with
+         ppat_attributes = [];
+         ppat_desc = Ast_500.Parsetree.Ppat_constraint (pvb_pat, typ);
+       }
+     in
+     (pvb_pat, pvb_expr)
+  in
   let pvb_pat, pvb_expr =
     match (pvb_constraint, pvb_pat) with
+    | ( Some (Pvc_constraint {
+         locally_abstract_univars=[];
+         typ= ({ ptyp_desc = Ptyp_poly _; _ } as typ)
+       }),
+        { Ast_500.Parsetree.ppat_desc = Ppat_var _; ppat_attributes = [] } ) ->
+      (* the sugaring of [let x: univars . typ = exp ] was desugared to
+        [let (x:univars . typ) = exp] in 5.0 which doesn't fit the case below *)
+      constrain_pat typ pvb_pat pvb_expr
     | ( Some (Pvc_constraint { locally_abstract_univars; typ }),
         { Ast_500.Parsetree.ppat_desc = Ppat_var _; ppat_attributes = [] } ) ->
         (* Copied and adapted from OCaml 5.0 Ast_helper *)
@@ -319,15 +338,7 @@ and copy_value_binding :
         in
         (pvb_pat, pvb_expr)
     | Some (Pvc_constraint { locally_abstract_univars = []; typ }), _ ->
-        let typ = copy_core_type typ in
-        let pvb_pat =
-          {
-            pvb_pat with
-            ppat_attributes = [];
-            ppat_desc = Ast_500.Parsetree.Ppat_constraint (pvb_pat, typ);
-          }
-        in
-        (pvb_pat, pvb_expr)
+      constrain_pat typ pvb_pat pvb_expr
     | Some (Pvc_coercion { ground; coercion }), _ ->
         let coercion = copy_core_type coercion in
         let typ =

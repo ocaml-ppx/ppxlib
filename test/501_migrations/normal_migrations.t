@@ -76,12 +76,20 @@ However, the upward migration makes a value binding constraint out of it.
 
   $ echo "let f : 'a . 'a = (fun (type a) -> (assert false : a))" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
-  compile error after migrations
-  Fatal error: exception File "astlib/migrate_500_501.ml", line 290, characters 9-15: Assertion failed
-  File "file.ml", line 1:
-  Error: Error while running external preprocessor
-  Command line: ./identity_driver.exe -as-ppx '/tmp/build_f26de1_dune/camlppx64fd0f' '/tmp/build_f26de1_dune/camlppxe1d493'
-  
+  7,11c7,13
+  <           Ppat_var "f" (file.ml[1,0+4]..[1,0+5])
+  <         core_type (file.ml[1,0+8]..[1,0+15]) ghost
+  <           Ptyp_poly 'a
+  <           core_type (file.ml[1,0+13]..[1,0+15])
+  <             Ptyp_var a
+  ---
+  >           Ppat_constraint
+  >           pattern (file.ml[1,0+4]..[1,0+5])
+  >             Ppat_var "f" (file.ml[1,0+4]..[1,0+5])
+  >           core_type (file.ml[1,0+8]..[1,0+15]) ghost
+  >             Ptyp_poly 'a
+  >             core_type (file.ml[1,0+13]..[1,0+15])
+  >               Ptyp_var a
 
 Here we expect a diff (downwards migrating should yield the same as in the example right above).
 However, something is wrong.
