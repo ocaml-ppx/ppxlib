@@ -7,7 +7,7 @@ let run () =
   let direct = "without_migrations" in
   let migrations = "with_migrations" in
   let direct_ec =
-    Sys.command ("ocamlopt -dparsetree " ^ example_fn ^ " 2> " ^ direct)
+    Sys.command ("ocamlc -dparsetree " ^ example_fn ^ " 2> " ^ direct)
   in
   if direct_ec > 0 then (
     print_endline "compile error even without migrations";
@@ -16,7 +16,7 @@ let run () =
   else
     let migrations_ec =
       Sys.command
-        ("ocamlopt -dparsetree -ppx '" ^ ppx ^ " -as-ppx' " ^ example_fn
+        ("ocamlc -dparsetree -ppx '" ^ ppx ^ " -as-ppx' " ^ example_fn
        ^ " 2> " ^ migrations)
     in
     if migrations_ec > 0 then (
