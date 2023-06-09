@@ -106,6 +106,10 @@ AST's resulting from
 
   $ echo "let f : 'a . 'a = (fun (type a) -> (assert false : a))" > file.ml
   $ ./compare_on.exe file.ml ./reverse_migrations.exe
+  6c6
+  <         pattern (file.ml[1,0+4]..[1,0+15]) ghost
+  ---
+  >         pattern (file.ml[1,0+4]..[1,0+5])
 
   $ echo "let f : type a . a = assert false" > file.ml
   $ ./compare_on.exe file.ml ./reverse_migrations.exe
@@ -265,6 +269,14 @@ However, in several cases it doesn't.
 
   $ echo "let f : 'a . 'a = (fun (type a) -> (assert false : a))" > file.ml
   $ ./reverse_migrations.exe -check -locations-check file.ml > /dev/null
+  File "file.ml", line 1, characters 4-5:
+  1 | let f : 'a . 'a = (fun (type a) -> (assert false : a))
+          ^
+  Error: invalid output from ppx:
+         this pattern is built from a core type whose location is outside of this node's.
+  Child core type found at:
+  File "file.ml", line 1, characters 13-15:
+  [1]
 
   $ echo "let f : type a . a = assert false" > file.ml
   $ ./reverse_migrations.exe -check -locations-check file.ml > /dev/null

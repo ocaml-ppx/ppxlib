@@ -16,8 +16,8 @@ let run () =
   else
     let migrations_ec =
       Sys.command
-        ("ocamlc -dparsetree -ppx '" ^ ppx ^ " -as-ppx' " ^ example_fn
-       ^ " 2> " ^ migrations)
+        ("ocamlc -dparsetree -ppx '" ^ ppx ^ " -as-ppx' " ^ example_fn ^ " 2> "
+       ^ migrations)
     in
     if migrations_ec > 0 then (
       print_endline "compile error after migrations";

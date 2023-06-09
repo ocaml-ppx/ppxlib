@@ -284,13 +284,12 @@ and copy_value_binding :
        Ast_500.Parsetree.ppat_desc =
          Ppat_constraint
            ( ({ ppat_desc = Ppat_var _ } as pat),
-             ({ ptyp_desc = Ptyp_poly (args_tyvars, rt)} as ty_ext )
-           );
+             ({ ptyp_desc = Ptyp_poly (args_tyvars, rt) } as ty_ext) );
        ppat_attributes = [];
-     } ->
-        assert (match rt.ptyp_desc with Ptyp_poly _ -> false | _ -> true );
-        let ty = match args_tyvars with [] -> rt | _ -> ty_ext in
-        `Var (pat, args_tyvars, rt, ty)
+      } ->
+          assert (match rt.ptyp_desc with Ptyp_poly _ -> false | _ -> true);
+          let ty = match args_tyvars with [] -> rt | _ -> ty_ext in
+          `Var (pat, args_tyvars, rt, ty)
       | {
        Ast_500.Parsetree.ppat_desc = Ppat_constraint (pat, rt);
        ppat_attributes = [];
@@ -319,37 +318,37 @@ and copy_value_binding :
         else
           (* the expression constraint and the pattern constraint,
              don't match, but we still have a Ptyp_poly pattern constraint that
-             should be resugared to a value binding  *)
+             should be resugared to a value binding *)
           `Univars (p, pt_tyvars, extern_ct, e)
     | `Var (p, pt_tyvars, pt_ct, extern_ct), _ ->
-      `Univars (p, pt_tyvars, extern_ct, e)
+        `Univars (p, pt_tyvars, extern_ct, e)
     | `NonVar (pat, ct), _ -> `NonVar (pat, ct, e)
     | _ -> `None
   in
   let with_constraint ty_vars typ =
     let typ = copy_core_type typ in
-      Some
-        (Ast_501.Parsetree.Pvc_constraint
-           { locally_abstract_univars = ty_vars; typ })
+    Some
+      (Ast_501.Parsetree.Pvc_constraint
+         { locally_abstract_univars = ty_vars; typ })
   in
   let pvb_pat, pvb_expr, pvb_constraint =
     match resugarable_value_binding pvb_pat pvb_expr with
     | `Desugared_locally_abstract (p, ty_vars, typ, e) ->
-      (p, e, with_constraint ty_vars typ)
-    | `Univars (pat, [], ct, expr) ->
-      (* check if we are in the [let x : ty? :> coer = expr ] case *)
-      begin match expr with
-      | { pexp_desc = Pexp_coerce (expr, gr, coerce); pexp_attributes = [] } ->
-        let ground = Option.map copy_core_type gr in
-        let coercion = copy_core_type coerce in
-        let pvb_constraint =
-          Some (Ast_501.Parsetree.Pvc_coercion { ground; coercion })
-        in
-        (pat, expr, pvb_constraint)
-      | _ -> (pat, expr, with_constraint [] ct)
-      end
+        (p, e, with_constraint ty_vars typ)
+    | `Univars (pat, [], ct, expr) -> (
+        (* check if we are in the [let x : ty? :> coer = expr ] case *)
+        match expr with
+        | { pexp_desc = Pexp_coerce (expr, gr, coerce); pexp_attributes = [] }
+          ->
+            let ground = Option.map copy_core_type gr in
+            let coercion = copy_core_type coerce in
+            let pvb_constraint =
+              Some (Ast_501.Parsetree.Pvc_coercion { ground; coercion })
+            in
+            (pat, expr, pvb_constraint)
+        | _ -> (pat, expr, with_constraint [] ct))
     | `Univars (pat, _, ct, expr) -> (pat, expr, with_constraint [] ct)
-    | `NonVar(p,typ,e) -> (p, e, with_constraint [] typ)
+    | `NonVar (p, typ, e) -> (p, e, with_constraint [] typ)
     | `None -> (pvb_pat, pvb_expr, None)
   in
   {
