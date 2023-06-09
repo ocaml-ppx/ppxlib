@@ -26,6 +26,22 @@ We only expect a diff in one special case.
   $ echo "let (x, y) : (int * int) = assert false" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
+  $ echo "let f : type a . a = assert false" > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
+  $ echo 'let x : [`A] :> [`A | `B] = `A' > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
+  $ echo 'let x : [`A | `B] = (`A : [`A] :> [`A | `B])' > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
+  $ echo 'let x : <m:int; n:int> :> <m:int> = object method m = 0 method n = 1 end' > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
+  $ echo 'let x :> <m:int> = object method m = 0 method n = 1 end' > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
+
 Here might be a problem in the upward migration: the 5.1.0 parser parses the constraint as a pattern constraint.
 However, the upward migration makes a value binding constraint out of it.
   $ echo "let ((x,y) : (int*int)) = (assert false: int * int)" > file.ml
@@ -74,25 +90,34 @@ However, the upward migration makes a value binding constraint out of it.
   $ echo "let f: type a. a option -> _ = assert false" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
+
+Here we may expect a diff (downwards migrating should yield the same as in the example right above).
+However, those case are recoverable.
+
+First, both
+
   $ echo "let f : 'a . 'a = (fun (type a) -> (assert false : a))" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
-Here we expect a diff (downwards migrating should yield the same as in the example right above).
-However, something is wrong.
+and
   $ echo "let f : type a . a = assert false" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
+
+are translated to the same 5.0 AST tree. But the locations on the expression
+constraint and pattern constraint are only the same in the second case.
+Thus, we can distinguish between the two.
+
+Similarly, the syntactic translation for
 
   $ echo 'let x :> [`A | `B] = `A' > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
-  $ echo 'let x : [`A] :> [`A | `B] = `A' > file.ml
+and
+
+  $ echo 'let x : [`A | `B] = (`A :> [ `A | `B ] )' > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
-  $ echo 'let x : [`A | `B] = (`A : [`A] :> [`A | `B])' > file.ml
-  $ ./compare_on.exe file.ml ./identity_driver.exe
-
-  $ echo 'let x : <m:int; n:int> :> <m:int> = object method m = 0 method n = 1 end' > file.ml
-  $ ./compare_on.exe file.ml ./identity_driver.exe
-
-  $ echo 'let x :> <m:int> = object method m = 0 method n = 1 end' > file.ml
-  $ ./compare_on.exe file.ml ./identity_driver.exe
+are pretty close: The former is translated to "let (x: ø .  [`A | `B]) = (`A :> [`A | `B])"
+whereas the latter is mapped to "let (x: ø .  [`A | `B]) = ((`A :> [`A | `B]): [`A | `B]) ".
+However, the two case can be distingued by the fact that we have either an outward coercion
+or an outward constraint associated to a `Ptyp_poly([],...)` pattern constraint.
