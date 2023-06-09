@@ -320,27 +320,27 @@ and copy_value_binding :
     | Some (p, ty_vars, typ, e) ->
         let typ = copy_core_type typ in
         let pvb_constraint =
-          Some (Ast_501.Parsetree.Pvc_constraint
-          { locally_abstract_univars = ty_vars; typ })
+          Some
+            (Ast_501.Parsetree.Pvc_constraint
+               { locally_abstract_univars = ty_vars; typ })
         in
         (p, e, pvb_constraint)
     | None -> (
-      match (pvb_pat, pvb_expr) with
-      | ( {
-            Ast_500.Parsetree.ppat_desc =
-              Ppat_constraint (pat, { ptyp_desc = Ptyp_poly ([], _) });
-            ppat_attributes = [];
-          },
-          { pexp_desc = Pexp_coerce (expr, gr, coerce); pexp_attributes = [] } )
-        ->
-          let ground = Option.map copy_core_type gr in
-          let coercion = copy_core_type coerce in
-          let pvb_constraint =
-            Some (Ast_501.Parsetree.Pvc_coercion { ground; coercion })
-          in
-          (pat, expr, pvb_constraint)
-      | _ ->
-        (pvb_pat, pvb_expr, None))
+        match (pvb_pat, pvb_expr) with
+        | ( {
+              Ast_500.Parsetree.ppat_desc =
+                Ppat_constraint (pat, { ptyp_desc = Ptyp_poly ([], _) });
+              ppat_attributes = [];
+            },
+            { pexp_desc = Pexp_coerce (expr, gr, coerce); pexp_attributes = [] }
+          ) ->
+            let ground = Option.map copy_core_type gr in
+            let coercion = copy_core_type coerce in
+            let pvb_constraint =
+              Some (Ast_501.Parsetree.Pvc_coercion { ground; coercion })
+            in
+            (pat, expr, pvb_constraint)
+        | _ -> (pvb_pat, pvb_expr, None))
   in
   {
     Ast_501.Parsetree.pvb_pat = copy_pattern pvb_pat;
