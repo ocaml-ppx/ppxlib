@@ -76,20 +76,6 @@ However, the upward migration makes a value binding constraint out of it.
 
   $ echo "let f : 'a . 'a = (fun (type a) -> (assert false : a))" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
-  7,11c7,13
-  <           Ppat_var "f" (file.ml[1,0+4]..[1,0+5])
-  <         core_type (file.ml[1,0+8]..[1,0+15]) ghost
-  <           Ptyp_poly 'a
-  <           core_type (file.ml[1,0+13]..[1,0+15])
-  <             Ptyp_var a
-  ---
-  >           Ppat_constraint
-  >           pattern (file.ml[1,0+4]..[1,0+5])
-  >             Ppat_var "f" (file.ml[1,0+4]..[1,0+5])
-  >           core_type (file.ml[1,0+8]..[1,0+15]) ghost
-  >             Ptyp_poly 'a
-  >             core_type (file.ml[1,0+13]..[1,0+15])
-  >               Ptyp_var a
 
 Here we expect a diff (downwards migrating should yield the same as in the example right above).
 However, something is wrong.
