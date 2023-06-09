@@ -287,6 +287,7 @@ and copy_value_binding :
              { ptyp_desc = Ptyp_poly (args_tyvars, rt) } );
        ppat_attributes = [];
       } ->
+         assert (match rt.ptyp_desc with Ptyp_poly _ -> false | _ -> true );
           Some (pat, args_tyvars, rt, `Var)
       | {
        Ast_500.Parsetree.ppat_desc = Ppat_constraint (pat, rt);
