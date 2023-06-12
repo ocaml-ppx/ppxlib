@@ -54,6 +54,16 @@ Error: Attribute `blah' was not used.
        Did you put it at the wrong level?
 |}]
 
+let _ = () [@blah]
+[%%expect{|
+Line _, characters 13-17:
+Error: Attribute `blah' was not used.
+       Hint: `blah' is available for type declarations but is used here in
+       the
+       context of an expression.
+       Did you put it at the wrong level?
+|}]
+
 (* Attribute drops *)
 
 let faulty_transformation = object
