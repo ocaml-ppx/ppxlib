@@ -24,7 +24,7 @@ let run () =
       let _ = Sys.command ("cat " ^ migrations) in
       ())
     else
-      let _ = Sys.command ("diff " ^ direct ^ " " ^ migrations) in
+      let _ = Sys.command ("diff -U 0 " ^ direct ^ " " ^ migrations) in
       ()
 
 let () = run ()
