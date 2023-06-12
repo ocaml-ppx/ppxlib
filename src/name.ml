@@ -211,12 +211,13 @@ module Registrar = struct
           String.Map.add name t acc)
 
   let spellcheck t context ?(allowlist = []) name =
+    let all_for_context = get_all_for_context t context in
     let all =
-      let all = get_all_for_context t context in
-      String.Map.fold (fun key _ acc -> key :: acc) all.all []
+      String.Map.fold (fun key _ acc -> key :: acc) all_for_context.all []
     in
     match Spellcheck.spellcheck (all @ allowlist) name with
     | Some _ as x -> x
+    | None when String.Map.mem name all_for_context.all -> None
     | None -> (
         let other_contexts =
           Hashtbl.fold

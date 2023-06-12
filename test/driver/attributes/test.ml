@@ -57,11 +57,7 @@ Error: Attribute `blah' was not used.
 let _ = () [@blah]
 [%%expect{|
 Line _, characters 13-17:
-Error: Attribute `blah' was not used.
-       Hint: `blah' is available for type declarations but is used here in
-       the
-       context of an expression.
-       Did you put it at the wrong level?
+Error: Attribute `blah' was not used
 |}]
 
 (* Attribute drops *)
