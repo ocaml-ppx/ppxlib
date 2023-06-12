@@ -8,6 +8,9 @@ We only expect a diff in one special case.
   $ echo "let x : int = 5" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
+  $ echo "let (x) : int = 5" > file.ml
+  $ ./compare_on.exe file.ml ./identity_driver.exe
+
   $ echo "let _ : int = 5" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe
 
@@ -121,3 +124,8 @@ are pretty close: The former is translated to "let (x: ø .  [`A | `B]) = (`A :>
 whereas the latter is mapped to "let (x: ø .  [`A | `B]) = ((`A :> [`A | `B]): [`A | `B]) ".
 However, the two case can be distingued by the fact that we have either an outward coercion
 or an outward constraint associated to a `Ptyp_poly([],...)` pattern constraint.
+
+Let's make sure that in the examples with diffs,
+the location invariants are still fulfilled.
+  $ echo "let ((x,y) : (int*int)) = (assert false: int * int)" > file.ml
+  $ ./identity_driver.exe -check -locations-check file.ml > /dev/null
