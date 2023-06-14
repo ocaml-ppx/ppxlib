@@ -12,7 +12,7 @@ type t = {
 
 let top_level ~file_path =
   let main_module_name =
-    file_path |> Caml.Filename.basename |> Caml.Filename.remove_extension
+    file_path |> Stdlib.Filename.basename |> Stdlib.Filename.remove_extension
     |> String.capitalize_ascii
   in
   {

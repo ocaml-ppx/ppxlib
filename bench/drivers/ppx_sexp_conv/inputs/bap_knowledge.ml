@@ -24,9 +24,9 @@ type conflict = exn = ..
 module Conflict = struct
   type t = conflict = ..
 
-  let to_string = Caml.Printexc.to_string
+  let to_string = Stdlib.Printexc.to_string
   let pp ppf err = Format.fprintf ppf "%s" (to_string err)
-  let register_printer = Caml.Printexc.register_printer
+  let register_printer = Stdlib.Printexc.register_printer
   let sexp_of_t err = Sexp.Atom (to_string err)
 end
 
@@ -153,22 +153,22 @@ end = struct
 
     let rec find_exn t k =
       match t with
-      | Nil -> raise Caml.Not_found
+      | Nil -> raise Stdlib.Not_found
       | Tip (k', v) when k = k' -> v
-      | Tip _ -> raise Caml.Not_found
+      | Tip _ -> raise Stdlib.Not_found
       | Bin (k', l, r) -> (
           match Key.compare k' k with
-          | NA -> raise Caml.Not_found
+          | NA -> raise Stdlib.Not_found
           | LB -> find_exn l k
           | RB -> find_exn r k)
 
-    let find t k = try Some (find_exn t k) with Caml.Not_found -> None
+    let find t k = try Some (find_exn t k) with Stdlib.Not_found -> None
 
     let mem k t =
       try
         ignore (find_exn k t);
         true
-      with Caml.Not_found -> false
+      with Stdlib.Not_found -> false
 
     let node payload branching l r =
       match (l, r) with
@@ -359,7 +359,7 @@ end = struct
 
   let unescaped_exists_so_escape ?(skip_pos = -1) s =
     let buf = Buffer.create (String.length s + 1) in
-    Caml.StringLabels.iteri s ~f:(fun p c ->
+    Stdlib.StringLabels.iteri s ~f:(fun p c ->
         if p <> skip_pos && is_separator_unescaped s p c then
           Buffer.add_char buf escape_char;
         Buffer.add_char buf c);
@@ -555,7 +555,7 @@ end = struct
   let register ?(desc = "no description provided") ?package
       ?(reliability = trustworthy) name =
     let name = Name.create ?package name in
-    let agent = Caml.Digest.string (Name.show name) in
+    let agent = Stdlib.Digest.string (Name.show name) in
     if Hashtbl.mem agents agent then
       failwithf
         "An agent with name `%a' already exists, please choose another name"
@@ -2577,7 +2577,7 @@ module Knowledge = struct
         slot : Name.t;
         repr : string;
         error : Conflict.t;
-        trace : Caml.Printexc.raw_backtrace;
+        trace : Stdlib.Printexc.raw_backtrace;
       }
 
   let () =
@@ -2587,7 +2587,7 @@ module Knowledge = struct
           @@ Format.asprintf
                "Unable to update the slot %a of %s,\n%a\nBacktrace:\n%s" Name.pp
                slot repr Conflict.pp error
-               (Caml.Printexc.raw_backtrace_to_string trace)
+               (Stdlib.Printexc.raw_backtrace_to_string trace)
       | _ -> None)
 
   let non_monotonic slot obj error trace =
@@ -2626,7 +2626,7 @@ module Knowledge = struct
                     };
             }
         with Record.Merge_conflict err ->
-          non_monotonic slot obj err @@ Caml.Printexc.get_raw_backtrace ())
+          non_monotonic slot obj err @@ Stdlib.Printexc.get_raw_backtrace ())
 
   let notify { Slot.watchers } obj data =
     Hashtbl.data watchers
@@ -2698,7 +2698,7 @@ module Knowledge = struct
    fun slot obj ->
     objects slot.cls >>| fun { vals } ->
     match Oid.Tree.find_exn vals obj with
-    | exception Caml.Not_found -> Sleep
+    | exception Stdlib.Not_found -> Sleep
     | { data; comp = slots } -> (
         match Map.find slots (uid slot) with
         | Some (Work _) -> Awoke
@@ -2771,7 +2771,7 @@ module Knowledge = struct
    fun slot id ->
     objects slot.cls >>| fun { Env.vals } ->
     match Oid.Tree.find_exn vals id with
-    | exception Caml.Not_found -> slot.dom.empty
+    | exception Stdlib.Not_found -> slot.dom.empty
     | { data } -> Record.get slot.key slot.dom data
 
   let rec collect_inner : ('a, 'p) slot -> 'a obj -> _ -> _ =
@@ -3030,7 +3030,7 @@ module Knowledge = struct
     compute_value cls obj >>= fun () ->
     objects cls >>| fun { Env.vals } ->
     match Oid.Tree.find_exn vals obj with
-    | exception Caml.Not_found -> Value.empty cls
+    | exception Stdlib.Not_found -> Value.empty cls
     | { data = x } -> Value.create cls x
 
   let run cls obj s =

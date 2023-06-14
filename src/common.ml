@@ -1,7 +1,7 @@
 open! Import
 open Ast_builder.Default
-module Buffer = Caml.Buffer
-module Format = Caml.Format
+module Buffer = Stdlib.Buffer
+module Format = Stdlib.Format
 
 let lident x = Longident.Lident x
 

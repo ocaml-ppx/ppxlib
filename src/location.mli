@@ -27,7 +27,8 @@ val init : Lexing.lexbuf -> string -> unit
 (** Set the file name and line number of the [lexbuf] to be the start of the
     named file. *)
 
-val raise_errorf : ?loc:t -> ('a, Caml.Format.formatter, unit, 'b) format4 -> 'a
+val raise_errorf :
+  ?loc:t -> ('a, Stdlib.Format.formatter, unit, 'b) format4 -> 'a
 (** Raise a located error. Should be avoided as much as possible, in favor of
     {!error_extensionf}. See the {{!"good-practices".handling_errors} relevant}
     part of the tutorial. *)
@@ -35,10 +36,10 @@ val raise_errorf : ?loc:t -> ('a, Caml.Format.formatter, unit, 'b) format4 -> 'a
 val of_lexbuf : Lexing.lexbuf -> t
 (** Return the location corresponding to the last matched regular expression *)
 
-val report_exception : Caml.Format.formatter -> exn -> unit
+val report_exception : Stdlib.Format.formatter -> exn -> unit
 (** Report an exception on the given formatter *)
 
-val print : Caml.Format.formatter -> t -> unit
+val print : Stdlib.Format.formatter -> t -> unit
 (** Prints [File "...", line ..., characters ...-...:] *)
 
 type nonrec 'a loc = 'a loc = { txt : 'a; loc : t }
@@ -59,7 +60,7 @@ module Error : sig
   val make : loc:location -> string -> sub:(location * string) list -> t
 
   val createf :
-    loc:location -> ('a, Caml.Format.formatter, unit, t) format4 -> 'a
+    loc:location -> ('a, Stdlib.Format.formatter, unit, t) format4 -> 'a
 
   val message : t -> string
   val set_message : t -> string -> t

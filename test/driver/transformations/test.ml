@@ -56,17 +56,17 @@ let () =
 [%%expect{|
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop]
+let _ = Stdlib.Printf.sprintf "%s\n" [%plop]
 [%%expect{|
 - : string = "-\n"
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc]
+let _ = Stdlib.Printf.sprintf "%s\n" [%plop.Truc]
 [%%expect{|
 - : string = "Truc\n"
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
+let _ = Stdlib.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
 [%%expect{|
 - : string = "Truc.Bidule\n"
 |}]
@@ -89,17 +89,17 @@ let () =
 [%%expect{|
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt]
+let _ = Stdlib.Printf.sprintf "%s\n" [%plop_ctxt]
 [%%expect{|
 - : string = "-\n"
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt.Truc]
+let _ = Stdlib.Printf.sprintf "%s\n" [%plop_ctxt.Truc]
 [%%expect{|
 - : string = "Truc\n"
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt.Truc.Bidule]
+let _ = Stdlib.Printf.sprintf "%s\n" [%plop_ctxt.Truc.Bidule]
 [%%expect{|
 - : string = "Truc.Bidule\n"
 |}]

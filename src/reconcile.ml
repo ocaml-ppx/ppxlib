@@ -6,9 +6,9 @@ module Context = struct
     | Extension of 'a Extension.Context.t
     | Floating_attribute of 'a Attribute.Floating.Context.t
 
-  let paren pp ppf x = Caml.Format.fprintf ppf "(%a)" pp x
+  let paren pp ppf x = Stdlib.Format.fprintf ppf "(%a)" pp x
 
-  let printer : type a. a t -> Caml.Format.formatter -> a -> unit =
+  let printer : type a. a t -> Stdlib.Format.formatter -> a -> unit =
     let open Extension.Context in
     let open Attribute.Floating.Context in
     function
@@ -51,13 +51,13 @@ module Replacement = struct
         let s =
           let printer = Context.printer context in
           match generated with
-          | Single x -> Caml.Format.asprintf "%a" printer x
+          | Single x -> Stdlib.Format.asprintf "%a" printer x
           | Many l ->
-              Caml.Format.asprintf "%a"
+              Stdlib.Format.asprintf "%a"
                 (fun ppf l ->
                   List.iter l ~f:(fun x ->
                       printer ppf x;
-                      Caml.Format.pp_print_newline ppf ()))
+                      Stdlib.Format.pp_print_newline ppf ()))
                 l
         in
         let is_ws = function ' ' | '\t' | '\r' -> true | _ -> false in
@@ -169,24 +169,24 @@ let with_output ~styler ~(kind : Kind.t) fn ~f =
   | None -> with_output fn ~binary:false ~f
   | Some cmd ->
       let tmp_fn, oc =
-        Caml.Filename.open_temp_file "ppxlib_driver"
+        Stdlib.Filename.open_temp_file "ppxlib_driver"
           (match kind with Impl -> ".ml" | Intf -> ".mli")
       in
       let cmd =
         Printf.sprintf "%s %s%s" cmd
-          (Caml.Filename.quote tmp_fn)
+          (Stdlib.Filename.quote tmp_fn)
           (match fn with
           | None -> ""
-          | Some fn -> " > " ^ Caml.Filename.quote fn)
+          | Some fn -> " > " ^ Stdlib.Filename.quote fn)
       in
       let n =
-        Exn.protectx tmp_fn ~finally:Caml.Sys.remove ~f:(fun _ ->
+        Exn.protectx tmp_fn ~finally:Stdlib.Sys.remove ~f:(fun _ ->
             Exn.protectx oc ~finally:close_out ~f;
-            Caml.Sys.command cmd)
+            Stdlib.Sys.command cmd)
       in
       if n <> 0 then (
         Printf.eprintf "command exited with code %d: %s\n" n cmd;
-        Caml.exit 1)
+        Stdlib.exit 1)
 
 let reconcile ?styler (repls : Replacements.t) ~kind ~contents ~input_filename
     ~output ~input_name ~target =
