@@ -1,3 +1,5 @@
+module Caml = Stdlib [@@deprecated "[since 2023-06] use Stdlib instead"]
+open Stdlib
 open StdLabels
 module Sexp = Sexplib0.Sexp
 module Sexpable = Sexplib0.Sexpable
