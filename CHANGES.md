@@ -29,6 +29,8 @@ unreleased
 
 - Adopt the OCaml Code of Conduct on the repo (#426, @pitag-ha)
 
+- Replace `Caml` with `Stdlib`. (#427, @ceastlund)
+
 - Clean up misleading attribute hints when declared for proper context. (#425, @ceastlund)
 
 - Ast_pattern now has ebool, pbool helper, and a new map.(#402, @burnleydev1)
