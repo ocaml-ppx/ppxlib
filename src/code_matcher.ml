@@ -1,7 +1,7 @@
 (*$ open Ppxlib_cinaps_helpers $*)
 open! Import
-module Format = Caml.Format
-module Filename = Caml.Filename
+module Format = Stdlib.Format
+module Filename = Stdlib.Filename
 
 (* TODO: make the "deriving." depend on the matching attribute name. *)
 let end_marker_sig =
@@ -72,7 +72,9 @@ struct
 
   let diff_asts ~generated ~round_trip =
     let with_temp_file f =
-      Exn.protectx (Filename.temp_file "ppxlib" "") ~finally:Caml.Sys.remove ~f
+      Exn.protectx
+        (Filename.temp_file "ppxlib" "")
+        ~finally:Stdlib.Sys.remove ~f
     in
     with_temp_file (fun fn1 ->
         with_temp_file (fun fn2 ->
@@ -93,7 +95,7 @@ struct
                     (Filename.quote out)
                 in
                 let ok =
-                  Caml.Sys.command cmd = 1
+                  Stdlib.Sys.command cmd = 1
                   ||
                   let cmd =
                     Printf.sprintf
@@ -102,7 +104,7 @@ struct
                       (Filename.quote fn1) (Filename.quote fn2)
                       (Filename.quote out)
                   in
-                  Caml.Sys.command cmd = 1
+                  Stdlib.Sys.command cmd = 1
                 in
                 if ok then In_channel.read_all out
                 else "<no differences produced by diff>")))

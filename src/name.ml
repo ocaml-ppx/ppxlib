@@ -1,5 +1,5 @@
 open! Import
-module Format = Caml.Format
+module Format = Stdlib.Format
 
 let fold_dot_suffixes name ~init:acc ~f =
   let rec collapse_after_at = function
@@ -218,7 +218,7 @@ module Registrar = struct
     | Some e ->
         let declared_at = function
           | None -> ""
-          | Some (loc : Caml.Printexc.location) ->
+          | Some (loc : Stdlib.Printexc.location) ->
               Printf.sprintf " declared at %s:%d" loc.filename loc.line_number
         in
         let context =

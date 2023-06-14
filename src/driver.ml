@@ -3,9 +3,9 @@ open Import
 open Utils
 open Common
 open With_errors
-module Arg = Caml.Arg
+module Arg = Stdlib.Arg
 
-let exe_name = Caml.Filename.basename Caml.Sys.executable_name
+let exe_name = Stdlib.Filename.basename Stdlib.Sys.executable_name
 let args = ref []
 let add_arg key spec ~doc = args := (key, spec, doc) :: !args
 let loc_fname = ref None
@@ -172,7 +172,7 @@ module Transform = struct
       ?impl ?intf ?lint_impl ?lint_intf ?preprocess_impl ?preprocess_intf
       ?instrument ?(aliases = []) name =
     let rules = List.map extensions ~f:Context_free.Rule.extension @ rules in
-    let caller_id = Caller_id.get ~skip:[ Caml.__FILE__ ] in
+    let caller_id = Caller_id.get ~skip:[ Stdlib.__FILE__ ] in
     (match List.filter !all ~f:(fun ct -> has_name ct name) with
     | [] -> ()
     | ct :: _ ->
@@ -449,8 +449,8 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
       Printf.eprintf "The following attributes %s after applying %s:\n" what
         name;
       List.iter diff ~f:(fun { Location.txt; loc } ->
-          Caml.Format.eprintf "- %a: %s\n" Location.print loc txt);
-      Caml.Format.eprintf "@.")
+          Stdlib.Format.eprintf "- %a: %s\n" Location.print loc txt);
+      Stdlib.Format.eprintf "@.")
   in
   print_diff "disappeared" new_dropped old_dropped;
   print_diff "reappeared" old_dropped new_dropped
@@ -824,7 +824,7 @@ let versioned_errorf input_version input_file_name =
       in
       Error (err, input_version))
 
-let remove_no_error fn = try Caml.Sys.remove fn with Sys_error _ -> ()
+let remove_no_error fn = try Stdlib.Sys.remove fn with Sys_error _ -> ()
 
 let protectx x ~f ~finally =
   match f x with
@@ -839,7 +839,7 @@ let with_preprocessed_file fn ~f =
   match !preprocessor with
   | None -> f fn
   | Some pp ->
-      protectx (Caml.Filename.temp_file "ocamlpp" "") ~finally:remove_no_error
+      protectx (Stdlib.Filename.temp_file "ocamlpp" "") ~finally:remove_no_error
         ~f:(fun tmpfile ->
           match System.run_preprocessor ~pp ~input:fn ~output:tmpfile with
           | Ok () -> f tmpfile
@@ -1143,7 +1143,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
   let mismatches_found =
     match !corrections with
     | [] ->
-        if Caml.Sys.file_exists corrected then Caml.Sys.remove corrected;
+        if Stdlib.Sys.file_exists corrected then Stdlib.Sys.remove corrected;
         false
     | corrections ->
         Reconcile.reconcile corrections
@@ -1157,14 +1157,14 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
   | Null -> ()
   | Pretty_print ->
       with_output output ~binary:false ~f:(fun oc ->
-          let ppf = Caml.Format.formatter_of_out_channel oc in
+          let ppf = Stdlib.Format.formatter_of_out_channel oc in
           (match ast with
           | Intf ast -> Pprintast.signature ppf ast
           | Impl ast -> Pprintast.structure ppf ast);
           let null_ast =
             match ast with Intf [] | Impl [] -> true | _ -> false
           in
-          if not null_ast then Caml.Format.pp_print_newline ppf ())
+          if not null_ast then Stdlib.Format.pp_print_newline ppf ())
   | Dump_ast ->
       with_output output ~binary:true ~f:(fun oc ->
           Ast_io.write oc
@@ -1172,12 +1172,12 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
             ~add_ppx_context:true)
   | Dparsetree ->
       with_output output ~binary:false ~f:(fun oc ->
-          let ppf = Caml.Format.formatter_of_out_channel oc in
+          let ppf = Stdlib.Format.formatter_of_out_channel oc in
           let ast = add_cookies ast in
           (match ast with
           | Intf ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#signature ast)
           | Impl ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#structure ast));
-          Caml.Format.pp_print_newline ppf ())
+          Stdlib.Format.pp_print_newline ppf ())
   | Reconcile mode ->
       Reconcile.reconcile !replacements
         ~contents:(Lazy.force input_contents)
@@ -1189,7 +1189,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
   then (
     Ppxlib_print_diff.print () ~file1:fn ~file2:corrected ~use_color:!use_color
       ?diff_command:!diff_command;
-    Caml.exit 1)
+    Stdlib.exit 1)
 
 let output_mode = ref Pretty_print
 let output = ref None
@@ -1243,7 +1243,7 @@ let parse_apply_list s =
                Transform.has_name ct name))
       then
         raise
-          (Caml.Arg.Bad
+          (Stdlib.Arg.Bad
              (Printf.sprintf "code transformation '%s' does not exist" name)));
   names
 
@@ -1442,14 +1442,14 @@ let standalone_main () =
   interpret_mask ();
   if !request_print_transformations then (
     print_transformations ();
-    Caml.exit 0);
+    Stdlib.exit 0);
   if !request_print_passes then (
     print_passes ();
-    Caml.exit 0);
+    Stdlib.exit 0);
   match !input with
   | None ->
       Printf.eprintf "%s: no input file given\n%!" exe_name;
-      Caml.exit 2
+      Stdlib.exit 2
   | Some fn ->
       let kind =
         match !kind with
@@ -1461,7 +1461,7 @@ let standalone_main () =
                 Printf.eprintf
                   "%s: don't know what to do with '%s', use -impl or -intf.\n"
                   exe_name fn;
-                Caml.exit 2)
+                Stdlib.exit 2)
       in
       let input_name, relocate =
         match !loc_fname with None -> (fn, false) | Some fn -> (fn, true)
@@ -1492,10 +1492,10 @@ let parse_input passed_in_args ~valid_args ~incorrect_input_msg =
   with
   | Arg.Bad msg ->
       Printf.eprintf "%s" msg;
-      Caml.exit 2
+      Stdlib.exit 2
   | Arg.Help msg ->
       Printf.eprintf "%s" msg;
-      Caml.exit 0
+      Stdlib.exit 0
 
 let run_as_ppx_rewriter_main ~standalone_args ~usage input =
   let valid_args = get_args ~standalone_args () in
@@ -1506,23 +1506,23 @@ let run_as_ppx_rewriter_main ~standalone_args ~usage input =
       parse_input prog_name_and_flags ~valid_args ~incorrect_input_msg:usage;
       interpret_mask ();
       rewrite_binary_ast_file input_fn output_fn;
-      Caml.exit 0
+      Stdlib.exit 0
   | [ help; _ ] when String.equal help "-help" || String.equal help "--help" ->
       parse_input input ~valid_args ~incorrect_input_msg:usage;
       assert false
   | _ ->
       Printf.eprintf "Usage: %s\n%!" usage;
-      Caml.exit 2
+      Stdlib.exit 2
 
 let standalone_run_as_ppx_rewriter () =
-  let n = Array.length Caml.Sys.argv in
+  let n = Array.length Stdlib.Sys.argv in
   let usage =
     Printf.sprintf "%s -as-ppx [extra_args] <infile> <outfile>" exe_name
   in
   let argv = Array.make (n - 1) "" in
-  argv.(0) <- Caml.Sys.argv.(0);
+  argv.(0) <- Stdlib.Sys.argv.(0);
   for i = 1 to n - 2 do
-    argv.(i) <- Caml.Sys.argv.(i + 1)
+    argv.(i) <- Stdlib.Sys.argv.(i + 1)
   done;
   let standalone_args =
     List.map standalone_args ~f:(fun (arg, spec, _doc) ->
@@ -1534,23 +1534,25 @@ let standalone () =
   Astlib.init_error_reporting_style_using_env_vars ();
   try
     if
-      Array.length Caml.Sys.argv >= 2
+      Array.length Stdlib.Sys.argv >= 2
       &&
-      match Caml.Sys.argv.(1) with "-as-ppx" | "--as-ppx" -> true | _ -> false
+      match Stdlib.Sys.argv.(1) with
+      | "-as-ppx" | "--as-ppx" -> true
+      | _ -> false
     then standalone_run_as_ppx_rewriter ()
     else standalone_main ();
-    Caml.exit 0
+    Stdlib.exit 0
   with exn ->
-    Location.report_exception Caml.Format.err_formatter exn;
-    Caml.exit 1
+    Location.report_exception Stdlib.Format.err_formatter exn;
+    Stdlib.exit 1
 
 let run_as_ppx_rewriter () =
   let usage = Printf.sprintf "%s [extra_args] <infile> <outfile>" exe_name in
-  let input = Caml.Sys.argv in
+  let input = Stdlib.Sys.argv in
   try run_as_ppx_rewriter_main ~standalone_args:[] ~usage input
   with exn ->
-    Location.report_exception Caml.Format.err_formatter exn;
-    Caml.exit 1
+    Location.report_exception Stdlib.Format.err_formatter exn;
+    Stdlib.exit 1
 
 let pretty () = !pretty
 

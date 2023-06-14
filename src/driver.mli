@@ -6,7 +6,7 @@
 
 open Import
 
-val add_arg : Caml.Arg.key -> Caml.Arg.spec -> doc:string -> unit
+val add_arg : Stdlib.Arg.key -> Stdlib.Arg.spec -> doc:string -> unit
 (** Add one argument to the command line *)
 
 (** Error reported by linters *)

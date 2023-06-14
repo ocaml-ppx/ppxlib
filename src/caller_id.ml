@@ -1,7 +1,7 @@
 (** Small helper to find out who is the caller of a function *)
 
 open! Import
-module Printexc = Caml.Printexc
+module Printexc = Stdlib.Printexc
 
 type t = Printexc.location option
 

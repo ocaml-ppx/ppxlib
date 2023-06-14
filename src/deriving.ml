@@ -10,7 +10,7 @@ let keep_w32_intf = ref false
 
 let () =
   let keep_w32_spec =
-    Caml.Arg.Symbol
+    Stdlib.Arg.Symbol
       ( [ "impl"; "intf"; "both" ],
         function
         | "impl" -> keep_w32_impl := true
@@ -21,7 +21,7 @@ let () =
         | _ -> assert false )
   in
   let conv_w32_spec =
-    Caml.Arg.Symbol
+    Stdlib.Arg.Symbol
       ( [ "code"; "attribute" ],
         function
         | "code" -> do_insert_unused_warning_attribute := false
@@ -44,7 +44,7 @@ let keep_w60_intf = ref false
 
 let () =
   let keep_w60_spec =
-    Caml.Arg.Symbol
+    Stdlib.Arg.Symbol
       ( [ "impl"; "intf"; "both" ],
         function
         | "impl" -> keep_w60_impl := true

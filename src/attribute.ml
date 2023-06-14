@@ -304,7 +304,7 @@ let declare_flag name context =
   let continuation ~attr_loc:_ ~name_loc:_ = () in
   declare_with_all_args name context payload_pattern continuation
 
-module Attribute_table = Caml.Hashtbl.Make (struct
+module Attribute_table = Stdlib.Hashtbl.Make (struct
   type t = string loc
 
   let hash : t -> int = Hashtbl.hash

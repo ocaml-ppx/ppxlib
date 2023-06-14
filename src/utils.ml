@@ -9,8 +9,8 @@ module Kind = struct
   type t = Intf | Impl
 
   let of_filename fn : t option =
-    if Caml.Filename.check_suffix fn ".ml" then Some Impl
-    else if Caml.Filename.check_suffix fn ".mli" then Some Intf
+    if Stdlib.Filename.check_suffix fn ".ml" then Some Impl
+    else if Stdlib.Filename.check_suffix fn ".mli" then Some Intf
     else None
 
   let describe = function Impl -> "implementation" | Intf -> "interface"
@@ -213,9 +213,9 @@ module System = struct
   let run_preprocessor ~pp ~input ~output =
     let command =
       Printf.sprintf "%s %s > %s" pp
-        (if String.equal input "-" then "" else Caml.Filename.quote input)
-        (Caml.Filename.quote output)
+        (if String.equal input "-" then "" else Stdlib.Filename.quote input)
+        (Stdlib.Filename.quote output)
     in
-    if Caml.Sys.command command = 0 then Ok ()
+    if Stdlib.Sys.command command = 0 then Ok ()
     else Error (command, Ast_io.fall_back_input_version)
 end

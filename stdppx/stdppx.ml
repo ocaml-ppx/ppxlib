@@ -1,5 +1,3 @@
-module Caml = Stdlib
-open Caml
 open StdLabels
 module Sexp = Sexplib0.Sexp
 module Sexpable = Sexplib0.Sexpable
