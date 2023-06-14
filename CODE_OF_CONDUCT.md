@@ -9,5 +9,5 @@ This project follows the OCaml Code of Conduct
 To report any violations, please contact:
 
 - Sonja Heinze <sonja@tarides.com>
-- Paul-Elliot Anglès d'Auriac <paul-elliot@tarides.com>
+- Paul-Elliot Anglès d'Auriac <peada@free.fr>
 - Carl Eastlund <ceastlund@janestreet.com>
