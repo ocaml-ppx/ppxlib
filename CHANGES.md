@@ -1,6 +1,8 @@
 unreleased
 ------------------
 
+- Clean up misleading attribute hints when declared for proper context. (#425, @ceastlund)
+
 - Ast_pattern now has ebool, pbool helper, and a new map.(#402, @burnleydev1)
 
 - multiple errors are now reported in `metaquot`. (#397, @burnleydev1)
