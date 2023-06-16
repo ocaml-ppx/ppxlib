@@ -21,7 +21,7 @@ doc: "https://ocaml-ppx.github.io/ppxlib/"
 bug-reports: "https://github.com/ocaml-ppx/ppxlib/issues"
 depends: [
   "dune" {>= "2.7"}
-  "ocaml" {>= "4.04.1"}
+  "ocaml" {>= "4.04.1" & != "5.1.0~alpha1"}
   "ocaml-compiler-libs" {>= "v0.11.0"}
   "ppx_derivers" {>= "1.0"}
   "sexplib0" {>= "v0.12"}
@@ -30,8 +30,6 @@ depends: [
   "ocamlfind" {with-test}
   "re" {with-test & >= "1.9.0"}
   "cinaps" {with-test & >= "v0.12.1"}
-  "base" {with-test}
-  "stdio" {with-test}
   "odoc" {with-doc}
 ]
 conflicts: [

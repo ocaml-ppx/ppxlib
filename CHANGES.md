@@ -18,6 +18,8 @@ unreleased
   as it is usually the common case and it helps when magic numbers are
   ambiguous (such as on development versions) (#409, @shym)
 
+- Remove unnecessary test dependencies towards base and stdio (#421, @kit-ty-kate)
+
 0.29.1 (14/02/2023)
 ------------------
 

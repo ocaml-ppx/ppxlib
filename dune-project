@@ -15,7 +15,7 @@
 (package
  (name ppxlib)
  (depends
-  (ocaml (>= 4.04.1))
+  (ocaml (and (>= 4.04.1) (<> 5.1.0~alpha1)))
   (ocaml-compiler-libs (>= v0.11.0))
   (ppx_derivers (>= 1.0))
   (sexplib0 (>= v0.12))
@@ -23,9 +23,7 @@
   stdlib-shims
   (ocamlfind :with-test)
   (re (and :with-test (>= 1.9.0)))
-  (cinaps (and :with-test (>= v0.12.1)))
-  (base :with-test)
-  (stdio :with-test))
+  (cinaps (and :with-test (>= v0.12.1))))
  (conflicts
   (ocaml-migrate-parsetree (< 2.0.0))
   base-effects)

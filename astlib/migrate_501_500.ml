@@ -225,43 +225,169 @@ and copy_value_binding :
        Ast_501.Parsetree.pvb_attributes;
        Ast_501.Parsetree.pvb_loc;
      } ->
+  let merge_loc left right =
+    Location.
+      { loc_start = left.loc_start; loc_end = right.loc_end; loc_ghost = false }
+  in
+  let ghost_loc loc = { loc with Location.loc_ghost = true } in
+  let ghost_constraint pat typ =
+    let ppat_loc =
+      ghost_loc
+        (merge_loc pat.Ast_500.Parsetree.ppat_loc typ.Ast_500.Parsetree.ptyp_loc)
+    in
+    {
+      Ast_500.Parsetree.ppat_attributes = [];
+      ppat_loc;
+      ppat_desc = Ast_500.Parsetree.Ppat_constraint (pat, typ);
+      ppat_loc_stack = [];
+    }
+  in
   let pvb_pat = copy_pattern pvb_pat and pvb_expr = copy_expression pvb_expr in
+  let constrain_pat pat typ expr =
+    let typ = copy_core_type typ in
+    let pvb_pat = ghost_constraint pat typ in
+    (pvb_pat, pvb_expr)
+  in
   let pvb_pat, pvb_expr =
-    match pvb_constraint with
-    | None -> (pvb_pat, pvb_expr)
-    | Some { locally_abstract_univars; typ } ->
+    match (pvb_constraint, pvb_pat) with
+    | ( Some
+          (Pvc_constraint
+            {
+              locally_abstract_univars = [];
+              typ = { ptyp_desc = Ptyp_poly _; _ } as typ;
+            }),
+        { Ast_500.Parsetree.ppat_desc = Ppat_var _; ppat_attributes = [] } ) ->
+        (* the sugaring of [let x: univars . typ = exp ] was desugared to
+           [let (x:univars . typ) = exp] in 5.0 which doesn't fit the case below *)
+        constrain_pat pvb_pat typ pvb_expr
+    | ( Some (Pvc_constraint { locally_abstract_univars; typ }),
+        { Ast_500.Parsetree.ppat_desc = Ppat_var _; ppat_attributes = [] } ) ->
+        (* Copied and adapted from OCaml 5.0 Ast_helper *)
+        let varify_constructors var_names t =
+          let var_names = List.map (fun v -> v.Location.txt) var_names in
+          let rec loop t =
+            let desc =
+              match t.Ast_500.Parsetree.ptyp_desc with
+              | Ast_500.Parsetree.Ptyp_any -> Ast_500.Parsetree.Ptyp_any
+              | Ptyp_var x -> Ptyp_var x
+              | Ptyp_arrow (label, core_type, core_type') ->
+                  Ptyp_arrow (label, loop core_type, loop core_type')
+              | Ptyp_tuple lst -> Ptyp_tuple (List.map loop lst)
+              | Ptyp_constr ({ txt = Longident.Lident s }, [])
+                when List.mem s var_names ->
+                  Ptyp_var s
+              | Ptyp_constr (longident, lst) ->
+                  Ptyp_constr (longident, List.map loop lst)
+              | Ptyp_object (lst, o) ->
+                  Ptyp_object (List.map loop_object_field lst, o)
+              | Ptyp_class (longident, lst) ->
+                  Ptyp_class (longident, List.map loop lst)
+              | Ptyp_alias (core_type, string) ->
+                  Ptyp_alias (loop core_type, string)
+              | Ptyp_variant (row_field_list, flag, lbl_lst_option) ->
+                  Ptyp_variant
+                    ( List.map loop_row_field row_field_list,
+                      flag,
+                      lbl_lst_option )
+              | Ptyp_poly (string_lst, core_type) ->
+                  Ptyp_poly (string_lst, loop core_type)
+              | Ptyp_package (longident, lst) ->
+                  Ptyp_package
+                    (longident, List.map (fun (n, typ) -> (n, loop typ)) lst)
+              | Ptyp_extension (s, arg) -> Ptyp_extension (s, arg)
+            in
+            { t with ptyp_desc = desc }
+          and loop_row_field field =
+            let prf_desc =
+              match field.prf_desc with
+              | Ast_500.Parsetree.Rtag (label, flag, lst) ->
+                  Ast_500.Parsetree.Rtag (label, flag, List.map loop lst)
+              | Rinherit t -> Rinherit (loop t)
+            in
+            { field with prf_desc }
+          and loop_object_field field =
+            let pof_desc =
+              match field.pof_desc with
+              | Ast_500.Parsetree.Otag (label, t) ->
+                  Ast_500.Parsetree.Otag (label, loop t)
+              | Oinherit t -> Oinherit (loop t)
+            in
+            { field with pof_desc }
+          in
+          loop t
+        in
         let typ = copy_core_type typ in
+        let pexp_loc = merge_loc pvb_pat.ppat_loc pvb_expr.pexp_loc in
+        let ptyp_loc =
+          match locally_abstract_univars with
+          | [] -> ghost_loc typ.ptyp_loc
+          | _ :: _ -> ghost_loc pexp_loc
+        in
         let typ_poly =
           {
             typ with
+            ptyp_loc;
             ptyp_attributes = [];
             ptyp_desc =
-              Ast_500.Parsetree.Ptyp_poly (locally_abstract_univars, typ);
+              Ast_500.Parsetree.Ptyp_poly
+                ( locally_abstract_univars,
+                  varify_constructors locally_abstract_univars typ );
           }
         in
-        let pvb_pat =
-          {
-            pvb_pat with
-            ppat_attributes = [];
-            ppat_desc = Ast_500.Parsetree.Ppat_constraint (pvb_pat, typ_poly);
-          }
+
+        let ppat_loc =
+          ghost_loc
+            (merge_loc pvb_pat.Ast_500.Parsetree.ppat_loc
+               typ.Ast_500.Parsetree.ptyp_loc)
+        in
+        let pvb_pat = { (ghost_constraint pvb_pat typ_poly) with ppat_loc }
         and pvb_expr =
           List.fold_left
             (fun expr var ->
               {
                 expr with
                 pexp_attributes = [];
+                pexp_loc;
                 Ast_500.Parsetree.pexp_desc =
                   Ast_500.Parsetree.Pexp_newtype (var, expr);
               })
             {
               pvb_expr with
               pexp_attributes = [];
+              pexp_loc;
               pexp_desc = Pexp_constraint (pvb_expr, typ);
             }
             (List.rev locally_abstract_univars)
         in
         (pvb_pat, pvb_expr)
+    | Some (Pvc_constraint { locally_abstract_univars = []; typ }), _ ->
+        constrain_pat pvb_pat typ pvb_expr
+    | Some (Pvc_coercion { ground; coercion }), _ ->
+        let coercion = copy_core_type coercion in
+        let ptyp_loc = ghost_loc coercion.ptyp_loc in
+        let typ =
+          {
+            coercion with
+            ptyp_attributes = [];
+            ptyp_loc;
+            ptyp_desc = Ast_500.Parsetree.Ptyp_poly ([], coercion);
+          }
+        in
+        let pvb_pat = ghost_constraint pvb_pat typ in
+        let ground = Option.map copy_core_type ground in
+        let pexp_loc = merge_loc pvb_pat.ppat_loc pvb_expr.pexp_loc in
+        let pvb_expr =
+          {
+            pvb_expr with
+            pexp_attributes = [];
+            pexp_loc;
+            (* location is wrong. attrs might also be wrong. *)
+            pexp_desc =
+              Ast_500.Parsetree.Pexp_coerce (pvb_expr, ground, coercion);
+          }
+        in
+        (pvb_pat, pvb_expr)
+    | _ -> (pvb_pat, pvb_expr)
   in
   {
     Ast_500.Parsetree.pvb_pat;

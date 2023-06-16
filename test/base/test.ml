@@ -1,10 +1,5 @@
-#require "base";;
-#require "stdio";;
-
 let () = Printexc.record_backtrace false
 
-open Base
-open Stdio
 open Ppxlib
 
 module N = Ppxlib_private.Name
@@ -14,9 +9,9 @@ module N = Ppxlib.Ppxlib_private.Name
 
 
 let dot_suffixes name =
-  Caml.Printf.sprintf "%s"
-    (Sexp.to_string_hum
-       (List.sexp_of_t String.sexp_of_t (N.dot_suffixes name)))
+  Printf.sprintf "%s"
+    (Sexplib0.Sexp.to_string_hum
+       (Sexplib0.Sexp_conv.sexp_of_list Sexplib0.Sexp_conv.sexp_of_string (N.dot_suffixes name)))
 [%%expect{|
 val dot_suffixes : string -> string = <fun>
 |}]
@@ -34,9 +29,9 @@ let _ = dot_suffixes "foo.@bar.baz"
 
 let split_path name =
     let a, b = N.split_path name in
-    Caml.Printf.sprintf "%s"
-      (Sexp.to_string_hum
-         (List [sexp_of_string a; Option.sexp_of_t sexp_of_string b]))
+    Printf.sprintf "%s"
+      (Sexplib0.Sexp.to_string_hum
+         (List [Sexplib0.Sexp_conv.sexp_of_string a; Sexplib0.Sexp_conv.sexp_of_option Sexplib0.Sexp_conv.sexp_of_string b]))
 [%%expect{|
 val split_path : string -> string = <fun>
 |}]
@@ -161,12 +156,12 @@ let _ =
 let _ =
   let open Ast_builder.Make (struct let loc = Location.none end) in
   let params decl =
-    List.map decl.ptype_params ~f:(fun (core_type, _) -> core_type.ptyp_desc)
+    List.map (fun (core_type, _) -> core_type.ptyp_desc) decl.ptype_params
   in
   let decl =
     type_declaration
       ~name:{ txt = "t"; loc = Location.none }
-      ~params:(List.init 3 ~f:(fun _ -> ptyp_any, (NoVariance, NoInjectivity)))
+      ~params:(List.init 3 (fun _ -> ptyp_any, (NoVariance, NoInjectivity)))
       ~cstrs:[]
       ~kind:Ptype_abstract
       ~private_:Public

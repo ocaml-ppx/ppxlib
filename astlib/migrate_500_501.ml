@@ -224,19 +224,14 @@ and copy_value_binding :
        Ast_500.Parsetree.pvb_attributes;
        Ast_500.Parsetree.pvb_loc;
      } ->
-  (* Copied from OCaml 5.0 Ast_helper *)
+  (* Copied and adapted from OCaml 5.0 Ast_helper *)
   let varify_constructors var_names t =
-    let check_variable vl loc v =
-      if List.mem v vl then raise Syntaxerr.(Error (Variable_in_scope (loc, v)))
-    in
     let var_names = List.map (fun v -> v.Location.txt) var_names in
     let rec loop t =
       let desc =
         match t.Ast_500.Parsetree.ptyp_desc with
         | Ast_500.Parsetree.Ptyp_any -> Ast_500.Parsetree.Ptyp_any
-        | Ptyp_var x ->
-            check_variable var_names t.ptyp_loc x;
-            Ptyp_var x
+        | Ptyp_var x -> Ptyp_var x
         | Ptyp_arrow (label, core_type, core_type') ->
             Ptyp_arrow (label, loop core_type, loop core_type')
         | Ptyp_tuple lst -> Ptyp_tuple (List.map loop lst)
@@ -248,16 +243,11 @@ and copy_value_binding :
         | Ptyp_object (lst, o) -> Ptyp_object (List.map loop_object_field lst, o)
         | Ptyp_class (longident, lst) ->
             Ptyp_class (longident, List.map loop lst)
-        | Ptyp_alias (core_type, string) ->
-            check_variable var_names t.ptyp_loc string;
-            Ptyp_alias (loop core_type, string)
+        | Ptyp_alias (core_type, string) -> Ptyp_alias (loop core_type, string)
         | Ptyp_variant (row_field_list, flag, lbl_lst_option) ->
             Ptyp_variant
               (List.map loop_row_field row_field_list, flag, lbl_lst_option)
         | Ptyp_poly (string_lst, core_type) ->
-            List.iter
-              (fun v -> check_variable var_names t.ptyp_loc v.Location.txt)
-              string_lst;
             Ptyp_poly (string_lst, loop core_type)
         | Ptyp_package (longident, lst) ->
             Ptyp_package
@@ -287,52 +277,84 @@ and copy_value_binding :
   (* Match the form of the expr and pattern to decide the value of
      [pvb_constraint]. Adapted from OCaml 5.0 PPrinter. *)
   let tyvars_str tyvars = List.map (fun v -> v.Location.txt) tyvars in
-  let is_desugared_gadt p e =
-    let gadt_pattern =
+  let resugarable_value_binding p e =
+    let value_pattern =
       match p with
       | {
        Ast_500.Parsetree.ppat_desc =
          Ppat_constraint
            ( ({ ppat_desc = Ppat_var _ } as pat),
-             { ptyp_desc = Ptyp_poly (args_tyvars, rt) } );
+             ({ ptyp_desc = Ptyp_poly (args_tyvars, rt) } as ty_ext) );
        ppat_attributes = [];
       } ->
-          Some (pat, args_tyvars, rt)
-      | _ -> None
+          assert (match rt.ptyp_desc with Ptyp_poly _ -> false | _ -> true);
+          let ty = match args_tyvars with [] -> rt | _ -> ty_ext in
+          `Var (pat, args_tyvars, rt, ty)
+      | {
+       Ast_500.Parsetree.ppat_desc = Ppat_constraint (pat, rt);
+       ppat_attributes = [];
+      } ->
+          `NonVar (pat, rt)
+      | _ -> `None
     in
-    let rec gadt_exp tyvars e =
+    let rec value_exp tyvars e =
       match e with
       | {
        Ast_500.Parsetree.pexp_desc = Pexp_newtype (tyvar, e);
        pexp_attributes = [];
       } ->
-          gadt_exp (tyvar :: tyvars) e
+          value_exp (tyvar :: tyvars) e
       | { pexp_desc = Pexp_constraint (e, ct); pexp_attributes = [] } ->
           Some (List.rev tyvars, e, ct)
       | _ -> None
     in
-    let gadt_exp = gadt_exp [] e in
-    match (gadt_pattern, gadt_exp) with
-    | Some (p, pt_tyvars, pt_ct), Some (e_tyvars, e, e_ct)
+    let value_exp = value_exp [] e in
+    match (value_pattern, value_exp) with
+    | `Var (p, pt_tyvars, pt_ct, extern_ct), Some (e_tyvars, inner_e, e_ct)
       when tyvars_str pt_tyvars = tyvars_str e_tyvars ->
         let ety = varify_constructors e_tyvars e_ct in
-        if ety = pt_ct then Some (p, pt_tyvars, e_ct, e) else None
-    | _ -> None
+        if ety = pt_ct then
+          `Desugared_locally_abstract (p, pt_tyvars, e_ct, inner_e)
+        else
+          (* the expression constraint and the pattern constraint,
+             don't match, but we still have a Ptyp_poly pattern constraint that
+             should be resugared to a value binding *)
+          `Univars (p, pt_tyvars, extern_ct, e)
+    | `Var (p, pt_tyvars, pt_ct, extern_ct), _ ->
+        `Univars (p, pt_tyvars, extern_ct, e)
+    | `NonVar (pat, ct), _ -> `NonVar (pat, ct, e)
+    | _ -> `None
+  in
+  let with_constraint ty_vars typ =
+    let typ = copy_core_type typ in
+    Some
+      (Ast_501.Parsetree.Pvc_constraint
+         { locally_abstract_univars = ty_vars; typ })
   in
   let pvb_pat, pvb_expr, pvb_constraint =
-    match is_desugared_gadt pvb_pat pvb_expr with
-    | Some (p, ty_vars, typ, e) ->
-        let typ = copy_core_type typ in
-        let pvb_constraint =
-          Some { Ast_501.Parsetree.locally_abstract_univars = ty_vars; typ }
-        in
-        (p, e, pvb_constraint)
-    | None -> (pvb_pat, pvb_expr, None)
+    match resugarable_value_binding pvb_pat pvb_expr with
+    | `Desugared_locally_abstract (p, ty_vars, typ, e) ->
+        (p, e, with_constraint ty_vars typ)
+    | `Univars (pat, [], ct, expr) -> (
+        (* check if we are in the [let x : ty? :> coer = expr ] case *)
+        match expr with
+        | { pexp_desc = Pexp_coerce (expr, gr, coerce); pexp_attributes = [] }
+          ->
+            let ground = Option.map copy_core_type gr in
+            let coercion = copy_core_type coerce in
+            let pvb_constraint =
+              Some (Ast_501.Parsetree.Pvc_coercion { ground; coercion })
+            in
+            (pat, expr, pvb_constraint)
+        | _ -> (pat, expr, with_constraint [] ct))
+    | `Univars (pat, _, ct, expr) -> (pat, expr, with_constraint [] ct)
+    | `NonVar (p, typ, e) -> (p, e, with_constraint [] typ)
+    | `None -> (pvb_pat, pvb_expr, None)
   in
   {
     Ast_501.Parsetree.pvb_pat = copy_pattern pvb_pat;
     Ast_501.Parsetree.pvb_expr = copy_expression pvb_expr;
-    Ast_501.Parsetree.pvb_constraint = None;
+    Ast_501.Parsetree.pvb_constraint;
     Ast_501.Parsetree.pvb_attributes = copy_attributes pvb_attributes;
     Ast_501.Parsetree.pvb_loc = copy_location pvb_loc;
   }
