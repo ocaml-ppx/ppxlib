@@ -94,6 +94,9 @@ module Allowlisted = struct
         "ocaml.warning";
         "ocaml.toplevel_printer" (*Interpreted by the toplevel/utop*);
         "toplevel_printer" (*Interpreted by the toplevel/utop*);
+        "ocaml.flambda_o2";
+        "ocaml.flambda_o3";
+        "ocaml.flambda_oclassic";
       ]
 
   (* Allow list the following extensions.

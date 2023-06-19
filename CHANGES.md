@@ -1,6 +1,9 @@
 unreleased
 ------------------
 
+- Add `[@@@ocaml.flambda_o*]` attributes needed for the `[@@@ocaml.flambda_o*]`
+  attributes for controlling the optimization level (#305, @lukemaurer)
+
 - Adopt the OCaml Code of Conduct on the repo (#426, @pitag-ha)
 
 - Clean up misleading attribute hints when declared for proper context. (#425, @ceastlund)
