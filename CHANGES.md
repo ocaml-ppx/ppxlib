@@ -25,6 +25,9 @@ unreleased
 - Update description to reflect that `ppxlib` contains more than a library
   (#422, @pitag-ha)
 
+- Add support for OCaml 5.1, excluding OCaml `5.1.0~alpha1` (#428, @shym, @Octachron , @pitag-ha, @panglesd)
+- Driver: Fix `-locations-check` option for coercions with ground  (#428, @Octachron)
+
 0.29.1 (14/02/2023)
 ------------------
 
