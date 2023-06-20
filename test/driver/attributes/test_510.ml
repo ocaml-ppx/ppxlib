@@ -10,6 +10,7 @@ Error: Attribute `foo' was not used
 
 let f x = 1 [@@deprecatd "..."]
 [%%expect{|
+
 Line _, characters 15-24:
 Error: Attribute `deprecatd' was not used.
        Hint: Did you mean deprecated?
@@ -21,11 +22,13 @@ let attr : _ Attribute.t =
     Ast_pattern.(__)
     ignore
 [%%expect{|
+
 val attr : (type_declaration, unit) Attribute.t = <abstr>
 |}]
 
 type t = int [@blah]
 [%%expect{|
+
 Line _, characters 15-19:
 Error: Attribute `blah' was not used.
        Hint: `blah' is available for type declarations but is used here in
@@ -40,11 +43,13 @@ let attr : _ Attribute.t =
     Ast_pattern.(__)
     ignore
 [%%expect{|
+
 val attr : (expression, unit) Attribute.t = <abstr>
 |}]
 
 type t = int [@blah]
 [%%expect{|
+
 Line _, characters 15-19:
 Error: Attribute `blah' was not used.
        Hint: `blah' is available for expressions and type declarations but is
@@ -55,6 +60,7 @@ Error: Attribute `blah' was not used.
 
 let _ = () [@blah]
 [%%expect{|
+
 Line _, characters 13-17:
 Error: Attribute `blah' was not used
 |}]
@@ -71,6 +77,7 @@ let faulty_transformation = object
     | _ -> super#expression e
 end
 [%%expect{|
+
 val faulty_transformation : Ast_traverse.map = <obj>
 |}]
 
@@ -79,6 +86,7 @@ let () =
 
 let x = (42 [@foo])
 [%%expect{|
+
 Line _, characters 14-17:
 Error: Attribute `foo' was silently dropped
 |}]
@@ -87,8 +95,11 @@ type t1 = < >
 type t2 = < t1 >
 type t3 = < (t1[@foo]) >
 [%%expect{|
+
 type t1 = <  >
+
 type t2 = <  >
+
 Line _, characters 17-20:
 Error: Attribute `foo' was not used
 |}]
