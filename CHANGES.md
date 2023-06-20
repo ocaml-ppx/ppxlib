@@ -1,5 +1,5 @@
-unreleased
-------------------
+0.30.0 (20/06/2023)
+-------------------
 
 - Adopt the OCaml Code of Conduct on the repo (#426, @pitag-ha)
 
