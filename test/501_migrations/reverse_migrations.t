@@ -4,6 +4,10 @@ AST's resulting from
 1. parsing <file> on 5.0.0 directly
 2. parsing <file> on 5.0.0, migrating up to 5.1.0 and migrating back to 5.0.0
 
+------------------
+
+Tests for the Parsetree change for type constraints in value bindings
+
   $ echo "let x : int = 5" > file.ml
   $ ./compare_on.exe file.ml ./reverse_migrations.exe   | grep -v "without_migrations" | grep -v "with_migrations"
   [1]
@@ -162,3 +166,29 @@ the location invariants are still fulfilled.
 
   $ echo "let (x) : int = 5" > file.ml
   $ ./reverse_migrations.exe -check -locations-check file.ml > /dev/null
+
+
+------------------
+
+Tests for the Parsetree change for generative functor applications
+
+  $ cat > file.ml << EOF
+  > module F () = struct end
+  > module M = F ()
+  > EOF
+  $ ./compare_on.exe file.ml ./reverse_migrations.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  [1]
+
+  $ cat > file.ml << EOF
+  > module F () = struct end
+  > module M = F(struct end)
+  > EOF
+  $ ./compare_on.exe file.ml ./reverse_migrations.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  [1]
+
+  $ cat > file.ml << EOF
+  > module F (N : sig end) = struct end
+  > module M = F (struct end)
+  > EOF
+  $ ./compare_on.exe file.ml ./reverse_migrations.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  [1]

@@ -3,7 +3,10 @@ The 501 parsetree contains a parsing modificacion.
 AST's resulting from
 1. parsing <file> on 5.1.0 directly
 2. parsing <file> on 5.1.0, migrating down to 5.0.0 and migrating back to 5.1.0
-We only expect a diff in one special case.
+
+------------------
+
+Tests for the Parsetree change for type constraints in value bindings
 
   $ echo "let x : int = 5" > file.ml
   $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
@@ -146,3 +149,39 @@ Let's make sure that in the examples with diffs,
 the location invariants are still fulfilled.
   $ echo "let ((x,y) : (int*int)) = (assert false: int * int)" > file.ml
   $ ./identity_driver.exe -check -locations-check file.ml > /dev/null
+
+------------------
+
+Tests for the Parsetree change for generative functor applications
+
+
+  $ cat > file.ml << EOF
+  > module F () = struct end
+  > module M = F ()
+  > EOF
+  $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  @@ -14 +14 @@
+  -        Pmod_apply_unit
+  +        Pmod_apply
+  @@ -16,0 +17,3 @@
+  +        module_expr (_none_[0,0+-1]..[0,0+-1]) ghost
+  +          Pmod_structure
+  +          []
+  @@ -18,0 +22,3 @@
+  +File "_none_", line 1:
+  +Warning 73 [generative-application-expects-unit]: A generative functor
+  +should be applied to '()'; using '(struct end)' is deprecated.
+
+  $ cat > file.ml << EOF
+  > module F () = struct end
+  > module M = F(struct end)
+  > EOF
+  $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  [1]
+
+  $ cat > file.ml << EOF
+  > module F (N : sig end) = struct end
+  > module M = F (struct end)
+  > EOF
+  $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  [1]
