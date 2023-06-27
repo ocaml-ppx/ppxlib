@@ -452,19 +452,19 @@ module V3 = struct
            k ~ctxt))
 
   let declare_inline name context pattern k =
-    check_context_for_inline context ~func:"Extension.declare_inline";
+    check_context_for_inline context ~func:"Extension.V3.declare_inline";
     let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
     T
       (M.declare ~with_arg:false name context pattern (fun ~ctxt ~arg:_ ->
            k ~ctxt))
 
-  let declare_with_path_arg name context pattern k =
+  let declare_with_additional_arg name context pattern k =
     let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Simple x) in
     T (M.declare ~with_arg:true name context pattern k)
 
-  let declare_inline_with_path_arg name context pattern k =
+  let declare_inline_with_additional_arg name context pattern k =
     check_context_for_inline context
-      ~func:"Extension.declare_inline_with_path_arg";
+      ~func:"Extension.V3.declare_inline_with_additional_arg";
     let pattern = Ast_pattern.map_result pattern ~f:(fun x -> Inline x) in
     T (M.declare ~with_arg:true name context pattern k)
 end
