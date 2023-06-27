@@ -91,7 +91,6 @@ let () =
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt]
 [%%expect{|
-[%%expect{|
 - : string = "-\n"
 |}]
 
