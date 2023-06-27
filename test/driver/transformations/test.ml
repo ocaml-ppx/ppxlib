@@ -72,12 +72,12 @@ let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
 |}]
 
 
-(* Extension with a path argument and cxtx *)
+(* Extension with a path argument and ctxt *)
 
 let () =
-  Driver.register_transformation "plop"
+  Driver.register_transformation "plop_ctxt"
     ~rules:[Context_free.Rule.extension
-              (Extension.V3.declare_with_path_arg "plop"
+              (Extension.V3.declare_with_path_arg "plop_ctxt"
                  Expression
                  Ast_pattern.(pstr nil)
                  (fun ~ctxt ~arg ->
@@ -89,17 +89,18 @@ let () =
 [%%expect{|
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop]
+let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt]
+[%%expect{|
 [%%expect{|
 - : string = "-\n"
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc]
+let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt.Truc]
 [%%expect{|
 - : string = "Truc\n"
 |}]
 
-let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
+let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt.Truc.Bidule]
 [%%expect{|
 - : string = "Truc.Bidule\n"
 |}]
