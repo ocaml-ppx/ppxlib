@@ -70,3 +70,36 @@ let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
 [%%expect{|
 - : string = "Truc.Bidule\n"
 |}]
+
+
+(* Extension with a path argument and cxtx *)
+
+let () =
+  Driver.register_transformation "plop"
+    ~rules:[Context_free.Rule.extension
+              (Extension.V3.declare_with_path_arg "plop"
+                 Expression
+                 Ast_pattern.(pstr nil)
+                 (fun ~ctxt ~arg ->
+                    let open Ast_builder.Default in
+                    let loc = Expansion_context.Extension.extension_point_loc ctxt in
+                    match arg with
+                    | None -> estring ~loc "-"
+                    | Some { loc; txt } -> estring ~loc (Longident.name txt)))]
+[%%expect{|
+|}]
+
+let _ = Caml.Printf.sprintf "%s\n" [%plop]
+[%%expect{|
+- : string = "-\n"
+|}]
+
+let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc]
+[%%expect{|
+- : string = "Truc\n"
+|}]
+
+let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
+[%%expect{|
+- : string = "Truc.Bidule\n"
+|}]
