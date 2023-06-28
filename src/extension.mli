@@ -72,10 +72,7 @@ val declare_with_path_arg :
     {[
       let%map.Foo.Bar x = 1 in
       ...
-    ]}
-
-    (In V3, this has been renamed to
-    {!Extension.V3.declare_with_additional_arg}.) *)
+    ]} *)
 
 val declare_inline :
   string ->
@@ -201,7 +198,7 @@ module V3 : sig
     (ctxt:Expansion_context.Extension.t -> 'a) ->
     t
 
-  val declare_with_additional_arg :
+  val declare_with_path_arg :
     string ->
     'context Context.t ->
     (payload, 'a, 'context) Ast_pattern.t ->
@@ -209,20 +206,17 @@ module V3 : sig
     arg:Longident.t Asttypes.loc option ->
     'a) ->
     t
-  (** Same as [declare] except that the extension name takes an additional
-      argument. This argument is the part of the name that start with a
-      capitalized component. For instance in the following, the extension
-      ["map"] would receive the additional argument [Foo.Bar]:
+  (** Same as [declare] except that the extension name takes an additional path
+      argument. The path is the part of the name that start with a capitalized
+      component. For instance in the following, the extension ["map"] would
+      receive the path argument [Foo.Bar]:
 
       {[
         let%map.Foo.Bar x = 1 in
         ...
-      ]}
+      ]} *)
 
-      (This was previously known as a "path_arg", but was renamed for V3 for
-      clarity and to disambiguate from the [code_path].) *)
-
-  val declare_inline_with_additional_arg :
+  val declare_inline_with_path_arg :
     string ->
     'context Context.t ->
     (payload, 'a, 'context list) Ast_pattern.t ->
