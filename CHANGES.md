@@ -1,6 +1,8 @@
 0.30.0 (20/06/2023)
 -------------------
 
+- Add `?warning` flag to `Deriving.Generator.make`. (#440, @jacksonzou123 via @ceastlund)
+
 - Adopt the OCaml Code of Conduct on the repo (#426, @pitag-ha)
 
 - Clean up misleading attribute hints when declared for proper context. (#425, @ceastlund)
