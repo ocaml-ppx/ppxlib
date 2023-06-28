@@ -1,0 +1,4 @@
+(library
+ (name ppx_warning_flags_testing_on_tests)
+ (preprocess
+  (pps ppx_warning_flags_testing)))

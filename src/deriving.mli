@@ -48,6 +48,7 @@ module Generator : sig
   val make :
     ?attributes:Attribute.packed list (* deprecated, unused *) ->
     ?deps:deriver list ->
+    ?unused_code_warnings:bool ->
     ('f, 'output_ast) Args.t ->
     (loc:Location.t -> path:string -> 'input_ast -> 'f) ->
     ('output_ast, 'input_ast) t
@@ -57,11 +58,16 @@ module Generator : sig
       [deps] is a list of derivers that this generator depends on.
 
       [attributes] is deprecated and unused. It is only kept for backward
-      compatibility. *)
+      compatibility.
+
+      [unused_code_warning] controls whether unused code warnings (e.g. warnings
+      32 and 60) are enabled or suppressed in emitted code. Default is [false],
+      which suppresses the warnings. *)
 
   val make_noarg :
     ?attributes:Attribute.packed list (* deprecated, unused *) ->
     ?deps:deriver list ->
+    ?unused_code_warnings:bool ->
     (loc:Location.t -> path:string -> 'input_ast -> 'output_ast) ->
     ('output_ast, 'input_ast) t
   (** Same as {!make}, but without arguments. *)
@@ -70,6 +76,7 @@ module Generator : sig
     val make :
       ?attributes:Attribute.packed list (* deprecated, unused *) ->
       ?deps:deriver list ->
+      ?unused_code_warnings:bool ->
       ('f, 'output_ast) Args.t ->
       (ctxt:Expansion_context.Deriver.t -> 'input_ast -> 'f) ->
       ('output_ast, 'input_ast) t
@@ -79,6 +86,7 @@ module Generator : sig
     val make_noarg :
       ?attributes:Attribute.packed list (* deprecated, unused *) ->
       ?deps:deriver list ->
+      ?unused_code_warnings:bool ->
       (ctxt:Expansion_context.Deriver.t -> 'input_ast -> 'output_ast) ->
       ('output_ast, 'input_ast) t
     (** Same as {!Generator.make_noarg}, but the generator has access to an
