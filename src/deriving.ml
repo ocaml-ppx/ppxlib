@@ -133,6 +133,8 @@ type parsed_args =
   | Args of (string * expression) list
   | Unknown_syntax of Location.t * string
 
+type 'item derived_code = { items : 'item list; unused_code_warnings : bool }
+
 module Generator = struct
   type deriver = t
 
@@ -142,24 +144,28 @@ module Generator = struct
         gen : ctxt:Expansion_context.Deriver.t -> 'b -> 'c;
         arg_names : String.Set.t;
         deps : deriver list;
+        unused_code_warnings : bool;
       }
         -> ('a, 'b) t
 
   let deps (T t) = t.deps
 
   module V2 = struct
-    let make ?attributes:(_ = []) ?(deps = []) spec gen =
+    let make ?attributes:(_ = []) ?(deps = []) ?(unused_code_warnings = false)
+        spec gen =
       let arg_names = String.Set.of_list (Args.names spec) in
-      T { spec; gen; arg_names; deps }
+      T { spec; gen; arg_names; deps; unused_code_warnings }
 
-    let make_noarg ?attributes ?deps gen = make ?attributes ?deps Args.empty gen
+    let make_noarg ?attributes ?deps ?unused_code_warnings gen =
+      make ?attributes ?deps ?unused_code_warnings Args.empty gen
   end
 
-  let make ?attributes ?deps spec gen =
-    V2.make ?attributes ?deps spec
+  let make ?attributes ?deps ?unused_code_warnings spec gen =
+    V2.make ?attributes ?deps ?unused_code_warnings spec
       (Expansion_context.Deriver.with_loc_and_path gen)
 
-  let make_noarg ?attributes ?deps gen = make ?attributes ?deps Args.empty gen
+  let make_noarg ?attributes ?deps ?unused_code_warnings gen =
+    make ?attributes ?deps ?unused_code_warnings Args.empty gen
 
   let merge_accepted_args l =
     let rec loop acc = function
@@ -214,8 +220,11 @@ module Generator = struct
   let apply_all ~ctxt entry (name, generators, args) =
     let open Result in
     check_arguments name.txt generators args >>| fun () ->
-    List.concat_map generators ~f:(fun t ->
-        apply t ~name:name.txt ~ctxt entry args)
+    List.map generators ~f:(fun (T t) ->
+        {
+          items = apply (T t) ~name:name.txt ~ctxt entry args;
+          unused_code_warnings = t.unused_code_warnings;
+        })
 
   let apply_all ~ctxt entry generators ext_to_item =
     let l = List.map generators ~f:(apply_all ~ctxt entry) in
@@ -226,7 +235,7 @@ module Generator = struct
       List.concat lerr
       |> List.map ~f:(fun err -> ext_to_item ~loc:Location.none err [])
     in
-    List.concat l1 @ lerr
+    List.concat l1 @ [ { items = lerr; unused_code_warnings = false } ]
 end
 
 module Deriver = struct
@@ -609,17 +618,17 @@ let wrap_str ~loc ~hide st =
   in
   [ pstr_include ~loc { include_infos with pincl_attributes } ]
 
-let wrap_str ~loc ~hide st =
+let wrap_str ~loc ~hide ~unused_code_warnings st =
   let loc = { loc with loc_ghost = true } in
   let warnings, st =
-    if keep_w32_impl () then ([], st)
+    if keep_w32_impl () || unused_code_warnings then ([], st)
     else if not !do_insert_unused_warning_attribute then
       ([], Ignore_unused_warning.add_dummy_user_for_values#structure st)
     else ([ 32 ], st)
   in
   let warnings, st =
     if
-      keep_w60_impl ()
+      keep_w60_impl () || unused_code_warnings
       || not (Ignore_unused_warning.binds_module_names#structure st false)
     then (warnings, st)
     else (60 :: warnings, st)
@@ -630,6 +639,11 @@ let wrap_str ~loc ~hide st =
   in
   if wrap then wrap_str ~loc ~hide st else st
 
+let wrap_str ~loc ~hide list =
+  List.concat_map list ~f:(fun { items; unused_code_warnings } ->
+      if List.is_empty items then []
+      else wrap_str ~loc ~hide ~unused_code_warnings items)
+
 let wrap_sig ~loc ~hide st =
   let include_infos = include_infos ~loc (pmty_signature ~loc st) in
   let pincl_attributes =
@@ -638,13 +652,16 @@ let wrap_sig ~loc ~hide st =
   in
   [ psig_include ~loc { include_infos with pincl_attributes } ]
 
-let wrap_sig ~loc ~hide sg =
+let wrap_sig ~loc ~hide ~unused_code_warnings sg =
   let loc = { loc with loc_ghost = true } in
-  let warnings = if keep_w32_intf () then [] else [ 32 ] in
+  let warnings =
+    if keep_w32_intf () || unused_code_warnings then [] else [ 32 ]
+  in
   let warnings =
     if
       keep_w60_intf ()
-      || not (Ignore_unused_warning.binds_module_names#signature sg false)
+      || (not (Ignore_unused_warning.binds_module_names#signature sg false))
+      || unused_code_warnings
     then warnings
     else 60 :: warnings
   in
@@ -653,6 +670,11 @@ let wrap_sig ~loc ~hide sg =
     else (true, psig_attribute ~loc (disable_warnings_attribute warnings) :: sg)
   in
   if wrap then wrap_sig ~loc ~hide sg else sg
+
+let wrap_sig ~loc ~hide list =
+  List.concat_map list ~f:(fun { items; unused_code_warnings } ->
+      if List.is_empty items then []
+      else wrap_sig ~loc ~hide ~unused_code_warnings items)
 
 (* +-----------------------------------------------------------------+
    | Main expansion                                                  |
@@ -676,6 +698,17 @@ let types_used_by_deriving (tds : type_declaration list) : structure_item list =
 let merge_generators field l =
   List.filter_map l ~f:(fun x -> x) |> List.concat |> Deriver.resolve_all field
 
+(* This function merges ['a derived] if they have the same [unused_code_warnings]. This
+   reduces the number of times we add [include struct ... end] to disable warnings. *)
+let merge_derived lists =
+  List.fold_right lists ~init:[] ~f:(fun derived acc ->
+      match acc with
+      | other :: others
+        when Bool.equal derived.unused_code_warnings other.unused_code_warnings
+        ->
+          { other with items = derived.items @ other.items } :: others
+      | _ -> derived :: acc)
+
 let expand_str_type_decls ~ctxt rec_flag tds values =
   let generators, l_err = merge_generators Deriver.Field.str_type_decl values in
   let l_err =
@@ -687,9 +720,10 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
   (* TODO: instead of disabling the unused warning for types themselves, we
      should add a tag [@@unused]. *)
   let generated =
-    types_used_by_deriving tds @ l_err
-    @ Generator.apply_all ~ctxt (rec_flag, tds) generators
-        Ast_builder.Default.pstr_extension
+    { items = types_used_by_deriving tds @ l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt (rec_flag, tds) generators
+         Ast_builder.Default.pstr_extension
+    |> merge_derived
   in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -705,9 +739,10 @@ let expand_sig_type_decls ~ctxt rec_flag tds values =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt (rec_flag, tds) generators
-        Ast_builder.Default.psig_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt (rec_flag, tds) generators
+         Ast_builder.Default.psig_extension
+    |> merge_derived
   in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -725,11 +760,11 @@ let expand_str_module_type_decl ~ctxt mtd generators =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt mtd generators
-        Ast_builder.Default.pstr_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt mtd generators
+         Ast_builder.Default.pstr_extension
+    |> merge_derived
   in
-
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
@@ -746,9 +781,10 @@ let expand_sig_module_type_decl ~ctxt mtd generators =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt mtd generators
-        Ast_builder.Default.psig_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt mtd generators
+         Ast_builder.Default.psig_extension
+    |> merge_derived
   in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -766,8 +802,10 @@ let expand_str_exception ~ctxt ec generators =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt ec generators Ast_builder.Default.pstr_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt ec generators
+         Ast_builder.Default.pstr_extension
+    |> merge_derived
   in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -785,8 +823,10 @@ let expand_sig_exception ~ctxt ec generators =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt ec generators Ast_builder.Default.psig_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt ec generators
+         Ast_builder.Default.psig_extension
+    |> merge_derived
   in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -804,8 +844,10 @@ let expand_str_type_ext ~ctxt te generators =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt te generators Ast_builder.Default.pstr_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt te generators
+         Ast_builder.Default.pstr_extension
+    |> merge_derived
   in
   wrap_str
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
@@ -823,8 +865,10 @@ let expand_sig_type_ext ~ctxt te generators =
       l_err
   in
   let generated =
-    l_err
-    @ Generator.apply_all ~ctxt te generators Ast_builder.Default.psig_extension
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt te generators
+         Ast_builder.Default.psig_extension
+    |> merge_derived
   in
   wrap_sig
     ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
