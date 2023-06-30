@@ -292,6 +292,243 @@ let _ = [%sig: include S]
     loc_ghost = true}}]
 |}]
 
+(* attributes *)
+
+let _ =
+  let e = [%expr (() [@attr1])] in
+  [%expr [%e e] [@attr2]].pexp_attributes
+[%%expect{|
+- : Ppxlib_ast.Ast.attributes =
+[{Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr1";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}};
+ {Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr2";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}}]
+|}]
+
+let _ =
+  let p = [%pat? (() [@attr1])] in
+  [%pat? [%p p] [@attr2]].ppat_attributes
+[%%expect{|
+- : Ppxlib_ast.Ast.attributes =
+[{Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr1";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}};
+ {Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr2";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}}]
+|}]
+
+let _ =
+  let t = [%type: (unit [@attr1])] in
+  [%type: [%t t] [@attr2]].ptyp_attributes
+[%%expect{|
+- : Ppxlib_ast.Ast.attributes =
+[{Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr1";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}};
+ {Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr2";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}}]
+|}]
+
+let _ =
+  let extract_module_M m =
+    match m with
+    | [%stri module M = [%m? m]] -> m
+    | _ -> assert false
+  in
+  let m = extract_module_M [%stri module M = (struct end [@attr1])] in
+  (extract_module_M [%stri module M = [%m m] [@attr2]]).pmod_attributes
+[%%expect{|
+- : Ppxlib_ast.Ast.attributes =
+[{Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr1";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}};
+ {Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr2";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}}]
+|}]
+
+let _ =
+  let extract_module_ty_S s =
+    match s with
+    | [%stri module type S = [%m? s]] -> s
+    | _ -> assert false
+  in
+  let s = extract_module_ty_S [%stri module type S = (sig end [@attr1])] in
+  (extract_module_ty_S [%stri module type S = [%m s] [@attr2]]).pmty_attributes
+[%%expect{|
+- : Ppxlib_ast.Ast.attributes =
+[{Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr1";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}};
+ {Ppxlib_ast.Ast.attr_name =
+   {Ppxlib_ast.Ast.txt = "attr2";
+    loc =
+     {Ppxlib_ast.Ast.loc_start =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_end =
+       {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+        pos_cnum = -1};
+      loc_ghost = true}};
+  attr_payload = Ppxlib_ast.Ast.PStr [];
+  attr_loc =
+   {Ppxlib_ast.Ast.loc_start =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_end =
+     {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
+      pos_cnum = -1};
+    loc_ghost = true}}]
+|}]
+
 (* mistyped escapes (not producing ASTs at all) *)
 
 let _ = [%expr [%e ()]]
@@ -327,4 +564,10 @@ let _ = [%sigi: [%%i ()]]
 Line _, characters 21-23:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.signature_item
+|}]
+
+let _ = [%expr [%e ()] [@attr]]
+[%%expect{|
+Line _:
+Error: This expression has type unit which is not a record type.
 |}]
