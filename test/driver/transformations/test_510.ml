@@ -69,8 +69,8 @@ let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc]
 |}]
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
-
 [%%expect{|
+
 - : string = "Truc.Bidule\n"
 |}]
 
