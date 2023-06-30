@@ -610,6 +610,7 @@ let inline_doc_attr =
     attr_loc = loc;
   }
 
+(* wrap a structure in extra attributes *)
 let wrap_str ~loc ~hide st =
   let include_infos = include_infos ~loc (pmod_structure ~loc st) in
   let pincl_attributes =
@@ -618,6 +619,7 @@ let wrap_str ~loc ~hide st =
   in
   [ pstr_include ~loc { include_infos with pincl_attributes } ]
 
+(* decide what to wrap a structure in, then call above [wrap_str] *)
 let wrap_str ~loc ~hide ~unused_code_warnings st =
   let loc = { loc with loc_ghost = true } in
   let warnings, st =
@@ -639,11 +641,13 @@ let wrap_str ~loc ~hide ~unused_code_warnings st =
   in
   if wrap then wrap_str ~loc ~hide st else st
 
+(* wrap blocks that share [unused_code_warnings], using above [wrap_str] above *)
 let wrap_str ~loc ~hide list =
   List.concat_map list ~f:(fun { items; unused_code_warnings } ->
       if List.is_empty items then []
       else wrap_str ~loc ~hide ~unused_code_warnings items)
 
+(* wrap a signature in extra attributes *)
 let wrap_sig ~loc ~hide st =
   let include_infos = include_infos ~loc (pmty_signature ~loc st) in
   let pincl_attributes =
@@ -652,6 +656,7 @@ let wrap_sig ~loc ~hide st =
   in
   [ psig_include ~loc { include_infos with pincl_attributes } ]
 
+(* decide what to wrap a signature in, then call above [wrap_sig] *)
 let wrap_sig ~loc ~hide ~unused_code_warnings sg =
   let loc = { loc with loc_ghost = true } in
   let warnings =
@@ -671,6 +676,7 @@ let wrap_sig ~loc ~hide ~unused_code_warnings sg =
   in
   if wrap then wrap_sig ~loc ~hide sg else sg
 
+(* wrap blocks that share [unused_code_warnings], using above [wrap_sig] above *)
 let wrap_sig ~loc ~hide list =
   List.concat_map list ~f:(fun { items; unused_code_warnings } ->
       if List.is_empty items then []
