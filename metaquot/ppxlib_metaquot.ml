@@ -3,25 +3,32 @@ open Ast_builder.Default
 module E = Extension
 module A = Ast_pattern
 
-type quoted_attributes =
-  { quoted_attributes : attributes
-  (* The attributes that appear quoted, e.g. [@foo] in [%expr [%e e] [@foo]] *)
-  ; field_name : string
-  (* The field name where attributes are stored for the kind of ASt the quoted attributes
-     are placed on, e.g. pexp_attributes. *)
-  }
+type quoted_attributes = {
+  quoted_attributes : attributes;
+      (* The attributes that appear quoted, e.g. [@foo] in [%expr [%e e] [@foo]] *)
+  field_name : string;
+      (* The field name where attributes are stored for the kind of AST the quoted
+         attributes are placed on, e.g. pexp_attributes. *)
+}
 
 module Make (M : sig
   type result
 
   val annotate : result -> core_type -> result
 
-  val cast
-    :  < attributes : attributes -> result; .. >
-      (* The instance of the [std_lifters] class being used. *)
-    -> extension
-    -> quoted_attributes option
-    -> result
+  val cast :
+    (* The instance of the [std_lifters] class being used. *)
+    < attributes : attributes -> result
+    ; typed : result -> string -> result
+    ; .. > ->
+    extension ->
+    quoted_attributes option ->
+    (* e.g. [expression]; the callee is responsible for calling
+       [self#typed ast type_name] on the AST to add a type annotation
+       that constrains its type.
+    *)
+    type_name:string ->
+    result
 
   val location : location -> result
   val location_stack : (location -> result) option
@@ -64,73 +71,77 @@ struct
         match e.pexp_desc with
         | Pexp_extension (({ txt = "e"; _ }, _) as ext) ->
             let attributes =
-              { quoted_attributes = e.pexp_attributes
-              ; field_name = "pexp_attributes"
+              {
+                quoted_attributes = e.pexp_attributes;
+                field_name = "pexp_attributes";
               }
             in
-            self#typed (M.cast self ext (Some attributes)) "expression"
+            M.cast self ext (Some attributes) ~type_name:"expression"
         | _ -> super#expression e
 
       method! pattern p =
         match p.ppat_desc with
         | Ppat_extension (({ txt = "p"; _ }, _) as ext) ->
             let attributes =
-              { quoted_attributes = p.ppat_attributes
-              ; field_name = "ppat_attributes"
+              {
+                quoted_attributes = p.ppat_attributes;
+                field_name = "ppat_attributes";
               }
             in
-            self#typed (M.cast self ext (Some attributes)) "pattern"
+            M.cast self ext (Some attributes) ~type_name:"pattern"
         | _ -> super#pattern p
 
       method! core_type t =
         match t.ptyp_desc with
         | Ptyp_extension (({ txt = "t"; _ }, _) as ext) ->
             let attributes =
-              { quoted_attributes = t.ptyp_attributes
-              ; field_name = "ptyp_attributes"
+              {
+                quoted_attributes = t.ptyp_attributes;
+                field_name = "ptyp_attributes";
               }
             in
-            self#typed (M.cast self ext (Some attributes)) "core_type"
+            M.cast self ext (Some attributes) ~type_name:"core_type"
         | _ -> super#core_type t
 
       method! module_expr m =
         match m.pmod_desc with
         | Pmod_extension (({ txt = "m"; _ }, _) as ext) ->
             let attributes =
-              { quoted_attributes = m.pmod_attributes
-              ; field_name = "pmod_attributes"
+              {
+                quoted_attributes = m.pmod_attributes;
+                field_name = "pmod_attributes";
               }
             in
-            self#typed (M.cast self ext (Some attributes)) "module_expr"
+            M.cast self ext (Some attributes) ~type_name:"module_expr"
         | _ -> super#module_expr m
 
       method! module_type m =
         match m.pmty_desc with
         | Pmty_extension (({ txt = "m"; _ }, _) as ext) ->
             let attributes =
-              { quoted_attributes = m.pmty_attributes
-              ; field_name = "pmty_attributes"
+              {
+                quoted_attributes = m.pmty_attributes;
+                field_name = "pmty_attributes";
               }
             in
-            self#typed (M.cast self ext (Some attributes)) "module_type"
+            M.cast self ext (Some attributes) ~type_name:"module_type"
         | _ -> super#module_type m
 
       method! structure_item i =
         match i.pstr_desc with
         | Pstr_extension ((({ txt = "i"; _ }, _) as ext), attrs) ->
             assert_no_attributes attrs;
-            self#typed (M.cast self ext None) "structure_item"
+            M.cast self ext None ~type_name:"structure_item"
         | _ -> super#structure_item i
 
       method! signature_item i =
         match i.psig_desc with
         | Psig_extension ((({ txt = "i"; _ }, _) as ext), attrs) ->
             assert_no_attributes attrs;
-            self#typed (M.cast self ext None) "signature_item"
+            M.cast self ext None ~type_name:"signature_item"
         | _ -> super#signature_item i
     end
 end
-
 
 module Expr = Make (struct
   type result = expression
@@ -160,49 +171,55 @@ module Expr = Make (struct
      [@attr]) at the end of the list is consistent with other parts of ppxlib
      that accumulate attributes.
   *)
-  let add_quoted_attributes self e { quoted_attributes; field_name } ~loc =
+  let add_quoted_attributes self e { quoted_attributes; field_name } ~type_name
+      ~loc =
     match quoted_attributes with
-    | [] -> e
+    | [] -> self#typed e type_name
     | _ :: _ ->
-      let open Ppxlib_ast.Ast_helper in
-      let loc = { loc with loc_ghost = true } in
-      let mkloc x = Located.mk x ~loc in
-      let var = fresh_name () in
-      let var_expr = Exp.ident (mkloc (Lident var)) in
-      let field_name = mkloc (Lident field_name) in
-      let reified_attrs = self#attributes quoted_attributes in
-      (* append arg1 arg2 = [%expr Stdlib.List.append [%e arg1] [%e arg2]] *)
-      let append arg1 arg2 =
-        Exp.apply
-          (Exp.ident
-             (mkloc (Ldot (Ldot (Lident "Stdlib", "List"), "append"))))
-          [ Nolabel, arg1; Nolabel, arg2 ]
-      in
-      (* [%expr
-         let [%p var] = [%e e] in
-         { [%e var] with field_name =
-         [%e append [%expr [%e var].field_name] reified_attrs]
-         ]
+        let loc = { loc with loc_ghost = true } in
+        let open (val Ast_builder.make loc) in
+        let var = fresh_name () in
+        let var_expr = pexp_ident (Located.mk (Lident var)) in
+        let field_name = Located.mk (Lident field_name) in
+        let reified_attrs = self#attributes quoted_attributes in
+        (* append arg1 arg2 = [%expr Stdlib.List.append [%e arg1] [%e arg2]] *)
+        let append arg1 arg2 =
+          pexp_apply
+            (pexp_ident
+               (Located.mk (Ldot (Ldot (Lident "Stdlib", "List"), "append"))))
+            [ (Nolabel, arg1); (Nolabel, arg2) ]
+        in
+        (*
+         Morally,
+         {[
+           let var = ([%expr e] : [%type: type_name]) in
+           { var
+             with pexp_attributes = var.pexp_attributes @ [%e reified_attrs ]
+           }
+         ]}
+        *)
+        pexp_let Nonrecursive
+          [
+            value_binding
+              ~pat:(ppat_var (Located.mk var))
+              ~expr:(self#typed e type_name);
+          ]
+          (pexp_record
+             [
+               ( field_name,
+                 append (pexp_field var_expr field_name) reified_attrs );
+             ]
+             (Some var_expr))
 
-         This comment lies a little bit: field_name is actually some other
-         literal string.
-      *)
-      Exp.let_
-        Nonrecursive
-        [ Vb.mk (Pat.var (mkloc var)) e ]
-        (Exp.record
-           [ field_name, append (Exp.field var_expr field_name) reified_attrs ]
-           (Some var_expr))
-
-  let cast self ext attrs =
+  let cast self ext attrs ~type_name =
     match snd ext with
-    | PStr [ { pstr_desc = Pstr_eval (e, inner_attrs); _ } ] ->
-      assert_no_attributes inner_attrs;
-      (match attrs with
-       | None -> e
-       | Some quoted_attrs ->
-         add_quoted_attributes self e quoted_attrs
-           ~loc:(loc_of_extension ext))
+    | PStr [ { pstr_desc = Pstr_eval (e, inner_attrs); _ } ] -> (
+        assert_no_attributes inner_attrs;
+        match attrs with
+        | None -> self#typed e type_name
+        | Some quoted_attrs ->
+            add_quoted_attributes self e quoted_attrs ~type_name
+              ~loc:(loc_of_extension ext))
     | _ ->
         Ast_builder.Default.(
           pexp_extension ~loc:(loc_of_extension ext)
@@ -224,21 +241,18 @@ module Patt = Make (struct
 
   let annotate p core_type = ppat_constraint ~loc:core_type.ptyp_loc p core_type
 
-  let cast _ ext attrs =
-    begin
-      match attrs with
-      | None -> ()
-      | Some { quoted_attributes; field_name = _ } ->
-          (* In theory, we could create a pattern where [quoted_attributes]
-             is consed to the front of [p.ppat_attributes]. But this is
-             inconsistent with [Expression.add_quoted_attributes], which appends
-             quoted attributes to the end -- and this wouldn't be a legal
-             pattern.
-          *)
-          assert_no_attributes quoted_attributes
-    end;
+  let cast self ext attrs ~type_name =
     match snd ext with
-    | PPat (p, None) -> p
+    | PPat (p, None) ->
+      (match attrs with
+       | None -> ()
+       | Some { quoted_attributes; field_name = _ } ->
+         (* We can't construct a pattern that searches for [quoted_attributes]
+            at the end of [p]'s attribute list -- the pattern language isn't
+            expressive enough. Instead, we fail.
+         *)
+         assert_no_attributes quoted_attributes);
+      self#typed p type_name
     | PPat (_, Some e) ->
         Ast_builder.Default.(
           ppat_extension ~loc:e.pexp_loc
