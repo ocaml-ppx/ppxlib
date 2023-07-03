@@ -570,16 +570,11 @@ Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.signature_item
 |}]
 
-let _ = [%expr [%e ()] [@attr]]
-[%%expect{|
-Line _:
-Error: This expression has type unit which is not a record type.
-|}]
-
 (* mistyped escapes (not producing ASTs at all) with attributes *)
 
 let _ = [%expr [%e ()] [@attr]]
 [%%expect{|
+
 Line _, characters 19-21:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.expression
@@ -587,6 +582,7 @@ Error: This expression should not be a unit literal, the expected type is
 
 let _ = [%pat? [%p ()] [@attr]]
 [%%expect{|
+
 Line _, characters 19-21:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.pattern
@@ -594,6 +590,7 @@ Error: This expression should not be a unit literal, the expected type is
 
 let _ = [%type: [%t ()] [@attr]]
 [%%expect{|
+
 Line _, characters 20-22:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.core_type
@@ -601,6 +598,7 @@ Error: This expression should not be a unit literal, the expected type is
 
 let _ = [%stri module M = [%m ()] [@attr]]
 [%%expect{|
+
 Line _, characters 30-32:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.module_expr
@@ -608,6 +606,7 @@ Error: This expression should not be a unit literal, the expected type is
 
 let _ = [%sigi: module type M = [%m ()] [@attr]]
 [%%expect{|
+
 Line _, characters 36-38:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.module_type
