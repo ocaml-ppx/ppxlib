@@ -244,15 +244,15 @@ module Patt = Make (struct
   let cast self ext attrs ~type_name =
     match snd ext with
     | PPat (p, None) ->
-      (match attrs with
-       | None -> ()
-       | Some { quoted_attributes; field_name = _ } ->
-         (* We can't construct a pattern that searches for [quoted_attributes]
-            at the end of [p]'s attribute list -- the pattern language isn't
-            expressive enough. Instead, we fail.
-         *)
-         assert_no_attributes quoted_attributes);
-      self#typed p type_name
+        (match attrs with
+        | None -> ()
+        | Some { quoted_attributes; field_name = _ } ->
+            (* We can't construct a pattern that searches for [quoted_attributes]
+               at the end of [p]'s attribute list -- the pattern language isn't
+               expressive enough. Instead, we fail.
+            *)
+            assert_no_attributes quoted_attributes);
+        self#typed p type_name
     | PPat (_, Some e) ->
         Ast_builder.Default.(
           ppat_extension ~loc:e.pexp_loc
