@@ -157,7 +157,7 @@ module Expr = Make (struct
   let fresh_name =
     let counter = ref 0 in
     fun () ->
-      let var = "_ppx_metaquot_helper_var%d" ^ Int.to_string !counter in
+      let var = "_ppx_metaquot_helper_var%d" ^ string_of_int !counter in
       incr counter;
       var
 
@@ -177,7 +177,8 @@ module Expr = Make (struct
     | [] -> self#typed e type_name
     | _ :: _ ->
         let loc = { loc with loc_ghost = true } in
-        let open (val Ast_builder.make loc) in
+        let module Ast_builder_with_loc = (val Ast_builder.make loc) in
+        let open Ast_builder_with_loc in
         let var = fresh_name () in
         let var_expr = pexp_ident (Located.mk (Lident var)) in
         let field_name = Located.mk (Lident field_name) in
