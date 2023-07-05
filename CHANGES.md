@@ -1,3 +1,8 @@
+unreleased
+-------------------
+
+- Restore the "path_arg" functionality in the V3 API (#431, @ELLIOTTCABLE)
+
 0.30.0 (20/06/2023)
 -------------------
 

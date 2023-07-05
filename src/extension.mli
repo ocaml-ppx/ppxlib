@@ -197,6 +197,33 @@ module V3 : sig
     (payload, 'a, 'context list) Ast_pattern.t ->
     (ctxt:Expansion_context.Extension.t -> 'a) ->
     t
+
+  val declare_with_path_arg :
+    string ->
+    'context Context.t ->
+    (payload, 'a, 'context) Ast_pattern.t ->
+    (ctxt:Expansion_context.Extension.t ->
+    arg:Longident.t Asttypes.loc option ->
+    'a) ->
+    t
+  (** Same as [declare] except that the extension name takes an additional path
+      argument. The path is the part of the name that start with a capitalized
+      component. For instance in the following, the extension ["map"] would
+      receive the path argument [Foo.Bar]:
+
+      {[
+        let%map.Foo.Bar x = 1 in
+        ...
+      ]} *)
+
+  val declare_inline_with_path_arg :
+    string ->
+    'context Context.t ->
+    (payload, 'a, 'context list) Ast_pattern.t ->
+    (ctxt:Expansion_context.Extension.t ->
+    arg:Longident.t Asttypes.loc option ->
+    'a) ->
+    t
 end
 
 (**/**)

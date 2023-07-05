@@ -36,6 +36,8 @@ test/driver/attributes/test_510.ml
 test/driver/instrument/test.ml
 test/driver/non-compressible-suffix/test.ml
 test/driver/transformations/test.ml
+test/driver/transformations/test_412.ml
+test/driver/transformations/test_510.ml
 test/expand-header-and-footer/test.ml
 test/expansion_helpers/mangle/test.ml
 test/expansion_inside_payloads/test.ml

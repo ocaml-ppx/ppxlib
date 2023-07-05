@@ -36,7 +36,7 @@ type t =
   }
 [%%expect{|
 Line _, characters 0-36:
-Error (warning 22): Fields are not sorted!
+Error (warning 22 [preprocessor]): Fields are not sorted!
 |}]
 
 
@@ -58,16 +58,19 @@ let () =
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop]
 [%%expect{|
+
 - : string = "-\n"
 |}]
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc]
 [%%expect{|
+
 - : string = "Truc\n"
 |}]
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop.Truc.Bidule]
 [%%expect{|
+
 - : string = "Truc.Bidule\n"
 |}]
 
@@ -91,15 +94,18 @@ let () =
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt]
 [%%expect{|
+
 - : string = "-\n"
 |}]
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt.Truc]
 [%%expect{|
+
 - : string = "Truc\n"
 |}]
 
 let _ = Caml.Printf.sprintf "%s\n" [%plop_ctxt.Truc.Bidule]
 [%%expect{|
+
 - : string = "Truc.Bidule\n"
 |}]
