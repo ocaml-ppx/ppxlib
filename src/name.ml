@@ -44,10 +44,15 @@ module Pattern = struct
   let matches t matched = String.Set.mem matched t.dot_suffixes
 end
 
-let get_outer_namespace name =
+(* On the namespace "a.NAMESPACE", return the pair ("a", NAMESPACE) *)
+let split_outer_namespace name =
   match String.index_opt name '.' with
   | None -> None
-  | Some i -> Some (String.sub name ~pos:0 ~len:i)
+  | Some i ->
+      let n = String.length name in
+      let before_dot = String.sub name ~pos:0 ~len:i in
+      let after_dot = String.sub name ~pos:(i + 1) ~len:(n - i - 1) in
+      Some (before_dot, after_dot)
 
 module Allowlisted = struct
   (* Allow list the following attributes, as well as all their dot suffixes.
@@ -114,8 +119,45 @@ module Allowlisted = struct
 end
 
 module Reserved_namespaces = struct
-  let tbl : (string, unit) Hashtbl.t = Hashtbl.create 16
-  let reserve ns = Hashtbl.add_exn tbl ~key:ns ~data:()
+  type reserved = (string, sub_namespaces) Hashtbl.t
+  and sub_namespaces = All | Sub_namespaces of reserved
+
+  (* If [tbl] contains a mapping from "x" to [All], then "x" and all paths that
+   * start with "x." are reserved with respect to [tbl]
+   *
+   * If [tbl] contains a mapping from "x" to [Sub_namespaces tbl'], and P is
+   * reserved with respect to [tbl'], then all paths "x.P" are reserved with
+   * respect to [tbl].
+   *)
+  let create_reserved () : reserved = Hashtbl.create 16
+
+  let rec reserve ns tbl =
+    match split_outer_namespace ns with
+    | None -> Hashtbl.add_exn tbl ~key:ns ~data:All
+    | Some (outer_ns, rest_ns) -> (
+        match
+          Hashtbl.find_or_add tbl outer_ns ~default:(fun () ->
+              Sub_namespaces (create_reserved ()))
+        with
+        | Sub_namespaces rest_tbl -> reserve rest_ns rest_tbl
+        | All -> ())
+
+  let rec is_in_reserved_namespaces name tbl =
+    match split_outer_namespace name with
+    | Some (ns, rest) -> (
+        match Hashtbl.find_opt tbl ns with
+        | Some (Sub_namespaces rest_tbl) ->
+            is_in_reserved_namespaces rest rest_tbl
+        | Some All -> true
+        | None -> false)
+    | None -> (
+        match Hashtbl.find_opt tbl name with
+        | Some All -> true
+        | Some (Sub_namespaces _) | None -> false)
+
+  let tbl = create_reserved ()
+  let reserve ns = reserve ns tbl
+  let is_in_reserved_namespaces name = is_in_reserved_namespaces name tbl
   let () = reserve "merlin"
   let () = reserve "reason"
   let () = reserve "refmt" (* reason *)
@@ -123,11 +165,6 @@ module Reserved_namespaces = struct
   let () = reserve "res" (* rescript *)
   let () = reserve "metaocaml"
   let () = reserve "ocamlformat"
-
-  let is_in_reserved_namespaces name =
-    match get_outer_namespace name with
-    | Some ns -> Hashtbl.mem tbl ns
-    | None -> Hashtbl.mem tbl name
 
   let check_not_reserved ~kind name =
     let kind, list =
