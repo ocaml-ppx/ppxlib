@@ -1,3 +1,4 @@
+let default_allow_unused_code_warnings = false
 let perform_checks = false
 
 (* The checks on extensions are only to get better error messages
