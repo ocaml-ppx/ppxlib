@@ -152,3 +152,20 @@ let x = (42 [@baz.qux_not_proper_sub_namespace])
 Line _, characters 14-46:
 Error: Attribute `baz.qux_not_proper_sub_namespace' was silently dropped
 |}]
+
+(* You can reserve multiple subnamespaces under the same namespace *)
+
+let () = Reserved_namespaces.reserve "baz.qux2"
+
+let x = (42 [@baz.qux])
+let x = (42 [@baz.qux2])
+[%%expect{|
+val x : int = 42
+val x : int = 42
+|}]
+
+let x = (42 [@baz.qux3])
+[%%expect{|
+Line _, characters 14-22:
+Error: Attribute `baz.qux3' was silently dropped
+|}]
