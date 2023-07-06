@@ -59,6 +59,17 @@ let () =
 
 let keep_w60_impl () = !keep_w60_impl || Driver.pretty ()
 let keep_w60_intf () = !keep_w60_intf || Driver.pretty ()
+let allow_unused_code_warnings = ref Options.default_allow_unused_code_warnings
+
+let () =
+  Driver.add_arg "-deriving-allow-unused-code-warnings"
+    (Set allow_unused_code_warnings)
+    ~doc:" allow ppx derivers to enable unused code warnings";
+  Driver.add_arg "-deriving-disallow-unused-code-warnings"
+    (Clear allow_unused_code_warnings)
+    ~doc:" force ppx derivers to disable unused code warnings"
+
+let allow_unused_code_warnings () = !allow_unused_code_warnings
 
 module Args = struct
   include (
@@ -622,6 +633,9 @@ let wrap_str ~loc ~hide st =
 (* decide what to wrap a structure in, then call above [wrap_str] *)
 let wrap_str ~loc ~hide ~unused_code_warnings st =
   let loc = { loc with loc_ghost = true } in
+  let unused_code_warnings =
+    unused_code_warnings && allow_unused_code_warnings ()
+  in
   let warnings, st =
     if keep_w32_impl () || unused_code_warnings then ([], st)
     else if not !do_insert_unused_warning_attribute then
@@ -659,6 +673,9 @@ let wrap_sig ~loc ~hide st =
 (* decide what to wrap a signature in, then call above [wrap_sig] *)
 let wrap_sig ~loc ~hide ~unused_code_warnings sg =
   let loc = { loc with loc_ghost = true } in
+  let unused_code_warnings =
+    unused_code_warnings && allow_unused_code_warnings ()
+  in
   let warnings =
     if keep_w32_intf () || unused_code_warnings then [] else [ 32 ]
   in
