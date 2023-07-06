@@ -9,6 +9,8 @@ unreleased
 
 - Expose migration/copying/etc. functions for all AST types needed by `Pprintast` (#454, @antalsz)
 
+- Preserve quoted attributes on antiquotes in metaquot (#441, @ncik-roberts)
+
 0.30.0 (20/06/2023)
 -------------------
 
