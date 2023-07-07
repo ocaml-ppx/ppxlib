@@ -62,12 +62,9 @@ let keep_w60_intf () = !keep_w60_intf || Driver.pretty ()
 let allow_unused_code_warnings = ref Options.default_allow_unused_code_warnings
 
 let () =
-  Driver.add_arg "-deriving-allow-unused-code-warnings"
-    (Set allow_unused_code_warnings)
-    ~doc:" allow ppx derivers to enable unused code warnings";
-  Driver.add_arg "-deriving-disallow-unused-code-warnings"
-    (Clear allow_unused_code_warnings)
-    ~doc:" force ppx derivers to disable unused code warnings"
+  Driver.add_arg "-unused-code-warnings"
+    (Bool (( := ) allow_unused_code_warnings))
+    ~doc:"_ Allow ppx derivers to enable unused code warnings"
 
 let allow_unused_code_warnings () = !allow_unused_code_warnings
 
