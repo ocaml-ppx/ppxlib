@@ -1,14 +1,14 @@
 unreleased
 -------------------
 
+- Add `-unused-code-warnings` command-line flag. (#444, @ceastlund)
+
+- Add `?warning` flag to `Deriving.Generator.make`. (#440, @jacksonzou123 via @ceastlund)
+
 - Restore the "path_arg" functionality in the V3 API (#431, @ELLIOTTCABLE)
 
 0.30.0 (20/06/2023)
 -------------------
-
-- Add `-unused-code-warnings` command-line flag. (#444, @ceastlund)
-
-- Add `?warning` flag to `Deriving.Generator.make`. (#440, @jacksonzou123 via @ceastlund)
 
 - Adopt the OCaml Code of Conduct on the repo (#426, @pitag-ha)
 
