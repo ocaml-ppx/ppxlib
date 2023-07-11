@@ -1,8 +1,8 @@
 (executables
  (names whole_file_exception whole_file_extension_point
-   whole_file_located_error extender deriver)
+   whole_file_located_error extender deriver whole_file_multiple_errors)
  (libraries ppxlib))
 
 (cram
  (deps extender.exe whole_file_exception.exe whole_file_located_error.exe
-   deriver.exe whole_file_extension_point.exe))
+   deriver.exe whole_file_extension_point.exe whole_file_multiple_errors.exe))
