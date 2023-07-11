@@ -1,8 +1,3 @@
-Unreleased (11/07/2023)
------------------------
-
-- Multiple errors can be reported. (#446, @burnleydev1)
-
 0.30.0 (20/06/2023)
 -------------------
 
@@ -413,4 +408,3 @@ Unreleased (11/07/2023)
 -----
 
 Initial release.
-
