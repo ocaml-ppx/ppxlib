@@ -1,6 +1,7 @@
 unreleased
 -------------------
 
+- Multiple errors can be reported. (#446, @burnleydev1)
 - Driver: Add `-unused-code-warnings` command-line flag. (#444, @ceastlund)
 
 - Add `?warning` flag to `Deriving.Generator.make`. (#440, @jacksonzou123 via @ceastlund)
