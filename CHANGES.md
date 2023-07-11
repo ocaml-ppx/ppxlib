@@ -1,7 +1,7 @@
 unreleased
 -------------------
 
-- Multiple errors can be reported. (#446, @burnleydev1)
+- Multiple errors can be reported. (#447, @burnleydev1)
 
 - Driver: Add `-unused-code-warnings` command-line flag. (#444, @ceastlund)
 
