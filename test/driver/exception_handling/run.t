@@ -131,14 +131,14 @@ and the whole AST is prepended with an error extension node.
 Just one exception is raised when -embed-errors is not added.
   $ ./whole_file_multiple_errors.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: A located error in a whole file transform
+  Error: A third located error in a whole file transformations
   [1]
 
 When the argument `-embed-errors` is added, the exception is added to the existing errors and prepended to the ast.
   $ ./whole_file_multiple_errors.exe -embed-errors impl.ml
-  [%%ocaml.error "A third located error in a whole codes transformations"]
-  [%%ocaml.error "A second located error in a whole codes transformations"]
   [%%ocaml.error "A located error in a whole file transform"]
+  [%%ocaml.error "A second located error in a whole file transformations"]
+  [%%ocaml.error "A third located error in a whole file transformations"]
   type a = int
   type b = int[@@deriving deriver_raised_exception]
 
