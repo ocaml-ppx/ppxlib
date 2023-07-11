@@ -529,65 +529,72 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
 let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
     ~dropped_so_far ~hook ~expect_mismatch_handler ~input_name ~f_exception
     ~embed_errors x =
-  let exception
-    Wrapper of
-      t list
-      * label loc list
-      * (location * label) list
-      * exn
-      * Location.Error.t list
-  in
+  (* Define a custom exception to wrap the state of the transformation process
+     when an exception occurs *)
+
+  (* Get the list of AST transformations to apply *)
   let cts =
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
   in
-  let finish (x, _dropped, lint_errors, errors) =
+  (* call this function when the transformation is finished *)
+  let finish (x, _dropped, lint_errors, errors, new_errors) =
     ( x,
       List.map lint_errors ~f:(fun (loc, s) ->
           Common.attribute_of_warning loc s),
-      errors )
+      errors,
+      new_errors )
   in
-  try
-    let acc =
-      List.fold_left cts ~init:(x, [], [], [])
-        ~f:(fun (x, dropped, (lint_errors : _ list), errors) (ct : Transform.t)
-           ->
-          let input_name =
-            match input_name with
-            | Some input_name -> input_name
-            | None -> "_none_"
-          in
-          let ctxt =
-            Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
-          in
-          let lint_errors =
-            match lint_field ct with
-            | None -> lint_errors
-            | Some f -> (
-                try lint_errors @ f ctxt x
-                with exn when embed_errors ->
-                  raise @@ Wrapper (x, dropped, lint_errors, exn, errors))
-          in
-          match field ct with
-          | None -> (x, dropped, lint_errors, errors)
-          | Some f ->
-              let x, more_errors =
-                try f ctxt x
-                with exn when embed_errors ->
-                  raise @@ Wrapper (x, dropped, lint_errors, exn, errors)
-              in
-              let dropped =
-                if !debug_attribute_drop then (
-                  let new_dropped = dropped_so_far x in
-                  debug_dropped_attribute ct.name ~old_dropped:dropped
-                    ~new_dropped;
-                  new_dropped)
-                else []
-              in
-              (x, dropped, lint_errors, errors @ more_errors))
-    in
-    Ok (finish acc)
-  with Wrapper (x, dropped, lint_errors, exn, errors) ->
-    Error (finish (f_exception exn :: x, dropped, lint_errors, errors))
+
+  (* Attempt to apply all transformations *)
+  let acc =
+    List.fold_left cts ~init:(x, [], [], [], [])
+      ~f:(fun
+           (x, dropped, (lint_errors : _ list), errors, new_errors)
+           (ct : Transform.t)
+         ->
+        (* Get the input name *)
+        let input_name =
+          match input_name with
+          | Some input_name -> input_name
+          | None -> "_none_"
+        in
+        let ctxt =
+          Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
+        in
+        (* Apply the lint_error transformation *)
+        let lint_errors, new_errors =
+          match lint_field ct with
+          | None -> (lint_errors, new_errors)
+          | Some f -> (
+              try
+                (lint_errors @ f ctxt x, new_errors)
+                (* If an exception occurs, recover from the error *)
+              with exn when embed_errors ->
+                (lint_errors, errors @ new_errors)
+                (* raise @@ Wrapper (x, dropped, lint_errors, exn, errors)) *))
+        in
+        match field ct with
+        | None -> (x, dropped, lint_errors, errors, new_errors)
+        | Some f ->
+            let (x, more_errors), new_errors =
+              try
+                (f ctxt x, new_errors)
+                (* If an exception, recover from the erro *)
+              with exn when embed_errors -> ((x, []), errors @ new_errors)
+            in
+            let dropped =
+              if !debug_attribute_drop then (
+                let new_dropped = dropped_so_far x in
+                debug_dropped_attribute ct.name ~old_dropped:dropped
+                  ~new_dropped;
+                new_dropped)
+              else []
+            in
+            (x, dropped, lint_errors, errors @ more_errors, errors @ new_errors))
+  in
+  (* If there were no errors, return an Ok value *)
+  Ok (finish acc)
+(* If an exception was raised, recover from the exception*)
 
 (*$*)
 
@@ -712,7 +719,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
   with
   | Error (st, lint_errors, errors) ->
       Error (st |> lint lint_errors |> with_errors errors)
-  | Ok (st, lint_errors, errors) ->
+  | Ok (st, lint_errors, errors, _new_errors) ->
       Ok (st |> lint lint_errors |> cookies_and_check |> with_errors errors)
 
 let map_structure st =
@@ -792,7 +799,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
   with
   | Error (sg, lint_errors, errors) ->
       Error (sg |> lint lint_errors |> with_errors errors)
-  | Ok (sg, lint_errors, errors) ->
+  | Ok (sg, lint_errors, errors, _new_errors) ->
       Ok (sg |> lint lint_errors |> cookies_and_check |> with_errors errors)
 
 let map_signature sg =
