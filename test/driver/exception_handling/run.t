@@ -124,3 +124,21 @@ and the whole AST is prepended with an error extension node.
   $ ./whole_file_exception.exe -embed-errors impl.ml
   Fatal error: exception Failure("An exception in a whole file transform")
   [2]
+
+
+4. Reporting Multiple Exceptions
+
+Just one exception is raised when -embed-errors is not added.
+  $ ./whole_file_multiple_errors.exe impl.ml
+  File "impl.ml", line 1, characters 0-12:
+  Error: A located error in a whole file transform
+  [1]
+
+When the argument `-embed-errors` is added, the exception is added to the existing errors and prepended to the ast.
+  $ ./whole_file_multiple_errors.exe -embed-errors impl.ml
+  [%%ocaml.error "B third located error in a whole codes transformations"]
+  [%%ocaml.error "A second located error in a whole codes transformations"]
+  [%%ocaml.error "A located error in a whole file transform"]
+  type a = int
+  type b = int[@@deriving deriver_raised_exception]
+

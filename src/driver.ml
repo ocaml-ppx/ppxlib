@@ -526,9 +526,8 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
   in
   linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 
-let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
-    ~dropped_so_far ~hook ~expect_mismatch_handler ~input_name ~f_exception
-    ~embed_errors x =
+let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
+    ~hook ~expect_mismatch_handler ~input_name ~embed_errors ast =
   (* Define a custom exception to wrap the state of the transformation process
      when an exception occurs *)
 
@@ -537,20 +536,23 @@ let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
   in
   (* call this function when the transformation is finished *)
-  let finish (x, _dropped, lint_errors, errors, new_errors) =
-    ( x,
+  let finish (ast, _dropped, lint_errors, errors) =
+    ( ast,
       List.map lint_errors ~f:(fun (loc, s) ->
           Common.attribute_of_warning loc s),
-      errors,
-      new_errors )
+      errors )
   in
 
   (* Attempt to apply all transformations *)
+  let exn_to_error exn =
+    match Location.Error.of_exn exn with
+    | None -> raise exn
+    | Some error -> error
+  in
+
   let acc =
-    List.fold_left cts ~init:(x, [], [], [], [])
-      ~f:(fun
-           (x, dropped, (lint_errors : _ list), errors, new_errors)
-           (ct : Transform.t)
+    List.fold_left cts ~init:(ast, [], [], [])
+      ~f:(fun (ast, dropped, (lint_errors : _ list), errors) (ct : Transform.t)
          ->
         (* Get the input name *)
         let input_name =
@@ -561,36 +563,38 @@ let apply_transforms (type t) ~tool_name ~file_path ~field ~lint_field
         let ctxt =
           Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
         in
+
         (* Apply the lint_error transformation *)
-        let lint_errors, new_errors =
+        let lint_errors, errors =
           match lint_field ct with
-          | None -> (lint_errors, new_errors)
+          | None -> (lint_errors, errors)
           | Some f -> (
               try
-                (lint_errors @ f ctxt x, new_errors)
+                (lint_errors @ f ctxt ast, errors)
                 (* If an exception occurs, recover from the error *)
               with exn when embed_errors ->
-                (lint_errors, errors @ new_errors)
-                (* raise @@ Wrapper (x, dropped, lint_errors, exn, errors)) *))
+                (lint_errors, exn_to_error exn :: errors))
+          (* raise @@ Wrapper (x, dropped, lint_errors, exn, errors)) *)
         in
         match field ct with
-        | None -> (x, dropped, lint_errors, errors, new_errors)
+        | None -> (ast, dropped, lint_errors, errors)
         | Some f ->
-            let (x, more_errors), new_errors =
+            let (ast, more_errors), errors =
               try
-                (f ctxt x, new_errors)
+                (f ctxt ast, errors)
                 (* If an exception, recover from the erro *)
-              with exn when embed_errors -> ((x, []), errors @ new_errors)
+              with exn when embed_errors ->
+                ((ast, []), exn_to_error exn :: errors)
             in
             let dropped =
               if !debug_attribute_drop then (
-                let new_dropped = dropped_so_far x in
+                let new_dropped = dropped_so_far ast in
                 debug_dropped_attribute ct.name ~old_dropped:dropped
                   ~new_dropped;
                 new_dropped)
               else []
             in
-            (x, dropped, lint_errors, errors @ more_errors, errors @ new_errors))
+            (ast, dropped, lint_errors, errors @ more_errors))
   in
   (* If there were no errors, return an Ok value *)
   Ok (finish acc)
@@ -603,22 +607,12 @@ let error_to_str_extension error =
   let ext = Location.Error.to_extension error in
   Ast_builder.Default.pstr_extension ~loc ext []
 
-let exn_to_str_extension exn =
-  match Location.Error.of_exn exn with
-  | None -> raise exn
-  | Some error -> error_to_str_extension error
-
 (*$ str_to_sig _last_text_block *)
 
 let error_to_sig_extension error =
   let loc = Location.none in
   let ext = Location.Error.to_extension error in
   Ast_builder.Default.psig_extension ~loc ext []
-
-let exn_to_sig_extension exn =
-  match Location.Error.of_exn exn with
-  | None -> raise exn
-  | Some error -> error_to_sig_extension error
 
 (*$*)
 
@@ -713,13 +707,11 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
-      ~expect_mismatch_handler ~input_name
-      ~f_exception:(fun exn -> exn_to_str_extension exn)
-      ~embed_errors
+      ~expect_mismatch_handler ~input_name ~embed_errors
   with
   | Error (st, lint_errors, errors) ->
       Error (st |> lint lint_errors |> with_errors errors)
-  | Ok (st, lint_errors, errors, _new_errors) ->
+  | Ok (st, lint_errors, errors) ->
       Ok (st |> lint lint_errors |> cookies_and_check |> with_errors errors)
 
 let map_structure st =
@@ -793,13 +785,11 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
-      ~expect_mismatch_handler ~input_name
-      ~f_exception:(fun exn -> exn_to_sig_extension exn)
-      ~embed_errors
+      ~expect_mismatch_handler ~input_name ~embed_errors
   with
   | Error (sg, lint_errors, errors) ->
       Error (sg |> lint lint_errors |> with_errors errors)
-  | Ok (sg, lint_errors, errors, _new_errors) ->
+  | Ok (sg, lint_errors, errors) ->
       Ok (sg |> lint lint_errors |> cookies_and_check |> with_errors errors)
 
 let map_signature sg =
