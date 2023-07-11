@@ -9,6 +9,8 @@ unreleased
 
 - Replace `Caml` with `Stdlib`. (#427, @ceastlund)
 
+- Multiple errors can be reported. (#446, @burnleydev1)
+
 0.31.0 (2023-09-21)
 -------------------
 
