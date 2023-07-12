@@ -9,7 +9,9 @@ unreleased
 
 - Replace `Caml` with `Stdlib`. (#427, @ceastlund)
 
-- Multiple errors can be reported. (#446, @burnleydev1)
+- Multiple errors can be reported. (#447, @burnleydev1)
+
+- Change the code in `apply_transforms` to complete the AST traversal even after encountering errors, and return all errors encountered. (#447, @burnleydev1)
 
 0.31.0 (2023-09-21)
 -------------------
