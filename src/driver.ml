@@ -528,14 +528,9 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
     ~hook ~expect_mismatch_handler ~input_name ~embed_errors ast =
-  (* Define a custom exception to wrap the state of the transformation process
-     when an exception occurs *)
-
-  (* Get the list of AST transformations to apply *)
   let cts =
     get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
   in
-  (* call this function when the transformation is finished *)
   let finish (ast, _dropped, lint_errors, errors) =
     ( ast,
       List.map lint_errors ~f:(fun (loc, s) ->
@@ -543,7 +538,6 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
       errors )
   in
 
-  (* Attempt to apply all transformations *)
   let exn_to_error exn =
     match Location.Error.of_exn exn with
     | None -> raise exn
@@ -554,7 +548,6 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
     List.fold_left cts ~init:(ast, [], [], [])
       ~f:(fun (ast, dropped, (lint_errors : _ list), errors) (ct : Transform.t)
          ->
-        (* Get the input name *)
         let input_name =
           match input_name with
           | Some input_name -> input_name
@@ -564,25 +557,19 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
           Expansion_context.Base.top_level ~tool_name ~file_path ~input_name
         in
 
-        (* Apply the lint_error transformation *)
         let lint_errors, errors =
           match lint_field ct with
           | None -> (lint_errors, errors)
           | Some f -> (
-              try
-                (lint_errors @ f ctxt ast, errors)
-                (* If an exception occurs, recover from the error *)
+              try (lint_errors @ f ctxt ast, errors)
               with exn when embed_errors ->
                 (lint_errors, exn_to_error exn :: errors))
-          (* raise @@ Wrapper (x, dropped, lint_errors, exn, errors)) *)
         in
         match field ct with
         | None -> (ast, dropped, lint_errors, errors)
         | Some f ->
             let (ast, more_errors), errors =
-              try
-                (f ctxt ast, errors)
-                (* If an exception, recover from the erro *)
+              try (f ctxt ast, errors)
               with exn when embed_errors ->
                 ((ast, []), exn_to_error exn :: errors)
             in
@@ -596,9 +583,7 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
             in
             (ast, dropped, lint_errors, errors @ more_errors))
   in
-  (* If there were no errors, return an Ok value *)
-  Ok (finish acc)
-(* If an exception was raised, recover from the exception*)
+  finish acc
 
 (*$*)
 
@@ -709,10 +694,8 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
       ~expect_mismatch_handler ~input_name ~embed_errors
   with
-  | Error (st, lint_errors, errors) ->
-      Error (st |> lint lint_errors |> with_errors errors)
-  | Ok (st, lint_errors, errors) ->
-      Ok (st |> lint lint_errors |> cookies_and_check |> with_errors errors)
+  | st, lint_errors, errors ->
+      st |> lint lint_errors |> cookies_and_check |> with_errors errors
 
 let map_structure st =
   match
@@ -722,7 +705,7 @@ let map_structure st =
       ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
       ~input_name:None ~embed_errors:false
   with
-  | Ok ast | Error ast -> ast
+  | ast -> ast
 
 (*$ str_to_sig _last_text_block *)
 
@@ -787,10 +770,8 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
       ~expect_mismatch_handler ~input_name ~embed_errors
   with
-  | Error (sg, lint_errors, errors) ->
-      Error (sg |> lint lint_errors |> with_errors errors)
-  | Ok (sg, lint_errors, errors) ->
-      Ok (sg |> lint lint_errors |> cookies_and_check |> with_errors errors)
+  | sg, lint_errors, errors ->
+      sg |> lint lint_errors |> cookies_and_check |> with_errors errors
 
 let map_signature sg =
   match
@@ -800,7 +781,7 @@ let map_signature sg =
       ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
       ~input_name:None ~embed_errors:false
   with
-  | Ok ast | Error ast -> ast
+  | ast -> ast
 
 (*$*)
 
@@ -1063,7 +1044,7 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
           map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
             ~input_name:(Some input_name) ~embed_errors
         with
-        | Error ast | Ok ast -> ast
+        | ast -> ast
       in
       Intf_or_impl.Intf ast
   | Impl x ->
@@ -1072,7 +1053,7 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
           map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
             ~input_name:(Some input_name) ~embed_errors
         with
-        | Error ast | Ok ast -> ast
+        | ast -> ast
       in
       Intf_or_impl.Impl ast
 

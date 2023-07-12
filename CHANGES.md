@@ -1,7 +1,7 @@
 unreleased
 -------------------
 
-- Multiple errors can be reported. (#447, @burnleydev1)
+- Change the code in `apply_transforms` to complete the AST traversal even after encountering errors, and return all errors encountered. (#447, @burnleydev1)
 
 - Driver: Add `-unused-code-warnings` command-line flag. (#444, @ceastlund)
 
