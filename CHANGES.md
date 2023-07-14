@@ -9,9 +9,9 @@ unreleased
 
 - Replace `Caml` with `Stdlib`. (#427, @ceastlund)
 
-- Multiple errors can be reported. (#447, @burnleydev1)
-
-- Change the code in `apply_transforms` to complete the AST traversal even after encountering errors, and return all errors encountered. (#447, @burnleydev1)
+- When a transformation raises, the last valid AST is used, as input to the upcoming 
+  transformations. All errors are collected. At the end, the errors are appended, as 
+  extension nodes, at its beginning (#447, @burnleydev1)
 
 0.31.0 (2023-09-21)
 -------------------
