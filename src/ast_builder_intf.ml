@@ -50,8 +50,8 @@ module type Additional_helpers = sig
     Asttypes.rec_flag ->
     value_binding list ->
     structure_item list
-  (** [pstr_value_list ~loc rf vbs] = [pstr_value ~loc rf vbs] if [vbs <> \[\]],
-      [\[\]] otherwise. *)
+  (** [pstr_value_list ~loc rf vbs] = [pstr_value ~loc rf vbs] if [vbs <> []],
+      [[]] otherwise. *)
 
   val nonrec_type_declaration :
     (name:string Loc.t ->
@@ -62,8 +62,8 @@ module type Additional_helpers = sig
     manifest:core_type option ->
     type_declaration)
     with_loc
-    [@@deprecated
-      "[since 2016-10] use Nonrecursive on the P(str|sig)_type instead"]
+  [@@deprecated
+    "[since 2016-10] use Nonrecursive on the P(str|sig)_type instead"]
 
   val unapplied_type_constr_conv :
     (Longident.t Loc.t -> f:(string -> string) -> expression) with_loc

@@ -492,8 +492,7 @@ let collect_unused_attributes_errors =
             let errors =
               List.map attrs
                 ~f:(fun
-                     ({ attr_name = name; attr_payload = payload; _ } as attr)
-                   ->
+                    ({ attr_name = name; attr_payload = payload; _ } as attr) ->
                   let collected_errors =
                     self#payload payload []
                     @ collect_attribute_errors registrar (On_item context) name
@@ -677,8 +676,8 @@ let check_unused =
         | [] -> node
         | _ ->
             List.iter attrs
-              ~f:(fun ({ attr_name = name; attr_payload = payload; _ } as attr)
-                 ->
+              ~f:(fun
+                  ({ attr_name = name; attr_payload = payload; _ } as attr) ->
                 self#payload payload;
                 check_attribute registrar (On_item context) name;
                 (* If we allow the attribute to pass through, mark it as seen *)
