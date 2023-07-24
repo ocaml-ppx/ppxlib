@@ -695,7 +695,8 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~expect_mismatch_handler ~input_name ~embed_errors
   with
   | st, lint_errors, errors ->
-      st |> lint lint_errors |> cookies_and_check |> with_errors errors
+      st |> lint lint_errors |> cookies_and_check
+      |> with_errors (List.rev errors)
 
 let map_structure st =
   match
@@ -771,7 +772,8 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~expect_mismatch_handler ~input_name ~embed_errors
   with
   | sg, lint_errors, errors ->
-      sg |> lint lint_errors |> cookies_and_check |> with_errors errors
+      sg |> lint lint_errors |> cookies_and_check
+      |> with_errors (List.rev errors)
 
 let map_signature sg =
   match
