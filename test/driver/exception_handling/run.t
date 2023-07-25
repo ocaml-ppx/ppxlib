@@ -128,17 +128,20 @@ and the whole AST is prepended with an error extension node.
 
 4. Reporting Multiple Exceptions
 
-Just one exception is raised when -embed-errors is not added.
+When the `-embed-error` flag is not set, exceptions stop the rewriting process. Therefore, only the first exception is reported to the user
   $ ./whole_file_multiple_errors.exe impl.ml
   File "impl.ml", line 1, characters 0-12:
-  Error: SHOULD APPEAR FIRST
+  Error: Raising a located exception during the first instrumentation phase
   [1]
 
-When the argument `-embed-errors` is added, the exception is added to the existing errors and prepended to the ast.
+When the `-embed-error` flag is set, located exceptions thrown during the rewriting process are caught, and collected. The "throwing transformations" are ignored. After all transformations have been applied, the collected errors are appended at the beginning of the AST.
   $ ./whole_file_multiple_errors.exe -embed-errors impl.ml
-  [%%ocaml.error "SHOULD APPEAR FIRST"]
-  [%%ocaml.error "A second located error in a whole file transform"]
-  [%%ocaml.error "SHOULD APPEAR LAST"]
+  [%%ocaml.error
+    "Raising a located exception during the first instrumentation phase"]
+  [%%ocaml.error
+    "Raising a located exception during the Global transformation phase"]
+  [%%ocaml.error
+    "Raising a located exception during the Last instrumentation phase"]
   type a = int
   type b = int[@@deriving deriver_raised_exception]
 
