@@ -687,16 +687,14 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
     with_errors errors st
   in
   let file_path = get_default_path_str st in
-  match
+  let st, lint_errors, errors =
     apply_transforms st ~tool_name ~file_path
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
       ~expect_mismatch_handler ~input_name ~embed_errors
-  with
-  | st, lint_errors, errors ->
-      st |> lint lint_errors |> cookies_and_check
-      |> with_errors (List.rev errors)
+  in
+  st |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
 
 let map_structure st =
   match
@@ -764,16 +762,14 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
     with_errors errors sg
   in
   let file_path = get_default_path_sig sg in
-  match
+  let sg, lint_errors, errors =
     apply_transforms sg ~tool_name ~file_path
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
       ~expect_mismatch_handler ~input_name ~embed_errors
-  with
-  | sg, lint_errors, errors ->
-      sg |> lint lint_errors |> cookies_and_check
-      |> with_errors (List.rev errors)
+  in
+  sg |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
 
 let map_signature sg =
   match

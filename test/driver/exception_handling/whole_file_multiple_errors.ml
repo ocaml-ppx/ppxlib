@@ -8,7 +8,8 @@ let () =
         | [] -> Location.in_file (Expansion_context.Base.input_name ctxt)
         | hd :: _ -> hd.pstr_loc
       in
-      Location.raise_errorf ~loc "SHOULD APPEAR FIRST"
+      Location.raise_errorf ~loc
+        "Raising a located exception during the first instrumentation phase"
     in
     Driver.Instrument.V2.make ~position:Driver.Instrument.Before transformation
   in
@@ -24,7 +25,7 @@ let () =
           | hd :: _ -> hd.pstr_loc
         in
         Location.raise_errorf ~loc
-          "A second located error in a whole file transform")
+          "Raising a located exception during the Global transformation phase")
       "b_raise_exc_second")
 
 let () =
@@ -35,7 +36,8 @@ let () =
         | [] -> Location.in_file (Expansion_context.Base.input_name ctxt)
         | hd :: _ -> hd.pstr_loc
       in
-      Location.raise_errorf ~loc "SHOULD APPEAR LAST"
+      Location.raise_errorf ~loc
+        "Raising a located exception during the Last instrumentation phase"
     in
     Driver.Instrument.V2.make ~position:Driver.Instrument.After transformation
   in
