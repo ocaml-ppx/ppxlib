@@ -2,6 +2,10 @@ open Stdlib0
 module From = Ast_502
 module To = Ast_501
 
+let migration_error loc missing_feature =
+  Location.raise_errorf ~loc
+    "migration error: %s is not supported before OCaml 5.02" missing_feature
+
 let rec copy_toplevel_phrase :
     Ast_502.Parsetree.toplevel_phrase -> Ast_501.Parsetree.toplevel_phrase =
   function
@@ -68,14 +72,74 @@ and copy_expression_desc :
   | Ast_502.Parsetree.Pexp_let (x0, x1, x2) ->
       Ast_501.Parsetree.Pexp_let
         (copy_rec_flag x0, List.map copy_value_binding x1, copy_expression x2)
-  | Ast_502.Parsetree.Pexp_function x0 ->
-      Ast_501.Parsetree.Pexp_function (List.map copy_case x0)
-  | Ast_502.Parsetree.Pexp_fun (x0, x1, x2, x3) ->
-      Ast_501.Parsetree.Pexp_fun
-        ( copy_arg_label x0,
-          Option.map copy_expression x1,
-          copy_pattern x2,
-          copy_expression x3 )
+  | Ast_502.Parsetree.Pexp_function (params, tconstraint, body) ->
+      let expr =
+        match body with
+        | Pfunction_body expr -> copy_expression expr
+        | Pfunction_cases (cases, loc, attrs) ->
+            {
+              Ast_501.Parsetree.pexp_desc =
+                Ast_501.Parsetree.Pexp_function (List.map copy_case cases);
+              pexp_loc = copy_location loc;
+              pexp_loc_stack = [];
+              pexp_attributes = copy_attributes attrs;
+            }
+      in
+      let expr =
+        match tconstraint with
+        | None -> expr
+        | Some (Pconstraint c) ->
+            {
+              Ast_501.Parsetree.pexp_desc =
+                Ast_501.Parsetree.Pexp_constraint (expr, copy_core_type c);
+              pexp_loc = expr.pexp_loc;
+              pexp_loc_stack = [];
+              pexp_attributes = [];
+            }
+        | Some (Pcoerce (c1, c2)) ->
+            let c1 =
+              match c1 with None -> None | Some c1 -> Some (copy_core_type c1)
+            in
+            {
+              Ast_501.Parsetree.pexp_desc =
+                Ast_501.Parsetree.Pexp_coerce (expr, c1, copy_core_type c2);
+              pexp_loc = expr.pexp_loc;
+              pexp_loc_stack = [];
+              pexp_attributes = [];
+            }
+      in
+      let expr =
+        List.fold_right
+          (fun param expr ->
+            match param with
+            | Ast_502.Parsetree.Pparam_val (lbl, exp0, p) ->
+                let pexp_desc =
+                  Ast_501.Parsetree.Pexp_fun
+                    ( copy_arg_label lbl,
+                      Option.map copy_expression exp0,
+                      copy_pattern p,
+                      expr )
+                in
+                {
+                  Ast_501.Parsetree.pexp_desc;
+                  pexp_loc = expr.pexp_loc;
+                  pexp_loc_stack = [];
+                  pexp_attributes = [];
+                }
+            | Pparam_newtype (x, loc) ->
+                let pexp_desc =
+                  Ast_501.Parsetree.Pexp_newtype (copy_loc (fun x -> x) x, expr)
+                in
+                {
+                  Ast_501.Parsetree.pexp_desc;
+                  pexp_loc = loc;
+                  pexp_loc_stack = [];
+                  pexp_attributes = [];
+                })
+          params expr
+      in
+      expr.pexp_desc
+      (* Ast_501.Parsetree.Pexp_function (List.map copy_case x0) *)
   | Ast_502.Parsetree.Pexp_apply (x0, x1) ->
       Ast_501.Parsetree.Pexp_apply
         ( copy_expression x0,
@@ -325,7 +389,7 @@ and copy_core_type : Ast_502.Parsetree.core_type -> Ast_501.Parsetree.core_type
        Ast_502.Parsetree.ptyp_attributes;
      } ->
   {
-    Ast_501.Parsetree.ptyp_desc = copy_core_type_desc ptyp_desc;
+    Ast_501.Parsetree.ptyp_desc = copy_core_type_desc ptyp_loc ptyp_desc;
     Ast_501.Parsetree.ptyp_loc = copy_location ptyp_loc;
     Ast_501.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
     Ast_501.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
@@ -335,7 +399,7 @@ and copy_location_stack :
     Ast_502.Parsetree.location_stack -> Ast_501.Parsetree.location_stack =
  fun x -> List.map copy_location x
 
-and copy_core_type_desc :
+and copy_core_type_desc loc :
     Ast_502.Parsetree.core_type_desc -> Ast_501.Parsetree.core_type_desc =
   function
   | Ast_502.Parsetree.Ptyp_any -> Ast_501.Parsetree.Ptyp_any
@@ -368,6 +432,8 @@ and copy_core_type_desc :
       Ast_501.Parsetree.Ptyp_package (copy_package_type x0)
   | Ast_502.Parsetree.Ptyp_extension x0 ->
       Ast_501.Parsetree.Ptyp_extension (copy_extension x0)
+  | Ast_502.Parsetree.Ptyp_open (x0, x1) ->
+      migration_error loc "module open in types"
 
 and copy_package_type :
     Ast_502.Parsetree.package_type -> Ast_501.Parsetree.package_type =

@@ -51,14 +51,15 @@ and copy_expression :
        Ast_501.Parsetree.pexp_loc_stack;
        Ast_501.Parsetree.pexp_attributes;
      } ->
+  let pexp_loc = copy_location pexp_loc in
   {
-    Ast_502.Parsetree.pexp_desc = copy_expression_desc pexp_desc;
-    Ast_502.Parsetree.pexp_loc = copy_location pexp_loc;
+    Ast_502.Parsetree.pexp_desc = copy_expression_desc pexp_loc pexp_desc;
+    Ast_502.Parsetree.pexp_loc;
     Ast_502.Parsetree.pexp_loc_stack = copy_location_stack pexp_loc_stack;
     Ast_502.Parsetree.pexp_attributes = copy_attributes pexp_attributes;
   }
 
-and copy_expression_desc :
+and copy_expression_desc loc :
     Ast_501.Parsetree.expression_desc -> Ast_502.Parsetree.expression_desc =
   function
   | Ast_501.Parsetree.Pexp_ident x0 ->
@@ -69,13 +70,25 @@ and copy_expression_desc :
       Ast_502.Parsetree.Pexp_let
         (copy_rec_flag x0, List.map copy_value_binding x1, copy_expression x2)
   | Ast_501.Parsetree.Pexp_function x0 ->
-      Ast_502.Parsetree.Pexp_function (List.map copy_case x0)
-  | Ast_501.Parsetree.Pexp_fun (x0, x1, x2, x3) ->
-      Ast_502.Parsetree.Pexp_fun
-        ( copy_arg_label x0,
-          Option.map copy_expression x1,
-          copy_pattern x2,
-          copy_expression x3 )
+      Ast_502.Parsetree.Pexp_function
+        ( [],
+          None,
+          Ast_502.Parsetree.Pfunction_cases (List.map copy_case x0, loc, []) )
+  | Ast_501.Parsetree.Pexp_fun (arg_label, opt_expr, pat, expr) ->
+      Ast_502.Parsetree.Pexp_function
+        ( [
+            Pparam_val
+              ( copy_arg_label arg_label,
+                Option.map copy_expression opt_expr,
+                copy_pattern pat );
+          ],
+          None,
+          Ast_502.Parsetree.Pfunction_body (copy_expression expr) )
+      (* Ast_502.Parsetree.Pexp_fun *)
+      (*   ( copy_arg_label x0, *)
+      (*     Option.map copy_expression x1, *)
+      (*     copy_pattern x2, *)
+      (*     copy_expression x3 ) *)
   | Ast_501.Parsetree.Pexp_apply (x0, x1) ->
       Ast_502.Parsetree.Pexp_apply
         ( copy_expression x0,
