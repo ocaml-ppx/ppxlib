@@ -71,23 +71,20 @@ displaying type, jumping to definition, or showing the list of errors.
 
 {2 Embedding the Errors in the AST}
 
-A common way to report an error is to throw an exception. However, this method
-interrupts the execution flow of the [ppxlib] driver and leaves later PPXs
-unexpanded when handing the AST over to Merlin.
-
-Instead, it is better to always return a valid AST, as complete as possible, but
-with "error extension nodes" at every place where successful code generation was
+A common way to report an error is to throw an exception. With this mechanism, when an exception is encountered, the raising rewriter is ignored, the exception is converted into an error by ppxlib, and added to a list of errors, the previous valid AST is used to continue the rewriting process. At the end of the rewriting process, the errors collected are appended at the beginning of the resulting AST. In this mechanism, all the subsequent PPXs are processed before handing the AST over to Merlin.
+However, this mechanism has some limitations:
+- when an exception is raised, and it can not report multiple errors in a single transformation. 
+- partial code generation since nothing is kept in the transformation when an exception is raised by the rewriter.
+ 
+A solution to these limitations is to embed the errors in the AST. 
+Embedding the Errors in the AST does this by placing "error extension nodes" at every place where successful code generation was
 impossible. Error extension nodes are special extension nodes [[%ocaml.error
 error_message]] that can be embedded into a valid AST and are interpreted
 later as errors, e.g., by the compiler or Merlin. As all extension nodes,
 they can be put {{:https://ocaml.org/manual/extensionnodes.html}at many places
 in the AST} to replace structure items, expressions, or patterns, for example.
 
-So whenever you're in doubt whether to throw an exception or if to embed the error as
-an error extension node when writing a PPX rewriter,
-embed the error is the way to go! And whenever you're in doubt about where
-exactly to embed the error inside the AST, a good ground rule is: as deep in
-the AST as possible.
+
 
 For instance, suppose a rewriter is supposed to define a new record type, but
 there is an error in one field’s type generation. In order to have
