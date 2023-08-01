@@ -84,8 +84,6 @@ later as errors, e.g., by the compiler or Merlin. As all extension nodes,
 they can be put {{:https://ocaml.org/manual/extensionnodes.html}at many places
 in the AST} to replace structure items, expressions, or patterns, for example.
 
-
-
 For instance, suppose a rewriter is supposed to define a new record type, but
 there is an error in one field’s type generation. In order to have
 the most complete AST as output, the rewriter can still define the type and all
@@ -199,10 +197,7 @@ If such an exception isn't caught, the PPX driver will return an error code,
 and the exception will be pretty-printed, including the location (that's the
 case when Dune calls the driver). When the driver is spawned with the
 [-embed-errors] or [-as-ppx] flags (that's the case when Merlin calls the driver), 
-the driver will look for located error. If it catches one, it will stop
-its rewriting chain at this point and output an AST consisting of the
-located error followed by the last valid AST: the one passed to the raising
-rewriter.
+the driver will look for located error. If it catches one, it will ignore the raising transformation, and conitnue rewriting from previous valid AST, it will continue this until the rewriting process is finished. At the end of the rewriting process, the errors collected are appended at the beginning of the resulting AST.
 
 Even more in context-free rewriters, raising should be avoided in favour of
 outputting a single error node when finer grained reporting is not needed or
