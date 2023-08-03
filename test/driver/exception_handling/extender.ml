@@ -40,8 +40,11 @@ let raise2_located_error_extension =
 let rule1 = Ppxlib.Context_free.Rule.extension extension_point_extension
 let rule2 = Ppxlib.Context_free.Rule.extension raise_exception_extension
 let rule3 = Ppxlib.Context_free.Rule.extension raise_located_error_extension
+let rule4 = Ppxlib.Context_free.Rule.extension raise2_located_error_extension
 
 let () =
-  Driver.register_transformation ~rules:[ rule1; rule2; rule3 ] "gen_errors"
+  Driver.register_transformation
+    ~rules:[ rule1; rule2; rule3; rule4 ]
+    "gen_errors"
 
 let () = Driver.standalone ()

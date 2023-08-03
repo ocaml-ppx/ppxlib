@@ -48,6 +48,7 @@ caught, so no AST is produced.
   $ export OCAML_ERROR_STYLE=short
   $ ./extender.exe impl.ml
   [%%ocaml.error "A raised located error"]
+  [%%ocaml.error "A second raised located error"]
   let x = 1 + 1.
   let _ = [%gen_raise_located_error ]
   let _ = [%gen2_raise_located_error ]
@@ -80,6 +81,7 @@ and the whole AST is prepended with an error extension node.
   $ echo "let _ = [%gen2_raise_located_error]" >> impl.ml
   $ ./extender.exe -embed-errors impl.ml
   [%%ocaml.error "A raised located error"]
+  [%%ocaml.error "A second raised located error"]
   let x = 1 + 1.
   let _ = [%gen_raise_located_error ]
   let _ = [%gen2_raise_located_error ]
