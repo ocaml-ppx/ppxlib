@@ -197,6 +197,11 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
+let exn_to_error exn =
+  match Location.Error.of_exn exn with None -> raise exn | Some error -> error
+
+let errors = []
+
 let rec map_node_rec context ts super_call loc base_ctxt x =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
@@ -204,8 +209,10 @@ let rec map_node_rec context ts super_call loc base_ctxt x =
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      E.For_context.convert_res ts ~ctxt ext
-      |> With_errors.of_result ~default:None
+      (try
+         E.For_context.convert_res ts ~ctxt ext
+         |> With_errors.of_result ~default:None
+       with exn -> (None, exn_to_error exn :: errors))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
@@ -221,8 +228,10 @@ let map_node context ts super_call loc base_ctxt x ~hook =
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      E.For_context.convert_res ts ~ctxt ext
-      |> With_errors.of_result ~default:None
+      (try
+         E.For_context.convert_res ts ~ctxt ext
+         |> With_errors.of_result ~default:None
+       with exn -> (None, exn_to_error exn :: errors))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
@@ -252,8 +261,10 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
             Expansion_context.Extension.make ~extension_point_loc
               ~base:base_ctxt ()
           in
-          E.For_context.convert_inline_res ts ~ctxt ext
-          |> With_errors.of_result ~default:None
+          (try
+             E.For_context.convert_inline_res ts ~ctxt ext
+             |> With_errors.of_result ~default:None
+           with exn -> (None, exn_to_error exn :: errors))
           >>= function
           | None ->
               super_call base_ctxt x >>= fun x ->
