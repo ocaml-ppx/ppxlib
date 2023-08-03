@@ -77,10 +77,14 @@ and copy_expression_desc loc :
   | Ast_501.Parsetree.Pexp_fun (arg_label, opt_expr, pat, expr) ->
       Ast_502.Parsetree.Pexp_function
         ( [
-            Pparam_val
-              ( copy_arg_label arg_label,
-                Option.map copy_expression opt_expr,
-                copy_pattern pat );
+            {
+              pparam_desc =
+                Pparam_val
+                  ( copy_arg_label arg_label,
+                    Option.map copy_expression opt_expr,
+                    copy_pattern pat );
+              pparam_loc = loc;
+            };
           ],
           None,
           Ast_502.Parsetree.Pfunction_body (copy_expression expr) )
