@@ -197,21 +197,15 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let exn_to_error exn =
-  match Location.Error.of_exn exn with None -> raise exn | Some error -> error
-
 let rec map_node_rec context ts super_call loc base_ctxt x =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
-
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      (try
-         E.For_context.convert_res ts ~ctxt ext
-         |> With_errors.of_result ~default:None
-       with exn -> (None, exn_to_error exn :: []))
+      E.For_context.convert_res ts ~ctxt ext
+      |> With_errors.of_result ~default:None
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
