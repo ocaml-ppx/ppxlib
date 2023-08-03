@@ -112,7 +112,10 @@ and copy_expression_desc :
         List.fold_right
           (fun param expr ->
             match param with
-            | Ast_502.Parsetree.Pparam_val (lbl, exp0, p) ->
+            | {
+             Ast_502.Parsetree.pparam_desc = Pparam_val (lbl, exp0, p);
+             pparam_loc;
+            } ->
                 let pexp_desc =
                   Ast_501.Parsetree.Pexp_fun
                     ( copy_arg_label lbl,
@@ -122,17 +125,17 @@ and copy_expression_desc :
                 in
                 {
                   Ast_501.Parsetree.pexp_desc;
-                  pexp_loc = expr.pexp_loc;
+                  pexp_loc = pparam_loc;
                   pexp_loc_stack = [];
                   pexp_attributes = [];
                 }
-            | Pparam_newtype (x, loc) ->
+            | { pparam_desc = Pparam_newtype x; pparam_loc } ->
                 let pexp_desc =
                   Ast_501.Parsetree.Pexp_newtype (copy_loc (fun x -> x) x, expr)
                 in
                 {
                   Ast_501.Parsetree.pexp_desc;
-                  pexp_loc = loc;
+                  pexp_loc = pparam_loc;
                   pexp_loc_stack = [];
                   pexp_attributes = [];
                 })
