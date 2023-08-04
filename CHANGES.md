@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Allowing multiple errors to be reported in one pass of the context_free transformation.(#453, @burnleydev1)
+
 - Sort embedded errors that are appended to the AST by location so the compiler
   reports the one closer to the beginning of the file first. (#463, @NathanReb)
 
