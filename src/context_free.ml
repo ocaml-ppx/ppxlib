@@ -200,9 +200,7 @@ end
 let exn_to_error exn =
   match Location.Error.of_exn exn with None -> raise exn | Some error -> error
 
-let errors = []
-
-let rec map_node_rec context ts super_call loc base_ctxt x =
+let rec map_node_rec context ts super_call loc base_ctxt x ~embed_errors =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
@@ -212,16 +210,17 @@ let rec map_node_rec context ts super_call loc base_ctxt x =
       (try
          E.For_context.convert_res ts ~ctxt ext
          |> With_errors.of_result ~default:None
-       with exn -> (None, exn_to_error exn :: errors))
+       with exn when embed_errors -> (None, [ exn_to_error exn ]))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
       | Some x ->
           EC.merge_attributes_res context x attrs
           |> With_errors.of_result ~default:x
-          >>= fun x -> map_node_rec context ts super_call loc base_ctxt x)
+          >>= fun x ->
+          map_node_rec context ts super_call loc base_ctxt x ~embed_errors)
 
-let map_node context ts super_call loc base_ctxt x ~hook =
+let map_node context ts super_call loc base_ctxt x ~hook ~embed_errors =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
@@ -231,18 +230,19 @@ let map_node context ts super_call loc base_ctxt x ~hook =
       (try
          E.For_context.convert_res ts ~ctxt ext
          |> With_errors.of_result ~default:None
-       with exn -> (None, exn_to_error exn :: errors))
+       with exn when embed_errors -> (None, [ exn_to_error exn ]))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
       | Some x ->
           map_node_rec context ts super_call loc base_ctxt
             (EC.merge_attributes context x attrs)
+            ~embed_errors
           >>| fun generated_code ->
           Generated_code_hook.replace hook context loc (Single generated_code);
           generated_code)
 
-let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
+let rec map_nodes context ts super_call get_loc base_ctxt l ~hook ~embed_errors
     ~in_generated_code =
   match l with
   | [] -> return []
@@ -253,7 +253,7 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
              same order as they appear in the source file. *)
           super_call base_ctxt x >>= fun x ->
           map_nodes context ts super_call get_loc base_ctxt l ~hook
-            ~in_generated_code
+            ~embed_errors ~in_generated_code
           >>| fun l -> x :: l
       | Some (ext, attrs) -> (
           let extension_point_loc = get_loc x in
@@ -264,23 +264,23 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
           (try
              E.For_context.convert_inline_res ts ~ctxt ext
              |> With_errors.of_result ~default:None
-           with exn -> (None, exn_to_error exn :: errors))
+           with exn when embed_errors -> (None, [ exn_to_error exn ]))
           >>= function
           | None ->
               super_call base_ctxt x >>= fun x ->
               map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~in_generated_code
+                ~embed_errors ~in_generated_code
               >>| fun l -> x :: l
           | Some converted ->
               ((), attributes_errors attrs) >>= fun () ->
               map_nodes context ts super_call get_loc base_ctxt converted ~hook
-                ~in_generated_code:true
+                ~embed_errors ~in_generated_code:true
               >>= fun generated_code ->
               if not in_generated_code then
                 Generated_code_hook.replace hook context extension_point_loc
                   (Many generated_code);
               map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~in_generated_code
+                ~embed_errors ~in_generated_code
               >>| fun code -> generated_code @ code))
 
 let map_nodes = map_nodes ~in_generated_code:false
@@ -470,9 +470,11 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     method! core_type base_ctxt x =
       map_node EC.core_type core_type super#core_type x.ptyp_loc base_ctxt x
+        ~embed_errors:false
 
     method! pattern base_ctxt x =
       map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
+        ~embed_errors:false
 
     method! expression base_ctxt e =
       let with_context =
@@ -495,7 +497,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | Pexp_extension _ ->
             map_node EC.expression expression
               (fun _ e -> return e)
-              e.pexp_loc base_ctxt e
+              e.pexp_loc base_ctxt e ~embed_errors:false
         | _ -> return e
       in
       expanded >>= fun e ->
@@ -561,21 +563,23 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     method! class_type base_ctxt x =
       map_node EC.class_type class_type super#class_type x.pcty_loc base_ctxt x
+        ~embed_errors:false
 
     method! class_type_field base_ctxt x =
       map_node EC.class_type_field class_type_field super#class_type_field
-        x.pctf_loc base_ctxt x
+        x.pctf_loc base_ctxt x ~embed_errors:false
 
     method! class_expr base_ctxt x =
       map_node EC.class_expr class_expr super#class_expr x.pcl_loc base_ctxt x
+        ~embed_errors:false
 
     method! class_field base_ctxt x =
       map_node EC.class_field class_field super#class_field x.pcf_loc base_ctxt
-        x
+        x ~embed_errors:false
 
     method! module_type base_ctxt x =
       map_node EC.module_type module_type super#module_type x.pmty_loc base_ctxt
-        x
+        x ~embed_errors:false
 
     method! module_expr base_ctxt x =
       ((* Make sure code-path attribute is applied before expanding. *)
@@ -591,32 +595,32 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
            (Expansion_context.Base.enter_module ~loc txt base_ctxt, x))
       >>= fun (base_ctxt, x) ->
       map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
-        x
+        x ~embed_errors:false
 
     method! structure_item base_ctxt x =
       map_node EC.structure_item structure_item super#structure_item x.pstr_loc
-        base_ctxt x
+        base_ctxt x ~embed_errors:false
 
     method! signature_item base_ctxt x =
       map_node EC.signature_item signature_item super#signature_item x.psig_loc
-        base_ctxt x
+        base_ctxt x ~embed_errors:false
 
     method! class_structure base_ctxt { pcstr_self; pcstr_fields } =
       self#pattern base_ctxt pcstr_self >>= fun pcstr_self ->
       map_nodes EC.class_field class_field super#class_field
         (fun x -> x.pcf_loc)
-        base_ctxt pcstr_fields
+        base_ctxt pcstr_fields ~embed_errors:false
       >>| fun pcstr_fields -> { pcstr_self; pcstr_fields }
 
     method! type_declaration base_ctxt x =
       map_node EC.Ppx_import ppx_import super#type_declaration x.ptype_loc
-        base_ctxt x
+        base_ctxt x ~embed_errors:false
 
     method! class_signature base_ctxt { pcsig_self; pcsig_fields } =
       self#core_type base_ctxt pcsig_self >>= fun pcsig_self ->
       map_nodes EC.class_type_field class_type_field super#class_type_field
         (fun x -> x.pctf_loc)
-        base_ctxt pcsig_fields
+        base_ctxt pcsig_fields ~embed_errors:false
       >>| fun pcsig_fields -> { pcsig_self; pcsig_fields }
 
     (* TODO: try to factorize #structure and #signature without meta-programming *)

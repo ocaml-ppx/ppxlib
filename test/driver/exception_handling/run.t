@@ -47,11 +47,9 @@ caught, so no AST is produced.
   $ echo "let _ = [%gen2_raise_located_error]" >> impl.ml
   $ export OCAML_ERROR_STYLE=short
   $ ./extender.exe impl.ml
-  [%%ocaml.error "A raised located error"]
-  [%%ocaml.error "A second raised located error"]
-  let x = 1 + 1.
-  let _ = [%gen_raise_located_error ]
-  let _ = [%gen2_raise_located_error ]
+  File "impl.ml", line 2, characters 8-34:
+  Error: A raised located error
+  [1]
 
  In the case of derivers
 
@@ -81,7 +79,6 @@ and the whole AST is prepended with an error extension node.
   $ echo "let _ = [%gen2_raise_located_error]" >> impl.ml
   $ ./extender.exe -embed-errors impl.ml
   [%%ocaml.error "A raised located error"]
-  [%%ocaml.error "A second raised located error"]
   let x = 1 + 1.
   let _ = [%gen_raise_located_error ]
   let _ = [%gen2_raise_located_error ]
