@@ -404,15 +404,19 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) rules =
+  ?(generated_code_hook = Generated_code_hook.nop) rules ~embed_errors =
   let hook = generated_code_hook in
 
   let special_functions =
-    Rule.filter Special_function rules |> table_of_special_functions
+    try Rule.filter Special_function rules |> table_of_special_functions
+    with exn -> raise exn
   in
   let constants =
-    Rule.filter Constant rules
-    |> List.map ~f:(fun (c : Rule.Constant.t) -> ((c.suffix, c.kind), c.expand))
+    (try
+       Rule.filter Constant rules
+       |> List.map ~f:(fun (c : Rule.Constant.t) ->
+              ((c.suffix, c.kind), c.expand))
+     with exn -> raise exn)
     |> Hashtbl.of_alist_exn
   in
   let extensions = Rule.filter Extension rules in
@@ -476,11 +480,11 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     method! core_type base_ctxt x =
       map_node EC.core_type core_type super#core_type x.ptyp_loc base_ctxt x
-        ~embed_errors:false
+        ~embed_errors
 
     method! pattern base_ctxt x =
       map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
-        ~embed_errors:false
+        ~embed_errors
 
     method! expression base_ctxt e =
       let with_context =
@@ -503,14 +507,16 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | Pexp_extension _ ->
             map_node EC.expression expression
               (fun _ e -> return e)
-              e.pexp_loc base_ctxt e ~embed_errors:false
+              e.pexp_loc base_ctxt e ~embed_errors
         | _ -> return e
       in
       expanded >>= fun e ->
       let expand_constant kind char text =
         match Hashtbl.find_opt constants (char, kind) with
         | None -> super#expression base_ctxt e
-        | Some expand -> self#expression base_ctxt (expand e.pexp_loc text)
+        | Some expand -> (
+            try self#expression base_ctxt (expand e.pexp_loc text)
+            with exn -> (e, [ exn_to_error exn ]))
       in
       match e.pexp_desc with
       | Pexp_apply (({ pexp_desc = Pexp_ident id; _ } as func), args) -> (
@@ -569,23 +575,23 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     method! class_type base_ctxt x =
       map_node EC.class_type class_type super#class_type x.pcty_loc base_ctxt x
-        ~embed_errors:false
+        ~embed_errors
 
     method! class_type_field base_ctxt x =
       map_node EC.class_type_field class_type_field super#class_type_field
-        x.pctf_loc base_ctxt x ~embed_errors:false
+        x.pctf_loc base_ctxt x ~embed_errors
 
     method! class_expr base_ctxt x =
       map_node EC.class_expr class_expr super#class_expr x.pcl_loc base_ctxt x
-        ~embed_errors:false
+        ~embed_errors
 
     method! class_field base_ctxt x =
       map_node EC.class_field class_field super#class_field x.pcf_loc base_ctxt
-        x ~embed_errors:false
+        x ~embed_errors
 
     method! module_type base_ctxt x =
       map_node EC.module_type module_type super#module_type x.pmty_loc base_ctxt
-        x ~embed_errors:false
+        x ~embed_errors
 
     method! module_expr base_ctxt x =
       ((* Make sure code-path attribute is applied before expanding. *)
@@ -601,32 +607,32 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
            (Expansion_context.Base.enter_module ~loc txt base_ctxt, x))
       >>= fun (base_ctxt, x) ->
       map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
-        x ~embed_errors:false
+        x ~embed_errors
 
     method! structure_item base_ctxt x =
       map_node EC.structure_item structure_item super#structure_item x.pstr_loc
-        base_ctxt x ~embed_errors:false
+        base_ctxt x ~embed_errors
 
     method! signature_item base_ctxt x =
       map_node EC.signature_item signature_item super#signature_item x.psig_loc
-        base_ctxt x ~embed_errors:false
+        base_ctxt x ~embed_errors
 
     method! class_structure base_ctxt { pcstr_self; pcstr_fields } =
       self#pattern base_ctxt pcstr_self >>= fun pcstr_self ->
       map_nodes EC.class_field class_field super#class_field
         (fun x -> x.pcf_loc)
-        base_ctxt pcstr_fields ~embed_errors:false
+        base_ctxt pcstr_fields ~embed_errors
       >>| fun pcstr_fields -> { pcstr_self; pcstr_fields }
 
     method! type_declaration base_ctxt x =
       map_node EC.Ppx_import ppx_import super#type_declaration x.ptype_loc
-        base_ctxt x ~embed_errors:false
+        base_ctxt x ~embed_errors
 
     method! class_signature base_ctxt { pcsig_self; pcsig_fields } =
       self#core_type base_ctxt pcsig_self >>= fun pcsig_self ->
       map_nodes EC.class_type_field class_type_field super#class_type_field
         (fun x -> x.pctf_loc)
-        base_ctxt pcsig_fields ~embed_errors:false
+        base_ctxt pcsig_fields ~embed_errors
       >>| fun pcsig_fields -> { pcsig_self; pcsig_fields }
 
     (* TODO: try to factorize #structure and #signature without meta-programming *)
@@ -685,40 +691,39 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                        assert acts as a failsafe in case it ever changes *)
                     assert (Poly.(rf = exp_rf));
                     handle_attr_group_inline attr_str_type_decls rf ~items:tds
-                      ~expanded_items:exp_tds ~loc ~base_ctxt
-                      ~embed_errors:false
+                      ~expanded_items:exp_tds ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_group_inline attr_str_type_decls_expect rf
                       ~items:tds ~expanded_items:exp_tds ~loc ~base_ctxt
-                      ~embed_errors:false
+                      ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
                 | Pstr_modtype mtd, Pstr_modtype exp_mtd ->
                     handle_attr_inline attr_str_module_type_decls ~item:mtd
-                      ~expanded_item:exp_mtd ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_mtd ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_inline attr_str_module_type_decls_expect
                       ~item:mtd ~expanded_item:exp_mtd ~loc ~base_ctxt
-                      ~embed_errors:false
+                      ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
                 | Pstr_typext te, Pstr_typext exp_te ->
                     handle_attr_inline attr_str_type_exts ~item:te
-                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_inline attr_str_type_exts_expect ~item:te
-                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
                 | Pstr_exception ec, Pstr_exception exp_ec ->
                     handle_attr_inline attr_str_exceptions ~item:ec
-                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_inline attr_str_exceptions_expect ~item:ec
-                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
@@ -783,40 +788,39 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                        assert acts as a failsafe in case it ever changes *)
                     assert (Poly.(rf = exp_rf));
                     handle_attr_group_inline attr_sig_type_decls rf ~items:tds
-                      ~expanded_items:exp_tds ~loc ~base_ctxt
-                      ~embed_errors:false
+                      ~expanded_items:exp_tds ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_group_inline attr_sig_type_decls_expect rf
                       ~items:tds ~expanded_items:exp_tds ~loc ~base_ctxt
-                      ~embed_errors:false
+                      ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
                 | Psig_modtype mtd, Psig_modtype exp_mtd ->
                     handle_attr_inline attr_sig_module_type_decls ~item:mtd
-                      ~expanded_item:exp_mtd ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_mtd ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_inline attr_sig_module_type_decls_expect
                       ~item:mtd ~expanded_item:exp_mtd ~loc ~base_ctxt
-                      ~embed_errors:false
+                      ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
                 | Psig_typext te, Psig_typext exp_te ->
                     handle_attr_inline attr_sig_type_exts ~item:te
-                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_inline attr_sig_type_exts_expect ~item:te
-                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_te ~loc ~base_ctxt ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
                 | Psig_exception ec, Psig_exception exp_ec ->
                     handle_attr_inline attr_sig_exceptions ~item:ec
-                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors
                     >>= fun extra_items ->
                     handle_attr_inline attr_sig_exceptions_expect ~item:ec
-                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors:false
+                      ~expanded_item:exp_ec ~loc ~base_ctxt ~embed_errors
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code

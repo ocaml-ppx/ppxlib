@@ -13,7 +13,7 @@ let expand_raise_located_error ~ctxt =
   let loc = Expansion_context.Extension.extension_point_loc ctxt in
   Location.raise_errorf ~loc "A raised located error"
 
-let expand2_raise_located_error ~ctxt =
+let expand_raise_located_error2 ~ctxt =
   let loc = Expansion_context.Extension.extension_point_loc ctxt in
   Location.raise_errorf ~loc "A second raised located error"
 
@@ -32,15 +32,15 @@ let raise_located_error_extension =
     Ast_pattern.(pstr nil)
     expand_raise_located_error
 
-let raise2_located_error_extension =
-  Extension.V3.declare "gen2_raise_located_error" Extension.Context.expression
+let raise_located_error_extension2 =
+  Extension.V3.declare "gen_raise_located_error2" Extension.Context.expression
     Ast_pattern.(pstr nil)
-    expand2_raise_located_error
+    expand_raise_located_error2
 
 let rule1 = Ppxlib.Context_free.Rule.extension extension_point_extension
 let rule2 = Ppxlib.Context_free.Rule.extension raise_exception_extension
 let rule3 = Ppxlib.Context_free.Rule.extension raise_located_error_extension
-let rule4 = Ppxlib.Context_free.Rule.extension raise2_located_error_extension
+let rule4 = Ppxlib.Context_free.Rule.extension raise_located_error_extension2
 
 let () =
   Driver.register_transformation

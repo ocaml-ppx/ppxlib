@@ -150,6 +150,7 @@ class map_top_down :
   -> ?generated_code_hook:
        Generated_code_hook.t (* default: Generated_code_hook.nop *)
   -> Rule.t list
+  -> embed_errors:bool
   -> object
        inherit Ast_traverse.map_with_expansion_context_and_errors
      end

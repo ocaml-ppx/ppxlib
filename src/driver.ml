@@ -218,12 +218,12 @@ module Transform = struct
         let last = get_loc (last x l) in
         Some { first with loc_end = last.loc_end }
 
-  let merge_into_generic_mappers t ~hook ~expect_mismatch_handler ~tool_name
-      ~input_name =
+  let merge_into_generic_mappers t ~embed_errors ~hook ~expect_mismatch_handler
+      ~tool_name ~input_name =
     let { rules; enclose_impl; enclose_intf; impl; intf; _ } = t in
     let map =
       new Context_free.map_top_down
-        rules ~generated_code_hook:hook ~expect_mismatch_handler
+        rules ~embed_errors ~generated_code_hook:hook ~expect_mismatch_handler
     in
     let gen_header_and_footer context whole_loc f =
       let header, footer = f whole_loc in
@@ -455,7 +455,8 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
   print_diff "disappeared" new_dropped old_dropped;
   print_diff "reappeared" old_dropped new_dropped
 
-let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
+let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
+    ~input_name =
   let cts =
     match !apply_list with
     | None -> List.rev !Transform.all
@@ -484,7 +485,7 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
     if !no_merge then
       List.map transforms
         ~f:
-          (Transform.merge_into_generic_mappers ~hook ~tool_name
+          (Transform.merge_into_generic_mappers ~embed_errors ~hook ~tool_name
              ~expect_mismatch_handler ~input_name)
     else
       (let get_enclosers ~f =
@@ -515,8 +516,8 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
                      let footers = List.concat (List.rev footers) in
                      (headers, footers))
            in
-           Transform.builtin_of_context_free_rewriters ~rules ~hook
-             ~expect_mismatch_handler
+           Transform.builtin_of_context_free_rewriters ~rules ~embed_errors
+             ~hook ~expect_mismatch_handler
              ~enclose_impl:(merge_encloser impl_enclosers)
              ~enclose_intf:(merge_encloser intf_enclosers)
              ~tool_name ~input_name
@@ -529,7 +530,8 @@ let get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name ~input_name =
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
     ~hook ~expect_mismatch_handler ~input_name ~embed_errors ast =
   let cts =
-    get_whole_ast_passes ~tool_name ~hook ~expect_mismatch_handler ~input_name
+    get_whole_ast_passes ~tool_name ~embed_errors ~hook ~expect_mismatch_handler
+      ~input_name
   in
   let finish (ast, _dropped, lint_errors, errors) =
     ( ast,
@@ -617,10 +619,11 @@ let exn_to_extension exn ~(kind : Kind.t) =
 
 let print_passes () =
   let tool_name = "ppxlib_driver" in
+  let embed_errors = false in
   let hook = Context_free.Generated_code_hook.nop in
   let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
   let cts =
-    get_whole_ast_passes ~hook ~expect_mismatch_handler ~tool_name
+    get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
       ~input_name:None
   in
   if !perform_checks then
