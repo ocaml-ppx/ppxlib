@@ -408,15 +408,11 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   let hook = generated_code_hook in
 
   let special_functions =
-    try Rule.filter Special_function rules |> table_of_special_functions
-    with exn -> raise exn
+    Rule.filter Special_function rules |> table_of_special_functions
   in
   let constants =
-    (try
-       Rule.filter Constant rules
-       |> List.map ~f:(fun (c : Rule.Constant.t) ->
-              ((c.suffix, c.kind), c.expand))
-     with exn -> raise exn)
+    Rule.filter Constant rules
+    |> List.map ~f:(fun (c : Rule.Constant.t) -> ((c.suffix, c.kind), c.expand))
     |> Hashtbl.of_alist_exn
   in
   let extensions = Rule.filter Extension rules in
