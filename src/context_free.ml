@@ -512,7 +512,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | None -> super#expression base_ctxt e
         | Some expand -> (
             try self#expression base_ctxt (expand e.pexp_loc text)
-            with exn -> (e, [ exn_to_error exn ]))
+            with exn when embed_errors -> (e, [ exn_to_error exn ]))
       in
       match e.pexp_desc with
       | Pexp_apply (({ pexp_desc = Pexp_ident id; _ } as func), args) -> (
@@ -524,18 +524,24 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               | None ->
                   self#pexp_apply_without_traversing_function base_ctxt e func
                     args
-              | Some e -> self#expression base_ctxt e))
+              | Some e -> (
+                  try self#expression base_ctxt e
+                  with exn when embed_errors -> (e, [ exn_to_error exn ]))))
       | Pexp_ident id -> (
           match Hashtbl.find_opt special_functions id.txt with
           | None -> super#expression base_ctxt e
           | Some pattern -> (
               match pattern e with
               | None -> super#expression base_ctxt e
-              | Some e -> self#expression base_ctxt e))
+              | Some e -> (
+                  try self#expression base_ctxt e
+                  with exn when embed_errors -> (e, [ exn_to_error exn ]))))
       | Pexp_constant (Pconst_integer (s, Some c)) ->
           expand_constant Integer c s
       | Pexp_constant (Pconst_float (s, Some c)) -> expand_constant Float c s
-      | _ -> super#expression base_ctxt e
+      | _ -> (
+          try super#expression base_ctxt e
+          with exn when embed_errors -> (e, [ exn_to_error exn ]))
 
     (* Pre-conditions:
        - e.pexp_desc = Pexp_apply(func, args)

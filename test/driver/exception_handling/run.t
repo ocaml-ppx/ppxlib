@@ -162,8 +162,43 @@ when the -embed-errors flag is not passed
   Fatal error: exception Failure("A raised exception")
   [2]
 
+ In the case of Constant types
+
+  $ echo "let x = 2g + 3g" > impl.ml
+  $ echo "let x = 2g + 3g" >> impl.ml
+
+ When embed-errors is not passed 
+  $ ./constant_type.exe impl.ml
+  File "impl.ml", line 1, characters 8-10:
+  Error: rewriter 2 failed
+  [1]
+
+ When embed-errors is not passed
+  $ ./constant_type.exe -embed-errors impl.ml
+  [%%ocaml.error "rewriter 2 failed"]
+  [%%ocaml.error "rewriter 3 failed"]
+  [%%ocaml.error "rewriter 2 failed"]
+  [%%ocaml.error "rewriter 3 failed"]
+  let x = 2g + 3g
+  let x = 2g + 3g
+
+ In the case of Special functions
+
+  $ echo "let _ = (f_macro arg1 arg2, f_macro)" > impl.ml
+  $ echo "let _ = (f_macro arg1 arg2, f_macro)" >> impl.ml
+ When embed-errors is not passed 
+  $ ./special_functions.exe impl.ml
+  let _ = ((f_macro arg1 arg2), f_macro)
+  let _ = ((f_macro arg1 arg2), f_macro)
+
+ When embed-errors is not passed
+  $ ./special_functions.exe -embed-errors impl.ml
+  let _ = ((f_macro arg1 arg2), f_macro)
+  let _ = ((f_macro arg1 arg2), f_macro)
+
  In the case of whole file transformations:
 
+  $ echo "let _ = [%gen_raise_exc] + [%gen_raise_exc]" > impl.ml
   $ ./whole_file_exception.exe impl.ml
   Fatal error: exception Failure("An exception in a whole file transform")
   [2]
