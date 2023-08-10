@@ -170,15 +170,15 @@ when the -embed-errors flag is not passed
  When embed-errors is not passed 
   $ ./constant_type.exe impl.ml
   File "impl.ml", line 1, characters 8-10:
-  Error: rewriter 2 failed
+  Error: A raised located error.
   [1]
 
  When embed-errors is not passed
   $ ./constant_type.exe -embed-errors impl.ml
-  [%%ocaml.error "rewriter 2 failed"]
-  [%%ocaml.error "rewriter 3 failed"]
-  [%%ocaml.error "rewriter 2 failed"]
-  [%%ocaml.error "rewriter 3 failed"]
+  [%%ocaml.error "A raised located error."]
+  [%%ocaml.error "A raised located error."]
+  [%%ocaml.error "A raised located error."]
+  [%%ocaml.error "A raised located error."]
   let x = 2g + 3g
   let x = 2g + 3g
 
