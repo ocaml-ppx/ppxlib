@@ -37,3 +37,37 @@ let foreach_version_pair f =
     | [ _ ] | [] -> ()
   in
   aux supported_versions
+
+(* Just for 4.14 <-> 5.00, mostly used by [ast_cinaps_helpers] *)
+
+let qualified_types =
+  [
+    ( "Parsetree",
+      [
+        "structure";
+        "signature";
+        "toplevel_phrase";
+        "core_type";
+        "expression";
+        "pattern";
+        "case";
+        "type_declaration";
+        "type_extension";
+        "extension_constructor";
+        "class_expr";
+        "class_field";
+        "class_type";
+        "class_signature";
+        "class_type_field";
+        "module_expr";
+        "module_type";
+        "signature_item";
+        "structure_item";
+      ] );
+  ]
+
+let foreach_module f =
+  nl ();
+  List.iter qualified_types ~f:(fun (m, types) -> f m types)
+
+let foreach_type f = foreach_module (fun m -> List.iter ~f:(f m))

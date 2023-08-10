@@ -4,6 +4,8 @@
    It must be opened in all modules, especially the ones coming from the compiler.
 *)
 
+(*$ open Ast_cinaps_helpers $*)
+
 module Js = Versions.OCaml_500
 module Ocaml = Versions.OCaml_current
 
@@ -12,18 +14,43 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
 
   module Type = struct
     type ('js, 'ocaml) t =
-      | Signature
-          : (Js.Ast.Parsetree.signature, Ocaml.Ast.Parsetree.signature) t
+      (*$ foreach_type (fun _ s ->
+            printf
+              "      | %s\n\
+              \          : ( Js.Ast.Parsetree.%s,\n\
+              \              Ocaml.Ast.Parsetree.%s )\n\
+              \            t\n"
+              (String.capitalize_ascii s) s s
+          )
+      *)
       | Structure
-          : (Js.Ast.Parsetree.structure, Ocaml.Ast.Parsetree.structure) t
+          : ( Js.Ast.Parsetree.structure,
+              Ocaml.Ast.Parsetree.structure )
+            t
+      | Signature
+          : ( Js.Ast.Parsetree.signature,
+              Ocaml.Ast.Parsetree.signature )
+            t
       | Toplevel_phrase
           : ( Js.Ast.Parsetree.toplevel_phrase,
               Ocaml.Ast.Parsetree.toplevel_phrase )
             t
-      | Expression
-          : (Js.Ast.Parsetree.expression, Ocaml.Ast.Parsetree.expression) t
       | Core_type
-          : (Js.Ast.Parsetree.core_type, Ocaml.Ast.Parsetree.core_type) t
+          : ( Js.Ast.Parsetree.core_type,
+              Ocaml.Ast.Parsetree.core_type )
+            t
+      | Expression
+          : ( Js.Ast.Parsetree.expression,
+              Ocaml.Ast.Parsetree.expression )
+            t
+      | Pattern
+          : ( Js.Ast.Parsetree.pattern,
+              Ocaml.Ast.Parsetree.pattern )
+            t
+      | Case
+          : ( Js.Ast.Parsetree.case,
+              Ocaml.Ast.Parsetree.case )
+            t
       | Type_declaration
           : ( Js.Ast.Parsetree.type_declaration,
               Ocaml.Ast.Parsetree.type_declaration )
@@ -36,6 +63,43 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
           : ( Js.Ast.Parsetree.extension_constructor,
               Ocaml.Ast.Parsetree.extension_constructor )
             t
+      | Class_expr
+          : ( Js.Ast.Parsetree.class_expr,
+              Ocaml.Ast.Parsetree.class_expr )
+            t
+      | Class_field
+          : ( Js.Ast.Parsetree.class_field,
+              Ocaml.Ast.Parsetree.class_field )
+            t
+      | Class_type
+          : ( Js.Ast.Parsetree.class_type,
+              Ocaml.Ast.Parsetree.class_type )
+            t
+      | Class_signature
+          : ( Js.Ast.Parsetree.class_signature,
+              Ocaml.Ast.Parsetree.class_signature )
+            t
+      | Class_type_field
+          : ( Js.Ast.Parsetree.class_type_field,
+              Ocaml.Ast.Parsetree.class_type_field )
+            t
+      | Module_expr
+          : ( Js.Ast.Parsetree.module_expr,
+              Ocaml.Ast.Parsetree.module_expr )
+            t
+      | Module_type
+          : ( Js.Ast.Parsetree.module_type,
+              Ocaml.Ast.Parsetree.module_type )
+            t
+      | Signature_item
+          : ( Js.Ast.Parsetree.signature_item,
+              Ocaml.Ast.Parsetree.signature_item )
+            t
+      | Structure_item
+          : ( Js.Ast.Parsetree.structure_item,
+              Ocaml.Ast.Parsetree.structure_item )
+            t
+(*$*)
       | List : ('a, 'b) t -> ('a list, 'b list) t
       | Pair : ('a, 'b) t * ('c, 'd) t -> ('a * 'c, 'b * 'd) t
   end
@@ -48,14 +112,32 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
     let open Of_ocaml in
     fun node ->
       match node with
-      | Signature -> copy_signature
+      (*$ foreach_type (fun _ s ->
+            printf
+              "      | %s -> copy_%s\n"
+              (String.capitalize_ascii s) s
+          )
+      *)
       | Structure -> copy_structure
+      | Signature -> copy_signature
       | Toplevel_phrase -> copy_toplevel_phrase
-      | Expression -> copy_expression
       | Core_type -> copy_core_type
+      | Expression -> copy_expression
+      | Pattern -> copy_pattern
+      | Case -> copy_case
       | Type_declaration -> copy_type_declaration
       | Type_extension -> copy_type_extension
       | Extension_constructor -> copy_extension_constructor
+      | Class_expr -> copy_class_expr
+      | Class_field -> copy_class_field
+      | Class_type -> copy_class_type
+      | Class_signature -> copy_class_signature
+      | Class_type_field -> copy_class_type_field
+      | Module_expr -> copy_module_expr
+      | Module_type -> copy_module_type
+      | Signature_item -> copy_signature_item
+      | Structure_item -> copy_structure_item
+(*$*)
       | List t -> List.map (of_ocaml t)
       | Pair (a, b) ->
           let f = of_ocaml a in
@@ -66,14 +148,32 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
     let open To_ocaml in
     fun node ->
       match node with
-      | Signature -> copy_signature
+      (*$ foreach_type (fun _ s ->
+            printf
+              "      | %s -> copy_%s\n"
+              (String.capitalize_ascii s) s
+          )
+      *)
       | Structure -> copy_structure
+      | Signature -> copy_signature
       | Toplevel_phrase -> copy_toplevel_phrase
-      | Expression -> copy_expression
       | Core_type -> copy_core_type
+      | Expression -> copy_expression
+      | Pattern -> copy_pattern
+      | Case -> copy_case
       | Type_declaration -> copy_type_declaration
       | Type_extension -> copy_type_extension
       | Extension_constructor -> copy_extension_constructor
+      | Class_expr -> copy_class_expr
+      | Class_field -> copy_class_field
+      | Class_type -> copy_class_type
+      | Class_signature -> copy_class_signature
+      | Class_type_field -> copy_class_type_field
+      | Module_expr -> copy_module_expr
+      | Module_type -> copy_module_type
+      | Signature_item -> copy_signature_item
+      | Structure_item -> copy_structure_item
+(*$*)
       | List t -> List.map (to_ocaml t)
       | Pair (a, b) ->
           let f = to_ocaml a in

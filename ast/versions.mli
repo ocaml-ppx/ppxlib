@@ -37,6 +37,15 @@ module type Ast = sig
     type type_declaration
     type type_extension
     type extension_constructor
+    type class_expr
+    type class_field
+    type class_type
+    type class_signature
+    type class_type_field
+    type module_expr
+    type module_type
+    type signature_item
+    type structure_item
   end
 (*$*)
   module Config : sig
@@ -60,6 +69,15 @@ type 'a _types = 'a constraint 'a
     type_declaration      : _;
     type_extension        : _;
     extension_constructor : _;
+    class_expr            : _;
+    class_field           : _;
+    class_type            : _;
+    class_signature       : _;
+    class_type_field      : _;
+    module_expr           : _;
+    module_type           : _;
+    signature_item        : _;
+    structure_item        : _;
 (*$*)
   >
 ;;
@@ -98,6 +116,15 @@ module type OCaml_version = sig
     type_declaration      : Ast.Parsetree.type_declaration;
     type_extension        : Ast.Parsetree.type_extension;
     extension_constructor : Ast.Parsetree.extension_constructor;
+    class_expr            : Ast.Parsetree.class_expr;
+    class_field           : Ast.Parsetree.class_field;
+    class_type            : Ast.Parsetree.class_type;
+    class_signature       : Ast.Parsetree.class_signature;
+    class_type_field      : Ast.Parsetree.class_type_field;
+    module_expr           : Ast.Parsetree.module_expr;
+    module_type           : Ast.Parsetree.module_type;
+    signature_item        : Ast.Parsetree.signature_item;
+    structure_item        : Ast.Parsetree.structure_item;
 (*$*)
   > _types
 
@@ -155,6 +182,15 @@ module Convert (A : OCaml_version) (B : OCaml_version) : sig
   val copy_type_declaration      : A.Ast.Parsetree.type_declaration      -> B.Ast.Parsetree.type_declaration
   val copy_type_extension        : A.Ast.Parsetree.type_extension        -> B.Ast.Parsetree.type_extension
   val copy_extension_constructor : A.Ast.Parsetree.extension_constructor -> B.Ast.Parsetree.extension_constructor
+  val copy_class_expr            : A.Ast.Parsetree.class_expr            -> B.Ast.Parsetree.class_expr
+  val copy_class_field           : A.Ast.Parsetree.class_field           -> B.Ast.Parsetree.class_field
+  val copy_class_type            : A.Ast.Parsetree.class_type            -> B.Ast.Parsetree.class_type
+  val copy_class_signature       : A.Ast.Parsetree.class_signature       -> B.Ast.Parsetree.class_signature
+  val copy_class_type_field      : A.Ast.Parsetree.class_type_field      -> B.Ast.Parsetree.class_type_field
+  val copy_module_expr           : A.Ast.Parsetree.module_expr           -> B.Ast.Parsetree.module_expr
+  val copy_module_type           : A.Ast.Parsetree.module_type           -> B.Ast.Parsetree.module_type
+  val copy_signature_item        : A.Ast.Parsetree.signature_item        -> B.Ast.Parsetree.signature_item
+  val copy_structure_item        : A.Ast.Parsetree.structure_item        -> B.Ast.Parsetree.structure_item
 (*$*)
 end
 
