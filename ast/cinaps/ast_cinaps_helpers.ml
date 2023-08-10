@@ -3,32 +3,12 @@
 include StdLabels
 include Printf
 
-let nl () = printf "\n"
-
-let qualified_types =
-  [
-    ( "Parsetree",
-      [
-        "structure";
-        "signature";
-        "toplevel_phrase";
-        "core_type";
-        "expression";
-        "pattern";
-        "case";
-        "type_declaration";
-        "type_extension";
-        "extension_constructor";
-      ] );
-  ]
+let nl = Astlib_cinaps_helpers.nl
+let qualified_types = Astlib_cinaps_helpers.qualified_types
+let foreach_module = Astlib_cinaps_helpers.foreach_module
+let foreach_type = Astlib_cinaps_helpers.foreach_type
 
 let all_types = List.concat (List.map ~f:snd qualified_types)
-
-let foreach_module f =
-  nl ();
-  List.iter qualified_types ~f:(fun (m, types) -> f m types)
-
-let foreach_type f = foreach_module (fun m -> List.iter ~f:(f m))
 
 let foreach_version f =
   nl ();
