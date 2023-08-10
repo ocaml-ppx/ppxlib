@@ -524,24 +524,18 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               | None ->
                   self#pexp_apply_without_traversing_function base_ctxt e func
                     args
-              | Some e -> (
-                  try self#expression base_ctxt e
-                  with exn when embed_errors -> (e, [ exn_to_error exn ]))))
+              | Some e -> self#expression base_ctxt e))
       | Pexp_ident id -> (
           match Hashtbl.find_opt special_functions id.txt with
           | None -> super#expression base_ctxt e
           | Some pattern -> (
               match pattern e with
               | None -> super#expression base_ctxt e
-              | Some e -> (
-                  try self#expression base_ctxt e
-                  with exn when embed_errors -> (e, [ exn_to_error exn ]))))
+              | Some e -> self#expression base_ctxt e))
       | Pexp_constant (Pconst_integer (s, Some c)) ->
           expand_constant Integer c s
       | Pexp_constant (Pconst_float (s, Some c)) -> expand_constant Float c s
-      | _ -> (
-          try super#expression base_ctxt e
-          with exn when embed_errors -> (e, [ exn_to_error exn ]))
+      | _ -> super#expression base_ctxt e
 
     (* Pre-conditions:
        - e.pexp_desc = Pexp_apply(func, args)
