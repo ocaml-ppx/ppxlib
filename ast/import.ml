@@ -20,7 +20,7 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
               \          : ( Js.Ast.Parsetree.%s,\n\
               \              Ocaml.Ast.Parsetree.%s )\n\
               \            t\n"
-              (String.capitalize_ascii s) s s
+              (capitalize_ascii s) s s
           )
       *)
       | Structure
@@ -115,7 +115,7 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
       (*$ foreach_type (fun _ s ->
             printf
               "      | %s -> copy_%s\n"
-              (String.capitalize_ascii s) s
+              (capitalize_ascii s) s
           )
       *)
       | Structure -> copy_structure
@@ -151,7 +151,7 @@ module Select_ast (Ocaml : Versions.OCaml_version) = struct
       (*$ foreach_type (fun _ s ->
             printf
               "      | %s -> copy_%s\n"
-              (String.capitalize_ascii s) s
+              (capitalize_ascii s) s
           )
       *)
       | Structure -> copy_structure
