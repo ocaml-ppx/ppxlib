@@ -7,7 +7,6 @@ let nl = Astlib_cinaps_helpers.nl
 let qualified_types = Astlib_cinaps_helpers.qualified_types
 let foreach_module = Astlib_cinaps_helpers.foreach_module
 let foreach_type = Astlib_cinaps_helpers.foreach_type
-
 let all_types = List.concat (List.map ~f:snd qualified_types)
 
 let foreach_version f =
