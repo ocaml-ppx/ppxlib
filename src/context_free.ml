@@ -511,7 +511,6 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         match Hashtbl.find_opt constants (char, kind) with
         | None -> super#expression base_ctxt e
         | Some expand -> self#expression base_ctxt (expand e.pexp_loc text)
-        (* with exn when embed_errors -> (e, [ exn_to_error exn ])) *)
       in
       match e.pexp_desc with
       | Pexp_apply (({ pexp_desc = Pexp_ident id; _ } as func), args) -> (
