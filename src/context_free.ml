@@ -510,9 +510,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
       let expand_constant kind char text =
         match Hashtbl.find_opt constants (char, kind) with
         | None -> super#expression base_ctxt e
-        | Some expand -> (
-            try self#expression base_ctxt (expand e.pexp_loc text)
-            with exn when embed_errors -> (e, [ exn_to_error exn ]))
+        | Some expand -> self#expression base_ctxt (expand e.pexp_loc text)
+        (* with exn when embed_errors -> (e, [ exn_to_error exn ])) *)
       in
       match e.pexp_desc with
       | Pexp_apply (({ pexp_desc = Pexp_ident id; _ } as func), args) -> (
@@ -532,9 +531,12 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               match pattern e with
               | None -> super#expression base_ctxt e
               | Some e -> self#expression base_ctxt e))
-      | Pexp_constant (Pconst_integer (s, Some c)) ->
-          expand_constant Integer c s
-      | Pexp_constant (Pconst_float (s, Some c)) -> expand_constant Float c s
+      | Pexp_constant (Pconst_integer (s, Some c)) -> (
+          try expand_constant Integer c s
+          with exn when embed_errors -> (e, [ exn_to_error exn ]))
+      | Pexp_constant (Pconst_float (s, Some c)) -> (
+          try expand_constant Float c s
+          with exn when embed_errors -> (e, [ exn_to_error exn ]))
       | _ -> super#expression base_ctxt e
 
     (* Pre-conditions:
