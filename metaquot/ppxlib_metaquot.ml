@@ -154,13 +154,6 @@ module Expr = Make (struct
 
   let annotate e core_type = pexp_constraint ~loc:core_type.ptyp_loc e core_type
 
-  let fresh_name =
-    let counter = ref 0 in
-    fun () ->
-      let var = "_ppx_metaquot_helper_var%d" ^ string_of_int !counter in
-      incr counter;
-      var
-
   (* Append the quoted attributes to the attributes present on the
      antiquoted construct. Take this as example:
 
@@ -177,17 +170,16 @@ module Expr = Make (struct
     | [] -> self#typed e type_name
     | _ :: _ ->
         let loc = { loc with loc_ghost = true } in
-        let module Ast_builder_with_loc = (val Ast_builder.make loc) in
-        let open Ast_builder_with_loc in
-        let var = fresh_name () in
-        let var_expr = pexp_ident (Located.mk (Lident var)) in
-        let field_name = Located.mk (Lident field_name) in
+        let var = gen_symbol ~prefix:"_ppx_metaquot_helper_var" () in
+        let var_expr = pexp_ident ~loc (Located.mk ~loc (Lident var)) in
+        let field_name = Located.mk ~loc (Lident field_name) in
         let reified_attrs = self#attributes quoted_attributes in
         (* append arg1 arg2 = [%expr Stdlib.List.append [%e arg1] [%e arg2]] *)
         let append arg1 arg2 =
-          pexp_apply
-            (pexp_ident
-               (Located.mk (Ldot (Ldot (Lident "Stdlib", "List"), "append"))))
+          pexp_apply ~loc
+            (pexp_ident ~loc
+               (Located.mk ~loc
+                  (Ldot (Ldot (Lident "Stdlib", "List"), "append"))))
             [ (Nolabel, arg1); (Nolabel, arg2) ]
         in
         (*
@@ -199,16 +191,16 @@ module Expr = Make (struct
            }
          ]}
         *)
-        pexp_let Nonrecursive
+        pexp_let Nonrecursive ~loc
           [
-            value_binding
-              ~pat:(ppat_var (Located.mk var))
+            value_binding ~loc
+              ~pat:(ppat_var ~loc (Located.mk ~loc var))
               ~expr:(self#typed e type_name);
           ]
-          (pexp_record
+          (pexp_record ~loc
              [
                ( field_name,
-                 append (pexp_field var_expr field_name) reified_attrs );
+                 append (pexp_field ~loc var_expr field_name) reified_attrs );
              ]
              (Some var_expr))
 
@@ -222,10 +214,9 @@ module Expr = Make (struct
             add_quoted_attributes self e quoted_attrs ~type_name
               ~loc:(loc_of_extension ext))
     | _ ->
-        Ast_builder.Default.(
-          pexp_extension ~loc:(loc_of_extension ext)
-            (Location.error_extensionf ~loc:(loc_of_extension ext)
-               "expression expected"))
+        pexp_extension ~loc:(loc_of_extension ext)
+          (Location.error_extensionf ~loc:(loc_of_extension ext)
+             "expression expected")
 end)
 
 module Patt = Make (struct
