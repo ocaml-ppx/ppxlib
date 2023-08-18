@@ -188,17 +188,18 @@ when the -embed-errors flag is not passed
 
  In the case of Special functions
 
-  $ echo "let _ = (f_macro arg1 arg2, f_macro)" > impl.ml
-  $ echo "let _ = (f_macro arg1 arg2, f_macro)" >> impl.ml
+  $ echo "n_args " > impl.ml
+  $ echo "n_args2 " >> impl.ml
  When embed-errors is not passed 
   $ ./special_functions.exe impl.ml
-  let _ = ((f_macro arg1 arg2), f_macro)
-  let _ = ((f_macro arg1 arg2), f_macro)
+  File "_none_", line 1:
+  Error: error special function
+  [1]
 
  When embed-errors is not passed
   $ ./special_functions.exe -embed-errors impl.ml
-  let _ = ((f_macro arg1 arg2), f_macro)
-  let _ = ((f_macro arg1 arg2), f_macro)
+  [%%ocaml.error "error special function"]
+  ;;n_args n_args2
 
  In the case of whole file transformations:
 
