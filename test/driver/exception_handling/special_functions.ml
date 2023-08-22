@@ -1,6 +1,6 @@
 open Ppxlib
 
-let expand e = Location.raise_errorf ~loc:e.pexp_loc "error special function "
+let expand e = Location.raise_errorf ~loc:e.pexp_loc "error special function"
 
 let expand2 e =
   Location.raise_errorf ~loc:e.pexp_loc "second error special function"
