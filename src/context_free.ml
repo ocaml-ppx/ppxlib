@@ -518,18 +518,30 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           | None ->
               self#pexp_apply_without_traversing_function base_ctxt e func args
           | Some pattern -> (
-              match pattern e with
+              let pat_expr =
+                try (pattern e, [])
+                with exn when embed_errors -> (None, [ exn_to_error exn ])
+              in
+              pat_expr >>= fun expr ->
+              match expr with
               | None ->
                   self#pexp_apply_without_traversing_function base_ctxt e func
                     args
-              | Some e -> self#expression base_ctxt e))
+              | Some e -> self#expression base_ctxt e
+              (* with exn when embed_errors -> (e, [ exn_to_error exn ]) *)))
       | Pexp_ident id -> (
           match Hashtbl.find_opt special_functions id.txt with
           | None -> super#expression base_ctxt e
           | Some pattern -> (
-              match pattern e with
+              let pat_exp =
+                try (pattern e, [])
+                with exn when embed_errors -> (None, [ exn_to_error exn ])
+              in
+              pat_exp >>= fun expr ->
+              match expr with
               | None -> super#expression base_ctxt e
-              | Some e -> self#expression base_ctxt e))
+              | Some e -> self#expression base_ctxt e
+              (* with exn when embed_errors -> (e, [ exn_to_error exn ]) *)))
       | Pexp_constant (Pconst_integer (s, Some c)) -> (
           try expand_constant Integer c s
           with exn when embed_errors -> (e, [ exn_to_error exn ]))

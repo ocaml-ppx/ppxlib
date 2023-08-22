@@ -192,13 +192,14 @@ when the -embed-errors flag is not passed
   $ echo "n_args2 " >> impl.ml
  When embed-errors is not passed 
   $ ./special_functions.exe impl.ml
-  File "_none_", line 1:
-  Error: error special function
+  File "impl.ml", lines 1-2, characters 0-7:
+  Error: error special function 
   [1]
 
  When embed-errors is not passed
   $ ./special_functions.exe -embed-errors impl.ml
-  [%%ocaml.error "error special function"]
+  [%%ocaml.error "error special function "]
+  [%%ocaml.error "second error special function"]
   ;;n_args n_args2
 
  In the case of whole file transformations:
