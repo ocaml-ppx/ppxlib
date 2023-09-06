@@ -91,7 +91,7 @@ end
 let _ = let module M = Functor() in !M.code_path
 [%%expect{|
 module Functor : functor () -> sig val code_path : string ref end
-Line _:
+Line _, characters 23-32:
 Error (warning 73 [generative-application-expects-unit]): A generative functor
 should be applied to '()'; using '(struct end)' is deprecated.
 |}]
