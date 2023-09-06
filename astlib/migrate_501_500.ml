@@ -769,8 +769,8 @@ and copy_module_expr :
        Ast_501.Parsetree.pmod_desc;
        Ast_501.Parsetree.pmod_loc;
        Ast_501.Parsetree.pmod_attributes;
-   } ->
- let loc = copy_location pmod_loc in
+     } ->
+  let loc = copy_location pmod_loc in
   {
     Ast_500.Parsetree.pmod_desc = copy_module_expr_desc loc pmod_desc;
     Ast_500.Parsetree.pmod_loc = loc;
@@ -788,7 +788,26 @@ and copy_module_expr_desc loc :
       Ast_500.Parsetree.Pmod_functor
         (copy_functor_parameter x0, copy_module_expr x1)
   | Ast_501.Parsetree.Pmod_apply (x0, x1) ->
-      Ast_500.Parsetree.Pmod_apply (copy_module_expr x0, copy_module_expr x1)
+      let x1 = copy_module_expr x1 in
+      let x1 =
+        match x1.pmod_desc with
+        | Pmod_structure [] ->
+            let pmod_attributes =
+              {
+                Ast_500.Parsetree.attr_name =
+                  {
+                    txt = "ppxlib.migration.keep_structure";
+                    loc = { x1.pmod_loc with loc_ghost = true };
+                  };
+                attr_payload = Ast_500.Parsetree.PStr [];
+                attr_loc = Location.none;
+              }
+              :: x1.pmod_attributes
+            in
+            { x1 with pmod_attributes }
+        | _ -> x1
+      in
+      Ast_500.Parsetree.Pmod_apply (copy_module_expr x0, x1)
   | Ast_501.Parsetree.Pmod_apply_unit x0 ->
       let empty_struct =
         Ast_500.Parsetree.

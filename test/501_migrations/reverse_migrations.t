@@ -179,16 +179,23 @@ Tests for the Parsetree change for generative functor applications
   $ ./compare_on.exe file.ml ./reverse_migrations.exe | grep -v "without_migrations" | grep -v "with_migrations"
   [1]
 
+When going up, F(struct end) is turned into F(), which makes the location be lost.
+It could be stored in an attribute, or turned into F(struct end [@warning "-73"]).
+
   $ cat > file.ml << EOF
   > module F () = struct end
   > module M = F(struct end)
   > EOF
   $ ./compare_on.exe file.ml ./reverse_migrations.exe | grep -v "without_migrations" | grep -v "with_migrations"
-  [1]
+  @@ -17 +17 @@
+  -        module_expr (file.ml[2,25+13]..[2,25+23])
+  +        module_expr (file.ml[2,25+11]..[2,25+24])
 
   $ cat > file.ml << EOF
   > module F (N : sig end) = struct end
   > module M = F (struct end)
   > EOF
   $ ./compare_on.exe file.ml ./reverse_migrations.exe | grep -v "without_migrations" | grep -v "with_migrations"
-  [1]
+  @@ -20 +20 @@
+  -        module_expr (file.ml[2,36+14]..[2,36+24])
+  +        module_expr (file.ml[2,36+11]..[2,36+25])

@@ -751,7 +751,27 @@ and copy_module_expr_desc :
       Ast_501.Parsetree.Pmod_functor
         (copy_functor_parameter x0, copy_module_expr x1)
   | Ast_500.Parsetree.Pmod_apply (x0, x1) ->
-      Ast_501.Parsetree.Pmod_apply (copy_module_expr x0, copy_module_expr x1)
+      let x1, is_unit =
+        match x1.pmod_desc with
+        | Pmod_structure [] ->
+            let rec extract_attr acc : Ast_500.Parsetree.attributes -> _ =
+              function
+              | [] -> (List.rev acc, true)
+              | {
+                  attr_name = { txt = "ppxlib.migration.keep_structure"; _ };
+                  _;
+                }
+                :: q ->
+                  (List.rev_append acc q, false)
+              | hd :: tl -> extract_attr (hd :: acc) tl
+            in
+            let pmod_attributes, b = extract_attr [] x1.pmod_attributes in
+            ({ x1 with pmod_attributes }, b)
+        | _ -> (x1, false)
+      in
+      if is_unit then Ast_501.Parsetree.Pmod_apply_unit (copy_module_expr x0)
+      else
+        Ast_501.Parsetree.Pmod_apply (copy_module_expr x0, copy_module_expr x1)
   | Ast_500.Parsetree.Pmod_constraint (x0, x1) ->
       Ast_501.Parsetree.Pmod_constraint
         (copy_module_expr x0, copy_module_type x1)
