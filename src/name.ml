@@ -165,6 +165,7 @@ module Reserved_namespaces = struct
   let () = reserve "res" (* rescript *)
   let () = reserve "metaocaml"
   let () = reserve "ocamlformat"
+  let () = reserve "ppxlib.migration"
 
   let check_not_reserved ~kind name =
     let kind, list =

@@ -160,19 +160,7 @@ Tests for the Parsetree change for generative functor applications
   > module M = F ()
   > EOF
   $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
-  @@ -14 +14 @@
-  -        Pmod_apply_unit
-  +        Pmod_apply
-  @@ -16,0 +17,3 @@
-  +        module_expr (file.ml[2,25+11]..[2,25+15])
-  +          Pmod_structure
-  +          []
-  @@ -18,0 +22,5 @@
-  +File "file.ml", line 2, characters 11-15:
-  +2 | module M = F ()
-  +               ^^^^
-  +Warning 73 [generative-application-expects-unit]: A generative functor
-  +should be applied to '()'; using '(struct end)' is deprecated.
+  [1]
 
   $ cat > file.ml << EOF
   > module F () = struct end
