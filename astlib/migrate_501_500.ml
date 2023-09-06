@@ -769,14 +769,15 @@ and copy_module_expr :
        Ast_501.Parsetree.pmod_desc;
        Ast_501.Parsetree.pmod_loc;
        Ast_501.Parsetree.pmod_attributes;
-     } ->
+   } ->
+ let loc = copy_location pmod_loc in
   {
-    Ast_500.Parsetree.pmod_desc = copy_module_expr_desc pmod_desc;
-    Ast_500.Parsetree.pmod_loc = copy_location pmod_loc;
+    Ast_500.Parsetree.pmod_desc = copy_module_expr_desc loc pmod_desc;
+    Ast_500.Parsetree.pmod_loc = loc;
     Ast_500.Parsetree.pmod_attributes = copy_attributes pmod_attributes;
   }
 
-and copy_module_expr_desc :
+and copy_module_expr_desc loc :
     Ast_501.Parsetree.module_expr_desc -> Ast_500.Parsetree.module_expr_desc =
   function
   | Ast_501.Parsetree.Pmod_ident x0 ->
@@ -793,7 +794,7 @@ and copy_module_expr_desc :
         Ast_500.Parsetree.
           {
             pmod_desc = Pmod_structure [];
-            pmod_loc = Location.none;
+            pmod_loc = loc;
             pmod_attributes = [];
           }
       in

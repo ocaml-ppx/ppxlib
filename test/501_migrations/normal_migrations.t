@@ -164,11 +164,13 @@ Tests for the Parsetree change for generative functor applications
   -        Pmod_apply_unit
   +        Pmod_apply
   @@ -16,0 +17,3 @@
-  +        module_expr (_none_[0,0+-1]..[0,0+-1]) ghost
+  +        module_expr (file.ml[2,25+11]..[2,25+15])
   +          Pmod_structure
   +          []
-  @@ -18,0 +22,3 @@
-  +File "_none_", line 1:
+  @@ -18,0 +22,5 @@
+  +File "file.ml", line 2, characters 11-15:
+  +2 | module M = F ()
+  +               ^^^^
   +Warning 73 [generative-application-expects-unit]: A generative functor
   +should be applied to '()'; using '(struct end)' is deprecated.
 
