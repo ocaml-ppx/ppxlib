@@ -6,6 +6,13 @@ let migration_error loc missing_feature =
   Location.raise_errorf ~loc
     "migration error: %s is not supported before OCaml 5.02" missing_feature
 
+let mk_ghost_attr name =
+  {
+    Ast_501.Parsetree.attr_name = { Location.txt = name; loc = Location.none };
+    attr_payload = PStr [];
+    attr_loc = Location.none;
+  }
+
 let rec copy_toplevel_phrase :
     Ast_502.Parsetree.toplevel_phrase -> Ast_501.Parsetree.toplevel_phrase =
   function
@@ -75,7 +82,16 @@ and copy_expression_desc :
   | Ast_502.Parsetree.Pexp_function (params, tconstraint, body) ->
       let expr =
         match body with
-        | Pfunction_body expr -> copy_expression expr
+        | Pfunction_body expr -> (
+            match expr.pexp_desc with
+            | Pexp_function _ ->
+                (* We don't want this [fun] to be merged with the parent during
+                   the round-trip. This attribute signals that this expression
+                   really is the body of the function. *)
+                let attr = mk_ghost_attr "ppxlib.migration.stop_taking" in
+                let expr = copy_expression expr in
+                { expr with pexp_attributes = attr :: expr.pexp_attributes }
+            | _ -> copy_expression expr)
         | Pfunction_cases (cases, loc, attrs) ->
             {
               Ast_501.Parsetree.pexp_desc =
@@ -97,9 +113,7 @@ and copy_expression_desc :
               pexp_attributes = [];
             }
         | Some (Pcoerce (c1, c2)) ->
-            let c1 =
-              match c1 with None -> None | Some c1 -> Some (copy_core_type c1)
-            in
+            let c1 = Option.map copy_core_type c1 in
             {
               Ast_501.Parsetree.pexp_desc =
                 Ast_501.Parsetree.Pexp_coerce (expr, c1, copy_core_type c2);
