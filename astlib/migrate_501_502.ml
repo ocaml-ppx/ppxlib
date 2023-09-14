@@ -2,6 +2,18 @@ open Stdlib0
 module From = Ast_501
 module To = Ast_502
 
+(** Look for a particular attribute and remove it from the list. Attributes are
+    used to make certain migrations round-trip. Returns [None] if the specified
+    attribute is not found. *)
+let extract_attr name (attrs : Ast_501.Parsetree.attributes) =
+  let rec loop acc = function
+    | [] -> (false, List.rev acc)
+    | { Ast_501.Parsetree.attr_name = { txt; _ }; _ } :: q when txt = name ->
+        (true, List.rev_append acc q)
+    | hd :: tl -> loop (hd :: acc) tl
+  in
+  loop [] attrs
+
 let rec copy_toplevel_phrase :
     Ast_501.Parsetree.toplevel_phrase -> Ast_502.Parsetree.toplevel_phrase =
   function
@@ -74,25 +86,81 @@ and copy_expression_desc loc :
         ( [],
           None,
           Ast_502.Parsetree.Pfunction_cases (List.map copy_case x0, loc, []) )
-  | Ast_501.Parsetree.Pexp_fun (arg_label, opt_expr, pat, expr) ->
-      Ast_502.Parsetree.Pexp_function
-        ( [
-            {
-              pparam_desc =
-                Pparam_val
-                  ( copy_arg_label arg_label,
-                    Option.map copy_expression opt_expr,
-                    copy_pattern pat );
-              pparam_loc = loc;
-            };
-          ],
-          None,
-          Ast_502.Parsetree.Pfunction_body (copy_expression expr) )
-      (* Ast_502.Parsetree.Pexp_fun *)
-      (*   ( copy_arg_label x0, *)
-      (*     Option.map copy_expression x1, *)
-      (*     copy_pattern x2, *)
-      (*     copy_expression x3 ) *)
+  | Ast_501.Parsetree.Pexp_fun (arg_label, opt_default, pat, expr) ->
+      let take_body (e : Ast_501.Parsetree.expression) =
+        match e.pexp_desc with
+        | Ast_501.Parsetree.Pexp_function case_list ->
+            Ast_502.Parsetree.Pfunction_cases
+              ( List.map copy_case case_list,
+                e.pexp_loc,
+                copy_attributes e.pexp_attributes )
+        | _ -> Ast_502.Parsetree.Pfunction_body (copy_expression e)
+      in
+      let rec take_arguments acc (e : Ast_501.Parsetree.expression) =
+        if e.pexp_attributes <> [] then
+          (* The attribute list is not empty, none of these nodes could have
+             been created by the downward migration. Except for [Pexp_fun], for
+             which we add a ghost attribute to help us roundtrip. *)
+          let _, attrs =
+            extract_attr "ppxlib.migration.stop_taking" e.pexp_attributes
+          in
+          ( acc,
+            None,
+            Ast_502.Parsetree.Pfunction_body
+              (copy_expression { e with pexp_attributes = attrs }) )
+        else
+          (* These nodes are likely to have been synthetized during the
+             downward migration. *)
+          match e.pexp_desc with
+          | Ast_501.Parsetree.Pexp_fun (arg_label, opt_default, pat, expr) ->
+              take_arguments_fun acc arg_label opt_default pat expr
+          | Ast_501.Parsetree.Pexp_newtype (t, expr) ->
+              let acc =
+                {
+                  Ast_502.Parsetree.pparam_loc = t.loc;
+                  pparam_desc = Pparam_newtype t;
+                }
+                :: acc
+              in
+              take_arguments acc expr
+          | Ast_501.Parsetree.Pexp_constraint (exp, ct) ->
+              (* These two expression are represented the same on 5.1 but
+                 differently on 5.2:
+                 {[
+                   let _ = fun x : (_ -> int) -> fun y -> x+y
+                   let _ = fun x -> ((fun y -> x+y) : _ -> int)
+                 ]}
+                 We normalize the second into the first when migrating to 5.2,
+                 making the migration 5.2->5.1->5.2 not roundtrip but hopefully
+                 without change in semantics. *)
+              let ct =
+                Some (Ast_502.Parsetree.Pconstraint (copy_core_type ct))
+              in
+              (acc, ct, take_body exp)
+          | Ast_501.Parsetree.Pexp_coerce (exp, c1, c2) ->
+              (* Same as above, might not roundtrip but hopefully OK. *)
+              let c1 = Option.map copy_core_type c1
+              and c2 = copy_core_type c2 in
+              (acc, Some (Ast_502.Parsetree.Pcoerce (c1, c2)), take_body e)
+          | _ -> (acc, None, take_body e)
+      and take_arguments_fun acc arg_label opt_default pat expr =
+        let acc =
+          let pparam_desc =
+            Ast_502.Parsetree.Pparam_val
+              ( copy_arg_label arg_label,
+                Option.map copy_expression opt_default,
+                copy_pattern pat )
+          in
+          (* Best-effort location. *)
+          { Ast_502.Parsetree.pparam_loc = pat.ppat_loc; pparam_desc } :: acc
+        in
+        take_arguments acc expr
+      in
+      (* The argument list returned by [take_arguments] is reversed *)
+      let arg_list, type_constraint, body =
+        take_arguments_fun [] arg_label opt_default pat expr
+      in
+      Ast_502.Parsetree.Pexp_function (List.rev arg_list, type_constraint, body)
   | Ast_501.Parsetree.Pexp_apply (x0, x1) ->
       Ast_502.Parsetree.Pexp_apply
         ( copy_expression x0,
