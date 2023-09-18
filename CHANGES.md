@@ -11,6 +11,8 @@ unreleased
 
 - Preserve quoted attributes on antiquotes in metaquot (#441, @ncik-roberts)
 
+- Attribute namespaces: Fix semantics of reserving multi-component namespaces (#443, @ncik-roberts)
+
 0.30.0 (20/06/2023)
 -------------------
 

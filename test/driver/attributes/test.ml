@@ -92,3 +92,80 @@ type t2 = <  >
 Line _, characters 17-20:
 Error: Attribute `foo' was not used
 |}]
+
+(* Reserved Namespaces *)
+
+(* ppxlib checks that unreserved attributes aren't dropped *)
+
+let x = (42 [@bar])
+[%%expect{|
+Line _, characters 14-17:
+Error: Attribute `bar' was silently dropped
+|}]
+
+let x = (42 [@bar.baz])
+[%%expect{|
+Line _, characters 14-21:
+Error: Attribute `bar.baz' was silently dropped
+|}]
+
+(* But reserving a namespace disables those checks. *)
+
+let () = Reserved_namespaces.reserve "bar"
+
+let x = (42 [@bar])
+let x = (42 [@bar.baz])
+[%%expect{|
+val x : int = 42
+val x : int = 42
+|}]
+
+let x = (42 [@bar_not_proper_sub_namespace])
+[%%expect{|
+Line _, characters 14-42:
+Error: Attribute `bar_not_proper_sub_namespace' was silently dropped
+|}]
+
+(* The namespace reservation process understands dots as namespace
+   separators. *)
+
+let () = Reserved_namespaces.reserve "baz.qux"
+
+let x = (42 [@baz])
+[%%expect{|
+Line _, characters 14-17:
+Error: Attribute `baz' was silently dropped
+|}]
+
+let x = (42 [@baz.qux])
+[%%expect{|
+val x : int = 42
+|}]
+
+let x = (42 [@baz.qux.quux])
+[%%expect{|
+val x : int = 42
+|}]
+
+let x = (42 [@baz.qux_not_proper_sub_namespace])
+[%%expect{|
+Line _, characters 14-46:
+Error: Attribute `baz.qux_not_proper_sub_namespace' was silently dropped
+|}]
+
+(* You can reserve multiple subnamespaces under the same namespace *)
+
+let () = Reserved_namespaces.reserve "baz.qux2"
+
+let x = (42 [@baz.qux])
+let x = (42 [@baz.qux2])
+[%%expect{|
+val x : int = 42
+val x : int = 42
+|}]
+
+let x = (42 [@baz.qux3])
+[%%expect{|
+Line _, characters 14-22:
+Error: Attribute `baz.qux3' was silently dropped
+|}]
