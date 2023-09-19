@@ -164,6 +164,13 @@ Tests for the Parsetree change for generative functor applications
 
   $ cat > file.ml << EOF
   > module F () = struct end
+  > module M = F [@attr1] () [@attr2]
+  > EOF
+  $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
+  [1]
+
+  $ cat > file.ml << EOF
+  > module F () = struct end
   > module M = F(struct end)
   > EOF
   $ ./compare_on.exe file.ml ./identity_driver.exe | grep -v "without_migrations" | grep -v "with_migrations"
