@@ -1,6 +1,10 @@
 unreleased
 -------------------
 
+- Fix support for OCaml 5.1: migrated code preserves generative
+  functor warnings, without creating more. Locations are better
+  preserved. (#432, @pitag-ha, @panglesd)
+
 - Driver: Add `-unused-code-warnings` command-line flag. (#444, @ceastlund)
 
 - Add `?warning` flag to `Deriving.Generator.make`. (#440, @jacksonzou123 via @ceastlund)
