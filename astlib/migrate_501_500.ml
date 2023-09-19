@@ -792,14 +792,11 @@ and copy_module_expr_desc loc :
       let x1 =
         match x1.pmod_desc with
         | Pmod_structure [] ->
-           let loc = { x1.pmod_loc with loc_ghost = true } in
+            let loc = { x1.pmod_loc with loc_ghost = true } in
             let pmod_attributes =
               {
                 Ast_500.Parsetree.attr_name =
-                  {
-                    txt = "ppxlib.migration.keep_structure";
-                    loc;
-                  };
+                  { txt = "ppxlib.migration.keep_structure"; loc };
                 attr_payload = Ast_500.Parsetree.PStr [];
                 attr_loc = loc;
               }
