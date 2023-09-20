@@ -7,7 +7,7 @@ as a string.
 E.g., assuming we set `MY_VAR="foo"`, it will turn:
 
 ```ocaml
-let () = print_string [%get_env "foo"]
+let () = print_string [%get_env "MY_VAR"]
 ```
 
 into:
