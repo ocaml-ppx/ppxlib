@@ -1,4 +1,4 @@
-unreleased
+0.31.0 (2023/09/21)
 -------------------
 
 - Fix support for OCaml 5.1: migrated code preserves generative
