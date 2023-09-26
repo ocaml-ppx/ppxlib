@@ -297,6 +297,13 @@ let declare_with_attr_loc name context pattern k =
   declare_with_all_args name context pattern (fun ~attr_loc ~name_loc:_ ->
       k ~attr_loc)
 
+type 'a flag = ('a, unit) t
+
+let declare_flag name context =
+  let payload_pattern = Ast_pattern.(pstr nil) in
+  let continuation ~attr_loc:_ ~name_loc:_ = () in
+  declare_with_all_args name context payload_pattern continuation
+
 module Attribute_table = Caml.Hashtbl.Make (struct
   type t = string loc
 
@@ -354,6 +361,16 @@ let get_res t ?mark_as_seen:do_mark_as_seen x =
 
 let get t ?mark_as_seen:do_mark_as_seen x =
   get_res t ?mark_as_seen:do_mark_as_seen x
+  |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err)
+
+let has_flag_res t ?mark_as_seen x =
+  match get_res ?mark_as_seen t x with
+  | Ok (Some ()) -> Ok true
+  | Ok None -> Ok false
+  | Error _ as e -> e
+
+let has_flag t ?mark_as_seen x =
+  has_flag_res t ?mark_as_seen x
   |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err)
 
 let consume_res t x =

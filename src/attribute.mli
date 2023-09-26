@@ -135,6 +135,13 @@ val declare_with_attr_loc :
   ('a, 'c) t
 (** Same as [declare] but the callback receives the location of the attribute. *)
 
+type 'a flag = ('a, unit) t
+(** Types for attributes without payload. *)
+
+val declare_flag : string -> 'a Context.t -> 'a flag
+(** Same as {!declare}, but the payload is expected to be empty. It is supposed
+    to be used in conjunction with {!has_flag}. *)
+
 val name : _ t -> string
 val context : ('a, _) t -> 'a Context.t
 
@@ -149,6 +156,17 @@ val get_res :
 val get :
   ('a, 'b) t -> ?mark_as_seen:bool (** default [true] *) -> 'a -> 'b option
 (** See {!get_res}. Raises a located error if the attribute is duplicated *)
+
+val has_flag_res :
+  'a flag ->
+  ?mark_as_seen:bool (** default [true] *) ->
+  'a ->
+  (bool, Location.Error.t NonEmptyList.t) result
+(** Answers whether the given flag is attached as an attribute. See {!get_res}
+    for the meaning of [mark_as_seen]. *)
+
+val has_flag : 'a flag -> ?mark_as_seen:bool (** default [true] *) -> 'a -> bool
+(** See {!has_flag_res}. Raises a located error if the attribute is duplicated. *)
 
 val consume_res :
   ('a, 'b) t -> 'a -> (('a * 'b) option, Location.Error.t NonEmptyList.t) result

@@ -1,3 +1,8 @@
+unreleased
+-------------------
+
+- Add API to manipulate attributes that are used as flags (#404, @dianaoigo)
+
 0.31.0 (2023/09/21)
 -------------------
 
