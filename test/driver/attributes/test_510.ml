@@ -192,3 +192,40 @@ let x = (42 [@baz.qux3])
 Line _, characters 14-22:
 Error: Attribute `baz.qux3' was silently dropped
 |}]
+
+(* Testing flags *)
+
+let flag = Attribute.declare_flag "flag" Attribute.Context.expression
+[%%expect{|
+
+val flag : expression Attribute.flag = <abstr>
+|}]
+
+let replace_flagged = object
+  inherit Ast_traverse.map as super
+
+  method! expression e =
+    match Attribute.has_flag_res flag e with
+    | Ok true -> Ast_builder.Default.estring ~loc:e.pexp_loc "Found flag"
+    | Ok false -> super#expression e
+    | Error (err, _) -> Ast_builder.Default.estring ~loc:e.pexp_loc (Location.Error.message err)
+end
+[%%expect{|
+
+val replace_flagged : Ast_traverse.map = <obj>
+|}]
+
+let () =
+  Driver.register_transformation "" ~impl:replace_flagged#structure
+
+let e1 = "flagged" [@flag]
+[%%expect{|
+
+val e1 : string = "Found flag"
+|}]
+
+let e1 = "flagged" [@flag 12]
+[%%expect{|
+
+val e1 : string = "[] expected"
+|}]
