@@ -93,22 +93,20 @@ exceptions. They have type {{!Ppxlib.Location.exception-Error}[Location.Error]}
 and contain enough information to display a located error message.
 
 During its {{!page-driver.driver_execution}execution}, the driver will run many
-different rewriter. In the case described above, it will catch any located
+different rewriters. In the case described above, it will catch any located
 exception thrown by a rewriter. When catching an exception, it will collect the
 error in a list, take the last valid AST (the one that was given to the raising
 rewriter) and continue its execution from there.
 
-At the end of the rewriting process, the driver will append at collected errors
-at the beginning of the AST, in the order in which they appeared.
+At the end of the rewriting process, the driver will prepend all collected errors
+to the beginning of the AST, in the order in which they appeared.
 
-The same mechanism applies for the context-free rewriters: if any of them raise,
+The same mechanism applies for the context-free rewriters: if any of them raises,
 the error is collected, the part of the AST that the rewriter was responsible to
 rewrite remains unmodified, and the context-free phase continues.
 
 The function provided by the API to raise located errors is
-{{!Ppxlib.Location.raise_errorf}[Location.raise_errorf]}. But keep in mind that
-in many case, there is a better AST to continue from than the one that was
-initially passed to the rewriter.
+{{!Ppxlib.Location.raise_errorf}[Location.raise_errorf]}.
 
 {2 Embedding the Errors in the AST}
 
