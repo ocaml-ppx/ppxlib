@@ -440,7 +440,7 @@ and copy_core_type_desc :
       Ast_502.Parsetree.Ptyp_class
         (copy_loc copy_Longident_t x0, List.map copy_core_type x1)
   | Ast_501.Parsetree.Ptyp_alias (x0, x1) ->
-      Ast_502.Parsetree.Ptyp_alias (copy_core_type x0, x1)
+      Ast_502.Parsetree.Ptyp_alias (copy_core_type x0, { Ast_502.Asttypes.txt = x1; loc = x0.ptyp_loc } )
   | Ast_501.Parsetree.Ptyp_variant (x0, x1, x2) ->
       Ast_502.Parsetree.Ptyp_variant
         ( List.map copy_row_field x0,
