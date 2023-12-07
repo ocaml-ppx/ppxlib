@@ -51,3 +51,6 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/ocaml-ppx/ppxlib.git"
+pin-depends: [
+  [ "ocaml-compiler-libs.v0.11.0" "git+https://github.com/art-w/ocaml-compiler-libs.git#ocaml-5.2-trunk" ]
+]
