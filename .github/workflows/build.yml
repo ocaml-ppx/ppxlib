@@ -32,7 +32,7 @@ jobs:
 
       - name: Install ppxlib dependencies
         run: |
-          opam install ./ppxlib.opam --deps-only
+          opam install ./ppxlib.opam --deps-only --with-test
 
       - name: Show configuration
         run: |
@@ -42,4 +42,4 @@ jobs:
           opam list
 
       - name: Build the ppxlib
-        run: opam exec -- dune build -p ppxlib
+        run: opam exec -- dune test -p ppxlib
