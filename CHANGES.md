@@ -5,6 +5,8 @@ unreleased
 
 - Update changelog to use ISO 8061 date format: YYYY-MM-DD. (#445, @ceastlund)
 
+- Replace `Caml` with `Stdlib`. (#427, @ceastlund)
+
 0.31.0 (2023-09-21)
 -------------------
 
@@ -28,8 +30,6 @@ unreleased
 -------------------
 
 - Adopt the OCaml Code of Conduct on the repo (#426, @pitag-ha)
-
-- Replace `Caml` with `Stdlib`. (#427, @ceastlund)
 
 - Clean up misleading attribute hints when declared for proper context. (#425, @ceastlund)
 
