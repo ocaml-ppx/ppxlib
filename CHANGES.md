@@ -1,7 +1,7 @@
 unreleased
 -------------------
 
-- Add API to manipulate attributes that are used as flags (#404, @dianaoigo)
+- Add API to manipulate attributes that are used as flags (#408, @dianaoigo)
 
 - Update changelog to use ISO 8061 date format: YYYY-MM-DD. (#445, @ceastlund)
 
