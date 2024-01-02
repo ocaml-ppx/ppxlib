@@ -177,28 +177,38 @@ let flag = Attribute.declare_flag "flag" Attribute.Context.expression
 val flag : expression Attribute.flag = <abstr>
 |}]
 
-let replace_flagged = object
-  inherit Ast_traverse.map as super
-
-  method! expression e =
-    match Attribute.has_flag_res flag e with
-    | Ok true -> Ast_builder.Default.estring ~loc:e.pexp_loc "Found flag"
-    | Ok false -> super#expression e
-    | Error (err, _) -> Ast_builder.Default.estring ~loc:e.pexp_loc (Location.Error.message err)
-end
+let extend name f =
+  let ext =
+    Extension.V3.declare
+      name
+      Expression
+      Ast_pattern.(single_expr_payload __)
+      (fun ~ctxt:_ e -> f e)
+  in
+  Driver.register_transformation name ~rules:[ Context_free.Rule.extension ext ]
 [%%expect{|
-val replace_flagged : Ast_traverse.map = <obj>
+val extend : string -> (expression -> expression) -> unit = <fun>
 |}]
 
 let () =
-  Driver.register_transformation "" ~impl:replace_flagged#structure
+  extend "flagged" (fun e ->
+    if Attribute.has_flag flag e
+    then e
+    else Location.raise_errorf ~loc:e.pexp_loc "flag not found")
 
-let e1 = "flagged" [@flag]
+let e1 = [%flagged "Absent flag"]
 [%%expect{|
-val e1 : string = "Found flag"
+Line _, characters 19-32:
+Error: flag not found
 |}]
 
-let e1 = "flagged" [@flag 12]
+let e2 = [%flagged "Found flag" [@flag]]
 [%%expect{|
-val e1 : string = "[] expected"
+val e2 : string = "Found flag"
+|}]
+
+let e3 = [%flagged "Misused flag" [@flag 12]]
+[%%expect{|
+Line _, characters 41-43:
+Error: [] expected
 |}]
