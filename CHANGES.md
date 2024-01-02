@@ -1,6 +1,8 @@
 unreleased
 -------------------
 
+- Update `Attribute.get` to ignore `loc_ghost`. (#460, @ceastlund)
+
 - Add API to manipulate attributes that are used as flags (#408, @dianaoigo)
 
 - Update changelog to use ISO 8061 date format: YYYY-MM-DD. (#445, @ceastlund)
