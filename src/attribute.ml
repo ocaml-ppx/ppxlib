@@ -307,8 +307,9 @@ let declare_flag name context =
 module Attribute_table = Stdlib.Hashtbl.Make (struct
   type t = string loc
 
-  let hash : t -> int = Hashtbl.hash
-  let equal : t -> t -> bool = Poly.equal
+  let normalize t = { t with loc = { t.loc with loc_ghost = true } }
+  let hash t = Hashtbl.hash (normalize t)
+  let equal x y = Poly.equal (normalize x) (normalize y)
 end)
 
 let not_seen = Attribute_table.create 128

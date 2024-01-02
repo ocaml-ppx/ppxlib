@@ -260,6 +260,5 @@ let () =
 
 let e = [%flag_ghost "bye" [@flag]]
 [%%expect{|
-Line _, characters 29-33:
-Error: Attribute `flag' was silently dropped
+val e : string * string = ("bye", "bye")
 |}]
