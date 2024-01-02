@@ -212,3 +212,54 @@ let e3 = [%flagged "Misused flag" [@flag 12]]
 Line _, characters 41-43:
 Error: [] expected
 |}]
+
+(* Testing attribute in trivial transformation *)
+
+open Ast_builder.Default
+
+let flagged e =
+  let loc = e.pexp_loc in
+  pexp_extension ~loc ({ loc; txt = "flagged" }, PStr [pstr_eval ~loc e []])
+[%%expect{|
+val flagged : expression -> expression = <fun>
+|}]
+
+let () = extend "simple" flagged
+
+let e = [%simple "flagged" [@flag]]
+[%%expect{|
+val e : string = "flagged"
+|}]
+
+(* When duplicating code, apply [ghost] to all but one copy. *)
+
+let ghost = object
+  inherit Ast_traverse.map
+  method! location l = { l with loc_ghost = true }
+end
+[%%expect{|
+val ghost : Ast_traverse.map = <obj>
+|}]
+
+(* Test attribute lookup in non-ghosted subexpression. *)
+
+let () =
+  extend "flag_alive" (fun e ->
+    pexp_tuple ~loc:e.pexp_loc [ flagged e; ghost#expression e ])
+
+let e = [%flag_alive "hello" [@flag]]
+[%%expect{|
+val e : string * string = ("hello", "hello")
+|}]
+
+(* Test attribute lookup in ghosted subexpression. *)
+
+let () =
+  extend "flag_ghost" (fun e ->
+    pexp_tuple ~loc:e.pexp_loc [ e; flagged (ghost#expression e) ])
+
+let e = [%flag_ghost "bye" [@flag]]
+[%%expect{|
+Line _, characters 29-33:
+Error: Attribute `flag' was silently dropped
+|}]
