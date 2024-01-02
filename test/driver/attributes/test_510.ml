@@ -201,31 +201,97 @@ let flag = Attribute.declare_flag "flag" Attribute.Context.expression
 val flag : expression Attribute.flag = <abstr>
 |}]
 
-let replace_flagged = object
-  inherit Ast_traverse.map as super
-
-  method! expression e =
-    match Attribute.has_flag_res flag e with
-    | Ok true -> Ast_builder.Default.estring ~loc:e.pexp_loc "Found flag"
-    | Ok false -> super#expression e
-    | Error (err, _) -> Ast_builder.Default.estring ~loc:e.pexp_loc (Location.Error.message err)
-end
+let extend name f =
+  let ext =
+    Extension.V3.declare
+      name
+      Expression
+      Ast_pattern.(single_expr_payload __)
+      (fun ~ctxt:_ e -> f e)
+  in
+  Driver.register_transformation name ~rules:[ Context_free.Rule.extension ext ]
 [%%expect{|
 
-val replace_flagged : Ast_traverse.map = <obj>
+val extend : string -> (expression -> expression) -> unit = <fun>
 |}]
 
 let () =
-  Driver.register_transformation "" ~impl:replace_flagged#structure
+  extend "flagged" (fun e ->
+    if Attribute.has_flag flag e
+    then e
+    else Location.raise_errorf ~loc:e.pexp_loc "flag not found")
 
-let e1 = "flagged" [@flag]
+let e1 = [%flagged "Absent flag"]
 [%%expect{|
 
-val e1 : string = "Found flag"
+Line _, characters 19-32:
+Error: flag not found
 |}]
 
-let e1 = "flagged" [@flag 12]
+let e2 = [%flagged "Found flag" [@flag]]
 [%%expect{|
 
-val e1 : string = "[] expected"
+val e2 : string = "Found flag"
+|}]
+
+let e3 = [%flagged "Misused flag" [@flag 12]]
+[%%expect{|
+
+Line _, characters 41-43:
+Error: [] expected
+|}]
+
+(* Testing attribute in trivial transformation *)
+
+open Ast_builder.Default
+
+let flagged e =
+  let loc = e.pexp_loc in
+  pexp_extension ~loc ({ loc; txt = "flagged" }, PStr [pstr_eval ~loc e []])
+[%%expect{|
+
+val flagged : expression -> expression = <fun>
+|}]
+
+let () = extend "simple" flagged
+
+let e = [%simple "flagged" [@flag]]
+[%%expect{|
+
+val e : string = "flagged"
+|}]
+
+(* When duplicating code, apply [ghost] to all but one copy. *)
+
+let ghost = object
+  inherit Ast_traverse.map
+  method! location l = { l with loc_ghost = true }
+end
+[%%expect{|
+
+val ghost : Ast_traverse.map = <obj>
+|}]
+
+(* Test attribute lookup in non-ghosted subexpression. *)
+
+let () =
+  extend "flag_alive" (fun e ->
+    pexp_tuple ~loc:e.pexp_loc [ flagged e; ghost#expression e ])
+
+let e = [%flag_alive "hello" [@flag]]
+[%%expect{|
+
+val e : string * string = ("hello", "hello")
+|}]
+
+(* Test attribute lookup in ghosted subexpression. *)
+
+let () =
+  extend "flag_ghost" (fun e ->
+    pexp_tuple ~loc:e.pexp_loc [ e; flagged (ghost#expression e) ])
+
+let e = [%flag_ghost "bye" [@flag]]
+[%%expect{|
+
+val e : string * string = ("bye", "bye")
 |}]
