@@ -1,5 +1,7 @@
 (env
  (_
+  (flags
+   (:standard -warn-error -9-27-26 -dtypedtree -dparsetree -dlambda -annot -dlocations -dsource -dump-into-file -drawlambda  -dprofile))
   (binaries
    (test/expect/expect_test.exe as expect-test))))
 

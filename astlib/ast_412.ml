@@ -294,9 +294,13 @@ module Parsetree = struct
     *)
     | Ppat_exception of pattern
     (* exception P *)
-    | Ppat_extension of extension
+
+
+    (* | Ppat_effect of extension *)
+    | Ppat_effect of Parsetree.pattern * Parsetree.pattern
+    | Ppat_extension of extension  
     (* [%id] *)
-    | Ppat_open of Longident.t loc * pattern
+    | Ppat_open of Longident.t loc * pattern 
     (* M.(P) *)
 
   (* Value expressions *)
@@ -802,6 +806,7 @@ module Parsetree = struct
     (* type t1 += ... *)
     | Psig_exception of type_exception
     (* exception C of T *)
+    | Psig_effect of Parsetree.effect_constructor
     | Psig_module of module_declaration
     (* module X = M
        module X : MT *)
@@ -950,6 +955,7 @@ module Parsetree = struct
     | Pstr_exception of type_exception
     (* exception C of T
        exception C = M.X *)
+    | Pstr_effect of Parsetree.effect_constructor
     | Pstr_module of module_binding
     (* module X = ME *)
     | Pstr_recmodule of module_binding list
