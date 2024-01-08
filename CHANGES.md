@@ -9,9 +9,9 @@ unreleased
 
 - Replace `Caml` with `Stdlib`. (#427, @ceastlund)
 
-- When a transformation raises, the last valid AST is used, as input to the upcoming 
-  transformations. All errors are collected. At the end, the errors are appended, as 
-  extension nodes, at its beginning (#447, @burnleydev1)
+- When a transformation raises, the last valid AST is used as input to the upcoming
+  transformations. All such errors are collected and appended as
+  extension nodes to the final AST (#447, @burnleydev1)
 
 0.31.0 (2023-09-21)
 -------------------
