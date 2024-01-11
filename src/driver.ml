@@ -539,13 +539,6 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
           Common.attribute_of_warning loc s),
       errors )
   in
-
-  let exn_to_error exn =
-    match Location.Error.of_exn exn with
-    | None -> raise exn
-    | Some error -> error
-  in
-
   let acc =
     List.fold_left cts ~init:(ast, [], [], [])
       ~f:(fun (ast, dropped, (lint_errors : _ list), errors) (ct : Transform.t)
@@ -565,7 +558,7 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
           | Some f -> (
               try (lint_errors @ f ctxt ast, errors)
               with exn when embed_errors ->
-                (lint_errors, exn_to_error exn :: errors))
+                (lint_errors, exn_to_loc_error exn :: errors))
         in
         match field ct with
         | None -> (ast, dropped, lint_errors, errors)
@@ -573,7 +566,7 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
             let (ast, more_errors), errors =
               try (f ctxt ast, errors)
               with exn when embed_errors ->
-                ((ast, []), exn_to_error exn :: errors)
+                ((ast, []), exn_to_loc_error exn :: errors)
             in
             let dropped =
               if !debug_attribute_drop then (
@@ -609,9 +602,7 @@ let error_to_extension error ~(kind : Kind.t) =
   | Impl -> Intf_or_impl.Impl [ error_to_str_extension error ]
 
 let exn_to_extension exn ~(kind : Kind.t) =
-  match Location.Error.of_exn exn with
-  | None -> raise exn
-  | Some error -> error_to_extension error ~kind
+  exn_to_loc_error exn |> error_to_extension ~kind
 
 (* +-----------------------------------------------------------------+
    | Actual rewriting of structure/signatures                        |

@@ -197,9 +197,6 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let exn_to_error exn =
-  match Location.Error.of_exn exn with None -> raise exn | Some error -> error
-
 let rec map_node_rec context ts super_call loc base_ctxt x ~embed_errors =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
@@ -210,7 +207,7 @@ let rec map_node_rec context ts super_call loc base_ctxt x ~embed_errors =
       (try
          E.For_context.convert_res ts ~ctxt ext
          |> With_errors.of_result ~default:None
-       with exn when embed_errors -> (None, [ exn_to_error exn ]))
+       with exn when embed_errors -> (None, [ exn_to_loc_error exn ]))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
@@ -230,7 +227,7 @@ let map_node context ts super_call loc base_ctxt x ~hook ~embed_errors =
       (try
          E.For_context.convert_res ts ~ctxt ext
          |> With_errors.of_result ~default:None
-       with exn when embed_errors -> (None, [ exn_to_error exn ]))
+       with exn when embed_errors -> (None, [ exn_to_loc_error exn ]))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
@@ -264,7 +261,7 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook ~embed_errors
           (try
              E.For_context.convert_inline_res ts ~ctxt ext
              |> With_errors.of_result ~default:None
-           with exn when embed_errors -> (None, [ exn_to_error exn ]))
+           with exn when embed_errors -> (None, [ exn_to_loc_error exn ]))
           >>= function
           | None ->
               super_call base_ctxt x >>= fun x ->
@@ -371,7 +368,7 @@ let handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt
           try
             let expect_items = group.expand ~ctxt rf expanded_items values in
             return (expect_items :: acc)
-          with exn when embed_errors -> (acc, [ exn_to_error exn ])))
+          with exn when embed_errors -> (acc, [ exn_to_loc_error exn ])))
 
 let handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt ~embed_errors
     =
@@ -393,7 +390,7 @@ let handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt ~embed_errors
           try
             let expect_items = a.expand ~ctxt expanded_item value in
             return (expect_items :: acc)
-          with exn when embed_errors -> (acc, [ exn_to_error exn ])))
+          with exn when embed_errors -> (acc, [ exn_to_loc_error exn ])))
 
 module Expect_mismatch_handler = struct
   type t = {
@@ -520,7 +517,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           | Some pattern -> (
               let generated_code =
                 try return (pattern e)
-                with exn when embed_errors -> (None, [ exn_to_error exn ])
+                with exn when embed_errors -> (None, [ exn_to_loc_error exn ])
               in
               generated_code >>= fun expr ->
               match expr with
@@ -534,7 +531,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           | Some pattern -> (
               let generated_code =
                 try return (pattern e)
-                with exn when embed_errors -> (None, [ exn_to_error exn ])
+                with exn when embed_errors -> (None, [ exn_to_loc_error exn ])
               in
               generated_code >>= fun expr ->
               match expr with
@@ -542,10 +539,10 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               | Some e -> self#expression base_ctxt e))
       | Pexp_constant (Pconst_integer (s, Some c)) -> (
           try expand_constant Integer c s
-          with exn when embed_errors -> (e, [ exn_to_error exn ]))
+          with exn when embed_errors -> (e, [ exn_to_loc_error exn ]))
       | Pexp_constant (Pconst_float (s, Some c)) -> (
           try expand_constant Float c s
-          with exn when embed_errors -> (e, [ exn_to_error exn ]))
+          with exn when embed_errors -> (e, [ exn_to_loc_error exn ]))
       | _ -> super#expression base_ctxt e
 
     (* Pre-conditions:

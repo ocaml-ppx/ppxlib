@@ -254,6 +254,9 @@ let mk_named_sig ~loc ~sg_name ~handle_polymorphic_variant = function
                   [ Pwith_typesubst (Located.lident ~loc "t", for_subst) ]))
   | _ -> None
 
+let exn_to_loc_error exn =
+  match Location.Error.of_exn exn with Some error -> error | None -> raise exn
+
 module With_errors = struct
   type 'a t = 'a * Location.Error.t list
 
