@@ -217,7 +217,7 @@ when the -embed-errors flag is not passed
 
 When the `-embed-error` flag is not set, exceptions stop the rewriting process. Therefore, only the first exception is reported to the user
   $ ./whole_file_multiple_errors.exe impl.ml
-  File "impl.ml", line 1, characters 0-12:
+  File "impl.ml", line 1, characters 0-43:
   Error: Raising a located exception during the first instrumentation phase
   [1]
 
