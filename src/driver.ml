@@ -631,6 +631,12 @@ let print_passes () =
     if !perform_checks_on_extensions then
       Printf.printf "<builtin:check-unused-extensions>\n")
 
+let sort_errors_by_loc errors =
+  List.sort errors ~cmp:(fun error error' ->
+      let loc = Location.Error.get_location error in
+      let loc' = Location.Error.get_location error' in
+      Location.compare loc loc')
+
 (*$*)
 
 let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
@@ -652,7 +658,8 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
     st
   in
   let with_errors errors st =
-    List.map errors ~f:(fun error ->
+    let sorted = sort_errors_by_loc errors in
+    List.map sorted ~f:(fun error ->
         Ast_builder.Default.pstr_extension
           ~loc:(Location.Error.get_location error)
           (Location.Error.to_extension error)
@@ -727,7 +734,8 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
     sg
   in
   let with_errors errors sg =
-    List.map errors ~f:(fun error ->
+    let sorted = sort_errors_by_loc errors in
+    List.map sorted ~f:(fun error ->
         Ast_builder.Default.psig_extension
           ~loc:(Location.Error.get_location error)
           (Location.Error.to_extension error)
