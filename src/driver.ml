@@ -1348,7 +1348,7 @@ let standalone_args =
       " Print the parsetree (same as ocamlc -dparsetree)" );
     ( "-embed-errors",
       Arg.Set embed_errors,
-      " Embed errors in the output AST (default: true when -dump-ast, false \
+      " Embed errors in the output AST (default: true when -as-pp, false \
        otherwise)" );
     ( "-null",
       Arg.Unit (fun () -> set_output_mode Null),
