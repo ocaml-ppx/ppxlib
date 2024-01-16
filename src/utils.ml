@@ -2,7 +2,9 @@ open Import
 
 let with_output fn ~binary ~f =
   match fn with
-  | None | Some "-" -> f stdout
+  | None | Some "-" ->
+      set_binary_mode_out stdout binary;
+      f stdout
   | Some fn -> Out_channel.with_file fn ~binary ~f
 
 module Kind = struct

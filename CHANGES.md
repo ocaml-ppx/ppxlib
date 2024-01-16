@@ -19,6 +19,9 @@ unreleased
 - Fix a small mistake in the man pages: Embededding errors is done by default with
   `-as-pp`, not with `-dump-ast` (#464, @pitag-ha)
 
+- Set appropriate binary mode when writing to `stdout` especially for Windows
+  compatibility. (#466, @jonahbeckford)
+
 0.31.0 (2023-09-21)
 -------------------
 
