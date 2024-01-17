@@ -13,6 +13,9 @@ unreleased
   transformations. All such errors are collected and appended as
   extension nodes to the final AST (#447, @burnleydev1)
 
+- Fix a small mistake in the man pages: Embededding errors is done by default with
+  `-as-pp`, not with `-dump-ast` (#464, @pitag-ha)
+
 0.31.0 (2023-09-21)
 -------------------
 
