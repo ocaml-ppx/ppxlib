@@ -1,6 +1,9 @@
 unreleased
 -------------------
 
+- Sort embedded errors that are appended to the AST by location so the compiler
+  reports the one closer to the beginning of the file first. (#463, @NathanReb)
+
 - Update `Attribute.get` to ignore `loc_ghost`. (#460, @ceastlund)
 
 - Add API to manipulate attributes that are used as flags (#408, @dianaoigo)
