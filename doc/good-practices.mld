@@ -83,31 +83,6 @@ error, the embedding mechanism has many advantages. For instance, embedding
 allows to report multiple errors, and to output the part of the code that could
 be generated successfully.
 
-{2 Ppxlib and exceptions}
-
-In general, raising an exception in a registered transformation will make the
-ppxlib driver crash with an uncaught exception error. However, when spawned with
-the [-embed-errors] or [-as-ppx] flags (that's the case when Merlin calls the
-driver) the ppxlib driver still handles a specific kind of exception: Located
-exceptions. They have type {{!Ppxlib.Location.exception-Error}[Location.Error]}
-and contain enough information to display a located error message.
-
-During its {{!page-driver.driver_execution}execution}, the driver will run many
-different rewriters. In the case described above, it will catch any located
-exception thrown by a rewriter. When catching an exception, it will collect the
-error in a list, take the last valid AST (the one that was given to the raising
-rewriter) and continue its execution from there.
-
-At the end of the rewriting process, the driver will prepend all collected errors
-to the beginning of the AST, in the order in which they appeared.
-
-The same mechanism applies for the context-free rewriters: if any of them raises,
-the error is collected, the part of the AST that the rewriter was responsible to
-rewrite remains unmodified, and the context-free phase continues.
-
-The function provided by the API to raise located errors is
-{{!Ppxlib.Location.raise_errorf}[Location.raise_errorf]}.
-
 {2 Embedding the Errors in the AST}
 
 It is better to always return a valid AST, as complete as possible, but with
