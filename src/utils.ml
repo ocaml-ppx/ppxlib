@@ -154,7 +154,11 @@ module Ast_io = struct
   let read input_source ~input_kind =
     try
       match input_source with
-      | Stdin -> from_channel stdin ~input_kind
+      | Stdin ->
+          (match input_kind with
+          | Necessarily_binary -> set_binary_mode_in stdin true
+          | _ -> ());
+          from_channel stdin ~input_kind
       | File fn -> In_channel.with_file fn ~f:(from_channel ~input_kind)
     with exn -> (
       match Location.Error.of_exn exn with
