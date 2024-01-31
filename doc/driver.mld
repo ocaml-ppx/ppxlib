@@ -119,7 +119,7 @@ driver.exe [extra_args] <infile> <outfile>
 v}
 {%html: </details>%}
 
-{3 Exceptions handling}
+{3:exception_handling Exception handling}
 
 In general, raising an exception in a registered transformation will make the
 ppxlib driver crash with an uncaught exception error. However, when spawned with
@@ -137,9 +137,9 @@ rewriter) and continue its execution from there.
 At the end of the rewriting process, the driver will prepend all collected errors
 to the beginning of the AST, in the order in which they appeared.
 
-The same mechanism applies for the context-free rewriters: if any of them raises,
+The same mechanism applies for the {{!"derivers-and-extenders"}context-free rewriters}: if any of them raises,
 the error is collected, the part of the AST that the rewriter was responsible to
-rewrite remains unmodified, and the context-free phase continues.
+rewrite remains unmodified, and the {{!"context-free-phase"}context-free phase} continues.
 
 {2 Cookies}
 

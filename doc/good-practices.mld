@@ -76,7 +76,7 @@ There are mainly two ways to report errors when writing a PPX.
 
 - By embedding special extensions nodes, called "error nodes", inside the
   generated code.
-- By raising a sepcific exception, letting the ppxlib driver handle the error.
+- By raising a sepcific exception, letting the ppxlib driver {{!page-driver.exception_handling}handle the error}.
 
 Let us emphasize that, while exceptions can be practical to quickly fail with an
 error, the embedding mechanism has many advantages. For instance, embedding
