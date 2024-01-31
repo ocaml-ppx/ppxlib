@@ -114,6 +114,28 @@ let _ = convert_longident ")"
 Exception: Invalid_argument "Ppxlib.Longident.parse: \")\"".
 |}]
 
+let _ = convert_longident "+."
+[%%expect{|
+- : string * longident = ("( +. )", Ppxlib.Longident.Lident "+.")
+|}]
+
+let _ = convert_longident "(+.)"
+[%%expect{|
+- : string * longident = ("( +. )", Ppxlib.Longident.Lident "+.")
+|}]
+
+let _ = convert_longident "Foo.(+.)"
+[%%expect{|
+- : string * longident =
+("Foo.( +. )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Foo", "+."))
+|}]
+
+let _ = convert_longident "Foo.( *. )"
+[%%expect{|
+- : string * longident =
+("Foo.( *. )", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "Foo", "*."))
+|}]
+
 let _ = Ppxlib.Code_path.(file_path @@ top_level ~file_path:"dir/main.ml")
 [%%expect{|
 - : string = "dir/main.ml"
