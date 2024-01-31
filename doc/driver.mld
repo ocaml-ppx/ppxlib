@@ -119,6 +119,28 @@ driver.exe [extra_args] <infile> <outfile>
 v}
 {%html: </details>%}
 
+{3:exception_handling Exception handling}
+
+In general, raising an exception in a registered transformation will make the
+ppxlib driver crash with an uncaught exception error. However, when spawned with
+the [-embed-errors] or [-as-ppx] flags (that's the case when Merlin calls the
+driver) the ppxlib driver still handles a specific kind of exception: Located
+exceptions. They have type {{!Ppxlib.Location.exception-Error}[Location.Error]}
+and contain enough information to display a located error message.
+
+During its {{!page-driver.driver_execution}execution}, the driver will run many
+different rewriters. In the case described above, it will catch any located
+exception thrown by a rewriter. When catching an exception, it will collect the
+error in a list, take the last valid AST (the one that was given to the raising
+rewriter) and continue its execution from there.
+
+At the end of the rewriting process, the driver will prepend all collected errors
+to the beginning of the AST, in the order in which they appeared.
+
+The same mechanism applies for the {{!"derivers-and-extenders"}context-free rewriters}: if any of them raises,
+the error is collected, the part of the AST that the rewriter was responsible to
+rewrite remains unmodified, and the {{!"context-free-phase"}context-free phase} continues.
+
 {2 Cookies}
 
 Cookies are values that are passed to the driver via the command line, or set as
