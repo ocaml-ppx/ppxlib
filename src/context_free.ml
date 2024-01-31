@@ -197,43 +197,49 @@ module Generated_code_hook = struct
     | _ -> t.f context { loc with loc_start = loc.loc_end } x
 end
 
-let rec map_node_rec context ts super_call loc base_ctxt x =
+let rec map_node_rec context ts super_call loc base_ctxt x ~embed_errors =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      E.For_context.convert_res ts ~ctxt ext
-      |> With_errors.of_result ~default:None
+      (try
+         E.For_context.convert_res ts ~ctxt ext
+         |> With_errors.of_result ~default:None
+       with exn when embed_errors -> (None, [ exn_to_loc_error exn ]))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
       | Some x ->
           EC.merge_attributes_res context x attrs
           |> With_errors.of_result ~default:x
-          >>= fun x -> map_node_rec context ts super_call loc base_ctxt x)
+          >>= fun x ->
+          map_node_rec context ts super_call loc base_ctxt x ~embed_errors)
 
-let map_node context ts super_call loc base_ctxt x ~hook =
+let map_node context ts super_call loc base_ctxt x ~hook ~embed_errors =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
   match EC.get_extension context x with
   | None -> super_call base_ctxt x
   | Some (ext, attrs) -> (
-      E.For_context.convert_res ts ~ctxt ext
-      |> With_errors.of_result ~default:None
+      (try
+         E.For_context.convert_res ts ~ctxt ext
+         |> With_errors.of_result ~default:None
+       with exn when embed_errors -> (None, [ exn_to_loc_error exn ]))
       >>= fun converted ->
       match converted with
       | None -> super_call base_ctxt x
       | Some x ->
           map_node_rec context ts super_call loc base_ctxt
             (EC.merge_attributes context x attrs)
+            ~embed_errors
           >>| fun generated_code ->
           Generated_code_hook.replace hook context loc (Single generated_code);
           generated_code)
 
-let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
+let rec map_nodes context ts super_call get_loc base_ctxt l ~hook ~embed_errors
     ~in_generated_code =
   match l with
   | [] -> return []
@@ -244,7 +250,7 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
              same order as they appear in the source file. *)
           super_call base_ctxt x >>= fun x ->
           map_nodes context ts super_call get_loc base_ctxt l ~hook
-            ~in_generated_code
+            ~embed_errors ~in_generated_code
           >>| fun l -> x :: l
       | Some (ext, attrs) -> (
           let extension_point_loc = get_loc x in
@@ -252,24 +258,26 @@ let rec map_nodes context ts super_call get_loc base_ctxt l ~hook
             Expansion_context.Extension.make ~extension_point_loc
               ~base:base_ctxt ()
           in
-          E.For_context.convert_inline_res ts ~ctxt ext
-          |> With_errors.of_result ~default:None
+          (try
+             E.For_context.convert_inline_res ts ~ctxt ext
+             |> With_errors.of_result ~default:None
+           with exn when embed_errors -> (None, [ exn_to_loc_error exn ]))
           >>= function
           | None ->
               super_call base_ctxt x >>= fun x ->
               map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~in_generated_code
+                ~embed_errors ~in_generated_code
               >>| fun l -> x :: l
           | Some converted ->
               ((), attributes_errors attrs) >>= fun () ->
               map_nodes context ts super_call get_loc base_ctxt converted ~hook
-                ~in_generated_code:true
+                ~embed_errors ~in_generated_code:true
               >>= fun generated_code ->
               if not in_generated_code then
                 Generated_code_hook.replace hook context extension_point_loc
                   (Many generated_code);
               map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~in_generated_code
+                ~embed_errors ~in_generated_code
               >>| fun code -> generated_code @ code))
 
 let map_nodes = map_nodes ~in_generated_code:false
@@ -341,7 +349,8 @@ let context_free_attribute_modification ~loc =
    This complexity is horrible, but in practice we don't care as [attrs] is always a list
    of one element; it only has [@@deriving].
 *)
-let handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt =
+let handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt
+    ~embed_errors =
   List.fold_left attrs ~init:(return [])
     ~f:(fun acc (Rule.Attr_group_inline.T group) ->
       acc >>= fun acc ->
@@ -351,15 +360,18 @@ let handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt =
       | None, None -> return acc
       | None, Some _ | Some _, None ->
           context_free_attribute_modification ~loc |> of_result ~default:acc
-      | Some values, Some _ ->
+      | Some values, Some _ -> (
           let ctxt =
             Expansion_context.Deriver.make ~derived_item_loc:loc
               ~inline:group.expect ~base:base_ctxt ()
           in
-          let expect_items = group.expand ~ctxt rf expanded_items values in
-          return (expect_items :: acc))
+          try
+            let expect_items = group.expand ~ctxt rf expanded_items values in
+            return (expect_items :: acc)
+          with exn when embed_errors -> (acc, [ exn_to_loc_error exn ])))
 
-let handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt =
+let handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt ~embed_errors
+    =
   List.fold_left attrs ~init:(return []) ~f:(fun acc (Rule.Attr_inline.T a) ->
       acc >>= fun acc ->
       Attribute.get_res a.attribute item |> of_result ~default:None
@@ -370,13 +382,15 @@ let handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt =
       | None, None -> return acc
       | None, Some _ | Some _, None ->
           context_free_attribute_modification ~loc |> of_result ~default:acc
-      | Some value, Some _ ->
+      | Some value, Some _ -> (
           let ctxt =
             Expansion_context.Deriver.make ~derived_item_loc:loc
               ~inline:a.expect ~base:base_ctxt ()
           in
-          let expect_items = a.expand ~ctxt expanded_item value in
-          return (expect_items :: acc))
+          try
+            let expect_items = a.expand ~ctxt expanded_item value in
+            return (expect_items :: acc)
+          with exn when embed_errors -> (acc, [ exn_to_loc_error exn ])))
 
 module Expect_mismatch_handler = struct
   type t = {
@@ -387,7 +401,7 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) rules =
+  ?(generated_code_hook = Generated_code_hook.nop) rules ~embed_errors =
   let hook = generated_code_hook in
 
   let special_functions =
@@ -448,8 +462,10 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     |> sort_attr_inline |> Rule.Attr_inline.split_normal_and_expect
   in
 
-  let map_node = map_node ~hook in
-  let map_nodes = map_nodes ~hook in
+  let map_node = map_node ~hook ~embed_errors in
+  let map_nodes = map_nodes ~hook ~embed_errors in
+  let handle_attr_group_inline = handle_attr_group_inline ~embed_errors in
+  let handle_attr_inline = handle_attr_inline ~embed_errors in
 
   object (self)
     inherit Ast_traverse.map_with_expansion_context_and_errors as super
@@ -499,7 +515,12 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           | None ->
               self#pexp_apply_without_traversing_function base_ctxt e func args
           | Some pattern -> (
-              match pattern e with
+              let generated_code =
+                try return (pattern e)
+                with exn when embed_errors -> (None, [ exn_to_loc_error exn ])
+              in
+              generated_code >>= fun expr ->
+              match expr with
               | None ->
                   self#pexp_apply_without_traversing_function base_ctxt e func
                     args
@@ -508,12 +529,20 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           match Hashtbl.find_opt special_functions id.txt with
           | None -> super#expression base_ctxt e
           | Some pattern -> (
-              match pattern e with
+              let generated_code =
+                try return (pattern e)
+                with exn when embed_errors -> (None, [ exn_to_loc_error exn ])
+              in
+              generated_code >>= fun expr ->
+              match expr with
               | None -> super#expression base_ctxt e
               | Some e -> self#expression base_ctxt e))
-      | Pexp_constant (Pconst_integer (s, Some c)) ->
-          expand_constant Integer c s
-      | Pexp_constant (Pconst_float (s, Some c)) -> expand_constant Float c s
+      | Pexp_constant (Pconst_integer (s, Some c)) -> (
+          try expand_constant Integer c s
+          with exn when embed_errors -> (e, [ exn_to_loc_error exn ]))
+      | Pexp_constant (Pconst_float (s, Some c)) -> (
+          try expand_constant Float c s
+          with exn when embed_errors -> (e, [ exn_to_loc_error exn ]))
       | _ -> super#expression base_ctxt e
 
     (* Pre-conditions:

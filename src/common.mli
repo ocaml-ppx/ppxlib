@@ -88,6 +88,9 @@ val mk_named_sig :
 
     It will take care of giving fresh names to unnamed type parameters. *)
 
+val exn_to_loc_error : exn -> Location.Error.t
+(** Convert [exn] to a located error if possible or reraise it otherwise *)
+
 module With_errors : sig
   type 'a t = 'a * Location.Error.t list
 
