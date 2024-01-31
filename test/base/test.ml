@@ -114,11 +114,9 @@ let _ = convert_longident ")"
 Exception: Invalid_argument "Ppxlib.Longident.parse: \")\"".
 |}]
 
-(* FIXME this is a bug *)
 let _ = convert_longident "+."
 [%%expect{|
-- : string * longident =
-("( + ).", Ppxlib.Longident.Ldot (Ppxlib.Longident.Lident "+", ""))
+- : string * longident = ("( +. )", Ppxlib.Longident.Lident "+.")
 |}]
 
 let _ = convert_longident "(+.)"

@@ -51,10 +51,14 @@ let parse s =
   let invalid () =
     invalid_arg (Printf.sprintf "Ppxlib.Longident.parse: %S" s)
   in
-  match (String.index_opt s '(', String.rindex_opt s ')') with
-  | None, None -> parse_simple s
-  | None, _ | _, None -> invalid ()
-  | Some l, Some r -> (
+  if String.length s < 1 then invalid ();
+  let open_par = String.index_opt s '(' in
+  let close_par = String.index_opt s ')' in
+  match (s.[0], open_par, close_par) with
+  | ('A' .. 'Z' | 'a' .. 'z' | '_'), None, None -> parse_simple s
+  | _, None, None -> Lident s (* This is a raw operator, no module path *)
+  | _, None, _ | _, _, None -> invalid ()
+  | _, Some l, Some r -> (
       if Int.(r <> String.length s - 1) then invalid ();
       let group =
         if Int.(r = l + 1) then "()"
