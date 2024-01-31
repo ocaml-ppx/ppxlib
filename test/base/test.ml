@@ -101,17 +101,17 @@ let _ = convert_longident "Base.( land )"
 
 let _ = convert_longident "A(B)"
 [%%expect{|
-Exception: (Invalid_argument "Ppxlib.Longident.parse: \"A(B)\"")
+Exception: Invalid_argument "Ppxlib.Longident.parse: \"A(B)\"".
 |}]
 
 let _ = convert_longident "A.B(C)"
 [%%expect{|
-Exception: (Invalid_argument "Ppxlib.Longident.parse: \"A.B(C)\"")
+Exception: Invalid_argument "Ppxlib.Longident.parse: \"A.B(C)\"".
 |}]
 
 let _ = convert_longident ")"
 [%%expect{|
-Exception: (Invalid_argument "Ppxlib.Longident.parse: \")\"")
+Exception: Invalid_argument "Ppxlib.Longident.parse: \")\"".
 |}]
 
 (* FIXME this is a bug *)
