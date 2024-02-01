@@ -2,7 +2,18 @@ open Import
 
 let with_output fn ~binary ~f =
   match fn with
-  | None | Some "-" -> f stdout
+  | None | Some "-" ->
+      (* Flipping back and forth from binary to text is not
+         a good idea, so we'll make two simplifying assumptions:
+         1. Assume that nothing is buffered on stdout before
+            entering [with_output]. That means we don't need to
+            flush the stdout on entry.
+         2. Assume that nothing else is sent to stdout after
+            [with_output]. That means it is safe to leave stdout
+            channel in binary mode (or text mode if [binary=true])
+            after the function is done. *)
+      set_binary_mode_out stdout binary;
+      f stdout
   | Some fn -> Out_channel.with_file fn ~binary ~f
 
 module Kind = struct
@@ -112,6 +123,10 @@ module Ast_io = struct
           parse_source_code ~kind ~input_name ~prefix_read_from_source ch
       | Necessarily_binary -> Error Not_a_binary_ast
     in
+    (* Marshalled AST must be read in binary mode. Even though we don't know
+       before reading the magic number when the file has a marshalled AST,
+       it is safe to read source files in binary mode. *)
+    set_binary_mode_in ch true;
     match read_magic ch with
     | Error s -> handle_non_binary s
     | Ok s -> (
@@ -152,7 +167,9 @@ module Ast_io = struct
   let read input_source ~input_kind =
     try
       match input_source with
-      | Stdin -> from_channel stdin ~input_kind
+      | Stdin ->
+          set_binary_mode_in stdin true;
+          from_channel stdin ~input_kind
       | File fn -> In_channel.with_file fn ~f:(from_channel ~input_kind)
     with exn -> (
       match Location.Error.of_exn exn with
