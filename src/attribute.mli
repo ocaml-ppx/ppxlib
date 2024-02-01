@@ -97,8 +97,8 @@ val declare :
     names: "default", "bar.default" and "foo.bar.default".
 
     Additionally it is possible to prevent a suffix to be shortened by prefixing
-    it with '\@'. So for instance an attribute declared with name
-    "foo.\@bar.default" will match exactly these attribute names: "bar.default"
+    it with '@'. So for instance an attribute declared with name
+    "foo.@bar.default" will match exactly these attribute names: "bar.default"
     and "foo.bar.default".
 
     When matching against a list of attributes on an item, if several matches

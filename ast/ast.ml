@@ -114,7 +114,7 @@ and constant = Parsetree.constant =
   | Pconst_integer of string * char option
       (** Integer constants such as [3] [3l] [3L] [3n].
 
-          Suffixes [\[g-z\]\[G-Z\]] are accepted by the parser. Suffixes except
+          Suffixes [[g-z][G-Z]] are accepted by the parser. Suffixes except
           ['l'], ['L'] and ['n'] are rejected by the typechecker *)
   | Pconst_char of char  (** Character such as ['c']. *)
   | Pconst_string of string * location * string option
@@ -135,13 +135,13 @@ and attribute = Parsetree.attribute = {
   attr_payload : payload;
   attr_loc : location;
 }
-(** Attributes such as [\[@id ARG\]] and [\[@@id ARG\]].
+(** Attributes such as [[@id ARG]] and [[@@id ARG]].
 
     Metadata containers passed around within the AST. The compiler ignores
     unknown attributes. *)
 
 and extension = string loc * payload
-(** Extension points such as [\[%id ARG\] and \[%%id ARG\]].
+(** Extension points such as [[%id ARG] and [%%id ARG]].
 
     Sub-language placeholder -- rejected by the typechecker. *)
 
@@ -161,7 +161,7 @@ and core_type = Parsetree.core_type = {
   ptyp_desc : core_type_desc;
   ptyp_loc : location;
   ptyp_loc_stack : location_stack;
-  ptyp_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  ptyp_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and core_type_desc = Parsetree.core_type_desc =
@@ -176,18 +176,18 @@ and core_type_desc = Parsetree.core_type_desc =
           - [?l:T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Optional}
             [Optional]}. *)
   | Ptyp_tuple of core_type list
-      (** [Ptyp_tuple(\[T1 ; ... ; Tn\])] represents a product type
+      (** [Ptyp_tuple([T1 ; ... ; Tn])] represents a product type
           [T1 * ... * Tn].
 
           Invariant: [n >= 2]. *)
   | Ptyp_constr of longident_loc * core_type list
       (** [Ptyp_constr(lident, l)] represents:
 
-          - [tconstr] when [l=\[\]],
-          - [T tconstr] when [l=\[T\]],
-          - [(T1, ..., Tn) tconstr] when [l=\[T1 ; ... ; Tn\]]. *)
+          - [tconstr] when [l=[]],
+          - [T tconstr] when [l=[T]],
+          - [(T1, ..., Tn) tconstr] when [l=[T1 ; ... ; Tn]]. *)
   | Ptyp_object of object_field list * closed_flag
-      (** [Ptyp_object(\[ l1:T1; ...; ln:Tn \], flag)] represents:
+      (** [Ptyp_object([ l1:T1; ...; ln:Tn ], flag)] represents:
 
           - [< l1:T1; ...; ln:Tn >] when [flag] is
             {{!Asttypes.closed_flag.Closed} [Closed]},
@@ -196,22 +196,21 @@ and core_type_desc = Parsetree.core_type_desc =
   | Ptyp_class of longident_loc * core_type list
       (** [Ptyp_class(tconstr, l)] represents:
 
-          - [#tconstr] when [l=\[\]],
-          - [T #tconstr] when [l=\[T\]],
-          - [(T1, ..., Tn) #tconstr] when [l=\[T1 ; ... ; Tn\]]. *)
+          - [#tconstr] when [l=[]],
+          - [T #tconstr] when [l=[T]],
+          - [(T1, ..., Tn) #tconstr] when [l=[T1 ; ... ; Tn]]. *)
   | Ptyp_alias of core_type * string  (** [T as 'a]. *)
   | Ptyp_variant of row_field list * closed_flag * label list option
-      (** [Ptyp_variant(\[`A;`B\], flag, labels)] represents:
+      (** [Ptyp_variant([`A;`B], flag, labels)] represents:
 
-          - [\[ `A|`B \]] when [flag] is {{!Asttypes.closed_flag.Closed}
+          - [[ `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Closed}
             [Closed]}, and [labels] is [None],
-          - [\[> `A|`B \]] when [flag] is {{!Asttypes.closed_flag.Open} [Open]},
+          - [[> `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Open} [Open]},
             and [labels] is [None],
-          - [\[< `A|`B \]] when [flag] is {{!Asttypes.closed_flag.Closed}
-            [Closed]}, and [labels] is [Some \[\]],
-          - [\[< `A|`B > `X `Y \]] when [flag] is
-            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is
-            [Some \["X";"Y"\]]. *)
+          - [[< `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Closed}
+            [Closed]}, and [labels] is [Some []],
+          - [[< `A|`B > `X `Y ]] when [flag] is {{!Asttypes.closed_flag.Closed}
+            [Closed]}, and [labels] is [Some ["X";"Y"]]. *)
   | Ptyp_poly of string loc list * core_type
       (** ['a1 ... 'an. T]
 
@@ -242,13 +241,13 @@ and core_type_desc = Parsetree.core_type_desc =
           - As the {{!value_description.pval_type} [pval_type]} field of a
             {!value_description}. *)
   | Ptyp_package of package_type  (** [(module S)]. *)
-  | Ptyp_extension of extension  (** [\[%id\]]. *)
+  | Ptyp_extension of extension  (** [[%id]]. *)
 
 and package_type = longident_loc * (longident_loc * core_type) list
 (** As {!package_type} typed values:
 
-    - [(S, \[\])] represents [(module S)],
-    - [(S, \[(t1, T1) ; ... ; (tn, Tn)\])] represents
+    - [(S, [])] represents [(module S)],
+    - [(S, [(t1, T1) ; ... ; (tn, Tn)])] represents
       [(module S with type t1 = T1 and ... and tn = Tn)]. *)
 
 and row_field = Parsetree.row_field = {
@@ -261,16 +260,16 @@ and row_field_desc = Parsetree.row_field_desc =
   | Rtag of label loc * bool * core_type list
       (** [Rtag(`A, b, l)] represents:
 
-          - [`A] when [b] is [true] and [l] is [\[\]],
-          - [`A of T] when [b] is [false] and [l] is [\[T\]],
-          - [`A of T1 & .. & Tn] when [b] is [false] and [l] is [\[T1;...Tn\]],
-          - [`A of & T1 & .. & Tn] when [b] is [true] and [l] is [\[T1;...Tn\]].
+          - [`A] when [b] is [true] and [l] is [[]],
+          - [`A of T] when [b] is [false] and [l] is [[T]],
+          - [`A of T1 & .. & Tn] when [b] is [false] and [l] is [[T1;...Tn]],
+          - [`A of & T1 & .. & Tn] when [b] is [true] and [l] is [[T1;...Tn]].
 
           - The [bool] field is true if the tag contains a constant (empty)
             constructor.
           - [&] occurs when several types are used for the same constructor (see
             4.2 in the manual) *)
-  | Rinherit of core_type  (** [\[ | t \]] *)
+  | Rinherit of core_type  (** [[ | t ]] *)
 
 and object_field = Parsetree.object_field = {
   pof_desc : object_field_desc;
@@ -288,7 +287,7 @@ and pattern = Parsetree.pattern = {
   ppat_desc : pattern_desc;
   ppat_loc : location;
   ppat_loc_stack : location_stack;
-  ppat_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  ppat_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and pattern_desc = Parsetree.pattern_desc =
@@ -311,17 +310,17 @@ and pattern_desc = Parsetree.pattern_desc =
       (** [Ppat_construct(C, args)] represents:
 
           - [C] when [args] is [None],
-          - [C P] when [args] is [Some (\[\], P)]
+          - [C P] when [args] is [Some ([], P)]
           - [C (P1, ..., Pn)] when [args] is
-            [Some (\[\], Ppat_tuple \[P1; ...; Pn\])]
-          - [C (type a b) P] when [args] is [Some (\[a; b\], P)] *)
+            [Some ([], Ppat_tuple [P1; ...; Pn])]
+          - [C (type a b) P] when [args] is [Some ([a; b], P)] *)
   | Ppat_variant of label * pattern option
       (** [Ppat_variant(`A, pat)] represents:
 
           - [`A] when [pat] is [None],
           - [`A P] when [pat] is [Some P] *)
   | Ppat_record of (longident_loc * pattern) list * closed_flag
-      (** [Ppat_record(\[(l1, P1) ; ... ; (ln, Pn)\], flag)] represents:
+      (** [Ppat_record([(l1, P1) ; ... ; (ln, Pn)], flag)] represents:
 
           - [{ l1=P1; ...; ln=Pn }] when [flag] is
             {{!Asttypes.closed_flag.Closed} [Closed]}
@@ -329,7 +328,7 @@ and pattern_desc = Parsetree.pattern_desc =
             {{!Asttypes.closed_flag.Open} [Open]}
 
           Invariant: [n > 0] *)
-  | Ppat_array of pattern list  (** Pattern [\[| P1; ...; Pn |\]] *)
+  | Ppat_array of pattern list  (** Pattern [[| P1; ...; Pn |]] *)
   | Ppat_or of pattern * pattern  (** Pattern [P1 | P2] *)
   | Ppat_constraint of pattern * core_type  (** Pattern [(P : T)] *)
   | Ppat_type of longident_loc  (** Pattern [#tconst] *)
@@ -343,7 +342,7 @@ and pattern_desc = Parsetree.pattern_desc =
           Note: [(module P : S)] is represented as
           [Ppat_constraint(Ppat_unpack(Some "P"), Ptyp_package S)] *)
   | Ppat_exception of pattern  (** Pattern [exception P] *)
-  | Ppat_extension of extension  (** Pattern [\[%id\]] *)
+  | Ppat_extension of extension  (** Pattern [[%id]] *)
   | Ppat_open of longident_loc * pattern  (** Pattern [M.(P)] *)
 
 (** {2 Value expressions} *)
@@ -352,7 +351,7 @@ and expression = Parsetree.expression = {
   pexp_desc : expression_desc;
   pexp_loc : location;
   pexp_loc_stack : location_stack;
-  pexp_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  pexp_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and expression_desc = Parsetree.expression_desc =
@@ -361,7 +360,7 @@ and expression_desc = Parsetree.expression_desc =
       (** Expressions constant such as [1], ['a'], ["true"], [1.0], [1l], [1L],
           [1n] *)
   | Pexp_let of rec_flag * value_binding list * expression
-      (** [Pexp_let(flag, \[(P1,E1) ; ... ; (Pn,En)\], E)] represents:
+      (** [Pexp_let(flag, [(P1,E1) ; ... ; (Pn,En)], E)] represents:
 
           - [let P1 = E1 and ... and Pn = EN in E] when [flag] is
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
@@ -390,7 +389,7 @@ and expression_desc = Parsetree.expression_desc =
           - [let f P = E] is represented using {{!expression_desc.Pexp_fun}
             [Pexp_fun]}. *)
   | Pexp_apply of expression * (arg_label * expression) list
-      (** [Pexp_apply(E0, \[(l1, E1) ; ... ; (ln, En)\])] represents
+      (** [Pexp_apply(E0, [(l1, E1) ; ... ; (ln, En)])] represents
           [E0 ~l1:E1 ... ~ln:En]
 
           [li] can be {{!Asttypes.arg_label.Nolabel} [Nolabel]} (non labeled
@@ -412,14 +411,14 @@ and expression_desc = Parsetree.expression_desc =
 
           - [C] when [exp] is [None],
           - [C E] when [exp] is [Some E],
-          - [C (E1, ..., En)] when [exp] is [Some (Pexp_tuple\[E1;...;En\])] *)
+          - [C (E1, ..., En)] when [exp] is [Some (Pexp_tuple[E1;...;En])] *)
   | Pexp_variant of label * expression option
       (** [Pexp_variant(`A, exp)] represents
 
           - [`A] when [exp] is [None]
           - [`A E] when [exp] is [Some E] *)
   | Pexp_record of (longident_loc * expression) list * expression option
-      (** [Pexp_record(\[(l1,P1) ; ... ; (ln,Pn)\], exp0)] represents
+      (** [Pexp_record([(l1,P1) ; ... ; (ln,Pn)], exp0)] represents
 
           - [{ l1=P1; ...; ln=Pn }] when [exp0] is [None]
           - [{ E0 with l1=P1; ...; ln=Pn }] when [exp0] is [Some E0]
@@ -428,7 +427,7 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_field of expression * longident_loc  (** [E.l] *)
   | Pexp_setfield of expression * longident_loc * expression
       (** [E1.l <- E2] *)
-  | Pexp_array of expression list  (** [\[| E1; ...; En |\]] *)
+  | Pexp_array of expression list  (** [[| E1; ...; En |]] *)
   | Pexp_ifthenelse of expression * expression * expression option
       (** [if E1 then E2 else E3] *)
   | Pexp_sequence of expression * expression  (** [E1; E2] *)
@@ -480,7 +479,7 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_letop of letop
       (** - [let* P = E0 in E1]
           - [let* P0 = E00 and* P1 = E01 in E1] *)
-  | Pexp_extension of extension  (** [\[%id\]] *)
+  | Pexp_extension of extension  (** [[%id]] *)
   | Pexp_unreachable  (** [.] *)
 
 and case = Parsetree.case = {
@@ -509,14 +508,14 @@ and value_description = Parsetree.value_description = {
   pval_name : string loc;
   pval_type : core_type;
   pval_prim : string list;
-  pval_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pval_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
   pval_loc : location;
 }
 (** Values of type {!value_description} represents:
 
-    - [val x: T], when {{!value_description.pval_prim} [pval_prim]} is [\[\]]
+    - [val x: T], when {{!value_description.pval_prim} [pval_prim]} is [[]]
     - [external x: T = "s1" ... "sn"] when {{!value_description.pval_prim}
-      [pval_prim]} is [\["s1";..."sn"\]] *)
+      [pval_prim]} is [["s1";..."sn"]] *)
 
 (** {2 Type declarations} *)
 
@@ -529,7 +528,7 @@ and type_declaration = Parsetree.type_declaration = {
   ptype_kind : type_kind;
   ptype_private : private_flag;  (** for [= private ...] *)
   ptype_manifest : core_type option;  (** represents [= T] *)
-  ptype_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  ptype_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
   ptype_loc : location;
 }
 (** Here are type declarations and their representation, for various
@@ -562,7 +561,7 @@ and label_declaration = Parsetree.label_declaration = {
   pld_mutable : mutable_flag;
   pld_type : core_type;
   pld_loc : location;
-  pld_attributes : attributes;  (** [l : T \[@id1\] \[@id2\]] *)
+  pld_attributes : attributes;  (** [l : T [@id1] [@id2]] *)
 }
 (** - [{ ...; l: T; ... }] when {{!label_declaration.pld_mutable} [pld_mutable]}
       is {{!Asttypes.mutable_flag.Immutable} [Immutable]},
@@ -577,7 +576,7 @@ and constructor_declaration = Parsetree.constructor_declaration = {
   pcd_args : constructor_arguments;
   pcd_res : core_type option;
   pcd_loc : location;
-  pcd_attributes : attributes;  (** [C of ... \[@id1\] \[@id2\]] *)
+  pcd_attributes : attributes;  (** [C of ... [@id1] [@id2]] *)
 }
 
 and constructor_arguments = Parsetree.constructor_arguments =
@@ -587,13 +586,13 @@ and constructor_arguments = Parsetree.constructor_arguments =
           arguments of:
 
           - [C of T1 * ... * Tn] when [res = None], and
-            [args = Pcstr_tuple \[T1; ... ; Tn\]],
-          - [C: T0] when [res = Some T0], and [args = Pcstr_tuple \[\]],
+            [args = Pcstr_tuple [T1; ... ; Tn]],
+          - [C: T0] when [res = Some T0], and [args = Pcstr_tuple []],
           - [C: T1 * ... * Tn -> T0] when [res = Some T0], and
-            [args = Pcstr_tuple \[T1; ... ; Tn\]],
-          - [C of {...}] when [res = None], and [args = Pcstr_record \[...\]],
+            [args = Pcstr_tuple [T1; ... ; Tn]],
+          - [C of {...}] when [res = None], and [args = Pcstr_record [...]],
           - [C: {...} -> T0] when [res = Some T0], and
-            [args = Pcstr_record \[...\]]. *)
+            [args = Pcstr_record [...]]. *)
 
 and type_extension = Parsetree.type_extension = {
   ptyext_path : longident_loc;
@@ -610,13 +609,13 @@ and extension_constructor = Parsetree.extension_constructor = {
   pext_name : string loc;
   pext_kind : extension_constructor_kind;
   pext_loc : location;
-  pext_attributes : attributes;  (** [C of ... \[@id1\] \[@id2\]] *)
+  pext_attributes : attributes;  (** [C of ... [@id1] [@id2]] *)
 }
 
 and type_exception = Parsetree.type_exception = {
   ptyexn_constructor : extension_constructor;
   ptyexn_loc : location;
-  ptyexn_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  ptyexn_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
 }
 (** Definition of a new exception ([exception E]). *)
 
@@ -629,29 +628,29 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
            {- [C of T1 * ... * Tn]
               when:
 
-              - [existentials] is [\[\]],
-              - [c_args] is [\[T1; ...; Tn\]],
+              - [existentials] is [[]],
+              - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [None].
            }
            {- [C: T0]
               when
 
-              - [existentials] is [\[\]],
-              - [c_args] is [\[\]],
+              - [existentials] is [[]],
+              - [c_args] is [[]],
               - [t_opt] is [Some T0].
            }
            {- [C: T1 * ... * Tn -> T0]
               when
 
-              - [existentials] is [\[\]],
-              - [c_args] is [\[T1; ...; Tn\]],
+              - [existentials] is [[]],
+              - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [Some T0].
            }
            {- [C: 'a... . T1 * ... * Tn -> T0]
               when
 
-              - [existentials] is [\['a;...\]],
-              - [c_args] is [\[T1; ... ; Tn\]],
+              - [existentials] is [['a;...]],
+              - [c_args] is [[T1; ... ; Tn]],
               - [t_opt] is [Some T0].
            }
           } *)
@@ -664,13 +663,13 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
 and class_type = Parsetree.class_type = {
   pcty_desc : class_type_desc;
   pcty_loc : location;
-  pcty_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  pcty_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and class_type_desc = Parsetree.class_type_desc =
   | Pcty_constr of longident_loc * core_type list
       (** - [c]
-          - [\['a1, ..., 'an\] c] *)
+          - [['a1, ..., 'an] c] *)
   | Pcty_signature of class_signature  (** [object ... end] *)
   | Pcty_arrow of arg_label * core_type * class_type
       (** [Pcty_arrow(lbl, T, CT)] represents:
@@ -696,7 +695,7 @@ and class_signature = Parsetree.class_signature = {
 and class_type_field = Parsetree.class_type_field = {
   pctf_desc : class_type_field_desc;
   pctf_loc : location;
-  pctf_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pctf_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
 }
 
 and class_type_field_desc = Parsetree.class_type_field_desc =
@@ -708,8 +707,8 @@ and class_type_field_desc = Parsetree.class_type_field_desc =
 
           Note: [T] can be a {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}. *)
   | Pctf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
-  | Pctf_attribute of attribute  (** [\[@@@id\]] *)
-  | Pctf_extension of extension  (** [\[%%id\]] *)
+  | Pctf_attribute of attribute  (** [[@@@id]] *)
+  | Pctf_extension of extension  (** [[%%id]] *)
 
 and 'a class_infos = 'a Parsetree.class_infos = {
   pci_virt : virtual_flag;
@@ -717,12 +716,12 @@ and 'a class_infos = 'a Parsetree.class_infos = {
   pci_name : string loc;
   pci_expr : 'a;
   pci_loc : location;
-  pci_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pci_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
 }
 (** Values of type [class_expr class_infos] represents:
 
     - [class c = ...]
-    - [class \['a1,...,'an\] c = ...]
+    - [class ['a1,...,'an] c = ...]
     - [class virtual c = ...]
 
     They are also used for "class type" declaration. *)
@@ -735,12 +734,12 @@ and class_type_declaration = class_type class_infos
 and class_expr = Parsetree.class_expr = {
   pcl_desc : class_expr_desc;
   pcl_loc : location;
-  pcl_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  pcl_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and class_expr_desc = Parsetree.class_expr_desc =
   | Pcl_constr of longident_loc * core_type list
-      (** [c] and [\['a1, ..., 'an\] c] *)
+      (** [c] and [['a1, ..., 'an] c] *)
   | Pcl_structure of class_structure  (** [object ... end] *)
   | Pcl_fun of arg_label * expression option * pattern * class_expr
       (** [Pcl_fun(lbl, exp0, P, CE)] represents:
@@ -755,20 +754,20 @@ and class_expr_desc = Parsetree.class_expr_desc =
             {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is
             [Some E0]. *)
   | Pcl_apply of class_expr * (arg_label * expression) list
-      (** [Pcl_apply(CE, \[(l1,E1) ; ... ; (ln,En)\])] represents
+      (** [Pcl_apply(CE, [(l1,E1) ; ... ; (ln,En)])] represents
           [CE ~l1:E1 ... ~ln:En]. [li] can be empty (non labeled argument) or
           start with [?] (optional argument).
 
           Invariant: [n > 0] *)
   | Pcl_let of rec_flag * value_binding list * class_expr
-      (** [Pcl_let(rec, \[(P1, E1); ... ; (Pn, En)\], CE)] represents:
+      (** [Pcl_let(rec, [(P1, E1); ... ; (Pn, En)], CE)] represents:
 
           - [let P1 = E1 and ... and Pn = EN in CE] when [rec] is
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN in CE] when [rec] is
             {{!Asttypes.rec_flag.Recursive} [Recursive]}. *)
   | Pcl_constraint of class_expr * class_type  (** [(CE : CT)] *)
-  | Pcl_extension of extension  (** [\[%id\]] *)
+  | Pcl_extension of extension  (** [[%id]] *)
   | Pcl_open of open_description * class_expr  (** [let open M in CE] *)
 
 and class_structure = Parsetree.class_structure = {
@@ -784,7 +783,7 @@ and class_structure = Parsetree.class_structure = {
 and class_field = Parsetree.class_field = {
   pcf_desc : class_field_desc;
   pcf_loc : location;
-  pcf_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pcf_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
 }
 
 and class_field_desc = Parsetree.class_field_desc =
@@ -821,8 +820,8 @@ and class_field_desc = Parsetree.class_field_desc =
             [Ptyp_poly]}) *)
   | Pcf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
   | Pcf_initializer of expression  (** [initializer E] *)
-  | Pcf_attribute of attribute  (** [\[@@@id\]] *)
-  | Pcf_extension of extension  (** [\[%%id\]] *)
+  | Pcf_attribute of attribute  (** [[@@@id]] *)
+  | Pcf_extension of extension  (** [[%%id]] *)
 
 and class_field_kind = Parsetree.class_field_kind =
   | Cfk_virtual of core_type
@@ -836,7 +835,7 @@ and class_declaration = class_expr class_infos
 and module_type = Parsetree.module_type = {
   pmty_desc : module_type_desc;
   pmty_loc : location;
-  pmty_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  pmty_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and module_type_desc = Parsetree.module_type_desc =
@@ -846,7 +845,7 @@ and module_type_desc = Parsetree.module_type_desc =
       (** [functor(X : MT1) -> MT2] *)
   | Pmty_with of module_type * with_constraint list  (** [MT with ...] *)
   | Pmty_typeof of module_expr  (** [module type of ME] *)
-  | Pmty_extension of extension  (** [\[%id\]] *)
+  | Pmty_extension of extension  (** [[%id]] *)
   | Pmty_alias of longident_loc  (** [(module M)] *)
 
 and functor_parameter = Parsetree.functor_parameter =
@@ -887,13 +886,13 @@ and signature_item_desc = Parsetree.signature_item_desc =
       (** [class c1 : ... and ... and cn : ...] *)
   | Psig_class_type of class_type_declaration list
       (** [class type ct1 = ... and ... and ctn = ...] *)
-  | Psig_attribute of attribute  (** [\[@@@id\]] *)
-  | Psig_extension of extension * attributes  (** [\[%%id\]] *)
+  | Psig_attribute of attribute  (** [[@@@id]] *)
+  | Psig_extension of extension * attributes  (** [[%%id]] *)
 
 and module_declaration = Parsetree.module_declaration = {
   pmd_name : string option loc;
   pmd_type : module_type;
-  pmd_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pmd_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
   pmd_loc : location;
 }
 (** Values of type [module_declaration] represents [S : MT] *)
@@ -901,7 +900,7 @@ and module_declaration = Parsetree.module_declaration = {
 and module_substitution = Parsetree.module_substitution = {
   pms_name : string loc;
   pms_manifest : longident_loc;
-  pms_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pms_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
   pms_loc : location;
 }
 (** Values of type [module_substitution] represents [S := M] *)
@@ -909,7 +908,7 @@ and module_substitution = Parsetree.module_substitution = {
 and module_type_declaration = Parsetree.module_type_declaration = {
   pmtd_name : string loc;
   pmtd_type : module_type option;
-  pmtd_attributes : attributes;  (** [... \[@@id1\] \[@@id2\]] *)
+  pmtd_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
   pmtd_loc : location;
 }
 (** Values of type [module_type_declaration] represents:
@@ -969,7 +968,7 @@ and with_constraint = Parsetree.with_constraint =
   | Pwith_modtypesubst of longident_loc * module_type
       (** [with module type X.Y := sig end] *)
   | Pwith_typesubst of longident_loc * type_declaration
-      (** [with type X.t := ..., same format as \[Pwith_type\]] *)
+      (** [with type X.t := ..., same format as [Pwith_type]] *)
   | Pwith_modsubst of longident_loc * longident_loc
       (** [with module X.Y := Z] *)
 
@@ -978,7 +977,7 @@ and with_constraint = Parsetree.with_constraint =
 and module_expr = Parsetree.module_expr = {
   pmod_desc : module_expr_desc;
   pmod_loc : location;
-  pmod_attributes : attributes;  (** [... \[@id1\] \[@id2\]] *)
+  pmod_attributes : attributes;  (** [... [@id1] [@id2]] *)
 }
 
 and module_expr_desc = Parsetree.module_expr_desc =
@@ -989,7 +988,7 @@ and module_expr_desc = Parsetree.module_expr_desc =
   | Pmod_apply of module_expr * module_expr  (** [ME1(ME2)] *)
   | Pmod_constraint of module_expr * module_type  (** [(ME : MT)] *)
   | Pmod_unpack of expression  (** [(val E)] *)
-  | Pmod_extension of extension  (** [\[%id\]] *)
+  | Pmod_extension of extension  (** [[%id]] *)
 
 and structure = structure_item list
 
@@ -1001,7 +1000,7 @@ and structure_item = Parsetree.structure_item = {
 and structure_item_desc = Parsetree.structure_item_desc =
   | Pstr_eval of expression * attributes  (** [E] *)
   | Pstr_value of rec_flag * value_binding list
-      (** [Pstr_value(rec, \[(P1, E1 ; ... ; (Pn, En))\])] represents:
+      (** [Pstr_value(rec, [(P1, E1 ; ... ; (Pn, En))])] represents:
 
           - [let P1 = E1 and ... and Pn = EN] when [rec] is
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
@@ -1026,8 +1025,8 @@ and structure_item_desc = Parsetree.structure_item_desc =
   | Pstr_class_type of class_type_declaration list
       (** [class type ct1 = ... and ... and ctn = ...] *)
   | Pstr_include of include_declaration  (** [include ME] *)
-  | Pstr_attribute of attribute  (** [\[@@@id\]] *)
-  | Pstr_extension of extension * attributes  (** [\[%%id\]] *)
+  | Pstr_attribute of attribute  (** [[@@@id]] *)
+  | Pstr_extension of extension * attributes  (** [[%%id]] *)
 
 and value_binding = Parsetree.value_binding = {
   pvb_pat : pattern;

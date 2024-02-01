@@ -149,7 +149,7 @@ val register_code_transformation :
   impl:(structure -> structure) ->
   intf:(signature -> signature) ->
   unit
-  [@@deprecated "[since 2015-11] use register_transformation instead"]
+[@@deprecated "[since 2015-11] use register_transformation instead"]
 (** Same as:
 
     {[
@@ -217,10 +217,11 @@ end
 
     In the future we could also use this to directly compute the dependencies
     and pass them here, to avoid calling ocamldep separately. *)
-module Create_file_property (Name : sig
-  val name : string
-end)
-(T : Sexpable.S) : sig
+module Create_file_property
+    (Name : sig
+      val name : string
+    end)
+    (T : Sexpable.S) : sig
   val set : T.t -> unit
 end
 

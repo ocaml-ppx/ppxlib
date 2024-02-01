@@ -146,11 +146,11 @@ end
    parser should be fixed. *)
 class map_top_down :
   ?expect_mismatch_handler:
-    Expect_mismatch_handler.t (* default: Expect_mismatch_handler.nop *)
-  -> ?generated_code_hook:
-       Generated_code_hook.t (* default: Generated_code_hook.nop *)
-  -> Rule.t list
-  -> embed_errors:bool
-  -> object
-       inherit Ast_traverse.map_with_expansion_context_and_errors
-     end
+    Expect_mismatch_handler.t (* default: Expect_mismatch_handler.nop *) ->
+  ?generated_code_hook:
+    Generated_code_hook.t (* default: Generated_code_hook.nop *) ->
+  Rule.t list ->
+  embed_errors:bool ->
+object
+  inherit Ast_traverse.map_with_expansion_context_and_errors
+end
