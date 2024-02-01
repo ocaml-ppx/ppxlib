@@ -429,7 +429,7 @@ let register_transformation ?extensions ?rules ?enclose_impl ?enclose_intf ?impl
 
 let register_code_transformation ~name ?(aliases = []) ~impl ~intf =
   register_transformation name ~impl ~intf ~aliases
-  [@@warning "-16"]
+[@@warning "-16"]
 (* This function triggers a warning 16 as of ocaml 4.12 *)
 
 let register_transformation_using_ocaml_current_ast ?impl ?intf =
@@ -474,13 +474,13 @@ let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
   in
   (* Allow only one preprocessor to assure deterministic order *)
   (if List.length preprocess > 1 then
-   let pp =
-     String.concat ~sep:", " (List.map preprocess ~f:(fun t -> t.name))
-   in
-   let err =
-     Printf.sprintf "At most one preprocessor is allowed, while got: %s" pp
-   in
-   failwith err);
+     let pp =
+       String.concat ~sep:", " (List.map preprocess ~f:(fun t -> t.name))
+     in
+     let err =
+       Printf.sprintf "At most one preprocessor is allowed, while got: %s" pp
+     in
+     failwith err);
   let make_generic transforms =
     if !no_merge then
       List.map transforms
@@ -541,8 +541,8 @@ let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
   in
   let acc =
     List.fold_left cts ~init:(ast, [], [], [])
-      ~f:(fun (ast, dropped, (lint_errors : _ list), errors) (ct : Transform.t)
-         ->
+      ~f:(fun
+          (ast, dropped, (lint_errors : _ list), errors) (ct : Transform.t) ->
         let input_name =
           match input_name with
           | Some input_name -> input_name
@@ -677,11 +677,11 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
         in
         let not_seen_errors = Attribute.collect_unseen_errors () in
         (if !perform_locations_check then
-         let open Location_check in
-         ignore
-           ((enforce_invariants !loc_fname)#structure st
-              Non_intersecting_ranges.empty
-             : Non_intersecting_ranges.t));
+           let open Location_check in
+           ignore
+             ((enforce_invariants !loc_fname)#structure st
+                Non_intersecting_ranges.empty
+               : Non_intersecting_ranges.t));
         unused_attributes_errors @ unused_extension_errors @ not_seen_errors)
       else []
     in
@@ -753,11 +753,11 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
         in
         let not_seen_errors = Attribute.collect_unseen_errors () in
         (if !perform_locations_check then
-         let open Location_check in
-         ignore
-           ((enforce_invariants !loc_fname)#signature sg
-              Non_intersecting_ranges.empty
-             : Non_intersecting_ranges.t));
+           let open Location_check in
+           ignore
+             ((enforce_invariants !loc_fname)#signature sg
+                Non_intersecting_ranges.empty
+               : Non_intersecting_ranges.t));
         unused_attributes_errors @ unused_extension_errors @ not_seen_errors)
       else []
     in
@@ -1023,10 +1023,11 @@ module File_property = struct
             Some (t.name, t.sexp_of_t v))
 end
 
-module Create_file_property (Name : sig
-  val name : string
-end)
-(T : Sexpable.S) =
+module Create_file_property
+    (Name : sig
+      val name : string
+    end)
+    (T : Sexpable.S) =
 struct
   let t : _ File_property.t =
     { name = Name.name; data = None; sexp_of_t = T.sexp_of_t }
