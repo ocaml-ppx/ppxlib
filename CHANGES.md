@@ -1,6 +1,10 @@
 unreleased
 -------------------
 
+- Add an optional `embed_errors` argument to `Context_free.map_top_down` that
+  controls how to deal with exceptions thrown by context-free rules.
+  (#468, @NathanReb)
+
 - Fix `Longident.parse` so it properly handles unparenthesized dotted operators
   such as `+.` or `*.`. (#111, @rgrinberg, @NathanReb)
 

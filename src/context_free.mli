@@ -149,8 +149,8 @@ class map_top_down :
     Expect_mismatch_handler.t (* default: Expect_mismatch_handler.nop *) ->
   ?generated_code_hook:
     Generated_code_hook.t (* default: Generated_code_hook.nop *) ->
+  ?embed_errors:bool ->
   Rule.t list ->
-  embed_errors:bool ->
 object
   inherit Ast_traverse.map_with_expansion_context_and_errors
 end
