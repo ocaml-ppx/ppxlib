@@ -401,7 +401,8 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) rules ~embed_errors =
+  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = false) rules
+  =
   let hook = generated_code_hook in
 
   let special_functions =
