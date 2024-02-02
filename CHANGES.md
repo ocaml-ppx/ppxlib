@@ -1,4 +1,4 @@
-0.32.0 (2024-02-01)
+unreleased
 -------------------
 
 - Fix `Longident.parse` so it properly handles unparenthesized dotted operators
