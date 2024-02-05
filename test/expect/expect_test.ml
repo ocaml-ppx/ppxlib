@@ -50,6 +50,13 @@ let apply_rewriters : Parsetree.toplevel_phrase -> Parsetree.toplevel_phrase =
       let s' = Ppxlib.Driver.map_structure s in
       Ptop_def (Ppxlib.Selected_ast.to_ocaml Structure s')
 
+let execute_phrase ppf phr =
+  let buf = Buffer.create 1024 in
+  let buf_fmt = Format.formatter_of_buffer buf in
+  let _ignore = Toploop.execute_phrase true buf_fmt phr in
+  let trimmed = String.trim (Buffer.contents buf) in
+  match trimmed with "" -> () | _ -> Format.fprintf ppf "%s\n" trimmed
+
 let main () =
   let rec map_tree = function
     | Outcometree.Oval_constr (name, params) ->
@@ -109,7 +116,7 @@ let main () =
                   if !Clflags.dump_source then
                     Format.fprintf ppf "%a@?" Ppxlib.Pprintast.top_phrase
                       (Ppxlib.Selected_ast.Of_ocaml.copy_toplevel_phrase phr);
-                  ignore (Toploop.execute_phrase true ppf phr : bool)
+                  execute_phrase ppf phr
                 with exn -> Location.report_exception ppf exn));
           Format.fprintf ppf "@?|}]@.");
       Buffer.contents buf)
