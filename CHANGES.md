@@ -1,4 +1,4 @@
-unreleased
+0.32.0 (2024-02-05)
 -------------------
 
 - Add an optional `embed_errors` argument to `Context_free.map_top_down` that
