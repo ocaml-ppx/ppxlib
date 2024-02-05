@@ -51,21 +51,11 @@ val foo : int = 42
 val bar : int = 43
 |}]
 
-module Foo_sig : sig
+module type Foo_sig = sig
   type t [@@deriving foo]
-end = struct
-  type t
 end
 [%%expect{|
-Line _, characters 6-25:
-Error: Signature mismatch:
-       Modules do not match:
-         sig type t end
-       is not included in
-         sig type t val foo : int end
-       The value `foo' is required but not provided
-       File "test/deriving/test.ml", line 3, characters 2-25:
-         Expected declaration
+module type Foo_sig = sig type t val foo : int end
 |}]
 
 module type X = sig end [@@deriving mtd]
