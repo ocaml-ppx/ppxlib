@@ -27,7 +27,7 @@ let run_expect_test file ~f =
 let capture_trimmed_fmt printer arg =
   let buf = Buffer.create 1024 in
   let buf_fmt = Format.formatter_of_buffer buf in
-  let _ = printer buf_fmt arg in
+  printer buf_fmt arg;
   String.trim (Buffer.contents buf)
 
 let print_loc _ _ ppf (loc : Location.t) =
