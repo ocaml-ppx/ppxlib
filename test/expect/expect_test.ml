@@ -24,6 +24,12 @@ let run_expect_test file ~f =
     if Sys.file_exists corrected_file then Sys.remove corrected_file;
     exit 0)
 
+let capture_trimmed_fmt printer arg =
+  let buf = Buffer.create 1024 in
+  let buf_fmt = Format.formatter_of_buffer buf in
+  printer buf_fmt arg;
+  String.trim (Buffer.contents buf)
+
 let print_loc _ _ ppf (loc : Location.t) =
   let startchar = loc.loc_start.pos_cnum - loc.loc_start.pos_bol in
   let endchar = loc.loc_end.pos_cnum - loc.loc_start.pos_cnum + startchar in
@@ -33,8 +39,17 @@ let print_loc _ _ ppf (loc : Location.t) =
   Format.fprintf ppf ":@."
 
 let report_printer () =
-  let printer = Location.default_report_printer () in
-  { printer with Location.pp_main_loc = print_loc; pp_submsg_loc = print_loc }
+  let default = Location.default_report_printer () in
+  let trimmed_pp report_printer ppf report =
+    let trimmed = capture_trimmed_fmt (default.pp report_printer) report in
+    Format.fprintf ppf "%s\n" trimmed
+  in
+  {
+    default with
+    pp = trimmed_pp;
+    pp_main_loc = print_loc;
+    pp_submsg_loc = print_loc;
+  }
 
 let setup_printers ppf =
   Location.formatter_for_warnings := ppf;
@@ -49,6 +64,14 @@ let apply_rewriters : Parsetree.toplevel_phrase -> Parsetree.toplevel_phrase =
       let s = Ppxlib.Selected_ast.of_ocaml Structure s in
       let s' = Ppxlib.Driver.map_structure s in
       Ptop_def (Ppxlib.Selected_ast.to_ocaml Structure s')
+
+let execute_phrase ppf phr =
+  let trimmed =
+    capture_trimmed_fmt
+      (fun ppf phr -> ignore (Toploop.execute_phrase true ppf phr))
+      phr
+  in
+  match trimmed with "" -> () | _ -> Format.fprintf ppf "%s\n" trimmed
 
 let main () =
   let rec map_tree = function
@@ -109,7 +132,7 @@ let main () =
                   if !Clflags.dump_source then
                     Format.fprintf ppf "%a@?" Ppxlib.Pprintast.top_phrase
                       (Ppxlib.Selected_ast.Of_ocaml.copy_toplevel_phrase phr);
-                  ignore (Toploop.execute_phrase true ppf phr : bool)
+                  execute_phrase ppf phr
                 with exn -> Location.report_exception ppf exn));
           Format.fprintf ppf "@?|}]@.");
       Buffer.contents buf)
