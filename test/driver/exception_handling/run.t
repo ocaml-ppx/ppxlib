@@ -56,11 +56,9 @@ caught, so no AST is produced.
 
  when the -embed-errors flag is  passed
   $ ./extender.exe -embed-errors impl.ml
-  [%%ocaml.error "A raised located error"]
-  [%%ocaml.error "A second raised located error"]
   let x = 1 + 1.
-  let _ = [%gen_raise_located_error ]
-  let _ = [%gen_raise_located_error2 ]
+  let _ = [%ocaml.error "A raised located error"]
+  let _ = [%ocaml.error "A second raised located error"]
 
  In the case of derivers
 
@@ -76,11 +74,11 @@ caught, so no AST is produced.
 
  when the -embed-errors flag is  passed
   $ ./deriver.exe -embed-errors impl.ml
-  [%%ocaml.error "A raised located error"]
-  [%%ocaml.error "A second raised located error"]
   type a = int
   type b = int[@@deriving deriver_located_error]
+  [%%ocaml.error "A raised located error"]
   type c = int[@@deriving deriver_located_error2]
+  [%%ocaml.error "A second raised located error"]
 
  In the case of whole file transformations:
 
@@ -107,11 +105,9 @@ when the -embed-errors flag is not passed
 
  when the -embed-errors flag is  passed 
   $ ./extender.exe -embed-errors impl.ml
-  [%%ocaml.error "A raised located error"]
-  [%%ocaml.error "A second raised located error"]
   let x = 1 + 1.
-  let _ = [%gen_raise_located_error ]
-  let _ = [%gen_raise_located_error2 ]
+  let _ = [%ocaml.error "A raised located error"]
+  let _ = [%ocaml.error "A second raised located error"]
 
  In the case of derivers
 
@@ -127,12 +123,12 @@ when the -embed-errors flag is not passed
   [1]
  when the -embed-errors flag is passed 
   $ ./deriver.exe -embed-errors impl.ml
-  [%%ocaml.error "A raised located error"]
-  [%%ocaml.error "A second raised located error"]
   let x = 1 + 1.
   type a = int
   type b = int[@@deriving deriver_located_error]
+  [%%ocaml.error "A raised located error"]
   type b = int[@@deriving deriver_located_error2]
+  [%%ocaml.error "A second raised located error"]
 
  In the case of whole file transformations:
 
