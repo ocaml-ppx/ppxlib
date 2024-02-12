@@ -200,19 +200,21 @@ end
 (* Used to insert error extensions *)
 let wrap_extension : type a. loc:Location.t -> a EC.t -> a -> extension -> a =
  fun ~loc t original_node extension ->
+  (* Prefixing constructors with the module path is necessary for OCaml < 4.07,
+     see https://github.com/ocaml/ocaml/issues/6852 *)
   match t with
-  | Class_expr -> Ast_builder.Default.pcl_extension ~loc extension
-  | Class_field -> Ast_builder.Default.pcf_extension ~loc extension
-  | Class_type -> Ast_builder.Default.pcty_extension ~loc extension
-  | Class_type_field -> Ast_builder.Default.pctf_extension ~loc extension
-  | Core_type -> Ast_builder.Default.ptyp_extension ~loc extension
-  | Expression -> Ast_builder.Default.pexp_extension ~loc extension
-  | Module_expr -> Ast_builder.Default.pmod_extension ~loc extension
-  | Module_type -> Ast_builder.Default.pmty_extension ~loc extension
-  | Pattern -> Ast_builder.Default.ppat_extension ~loc extension
-  | Signature_item -> Ast_builder.Default.psig_extension ~loc extension []
-  | Structure_item -> Ast_builder.Default.pstr_extension ~loc extension []
-  | Ppx_import ->
+  | EC.Class_expr -> Ast_builder.Default.pcl_extension ~loc extension
+  | EC.Class_field -> Ast_builder.Default.pcf_extension ~loc extension
+  | EC.Class_type -> Ast_builder.Default.pcty_extension ~loc extension
+  | EC.Class_type_field -> Ast_builder.Default.pctf_extension ~loc extension
+  | EC.Core_type -> Ast_builder.Default.ptyp_extension ~loc extension
+  | EC.Expression -> Ast_builder.Default.pexp_extension ~loc extension
+  | EC.Module_expr -> Ast_builder.Default.pmod_extension ~loc extension
+  | EC.Module_type -> Ast_builder.Default.pmty_extension ~loc extension
+  | EC.Pattern -> Ast_builder.Default.ppat_extension ~loc extension
+  | EC.Signature_item -> Ast_builder.Default.psig_extension ~loc extension []
+  | EC.Structure_item -> Ast_builder.Default.pstr_extension ~loc extension []
+  | EC.Ppx_import ->
       (* Insert the error in the type decl manifest *)
       let ptype_manifest =
         Some (Ast_builder.Default.ptyp_extension ~loc extension)
