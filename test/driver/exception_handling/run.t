@@ -171,16 +171,18 @@ when the -embed-errors flag is not passed
 
  When embed-errors is not passed
   $ ./constant_type.exe -embed-errors impl.ml
-  [%%ocaml.error
-    "A raised located error in the constant rewriting transformation."]
-  [%%ocaml.error
-    "A raised located error in the constant rewriting transformation."]
-  [%%ocaml.error
-    "A raised located error in the constant rewriting transformation."]
-  [%%ocaml.error
-    "A raised located error in the constant rewriting transformation."]
-  let x = 2g + 3g
-  let x = 2g + 3g
+  let x =
+    ([%ocaml.error
+       "A raised located error in the constant rewriting transformation."])
+      +
+      ([%ocaml.error
+         "A raised located error in the constant rewriting transformation."])
+  let x =
+    ([%ocaml.error
+       "A raised located error in the constant rewriting transformation."])
+      +
+      ([%ocaml.error
+         "A raised located error in the constant rewriting transformation."])
 
  In the case of Special functions
 
@@ -194,10 +196,8 @@ when the -embed-errors flag is not passed
 
  When embed-errors is not passed
   $ ./special_functions.exe -embed-errors impl.ml
-  [%%ocaml.error "error special function"]
-  [%%ocaml.error "second error special function"]
-  let x1 = n_args
-  let x2 = n_args2
+  let x1 = [%ocaml.error "error special function"]
+  let x2 = [%ocaml.error "second error special function"]
 
  In the case of whole file transformations:
 

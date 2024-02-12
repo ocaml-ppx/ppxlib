@@ -567,7 +567,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           | Some pattern -> (
               let generated_code =
                 try return (pattern e)
-                with exn when embed_errors -> (None, [ exn_to_loc_error exn ])
+                with exn when embed_errors ->
+                  return (Some (exn_to_error_extension EC.expression e exn))
               in
               generated_code >>= fun expr ->
               match expr with
@@ -581,7 +582,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
           | Some pattern -> (
               let generated_code =
                 try return (pattern e)
-                with exn when embed_errors -> (None, [ exn_to_loc_error exn ])
+                with exn when embed_errors ->
+                  return (Some (exn_to_error_extension EC.expression e exn))
               in
               generated_code >>= fun expr ->
               match expr with
@@ -589,10 +591,12 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               | Some e -> self#expression base_ctxt e))
       | Pexp_constant (Pconst_integer (s, Some c)) -> (
           try expand_constant Integer c s
-          with exn when embed_errors -> (e, [ exn_to_loc_error exn ]))
+          with exn when embed_errors ->
+            return (exn_to_error_extension EC.expression e exn))
       | Pexp_constant (Pconst_float (s, Some c)) -> (
           try expand_constant Float c s
-          with exn when embed_errors -> (e, [ exn_to_loc_error exn ]))
+          with exn when embed_errors ->
+            return (exn_to_error_extension EC.expression e exn))
       | _ -> super#expression base_ctxt e
 
     (* Pre-conditions:
