@@ -731,15 +731,7 @@ and copy_module_expr_desc :
   | Ast_501.Parsetree.Pmod_apply (x0, x1) ->
       Ast_502.Parsetree.Pmod_apply (copy_module_expr x0, copy_module_expr x1)
   | Ast_501.Parsetree.Pmod_apply_unit x0 ->
-      let empty_struct =
-        Ast_502.Parsetree.
-          {
-            pmod_desc = Pmod_structure [];
-            pmod_loc = Location.none;
-            pmod_attributes = [];
-          }
-      in
-      Ast_502.Parsetree.Pmod_apply (copy_module_expr x0, empty_struct)
+      Ast_502.Parsetree.Pmod_apply_unit (copy_module_expr x0)
   | Ast_501.Parsetree.Pmod_constraint (x0, x1) ->
       Ast_502.Parsetree.Pmod_constraint
         (copy_module_expr x0, copy_module_type x1)
