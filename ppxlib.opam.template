@@ -1,0 +1,2 @@
+flags: avoid-version
+available: opam-version >= "2.1.0"
