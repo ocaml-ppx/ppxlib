@@ -7,12 +7,61 @@ module To = Ast_502
     attribute is not found. *)
 let extract_attr name (attrs : Ast_501.Parsetree.attributes) =
   let rec loop acc = function
-    | [] -> (false, List.rev acc)
-    | { Ast_501.Parsetree.attr_name = { txt; _ }; _ } :: q when txt = name ->
-        (true, List.rev_append acc q)
+    | [] -> (None, List.rev acc)
+    | { Ast_501.Parsetree.attr_name = { txt; _ }; attr_payload; _ } :: q
+      when txt = name ->
+        (Some attr_payload, List.rev_append acc q)
     | hd :: tl -> loop (hd :: acc) tl
   in
   loop [] attrs
+
+let migrate_ppx_context_load_path expr =
+  let open Ast_501.Parsetree in
+  let visible = { expr with pexp_attributes = [] } in
+  let payload, other_attrs =
+    extract_attr "ppxlib.migration.hidden_load_path" expr.pexp_attributes
+  in
+  let hidden =
+    match payload with
+    | None ->
+        (* An empty list *)
+        let pexp_desc =
+          Pexp_construct ({ txt = Lident "[]"; loc = expr.pexp_loc }, None)
+        in
+        { expr with pexp_desc; pexp_attributes = [] }
+    | Some (PStr [ { pstr_desc = Pstr_eval (expr, []); _ } ]) -> expr
+    | Some _ -> invalid_arg "Invalid ppxlib.migration.hidden_load_path paylaod"
+  in
+  {
+    expr with
+    pexp_attributes = other_attrs;
+    pexp_desc = Pexp_tuple [ visible; hidden ];
+  }
+
+let migrate_ppx_context_fields fields =
+  List.map
+    (fun (lident_loc, expr) ->
+      match lident_loc.Ast_501.Asttypes.txt with
+      | Longident.Lident "load_path" ->
+          (lident_loc, migrate_ppx_context_load_path expr)
+      | _ -> (lident_loc, expr))
+    fields
+
+let migrate_ppx_context_payload payload =
+  let open Ast_501.Parsetree in
+  match payload with
+  | PStr
+      [
+        ({
+           pstr_desc =
+             Pstr_eval
+               (({ pexp_desc = Pexp_record (fields, None) } as expr), attributes);
+         } as stri);
+      ] ->
+      let new_fields = migrate_ppx_context_fields fields in
+      let new_expr = { expr with pexp_desc = Pexp_record (new_fields, None) } in
+      PStr [ { stri with pstr_desc = Pstr_eval (new_expr, attributes) } ]
+  | _ -> payload
 
 let rec copy_toplevel_phrase :
     Ast_501.Parsetree.toplevel_phrase -> Ast_502.Parsetree.toplevel_phrase =
@@ -514,7 +563,11 @@ and copy_attribute : Ast_501.Parsetree.attribute -> Ast_502.Parsetree.attribute
      } ->
   {
     Ast_502.Parsetree.attr_name = copy_loc (fun x -> x) attr_name;
-    Ast_502.Parsetree.attr_payload = copy_payload attr_payload;
+    Ast_502.Parsetree.attr_payload =
+      (match attr_name.txt with
+      | "ocaml.ppx.context" ->
+          copy_payload (migrate_ppx_context_payload attr_payload)
+      | _ -> copy_payload attr_payload);
     Ast_502.Parsetree.attr_loc = copy_location attr_loc;
   }
 

@@ -1,0 +1,13 @@
+; Remember to bump the enabled if to the latest supported OCaml
+
+(executable
+ (name driver)
+ (enabled_if
+  (>= %{ocaml_version} "5.2"))
+ (libraries ppxlib ppxlib.ast ppxlib.astlib ocaml-compiler-libs.common
+   compiler-libs.common))
+
+(cram
+ (enabled_if
+  (>= %{ocaml_version} "5.2"))
+ (deps driver.exe))
