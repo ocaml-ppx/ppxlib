@@ -34,7 +34,8 @@ depends: [
 ]
 conflicts: [
   "ocaml-migrate-parsetree" {< "2.0.0"}
-  "ocaml" {= "5.1.0~alpha1"}
+  "ocaml-base-compiler" {= "5.1.0~alpha1"}
+  "ocaml-variants" {= "5.1.0~alpha1+options"}
   "base-effects"
 ]
 build: [

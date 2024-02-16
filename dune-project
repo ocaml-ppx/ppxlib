@@ -26,7 +26,8 @@
   (cinaps (and :with-test (>= v0.12.1))))
  (conflicts
   (ocaml-migrate-parsetree (< 2.0.0))
-  (ocaml (= 5.1.0~alpha1))
+  (ocaml-base-compiler (= 5.1.0~alpha1))
+  (ocaml-variants (= 5.1.0~alpha1+options))
   base-effects)
  (synopsis "Standard infrastructure for ppx rewriters")
  (description "Ppxlib is the standard infrastructure for ppx rewriters
