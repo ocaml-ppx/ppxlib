@@ -17,26 +17,23 @@ let extract_attr name (attrs : Ast_501.Parsetree.attributes) =
 
 let migrate_ppx_context_load_path expr =
   let open Ast_501.Parsetree in
-  let visible = { expr with pexp_attributes = [] } in
   let payload, other_attrs =
-    extract_attr "ppxlib.migration.hidden_load_path" expr.pexp_attributes
+    extract_attr "ppxlib.migration.load_path" expr.pexp_attributes
   in
-  let hidden =
-    match payload with
-    | None ->
-        (* An empty list *)
-        let pexp_desc =
-          Pexp_construct ({ txt = Lident "[]"; loc = expr.pexp_loc }, None)
-        in
-        { expr with pexp_desc; pexp_attributes = [] }
-    | Some (PStr [ { pstr_desc = Pstr_eval (expr, []); _ } ]) -> expr
-    | Some _ -> invalid_arg "Invalid ppxlib.migration.hidden_load_path paylaod"
-  in
-  {
-    expr with
-    pexp_attributes = other_attrs;
-    pexp_desc = Pexp_tuple [ visible; hidden ];
-  }
+  match payload with
+  | None ->
+      let pexp_desc =
+        Pexp_construct ({ txt = Lident "[]"; loc = expr.pexp_loc }, None)
+      in
+      let hidden = { expr with pexp_desc; pexp_attributes = [] } in
+      let visible = expr in
+      {
+        expr with
+        pexp_attributes = other_attrs;
+        pexp_desc = Pexp_tuple [ visible; hidden ];
+      }
+  | Some (PStr [ { pstr_desc = Pstr_eval (expr, []); _ } ]) -> expr
+  | Some _ -> invalid_arg "Invalid ppxlib.migration.load_path paylaod"
 
 let migrate_ppx_context_fields fields =
   List.map

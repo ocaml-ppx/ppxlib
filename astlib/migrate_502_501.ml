@@ -13,21 +13,44 @@ let mk_ghost_attr name =
     attr_loc = Location.none;
   }
 
+let rec concat_list_lit left right =
+  let open Ast_502.Parsetree in
+  let open Ast_502.Asttypes in
+  match (left.pexp_desc, right.pexp_desc) with
+  | _, Pexp_construct ({ txt = Lident "[]"; _ }, _) -> left
+  | Pexp_construct ({ txt = Lident "[]"; _ }, _), _ -> right
+  | ( Pexp_construct
+        ( { txt = Lident "::"; loc },
+          Some ({ pexp_desc = Pexp_tuple [ hd; tl ]; _ } as arg_expr) ),
+      _ ) ->
+      {
+        left with
+        pexp_desc =
+          Pexp_construct
+            ( { txt = Lident "::"; loc },
+              Some
+                {
+                  arg_expr with
+                  pexp_desc = Pexp_tuple [ hd; concat_list_lit tl right ];
+                } );
+      }
+  | _ -> invalid_arg "Invalid ocaml.ppx.context's load_path"
+
 let migrate_ppx_context_load_path expr =
   let open Ast_502.Parsetree in
   let loc = Location.none in
   match expr.pexp_desc with
   | Pexp_tuple [ visible; hidden ] ->
-      let hidden_attr =
+      let migration_attr =
         {
-          attr_name =
-            { Location.txt = "ppxlib.migration.hidden_load_path"; loc };
+          attr_name = { Location.txt = "ppxlib.migration.load_path"; loc };
           attr_loc = loc;
           attr_payload =
-            PStr [ { pstr_loc = loc; pstr_desc = Pstr_eval (hidden, []) } ];
+            PStr [ { pstr_loc = loc; pstr_desc = Pstr_eval (expr, []) } ];
         }
       in
-      { visible with pexp_attributes = hidden_attr :: expr.pexp_attributes }
+      let expr' = concat_list_lit visible hidden in
+      { expr' with pexp_attributes = migration_attr :: expr.pexp_attributes }
   | _ -> expr
 
 let migrate_ppx_context_fields fields =
