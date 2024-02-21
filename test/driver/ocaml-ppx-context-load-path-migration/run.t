@@ -41,7 +41,7 @@ the one above.
       tool_name: "ocaml";
       include_dirs: ["foo"];
       hidden_include_dirs: [];
-      load_path: ["foo"; "bar"];
+      load_path: ["foo"; "bar"; "baz"];
       open_modules: [];
       for_package: None;
       debug: true;
