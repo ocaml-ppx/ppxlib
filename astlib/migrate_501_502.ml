@@ -33,7 +33,7 @@ let migrate_ppx_context_load_path expr =
         pexp_desc = Pexp_tuple [ visible; hidden ];
       }
   | Some (PStr [ { pstr_desc = Pstr_eval (expr, []); _ } ]) -> expr
-  | Some _ -> invalid_arg "Invalid ppxlib.migration.load_path paylaod"
+  | Some _ -> invalid_arg "Invalid ppxlib.migration.load_path payload"
 
 let migrate_ppx_context_fields fields =
   List.map
