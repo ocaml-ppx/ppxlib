@@ -141,7 +141,7 @@ and copy_expression_desc loc :
               (* Same as above, might not roundtrip but hopefully OK. *)
               let c1 = Option.map copy_core_type c1
               and c2 = copy_core_type c2 in
-              (acc, Some (Ast_502.Parsetree.Pcoerce (c1, c2)), take_body e)
+              (acc, Some (Ast_502.Parsetree.Pcoerce (c1, c2)), take_body exp)
           | _ -> (acc, None, take_body e)
       and take_arguments_fun acc arg_label opt_default pat expr =
         let acc =
