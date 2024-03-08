@@ -1,0 +1,8 @@
+(executable
+ (name raising_driver)
+ (libraries ppxlib))
+
+(cram
+ (enabled_if
+  (>= %{ocaml_version} "4.08.0"))
+ (deps raising_driver.exe))

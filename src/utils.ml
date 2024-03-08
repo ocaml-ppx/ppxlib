@@ -81,21 +81,19 @@ module Ast_io = struct
     let input_version = (module Compiler_version : OCaml_version) in
     try
       (* To test if a file is an AST file, we have to read the first few bytes of the
-          file. If it is not, we have to parse these bytes and the rest of the file as
-          source code.
-
-          The compiler just does [seek_on 0] in this case, however this doesn't work when
-          the input is a pipe.
-
-          What we do instead is create a lexing buffer from the input channel and pre-fill
-          it with what we read to do the test. *)
-      let lexbuf = Lexing.from_channel ic in
-      let len = String.length prefix_read_from_source in
-      Bytes.blit_string ~src:prefix_read_from_source ~src_pos:0
-        ~dst:lexbuf.lex_buffer ~dst_pos:0 ~len;
-      lexbuf.lex_buffer_len <- len;
-      lexbuf.lex_curr_p <-
-        { pos_fname = input_name; pos_lnum = 1; pos_bol = 0; pos_cnum = 0 };
+         file. If it is not, we have to parse these bytes and the rest of the file as
+         source code.
+         The compiler just does [seek_on 0] in this case, however this doesn't work
+         when the input is a pipe.
+         What we do is we build a string of the whole source, append the prefix
+         and built a lexing buffer from that.
+         We have to put all the source into the lexing buffer at once this way
+         for source quotation to work in error messages.
+         See ocaml#12238 and ocaml/driver/pparse.ml. *)
+      let all_source = prefix_read_from_source ^ In_channel.input_all ic in
+      let lexbuf = Lexing.from_string all_source in
+      lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = input_name };
+      Astlib.Location.set_input_lexbuf (Some lexbuf);
       Skip_hash_bang.skip_hash_bang lexbuf;
       let ast : Intf_or_impl.t =
         match kind with
