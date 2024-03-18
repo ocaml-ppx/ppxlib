@@ -86,7 +86,7 @@ let impl _ctxt str =
   let round_trip = Before_502_to_ocaml.copy_structure_item ppx_context in
   Printf.printf "ocaml.ppx.context round tripped:\n";
   Ocaml_common.Pprintast.structure_item Format.std_formatter round_trip;
-  From_before_502.copy_structure before_502_ast
+  str
 
 let () = Ppxlib.Driver.V2.register_transformation ~impl "ocaml.ppx.context-test"
 let () = Ppxlib.Driver.standalone ()
