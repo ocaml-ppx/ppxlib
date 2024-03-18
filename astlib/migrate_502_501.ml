@@ -38,7 +38,7 @@ let rec concat_list_lit left right =
 
 let migrate_ppx_context_load_path expr =
   let open Ast_502.Parsetree in
-  let loc = Location.none in
+  let loc = expr.pexp_loc in
   match expr.pexp_desc with
   | Pexp_tuple [ visible; hidden ] ->
       let migration_attr =
