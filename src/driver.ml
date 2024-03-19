@@ -304,11 +304,13 @@ module Transform = struct
     in
     { t with impl = Some map_impl; intf = Some map_intf }
 
+  let builtin_context_free_name = "<builtin:context-free>"
+
   let builtin_of_context_free_rewriters ~hook ~rules ~enclose_impl ~enclose_intf
       ~input_name =
     merge_into_generic_mappers ~hook ~input_name
       {
-        name = "<builtin:context-free>";
+        name = builtin_context_free_name;
         aliases = [];
         impl = None;
         intf = None;
@@ -322,6 +324,21 @@ module Transform = struct
         rules;
         registered_at = Caller_id.get ~skip:[];
       }
+
+  (* Meant to be used after partitioning *)
+  let rewrites_not_context_free t =
+    match t with
+    | { name; _ } when String.equal name builtin_context_free_name -> false
+    | {
+     impl = None;
+     intf = None;
+     instrument = None;
+     preprocess_impl = None;
+     preprocess_intf = None;
+     _;
+    } ->
+        false
+    | _ -> true
 
   let partition_transformations ts =
     let before_instrs, after_instrs, rest =
@@ -528,11 +545,20 @@ let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
   linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
-    ~hook ~expect_mismatch_handler ~input_name ~embed_errors ast =
+    ~hook ~expect_mismatch_handler ~input_name ~embed_errors ?rewritten ast =
   let cts =
     get_whole_ast_passes ~tool_name ~embed_errors ~hook ~expect_mismatch_handler
       ~input_name
   in
+  (match rewritten with
+  | None -> ()
+  | Some rewritten -> (
+      match List.filter cts ~f:Transform.rewrites_not_context_free with
+      | [] -> ()
+      | _ ->
+          (* We won't be able to accurately tell whether any rewriting has
+             happened *)
+          rewritten := true));
   let finish (ast, _dropped, lint_errors, errors) =
     ( ast,
       List.map lint_errors ~f:(fun (loc, s) ->
@@ -633,8 +659,8 @@ let sort_errors_by_loc errors =
 
 (*$*)
 
-let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
-    ~embed_errors =
+let map_structure_gen ~tool_name ~hook ~expect_mismatch_handler ~input_name
+    ~embed_errors ?rewritten st =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
@@ -693,7 +719,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
-      ~expect_mismatch_handler ~input_name ~embed_errors
+      ~expect_mismatch_handler ~input_name ~embed_errors ?rewritten
   in
   st |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
 
@@ -703,14 +729,14 @@ let map_structure st =
       ~tool_name:(Astlib.Ast_metadata.tool_name ())
       ~hook:Context_free.Generated_code_hook.nop
       ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-      ~input_name:None ~embed_errors:false
+      ~input_name:None ~embed_errors:false ?rewritten:None
   with
   | ast -> ast
 
 (*$ str_to_sig _last_text_block *)
 
-let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
-    ~embed_errors =
+let map_signature_gen ~tool_name ~hook ~expect_mismatch_handler ~input_name
+    ~embed_errors ?rewritten sg =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
@@ -769,7 +795,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
-      ~expect_mismatch_handler ~input_name ~embed_errors
+      ~expect_mismatch_handler ~input_name ~embed_errors ?rewritten
   in
   sg |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
 
@@ -779,7 +805,7 @@ let map_signature sg =
       ~tool_name:(Astlib.Ast_metadata.tool_name ())
       ~hook:Context_free.Generated_code_hook.nop
       ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-      ~input_name:None ~embed_errors:false
+      ~input_name:None ~embed_errors:false ?rewritten:None
   with
   | ast -> ast
 
@@ -917,6 +943,7 @@ type output_mode =
   | Dparsetree
   | Reconcile of Reconcile.mode
   | Null
+  | Dune_optional_output
 
 (*$*)
 let extract_cookies_str st =
@@ -1036,14 +1063,14 @@ struct
   let set x = t.data <- Some x
 end
 
-let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
-    ~expect_mismatch_handler ~embed_errors =
+let process_ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
+    ~embed_errors ?rewritten (ast : Intf_or_impl.t) =
   match ast with
   | Intf x ->
       let ast =
         match
           map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
-            ~input_name:(Some input_name) ~embed_errors
+            ~input_name:(Some input_name) ~embed_errors ?rewritten
         with
         | ast -> ast
       in
@@ -1052,11 +1079,20 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
       let ast =
         match
           map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
-            ~input_name:(Some input_name) ~embed_errors
+            ~input_name:(Some input_name) ~embed_errors ?rewritten
         with
         | ast -> ast
       in
       Intf_or_impl.Impl ast
+
+let pp_ast ~output (ast : Intf_or_impl.t) =
+  with_output output ~binary:false ~f:(fun oc ->
+      let ppf = Stdlib.Format.formatter_of_out_channel oc in
+      (match ast with
+      | Intf ast -> Pprintast.signature ppf ast
+      | Impl ast -> Pprintast.structure ppf ast);
+      let null_ast = match ast with Intf [] | Impl [] -> true | _ -> false in
+      if not null_ast then Stdlib.Format.pp_print_newline ppf ())
 
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
     ~embed_errors ~output =
@@ -1064,6 +1100,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
   corrections := [];
   let replacements = ref [] in
+  let rewritten = ref false in
   let tool_name = "ppx_driver" in
   let hook : Context_free.Generated_code_hook.t =
     match output_mode with
@@ -1075,6 +1112,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
                 (Reconcile.Replacement.make () ~context:(Extension context)
                    ~start:loc.loc_start ~stop:loc.loc_end ~repl:generated));
         }
+    | Dune_optional_output -> { f = (fun _ _ _ -> rewritten := true) }
     | _ -> Context_free.Generated_code_hook.nop
   in
   let expect_mismatch_handler : Context_free.Expect_mismatch_handler.t =
@@ -1097,7 +1135,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
           let ast =
             extract_cookies ast
             |> process_ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
-                 ~embed_errors
+                 ~embed_errors ~rewritten
           in
           (input_fname, input_version, ast)
         with exn when embed_errors ->
@@ -1134,16 +1172,8 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
 
   (match output_mode with
   | Null -> ()
-  | Pretty_print ->
-      with_output output ~binary:false ~f:(fun oc ->
-          let ppf = Stdlib.Format.formatter_of_out_channel oc in
-          (match ast with
-          | Intf ast -> Pprintast.signature ppf ast
-          | Impl ast -> Pprintast.structure ppf ast);
-          let null_ast =
-            match ast with Intf [] | Impl [] -> true | _ -> false
-          in
-          if not null_ast then Stdlib.Format.pp_print_newline ppf ())
+  | Pretty_print -> pp_ast ~output ast
+  | Dune_optional_output -> if !rewritten then pp_ast ~output ast
   | Dump_ast ->
       with_output output ~binary:true ~f:(fun oc ->
           Ast_io.write oc
@@ -1191,7 +1221,10 @@ let set_output_mode mode =
   match (!output_mode, mode) with
   | Pretty_print, _ -> output_mode := mode
   | _, Pretty_print -> assert false
-  | Dump_ast, Dump_ast | Dparsetree, Dparsetree -> ()
+  | Dune_optional_output, Dune_optional_output
+  | Dump_ast, Dump_ast
+  | Dparsetree, Dparsetree ->
+      ()
   | Reconcile a, Reconcile b when Poly.equal a b -> ()
   | x, y ->
       let arg_of_output_mode = function
@@ -1201,6 +1234,7 @@ let set_output_mode mode =
         | Reconcile Using_line_directives -> "-reconcile"
         | Reconcile Delimiting_generated_blocks -> "-reconcile-with-comments"
         | Null -> "-null"
+        | Dune_optional_output -> "-dune-optional-output"
       in
       raise
         (Arg.Bad
@@ -1409,6 +1443,9 @@ let standalone_args =
     ( "-corrected-suffix",
       Arg.Set_string corrected_suffix,
       "SUFFIX Suffix to append to corrected files" );
+    ( "-dune-optional-output",
+      Arg.Unit (fun () -> set_output_mode Dune_optional_output),
+      " For dune's internal use only" );
   ]
 
 let get_args ?(standalone_args = standalone_args) () =
