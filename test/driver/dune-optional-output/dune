@@ -1,0 +1,16 @@
+(executable
+ (name context_free_only_driver)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (modules context_free_only_driver))
+
+(executable
+ (name driver_with_impl)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (modules driver_with_impl))
+
+(cram
+ (deps context_free_only_driver.exe driver_with_impl.exe))
