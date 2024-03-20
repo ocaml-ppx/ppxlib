@@ -13,6 +13,71 @@ let mk_ghost_attr name =
     attr_loc = Location.none;
   }
 
+let rec concat_list_lit left right =
+  let open Ast_502.Parsetree in
+  let open Ast_502.Asttypes in
+  match (left.pexp_desc, right.pexp_desc) with
+  | _, Pexp_construct ({ txt = Lident "[]"; _ }, _) -> left
+  | Pexp_construct ({ txt = Lident "[]"; _ }, _), _ -> right
+  | ( Pexp_construct
+        ( { txt = Lident "::"; loc },
+          Some ({ pexp_desc = Pexp_tuple [ hd; tl ]; _ } as arg_expr) ),
+      _ ) ->
+      {
+        left with
+        pexp_desc =
+          Pexp_construct
+            ( { txt = Lident "::"; loc },
+              Some
+                {
+                  arg_expr with
+                  pexp_desc = Pexp_tuple [ hd; concat_list_lit tl right ];
+                } );
+      }
+  | _ -> invalid_arg "Invalid ocaml.ppx.context's load_path"
+
+let migrate_ppx_context_load_path expr =
+  let open Ast_502.Parsetree in
+  let loc = expr.pexp_loc in
+  match expr.pexp_desc with
+  | Pexp_tuple [ visible; hidden ] ->
+      let migration_attr =
+        {
+          attr_name = { Location.txt = "ppxlib.migration.load_path"; loc };
+          attr_loc = loc;
+          attr_payload =
+            PStr [ { pstr_loc = loc; pstr_desc = Pstr_eval (expr, []) } ];
+        }
+      in
+      let expr' = concat_list_lit visible hidden in
+      { expr' with pexp_attributes = migration_attr :: expr.pexp_attributes }
+  | _ -> expr
+
+let migrate_ppx_context_fields fields =
+  List.map
+    (fun (lident_loc, expr) ->
+      match lident_loc.Ast_502.Asttypes.txt with
+      | Longident.Lident "load_path" ->
+          (lident_loc, migrate_ppx_context_load_path expr)
+      | _ -> (lident_loc, expr))
+    fields
+
+let migrate_ppx_context_payload payload =
+  let open Ast_502.Parsetree in
+  match payload with
+  | PStr
+      [
+        ({
+           pstr_desc =
+             Pstr_eval
+               (({ pexp_desc = Pexp_record (fields, None) } as expr), attributes);
+         } as stri);
+      ] ->
+      let new_fields = migrate_ppx_context_fields fields in
+      let new_expr = { expr with pexp_desc = Pexp_record (new_fields, None) } in
+      PStr [ { stri with pstr_desc = Pstr_eval (new_expr, attributes) } ]
+  | _ -> payload
+
 let rec copy_toplevel_phrase :
     Ast_502.Parsetree.toplevel_phrase -> Ast_501.Parsetree.toplevel_phrase =
   function
@@ -511,7 +576,11 @@ and copy_attribute : Ast_502.Parsetree.attribute -> Ast_501.Parsetree.attribute
      } ->
   {
     Ast_501.Parsetree.attr_name = copy_loc (fun x -> x) attr_name;
-    Ast_501.Parsetree.attr_payload = copy_payload attr_payload;
+    Ast_501.Parsetree.attr_payload =
+      (match attr_name.txt with
+      | "ocaml.ppx.context" ->
+          copy_payload (migrate_ppx_context_payload attr_payload)
+      | _ -> copy_payload attr_payload);
     Ast_501.Parsetree.attr_loc = copy_location attr_loc;
   }
 
