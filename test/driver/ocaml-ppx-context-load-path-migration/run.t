@@ -1,6 +1,3 @@
-Note that this test shoud only be enabled with the latest supported OCaml
-version.
-
 In 5.2 the format of ocaml.ppx.context load_path changed.
 To ensure compat, we defined migration for ocaml.ppx.context attributes
 
