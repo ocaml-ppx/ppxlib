@@ -1,11 +1,15 @@
 (executable
  (name identity_standalone)
  (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot))
  (modules identity_standalone))
 
 (executable
  (name print_magic_number)
  (libraries astlib)
+ (preprocess
+  (pps ppxlib.metaquot))
  (modules print_magic_number))
 
 (cram
