@@ -39,5 +39,7 @@ error with source quotation:
 
   $ ./raising_driver.exe -impl file.pp.ml
   File "file.ml", line 1, characters 8-16:
+  1 | let x = [%raise]
+              ^^^^^^^^
   Error: An exception, raise be!
   [1]
