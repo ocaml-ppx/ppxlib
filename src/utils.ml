@@ -114,6 +114,18 @@ module Ast_io = struct
     let s = Bytes.sub_string buf ~pos:0 ~len in
     if len = magic_length then Ok s else Error s
 
+  let set_input_lexbuf input_name =
+    let set_input_lexbuf ic =
+      (* set input lexbuf for error messages. *)
+      let source = In_channel.input_all ic in
+      let lexbuf = Lexing.from_string source in
+      Astlib.Location.set_input_lexbuf (Some lexbuf);
+      lexbuf
+    in
+    match In_channel.with_file ~binary:true input_name ~f:set_input_lexbuf with
+    | (_ : Lexing.lexbuf) -> ()
+    | exception Sys_error _ -> ()
+
   let from_channel ch ~input_kind =
     let handle_non_binary prefix_read_from_source =
       match input_kind with
@@ -133,6 +145,7 @@ module Ast_io = struct
             let input_name : string = input_value ch in
             let ast = input_value ch in
             let module Input_to_ppxlib = Convert (Input_version) (Js) in
+            set_input_lexbuf input_name;
             let ast = Intf_or_impl.Intf (Input_to_ppxlib.copy_signature ast) in
             Ok
               {
@@ -144,6 +157,7 @@ module Ast_io = struct
             let input_name : string = input_value ch in
             let ast = input_value ch in
             let module Input_to_ppxlib = Convert (Input_version) (Js) in
+            set_input_lexbuf input_name;
             let ast = Intf_or_impl.Impl (Input_to_ppxlib.copy_structure ast) in
             Ok
               {
