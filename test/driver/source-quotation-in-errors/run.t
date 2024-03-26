@@ -24,3 +24,20 @@ the relevant quoted source:
               ^^^^^^^^
   Error: An exception, raise be!
   [1]
+
+This should also work when the input is a binary AST as the file contains the name
+of the original source file. Our driver should be able to properly set the input
+lexbuf and get the source quotation to work, assuming the information in the binary
+AST file is correct.
+
+Here we use an identity driver to generate the binary AST for our .ml file above:
+
+  $ ./identity_driver.exe -impl file.ml -dump-ast -o file.pp.ml 
+
+We then call our raising driver on the binary AST, it should be able to report the
+error with source quotation:
+
+  $ ./raising_driver.exe -impl file.pp.ml
+  File "file.ml", line 1, characters 8-16:
+  Error: An exception, raise be!
+  [1]
