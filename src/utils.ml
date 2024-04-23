@@ -81,21 +81,19 @@ module Ast_io = struct
     let input_version = (module Compiler_version : OCaml_version) in
     try
       (* To test if a file is an AST file, we have to read the first few bytes of the
-          file. If it is not, we have to parse these bytes and the rest of the file as
-          source code.
-
-          The compiler just does [seek_on 0] in this case, however this doesn't work when
-          the input is a pipe.
-
-          What we do instead is create a lexing buffer from the input channel and pre-fill
-          it with what we read to do the test. *)
-      let lexbuf = Lexing.from_channel ic in
-      let len = String.length prefix_read_from_source in
-      Bytes.blit_string ~src:prefix_read_from_source ~src_pos:0
-        ~dst:lexbuf.lex_buffer ~dst_pos:0 ~len;
-      lexbuf.lex_buffer_len <- len;
-      lexbuf.lex_curr_p <-
-        { pos_fname = input_name; pos_lnum = 1; pos_bol = 0; pos_cnum = 0 };
+         file. If it is not, we have to parse these bytes and the rest of the file as
+         source code.
+         The compiler just does [seek_on 0] in this case, however this doesn't work
+         when the input is a pipe.
+         What we do is we build a string of the whole source, append the prefix
+         and built a lexing buffer from that.
+         We have to put all the source into the lexing buffer at once this way
+         for source quotation to work in error messages.
+         See ocaml#12238 and ocaml/driver/pparse.ml. *)
+      let all_source = prefix_read_from_source ^ In_channel.input_all ic in
+      let lexbuf = Lexing.from_string all_source in
+      lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = input_name };
+      Astlib.Location.set_input_lexbuf (Some lexbuf);
       Skip_hash_bang.skip_hash_bang lexbuf;
       let ast : Intf_or_impl.t =
         match kind with
@@ -116,6 +114,18 @@ module Ast_io = struct
     let s = Bytes.sub_string buf ~pos:0 ~len in
     if len = magic_length then Ok s else Error s
 
+  let set_input_lexbuf input_name =
+    let set_input_lexbuf ic =
+      (* set input lexbuf for error messages. *)
+      let source = In_channel.input_all ic in
+      let lexbuf = Lexing.from_string source in
+      Astlib.Location.set_input_lexbuf (Some lexbuf);
+      lexbuf
+    in
+    match In_channel.with_file ~binary:true input_name ~f:set_input_lexbuf with
+    | (_ : Lexing.lexbuf) -> ()
+    | exception Sys_error _ -> ()
+
   let from_channel ch ~input_kind =
     let handle_non_binary prefix_read_from_source =
       match input_kind with
@@ -135,6 +145,7 @@ module Ast_io = struct
             let input_name : string = input_value ch in
             let ast = input_value ch in
             let module Input_to_ppxlib = Convert (Input_version) (Js) in
+            set_input_lexbuf input_name;
             let ast = Intf_or_impl.Intf (Input_to_ppxlib.copy_signature ast) in
             Ok
               {
@@ -146,6 +157,7 @@ module Ast_io = struct
             let input_name : string = input_value ch in
             let ast = input_value ch in
             let module Input_to_ppxlib = Convert (Input_version) (Js) in
+            set_input_lexbuf input_name;
             let ast = Intf_or_impl.Impl (Input_to_ppxlib.copy_structure ast) in
             Ok
               {
