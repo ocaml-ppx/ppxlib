@@ -1,6 +1,23 @@
 unreleased
 ----------
 
+### 5.3 support
+
+5.3 support is being added gradually over the course of its development.
+This section should be updated with each relevant PR.
+
+When releasing a new ppxlib without full 5.3 support (e.g. any release before
+OCaml 5.3 reaches beta), this section should be temporarily removed for the
+release and added back into the `unreleased` section afterward.
+Accordingly, the dune-project (and opam files) should be updated to temporarily
+revert the upper bound to `< 5.3.0` when cutting such a release. They must also
+be set back to `< 5.4.0` after the release for `main` to be compatible with
+trunk.
+
+- Add initial OCaml 5.3 support (#487, @NathanReb, @hhugo, @nojb)
+
+### Other changes
+
 - new functions `Ast_builder.{e,p}list_tail` that take an extra tail
   expression/pattern argument parameter compared to `Ast_builder.{e,p}list`, so
   they can build ASTs like `a :: b :: c` instead of only `[ a; b ]`.
