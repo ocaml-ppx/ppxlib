@@ -2,6 +2,10 @@ open Stdlib0
 module From = Ast_503
 module To = Ast_502
 
+let migration_error loc missing_feature =
+  Location.raise_errorf ~loc
+    "migration error: %s is not supported before OCaml 4.13" missing_feature
+
 let rec copy_toplevel_phrase :
     Ast_503.Parsetree.toplevel_phrase -> Ast_502.Parsetree.toplevel_phrase =
   function
@@ -272,14 +276,15 @@ and copy_pattern : Ast_503.Parsetree.pattern -> Ast_502.Parsetree.pattern =
        Ast_503.Parsetree.ppat_loc_stack;
        Ast_503.Parsetree.ppat_attributes;
      } ->
+  let ppat_loc = copy_location ppat_loc in
   {
-    Ast_502.Parsetree.ppat_desc = copy_pattern_desc ppat_desc;
-    Ast_502.Parsetree.ppat_loc = copy_location ppat_loc;
+    Ast_502.Parsetree.ppat_desc = copy_pattern_desc ppat_loc ppat_desc;
+    Ast_502.Parsetree.ppat_loc;
     Ast_502.Parsetree.ppat_loc_stack = copy_location_stack ppat_loc_stack;
     Ast_502.Parsetree.ppat_attributes = copy_attributes ppat_attributes;
   }
 
-and copy_pattern_desc :
+and copy_pattern_desc loc :
     Ast_503.Parsetree.pattern_desc -> Ast_502.Parsetree.pattern_desc = function
   | Ast_503.Parsetree.Ppat_any -> Ast_502.Parsetree.Ppat_any
   | Ast_503.Parsetree.Ppat_var x0 ->
@@ -325,6 +330,7 @@ and copy_pattern_desc :
         (copy_loc (fun x -> Option.map (fun x -> x) x) x0)
   | Ast_503.Parsetree.Ppat_exception x0 ->
       Ast_502.Parsetree.Ppat_exception (copy_pattern x0)
+  | Ast_503.Parsetree.Ppat_effect _ -> migration_error loc "effect pattern"
   | Ast_503.Parsetree.Ppat_extension x0 ->
       Ast_502.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_503.Parsetree.Ppat_open (x0, x1) ->
