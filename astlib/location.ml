@@ -26,6 +26,7 @@ module Error = struct
     kind : location_report_kind;
     main : location_msg;
     sub : location_msg list;
+    (*IF_AT_LEAST 503 footnote: unit -> (Format.formatter -> unit) option; *)
   }
 
   type t (*IF_AT_LEAST 408 = Ocaml_common.Location.error *) (*IF_NOT_AT_LEAST 408 = old_t *)
@@ -95,6 +96,7 @@ module Error = struct
       kind = Report_error;
       main = mk loc txt;
       sub = List.map (fun { loc; txt } -> mk loc txt) sub;
+      (*IF_AT_LEAST 503 footnote = fun _ -> None; *)
     }
 
   let make ~sub msg =
