@@ -4,7 +4,7 @@ module To = Ast_502
 
 let migration_error loc missing_feature =
   Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 4.13" missing_feature
+    "migration error: %s is not supported before OCaml 5.03" missing_feature
 
 let rec copy_toplevel_phrase :
     Ast_503.Parsetree.toplevel_phrase -> Ast_502.Parsetree.toplevel_phrase =
