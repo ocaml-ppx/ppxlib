@@ -67,6 +67,15 @@ let () =
     ~doc:"_ Allow ppx derivers to enable unused code warnings"
 
 let allow_unused_code_warnings () = !allow_unused_code_warnings
+let allow_unused_type_warnings = ref Options.default_allow_unused_type_warnings
+
+let () =
+  Driver.add_arg "-unused-type-warnings"
+    (Bool (( := ) allow_unused_type_warnings))
+    ~doc:
+      "{true|false} Allow unused type warnings for types with [@@deriving ...]"
+
+let allow_unused_type_warnings () = !allow_unused_type_warnings
 
 module Args = struct
   include (
@@ -701,7 +710,7 @@ let wrap_sig ~loc ~hide list =
    +-----------------------------------------------------------------+ *)
 
 let types_used_by_deriving (tds : type_declaration list) : structure_item list =
-  if keep_w32_impl () then []
+  if keep_w32_impl () || allow_unused_type_warnings () then []
   else
     List.map tds ~f:(fun td ->
         let typ = Common.core_type_of_type_declaration td in

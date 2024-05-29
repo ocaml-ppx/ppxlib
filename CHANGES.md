@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Add `-unused-type-warnings` flag to the driver to allow users to disable
+  the generation of warning 34 silencing structure items when using
+  `[@@deriving ...]` on type declarations. (#493, @NathanReb)
+
 - Fix `Longident.parse` so it also handles indexing operators such as
   `.!()`, `.%(;..)<-`, or `Vec.(.%())` (#494, @octachron)
 

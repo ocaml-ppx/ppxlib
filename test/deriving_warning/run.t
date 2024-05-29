@@ -6,6 +6,9 @@ triggering warnings, we also added optional arguments to `Deriving.make` so that
 the ppx themselves can declare whether they need the driver to disable warnings
 or not.
 
+The following tests describe the behaviour of flags and features used to control
+the emission of such warning silencing features.
+
 One such flag and optional argument pair is the `-unused-code-warnings` flag and
 `?unused_code_warning` `Deriving.V2.make` argument. Both of those default to
 `false` and control whether we disable warnings 32 and 60 for generated code
@@ -26,7 +29,7 @@ We have a driver with 4 derivers linked in:
 - two_do_warn
 - alias_warn
 
-----------------------------------------
+--------------------------------------------------------------------------------
 
 Let's consider the following ocaml source file using the zero_do_warn deriver
 
@@ -96,7 +99,7 @@ and compare the result of both driver invocations:
                                                                   "@inline"]
   [@@merlin.hide ]
 
------------------------------------------------
+--------------------------------------------------------------------------------
 
 The default value of the -unused-code-warnings should be false:
 
@@ -116,7 +119,7 @@ The default value of the -unused-code-warnings should be false:
 As we can see here, the warnings were disabled by the driver, as is expected
 with -unused-code-warnings=false.
 
------------------------------------------------
+--------------------------------------------------------------------------------
 
 Let's consider the following ocaml source file using the one_no_warn deriver
 
@@ -177,7 +180,7 @@ Same goes for .mli files:
       val one : Zero.t One.t
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
--------------------------------------------------
+--------------------------------------------------------------------------------
 
 The alias_warn deriver is in fact an alias for two derivers:
 - alias_do_warn, which is registered with unused_code_warnings=true
@@ -235,3 +238,55 @@ Same goes for .mli:
   include sig [@@@ocaml.warning "-32"] val unit_two : unit end[@@ocaml.doc
                                                                 "@inline"]
   [@@merlin.hide ]
+
+--------------------------------------------------------------------------------
+
+Whenever a set of types has a [@@deriving ...] attached, ppxlib's driver always
+generate structure items meant to disable unused type warnings (warning 34) for
+any of those types.
+
+Let's consider the following piece of OCaml code:
+
+  $ cat > unused_types.ml << EOF
+  > type t = int
+  > and u = string
+  > [@@deriving zero_do_warn]
+  > EOF
+
+If we run the driver:
+
+  $ ./driver.exe -impl unused_types.ml
+  type t = int
+  and u = string[@@deriving zero_do_warn]
+  include struct let _ = fun (_ : t) -> ()
+                 let _ = fun (_ : u) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
+                                                                      ]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      module Zero = struct type t =
+                             | T0  end
+      let zero = Zero.T0
+      let _ = zero
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+We can see that the driver generated two `let _ = fun (_ : ...`, one for each type
+in the set.
+
+We have a flag that disable this behaviour and allows unused type warnings to be
+reported properly. Passing that flag to the driver should remove the two previously
+mentionned items.
+
+  $ ./driver.exe -unused-type-warnings=true -impl unused_types.ml
+  type t = int
+  and u = string[@@deriving zero_do_warn]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      module Zero = struct type t =
+                             | T0  end
+      let zero = Zero.T0
+      let _ = zero
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+As you can see, turning on the flag disabled that behaviour as expected.
