@@ -6,6 +6,9 @@ triggering warnings, we also added optional arguments to `Deriving.make` so that
 the ppx themselves can declare whether they need the driver to disable warnings
 or not.
 
+The following tests describe the behaviour of flags and features used to control
+the emission of such warning silencing features.
+
 One such flag and optional argument pair is the `-unused-code-warnings` flag and
 `?unused_code_warning` `Deriving.V2.make` argument. Both of those default to
 `false` and control whether we disable warnings 32 and 60 for generated code
@@ -15,8 +18,10 @@ and behave as described by the following table:
 -------------|-------------|----------------------
  true        | true        | Enabled
  true        | false       | Disabled*
+ true        | force       | Enabled
  false       | true        | Disabled
  false       | false       | Disabled
+ false       | force       | Enabled
 * By adding warning silencers like [@@@ocaml.waring "-60"] or producing code like
 `let _ = zero in...`
 
@@ -26,7 +31,7 @@ We have a driver with 4 derivers linked in:
 - two_do_warn
 - alias_warn
 
-----------------------------------------
+--------------------------------------------------------------------------------
 
 Let's consider the following ocaml source file using the zero_do_warn deriver
 
@@ -34,7 +39,7 @@ Let's consider the following ocaml source file using the zero_do_warn deriver
   > type t = int [@@deriving zero_do_warn]
   > EOF
 
-Zero_do_warn is registered with unused_code_warning set true meaning it allows
+Zero_do_warn is registered with unused_code_warning set to true meaning it allows
 the driver not to silence unused code and unused module warnings if the
 -unused-code-warning flag is set to true.
 
@@ -96,7 +101,7 @@ and compare the result of both driver invocations:
                                                                   "@inline"]
   [@@merlin.hide ]
 
------------------------------------------------
+--------------------------------------------------------------------------------
 
 The default value of the -unused-code-warnings should be false:
 
@@ -116,7 +121,24 @@ The default value of the -unused-code-warnings should be false:
 As we can see here, the warnings were disabled by the driver, as is expected
 with -unused-code-warnings=false.
 
------------------------------------------------
+--------------------------------------------------------------------------------
+
+There is another value possible for the -unused-code-warnings flag: "force".
+This allows the warnings to be enabled even if the deriver does not allow it. In
+this example though, using `force` or `true` results in the same output, since
+the deriver `zero_do_warn` already allows the warning to be enabled.
+
+  $ ./driver.exe -unused-code-warnings=force -impl zero_do_warn.ml
+  type t = int[@@deriving zero_do_warn]
+  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
+                                                                      ]
+  include struct module Zero = struct type t =
+                                        | T0  end
+                 let zero = Zero.T0 end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+We'll see below other examples where the `force` flag is actually useful.
+
+--------------------------------------------------------------------------------
 
 Let's consider the following ocaml source file using the one_no_warn deriver
 
@@ -125,9 +147,9 @@ Let's consider the following ocaml source file using the one_no_warn deriver
   > EOF
 
 One_no_warn is registered with unused_code_warning set to false, meaning the driver
-should always disable warnings for the generated code, regardless of the value of
-the -unused-code-warning flag. The following driver invocations have the same
-output:
+should disable warnings for the generated code, even when the value of the
+-unused-code-warning is set to true. The following driver invocations have the
+same output:
 
   $ ./driver.exe -unused-code-warnings=false -impl one_no_warn.ml
   type t = int[@@deriving one_no_warn]
@@ -177,7 +199,30 @@ Same goes for .mli files:
       val one : Zero.t One.t
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
--------------------------------------------------
+--------------------------------------------------------------------------------
+
+When using a deriving that does not allow the warning to be enabled (such as
+`one_no_warn` here), it is still possible to force it from the user side. That's
+what the `force` argument for the driver flag is for. See below:
+
+  $ ./driver.exe -unused-code-warnings=force -impl one_no_warn.ml
+  type t = int[@@deriving one_no_warn]
+  include
+    struct
+      let _ = fun (_ : t) -> ()
+      module One = struct type 'a t =
+                            | T1 of 'a  end
+      let one = One.T1 zero
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+Same goes for .mli files:
+
+  $ ./driver.exe -unused-code-warnings=force -intf one_no_warn.mli
+  type t = int[@@deriving one_no_warn]
+  include sig module One : sig type 'a t end val one : Zero.t One.t end
+  [@@ocaml.doc "@inline"][@@merlin.hide ]
+
+--------------------------------------------------------------------------------
 
 The alias_warn deriver is in fact an alias for two derivers:
 - alias_do_warn, which is registered with unused_code_warnings=true
@@ -214,6 +259,17 @@ the unused-code-warnings flag, there will be one for both:
   include struct let unit_two = unit_one
                  let _ = unit_two end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
+As expected, if we force the unused-code-warnings, there will be no let _ for
+any of the two values.
+
+  $ ./driver.exe -unused-code-warnings=force -impl alias_warn.ml
+  type t = int[@@deriving alias_warn]
+  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
+                                                                      ]
+  include struct let unit_one = () end[@@ocaml.doc "@inline"][@@merlin.hide ]
+  include struct let unit_two = unit_one end[@@ocaml.doc "@inline"][@@merlin.hide
+                                                                     ]
+
 Same goes for .mli:
 
   $ cat > alias_warn.mli << EOF
@@ -235,3 +291,8 @@ Same goes for .mli:
   include sig [@@@ocaml.warning "-32"] val unit_two : unit end[@@ocaml.doc
                                                                 "@inline"]
   [@@merlin.hide ]
+
+  $ ./driver.exe -unused-code-warnings=force -intf alias_warn.mli
+  type t = int[@@deriving alias_warn]
+  include sig val unit_one : unit end[@@ocaml.doc "@inline"][@@merlin.hide ]
+  include sig val unit_two : unit end[@@ocaml.doc "@inline"][@@merlin.hide ]
