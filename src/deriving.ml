@@ -63,10 +63,20 @@ let allow_unused_code_warnings = ref Options.default_allow_unused_code_warnings
 
 let () =
   Driver.add_arg "-unused-code-warnings"
-    (Bool (( := ) allow_unused_code_warnings))
-    ~doc:"_ Allow ppx derivers to enable unused code warnings"
+    (Symbol
+       ( [ "false"; "true"; "force" ],
+         function
+         | "false" -> allow_unused_code_warnings := Disabled
+         | "true" -> allow_unused_code_warnings := Enabled
+         | "force" -> allow_unused_code_warnings := Force
+         | _ -> assert false ))
+    ~doc:" Allow ppx derivers to enable unused code warnings (def: false)"
 
-let allow_unused_code_warnings () = !allow_unused_code_warnings
+let allow_unused_code_warnings ~ppx_allows_unused_code_warnings =
+  match !allow_unused_code_warnings with
+  | Force -> true
+  | Disabled -> false
+  | Enabled -> ppx_allows_unused_code_warnings
 
 module Args = struct
   include (
@@ -631,7 +641,8 @@ let wrap_str ~loc ~hide st =
 let wrap_str ~loc ~hide ~unused_code_warnings st =
   let loc = { loc with loc_ghost = true } in
   let unused_code_warnings =
-    unused_code_warnings && allow_unused_code_warnings ()
+    allow_unused_code_warnings
+      ~ppx_allows_unused_code_warnings:unused_code_warnings
   in
   let warnings, st =
     if keep_w32_impl () || unused_code_warnings then ([], st)
@@ -671,7 +682,8 @@ let wrap_sig ~loc ~hide st =
 let wrap_sig ~loc ~hide ~unused_code_warnings sg =
   let loc = { loc with loc_ghost = true } in
   let unused_code_warnings =
-    unused_code_warnings && allow_unused_code_warnings ()
+    allow_unused_code_warnings
+      ~ppx_allows_unused_code_warnings:unused_code_warnings
   in
   let warnings =
     if keep_w32_intf () || unused_code_warnings then [] else [ 32 ]

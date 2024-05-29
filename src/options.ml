@@ -1,4 +1,8 @@
-let default_allow_unused_code_warnings = false
+module Allow_unused_code_warnings = struct
+  type t = Force | Enabled | Disabled
+end
+
+let default_allow_unused_code_warnings : Allow_unused_code_warnings.t = Disabled
 let perform_checks = false
 
 (* The checks on extensions are only to get better error messages

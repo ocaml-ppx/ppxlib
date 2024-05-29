@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Driver: Add `-unused-code-warnings=force` command-line flag argument. (#490, @mbarbin)
+
 0.32.1 (2024-04-23)
 -------------------
 
