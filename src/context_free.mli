@@ -19,6 +19,8 @@ module Rule : sig
   (** Rewrite an extension point *)
 
   val special_function : string -> (expression -> expression option) -> t
+
+  val special_function' : Longident.t -> (expression -> expression option) -> t
   (** [special_function id expand] is a rule to rewrite a function call at
       parsing time. [id] is the identifier to match on and [expand] is used to
       expand the full function application (it gets the Pexp_apply node). If the
@@ -26,7 +28,9 @@ module Rule : sig
       the identifier (Pexp_ident node) so you should handle both cases.
 
       If [id] is an operator identifier and contains dots, it should be
-      parenthesized (e.g. ["(+.+)"]).
+      parenthesized (e.g. ["(+.+)"]). Another option is to use the
+      [special_function'] variant which takes directly a {!Longident.t}
+      argument.
 
       [expand] must decide whether the expression it receive can be rewritten or
       not. Especially ppxlib makes the assumption that [expand] is idempotent.
