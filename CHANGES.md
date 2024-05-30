@@ -2,7 +2,7 @@ unreleased
 ----------
 
 - Driver: Change the construct generated to silence warning 34 to work
-  better with coverage tools such as `bisect_ppx`. (#<PR_NUMBER>, @mbarbin)
+  better with coverage tools such as `bisect_ppx`. (#495, @mbarbin)
 
 0.32.1 (2024-04-23)
 -------------------
