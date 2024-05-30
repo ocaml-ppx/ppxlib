@@ -3,7 +3,7 @@ type t = A [@@deriving_inline foo]
 include struct
   [@@@ocaml.warning "-60"]
 
-  let _ = fun (_ : t) -> ()
+  let _ = (`None : [ `None | `Some of t ])
 
   module Foo = struct end
 

@@ -23,7 +23,7 @@ is rewritten to contain two of these nodes.
   type a = int[@@deriving deriver_extension_node]
   include
     struct
-      let _ = fun (_ : a) -> ()
+      let _ = (`None : [ `None  | `Some of a ])
       [%%ocaml.error "An error message in an extension node"]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
 

@@ -1,6 +1,6 @@
 type t = int [@@deriving_inline zero_do_warn, one_no_warn, two_do_warn]
 
-let _ = fun (_ : t) -> ()
+let _ = (`None : [ `None | `Some of t ])
 
 module Zero = struct
   type t = T0
@@ -29,7 +29,7 @@ let two = Two.T2 (zero, one)
 
 type s = int [@@deriving_inline alias_warn]
 
-let _ = fun (_ : s) -> ()
+let _ = (`None : [ `None | `Some of s ])
 let unit_one = ()
 let unit_two = unit_one
 let _ = unit_two

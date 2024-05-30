@@ -710,9 +710,22 @@ let types_used_by_deriving (tds : type_declaration list) : structure_item list =
           [
             value_binding ~loc ~pat:(ppat_any ~loc)
               ~expr:
-                (pexp_fun ~loc Nolabel None
-                   (ppat_constraint ~loc (ppat_any ~loc) typ)
-                   (eunit ~loc));
+                (pexp_constraint ~loc
+                   (pexp_variant ~loc "None" None)
+                   (ptyp_variant ~loc
+                      [
+                        {
+                          prf_desc = Rtag ({ txt = "None"; loc }, true, []);
+                          prf_loc = loc;
+                          prf_attributes = [];
+                        };
+                        {
+                          prf_desc = Rtag ({ txt = "Some"; loc }, false, [ typ ]);
+                          prf_loc = loc;
+                          prf_attributes = [];
+                        };
+                      ]
+                      Closed None));
           ])
 
 let merge_generators field l =

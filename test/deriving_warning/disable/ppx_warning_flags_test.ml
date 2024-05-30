@@ -1,6 +1,6 @@
 type t = int [@@deriving_inline zero_do_warn, one_no_warn, two_do_warn]
 
-let _ = fun (_ : t) -> ()
+let _ = (`None : [ `None | `Some of t ])
 
 include struct
   [@@@ocaml.warning "-60"]
@@ -39,7 +39,7 @@ end [@@ocaml.doc "@inline"]
 
 type s = int [@@deriving_inline alias_warn]
 
-let _ = fun (_ : s) -> ()
+let _ = (`None : [ `None | `Some of s ])
 let unit_one = ()
 let _ = unit_one
 let unit_two = unit_one

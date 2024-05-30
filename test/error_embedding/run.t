@@ -8,7 +8,7 @@ Undefined derivers are turned into error nodes
   type t = int[@@deriving undefined]
   include
     struct
-      let _ = fun (_ : t) -> ()
+      let _ = (`None : [ `None  | `Some of t ])
       [%%ocaml.error
         "Ppxlib.Deriving: 'undefined' is not a supported type deriving generator"]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
@@ -32,13 +32,15 @@ Anything else will embed an error extension node
   $ echo "type b = int [@@deriving a_string unexpected_args]" >> parsing_payload_deriver.ml
   $ ./deriver.exe parsing_payload_deriver.ml
   type a = int[@@deriving a_string]
-  include struct let _ = fun (_ : a) -> ()
-                 let _ = "derived_string" end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
+  include
+    struct
+      let _ = (`None : [ `None  | `Some of a ])
+      let _ = "derived_string"
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
   type b = int[@@deriving a_string unexpected_args]
   include
     struct
-      let _ = fun (_ : b) -> ()
+      let _ = (`None : [ `None  | `Some of b ])
       [%%ocaml.error
         "Ppxlib.Deriving: non-optional labelled argument or record expected"]
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
@@ -50,7 +52,7 @@ Error nodes are generated when dependent derivers are not applied.
   type a = int[@@deriving a_dependent_string]
   include
     struct
-      let _ = fun (_ : a) -> ()
+      let _ = (`None : [ `None  | `Some of a ])
       [%%ocaml.error
         "Deriver a_string is needed for a_dependent_string, you need to add it before in the list"]
       let _ = "derived_string"
@@ -60,7 +62,7 @@ Error nodes are generated when dependent derivers are not applied.
   type b = int[@@deriving (a_dependent_string, a_string)]
   include
     struct
-      let _ = fun (_ : b) -> ()
+      let _ = (`None : [ `None  | `Some of b ])
       [%%ocaml.error
         "Deriver a_string is needed for a_dependent_string, you need to add it before in the list"]
       let _ = "derived_string"
@@ -71,7 +73,7 @@ Error nodes are generated when dependent derivers are not applied.
   type b = int[@@deriving (a_string, a_dependent_string)]
   include
     struct
-      let _ = fun (_ : b) -> ()
+      let _ = (`None : [ `None  | `Some of b ])
       let _ = "derived_string"
       let _ = "derived_string"
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
