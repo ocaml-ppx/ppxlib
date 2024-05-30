@@ -42,8 +42,9 @@ Let's call the driver with -unused-code-warnings=false:
 
   $ ./driver.exe -unused-code-warnings=false -impl zero_do_warn.ml
   type t = int[@@deriving zero_do_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
+  include struct let _ = (`None : [ `None  | `Some of t ]) end[@@ocaml.doc
+                                                                "@inline"]
+  [@@merlin.hide ]
   include
     struct
       [@@@ocaml.warning "-60"]
@@ -61,8 +62,9 @@ Now if we use -unused-code-warnings=true:
 
   $ ./driver.exe -unused-code-warnings=true -impl zero_do_warn.ml
   type t = int[@@deriving zero_do_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
+  include struct let _ = (`None : [ `None  | `Some of t ]) end[@@ocaml.doc
+                                                                "@inline"]
+  [@@merlin.hide ]
   include struct module Zero = struct type t =
                                         | T0  end
                  let zero = Zero.T0 end[@@ocaml.doc "@inline"][@@merlin.hide ]
@@ -102,8 +104,9 @@ The default value of the -unused-code-warnings should be false:
 
   $ ./driver.exe -impl zero_do_warn.ml
   type t = int[@@deriving zero_do_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
+  include struct let _ = (`None : [ `None  | `Some of t ]) end[@@ocaml.doc
+                                                                "@inline"]
+  [@@merlin.hide ]
   include
     struct
       [@@@ocaml.warning "-60"]
@@ -134,7 +137,7 @@ output:
   include
     struct
       [@@@ocaml.warning "-60"]
-      let _ = fun (_ : t) -> ()
+      let _ = (`None : [ `None  | `Some of t ])
       module One = struct type 'a t =
                             | T1 of 'a  end
       let one = One.T1 zero
@@ -146,7 +149,7 @@ output:
   include
     struct
       [@@@ocaml.warning "-60"]
-      let _ = fun (_ : t) -> ()
+      let _ = (`None : [ `None  | `Some of t ])
       module One = struct type 'a t =
                             | T1 of 'a  end
       let one = One.T1 zero
@@ -196,8 +199,9 @@ unit_one:
 
   $ ./driver.exe -unused-code-warnings=true -impl alias_warn.ml
   type t = int[@@deriving alias_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
+  include struct let _ = (`None : [ `None  | `Some of t ]) end[@@ocaml.doc
+                                                                "@inline"]
+  [@@merlin.hide ]
   include struct let unit_one = () end[@@ocaml.doc "@inline"][@@merlin.hide ]
   include struct let unit_two = unit_one
                  let _ = unit_two end[@@ocaml.doc "@inline"][@@merlin.hide ]
@@ -207,8 +211,9 @@ the unused-code-warnings flag, there will be one for both:
 
   $ ./driver.exe -unused-code-warnings=false -impl alias_warn.ml
   type t = int[@@deriving alias_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
+  include struct let _ = (`None : [ `None  | `Some of t ]) end[@@ocaml.doc
+                                                                "@inline"]
+  [@@merlin.hide ]
   include struct let unit_one = ()
                  let _ = unit_one end[@@ocaml.doc "@inline"][@@merlin.hide ]
   include struct let unit_two = unit_one

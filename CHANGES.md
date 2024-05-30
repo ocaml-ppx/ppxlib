@@ -14,6 +14,9 @@ details.
 
 ### Other changes
 
+- Driver: Change the construct generated to silence warning 34 to work
+  better with coverage tools such as `bisect_ppx`. (#495, @mbarbin)
+
 - new functions `Ast_builder.{e,p}list_tail` that take an extra tail
   expression/pattern argument parameter compared to `Ast_builder.{e,p}list`, so
   they can build ASTs like `a :: b :: c` instead of only `[ a; b ]`.
