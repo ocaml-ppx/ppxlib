@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Fix `Longident.parse` so it also handles indexing operators such as
+  `.!()`, `.%(;..)<-`, or `Vec.(.%())` (#494, @octachron)
+
 0.32.1 (2024-04-23)
 -------------------
 
