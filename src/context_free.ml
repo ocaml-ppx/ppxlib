@@ -130,6 +130,9 @@ module Rule = struct
   let special_function id f =
     T (Special_function, { name = id; ident = Longident.parse id; expand = f })
 
+  let special_function' ident f =
+    T (Special_function, { name = Longident.name ident; ident; expand = f })
+
   let constant kind suffix expand = T (Constant, { suffix; kind; expand })
 
   let attr_str_type_decl attribute expand =
