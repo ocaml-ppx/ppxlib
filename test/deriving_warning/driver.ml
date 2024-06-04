@@ -93,3 +93,5 @@ let () =
   (* The derivers are added from right to left *)
   Deriving.add_alias "alias_warn" [ alias_no_warn; alias_do_warn ]
   |> Deriving.ignore
+
+let () = Driver.standalone ()
