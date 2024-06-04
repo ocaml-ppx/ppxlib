@@ -1,3 +1,25 @@
+Ppxlib driver has a variety of ways to disable warnings that can be triggered
+when using `[@@deriving ...]`. These are all enabled by default but we added
+flags to let driver users disable them. To allow smooth transition from always
+adding them to never do so and let individual ppx-es do what they must to avoid
+triggering warnings, we also added optional arguments to `Deriving.make` so that
+the ppx themselves can declare whether they need the driver to disable warnings
+or not.
+
+One such flag and optional argument pair is the `-unused-code-warnings` flag and
+`?unused_code_warning` `Deriving.V2.make` argument. Both of those default to
+`false` and control whether we disable warnings 32 and 60 for generated code
+and behave as described by the following table:
+
+ Deriver arg | Driver Flag | Unused Code Warnings
+-------------|-------------|----------------------
+ true        | true        | Enabled
+ true        | false       | Disabled*
+ false       | true        | Disabled
+ false       | false       | Disabled
+* By adding warning silencers like [@@@ocaml.waring "-60"] or producing code like
+`let _ = zero in...`
+
 We have a driver with 4 derivers linked in:
 - zero_do_warn
 - one_no_warn
@@ -73,6 +95,26 @@ and compare the result of both driver invocations:
   include sig module Zero : sig type t end val zero : Zero.t end[@@ocaml.doc
                                                                   "@inline"]
   [@@merlin.hide ]
+
+-----------------------------------------------
+
+The default value of the -unused-code-warnings should be false:
+
+  $ ./driver.exe -impl zero_do_warn.ml
+  type t = int[@@deriving zero_do_warn]
+  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
+                                                                      ]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      module Zero = struct type t =
+                             | T0  end
+      let zero = Zero.T0
+      let _ = zero
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+As we can see here, the warnings were disabled by the driver, as is expected
+with -unused-code-warnings=false.
 
 -----------------------------------------------
 
