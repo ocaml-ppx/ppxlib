@@ -42,7 +42,9 @@ module type Additional_helpers = sig
   val pexp_tuple_opt : (expression list -> expression option) with_loc
   val pconstruct : constructor_declaration -> pattern option -> pattern
   val econstruct : constructor_declaration -> expression option -> expression
+  val elist_v2 : (?tail:expression -> expression list -> expression) with_loc
   val elist : (expression list -> expression) with_loc
+  val plist_v2 : (?tail:pattern -> pattern list -> pattern) with_loc
   val plist : (pattern list -> pattern) with_loc
 
   val pstr_value_list :
