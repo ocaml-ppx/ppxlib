@@ -18,21 +18,14 @@ below for details.
 
 ### Developing patches
 
-We ask that patches changing the code respect the overall coding
-style. In particular, the code should be indented using
-[ocp-indent][ocpi]. Additionally the test suite should pass on the
-contributor's machine before a patch is submitted for review.
+Before submitting a PR, please run `dune build @install @runtest @fmt`
+on your machine.
 
-Note that in addition to the normal dependencies, you need to install
-[cinaps][cinaps] in order to modify the code. This is because some
-parts of the code are auto-generated and committed in the repository.
-
-So before submitting a PR, make sure to check all the following
-points:
-
-- all the modified code is correctly indented according to ocp-indent
-- `make` succeeds
-- `make test` succeeds
+In addition to normal dependencies, you'll need to run something like
+`opam install cinaps ocamlformat.0.26.1`, but with the version
+specified in [`.ocamlformat`](.ocamlformat). [cinaps][cinaps] is used
+to keep up-to-date some parts of the code that are auto-generated and
+committed in the repository.
 
 ### Submitting patches and code review
 
