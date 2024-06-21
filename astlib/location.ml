@@ -125,5 +125,7 @@ module Error = struct
 end
 
 let raise_errorf ?loc msg =
+  (* Update from [kasprintf] to [kdprintf] + [Format_doc.deprecated_printer]
+     when ocaml lower bound is 4.08+ *)
   (*IF_AT_LEAST 503 Format.kasprintf (fun s -> raise_errorf ?loc "%s" s) msg *)
   (*IF_NOT_AT_LEAST 503 raise_errorf ?loc msg *)
