@@ -127,21 +127,33 @@ module Default = struct
   let econstruct cd arg =
     pexp_construct ~loc:cd.pcd_loc (Located.map_lident cd.pcd_name) arg
 
-  let rec elist ~loc l =
+  let rec elist_v2 ~loc ?tail l =
     match l with
-    | [] -> pexp_construct ~loc (Located.mk ~loc (Longident.Lident "[]")) None
+    | [] -> (
+        match tail with
+        | Some e -> e
+        | None ->
+            pexp_construct ~loc (Located.mk ~loc (Longident.Lident "[]")) None)
     | x :: l ->
         pexp_construct ~loc
           (Located.mk ~loc (Longident.Lident "::"))
-          (Some (pexp_tuple ~loc [ x; elist ~loc l ]))
+          (Some (pexp_tuple ~loc [ x; elist_v2 ~loc ?tail l ]))
 
-  let rec plist ~loc l =
+  let elist ~loc l = elist_v2 ~loc l
+
+  let rec plist_v2 ~loc ?tail l =
     match l with
-    | [] -> ppat_construct ~loc (Located.mk ~loc (Longident.Lident "[]")) None
+    | [] -> (
+        match tail with
+        | Some p -> p
+        | None ->
+            ppat_construct ~loc (Located.mk ~loc (Longident.Lident "[]")) None)
     | x :: l ->
         ppat_construct ~loc
           (Located.mk ~loc (Longident.Lident "::"))
-          (Some (ppat_tuple ~loc [ x; plist ~loc l ]))
+          (Some (ppat_tuple ~loc [ x; plist_v2 ~loc ?tail l ]))
+
+  let plist ~loc l = plist_v2 ~loc l
 
   let unapplied_type_constr_conv_without_apply ~loc (ident : Longident.t) ~f =
     match ident with
@@ -386,6 +398,8 @@ end) : S = struct
   let eapply e el = Default.eapply ~loc e el
   let eabstract ps e = Default.eabstract ~loc ps e
   let esequence el = Default.esequence ~loc el
+  let elist_v2 ?tail l = Default.elist_v2 ~loc ?tail l
+  let plist_v2 ?tail l = Default.plist_v2 ~loc ?tail l
   let elist l = Default.elist ~loc l
   let plist l = Default.plist ~loc l
 
