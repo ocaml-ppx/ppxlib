@@ -42,10 +42,22 @@ module type Additional_helpers = sig
   val pexp_tuple_opt : (expression list -> expression option) with_loc
   val pconstruct : constructor_declaration -> pattern option -> pattern
   val econstruct : constructor_declaration -> expression option -> expression
-  val elist_v2 : (?tail:expression -> expression list -> expression) with_loc
+
+  val elist_tail : (expression list -> expression -> expression) with_loc
+  (** [elist_tail ~loc [expr1; expr2; expr3] expr_tail] produces the expression
+      [expr1::expr2::expr3::expr_tail]. *)
+
   val elist : (expression list -> expression) with_loc
-  val plist_v2 : (?tail:pattern -> pattern list -> pattern) with_loc
+  (** [elist ~loc [expr1; expr2; expr3]] produces the list litteral expression
+      [[expr1; expr2; expr3]]. *)
+
+  val plist_tail : (pattern list -> pattern -> pattern) with_loc
+  (** [plist_tail ~loc [pat1; pat2; pat3] pat_tail] produces the pattern
+      [pat1::pat2::pat3::pat_tail]. *)
+
   val plist : (pattern list -> pattern) with_loc
+  (** [plist ~loc [pat1; pat2; pat3]] produces the list pattern
+      [[pat1; pat2; pat3]]. *)
 
   val pstr_value_list :
     loc:Location.t ->

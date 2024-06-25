@@ -1,9 +1,10 @@
 unreleased
 ----------
 
-- new functions `Ast_builder.{e,p}list_v2` that take an extra `?tail:expression`
-  parameter compared to `Ast_builder.{e,p}list`, so they can build ASTs like
-  `a :: b :: c` instead of only `[ a; b ]`.
+- new functions `Ast_builder.{e,p}list_tail` that take an extra tail
+  expression/pattern argument parameter compared to `Ast_builder.{e,p}list`, so
+  they can build ASTs like `a :: b :: c` instead of only `[ a; b ]`.
+  (#498, #502, @v-gb, @NathanReb)
 
 - Fix `Longident.parse` so it also handles indexing operators such as
   `.!()`, `.%(;..)<-`, or `Vec.(.%())` (#494, @octachron)
