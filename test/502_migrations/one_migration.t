@@ -716,8 +716,8 @@ So let's only keep one example.
               ((loc_start
                 ((pos_fname file.ml) (pos_lnum 1) (pos_bol 0) (pos_cnum 14)))
                (loc_end
-                ((pos_fname file.ml) (pos_lnum 1) (pos_bol 0) (pos_cnum 18)))
-               (loc_ghost false)))
+                ((pos_fname file.ml) (pos_lnum 1) (pos_bol 0) (pos_cnum 30)))
+               (loc_ghost true)))
              (pexp_loc_stack ()) (pexp_attributes ()))))
           (pexp_loc
            ((loc_start
