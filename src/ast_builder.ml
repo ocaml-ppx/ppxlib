@@ -15,6 +15,10 @@ module Default = struct
 
   module Latest = struct
     let ppat_construct = ppat_construct
+    let pexp_function = pexp_function
+
+    let value_binding ?constraint_ ~loc ~pat ~expr () =
+      value_binding ~constraint_ ~loc ~pat ~expr
 
     let constructor_declaration ~loc ~name ~vars ~args ~res () =
       constructor_declaration ~loc ~name ~vars ~args ~res
@@ -28,6 +32,27 @@ module Default = struct
       ppat_loc = loc;
       ppat_desc = Ppat_construct (lid, Option.map p ~f:(fun p -> ([], p)));
     }
+
+  let pexp_fun ~loc (label : arg_label) expr p e =
+    let pparam_desc = Pparam_val (label, expr, p) in
+    let case = { pparam_desc; pparam_loc = loc } in
+    {
+      pexp_loc_stack = [];
+      pexp_attributes = [];
+      pexp_loc = loc;
+      pexp_desc = Pexp_function ([ case ], None, Pfunction_body e);
+    }
+
+  let pexp_function ~loc cases =
+    {
+      pexp_loc_stack = [];
+      pexp_attributes = [];
+      pexp_loc = loc;
+      pexp_desc = Pexp_function ([], None, Pfunction_cases (cases, loc, []));
+    }
+
+  let value_binding ~loc ~pat ~expr =
+    value_binding ~loc ~pat ~expr ~constraint_:None
 
   let constructor_declaration ~loc ~name ~args ~res =
     {
@@ -196,7 +221,11 @@ module Default = struct
       match expr with
       | {
        pexp_desc =
-         Pexp_fun (label, None (* no default expression *), subpat, body);
+         Pexp_function
+           ( [ { pparam_loc = _; pparam_desc = Pparam_val (label, _, subpat) } ],
+             _constraint,
+             Pfunction_body body );
+       (* Pexp_fun (label, None (* no default expression *), subpat, body); *)
        pexp_attributes = [];
        pexp_loc = _;
        pexp_loc_stack = _;
@@ -373,6 +402,7 @@ end) : S = struct
   let ppat_tuple_opt l = Default.ppat_tuple_opt ~loc l
   let ptyp_poly vars ty = Default.ptyp_poly ~loc vars ty
   let pexp_apply e el = Default.pexp_apply ~loc e el
+  let pexp_fun = Default.pexp_fun
   let eint t = Default.eint ~loc t
   let echar t = Default.echar ~loc t
   let estring t = Default.estring ~loc t
@@ -402,6 +432,7 @@ end) : S = struct
   let plist_tail l tail = Default.plist_tail ~loc l tail
   let elist l = Default.elist ~loc l
   let plist l = Default.plist ~loc l
+  let value_binding = Default.value_binding ~loc
 
   let type_constr_conv ident ~f args =
     Default.type_constr_conv ~loc ident ~f args
