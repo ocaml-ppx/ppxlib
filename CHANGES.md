@@ -13,6 +13,10 @@ unreleased
   argument to avoid the issue that `Longident.t` cover distinct syntaxic classes
   which cannot be easily parsed by a common parser (#496, @octachron).
 
+- Keep location ranges consistent when migrating `Pexp_function` nodes from 5.2+
+  to older versions (#504, @jchavarri)
+
+
 0.32.1 (2024-04-23)
 -------------------
 
