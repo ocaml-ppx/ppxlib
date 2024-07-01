@@ -35,6 +35,21 @@ module Default : sig
       (label loc list * pattern) option ->
       pattern
 
+    val pexp_function :
+      loc:location ->
+      function_param list ->
+      type_constraint option ->
+      function_body ->
+      expression
+
+    val value_binding :
+      ?constraint_:value_constraint ->
+      loc:location ->
+      pat:pattern ->
+      expr:expression ->
+      unit ->
+      value_binding
+
     val constructor_declaration :
       loc:location ->
       name:label loc ->
@@ -47,6 +62,8 @@ module Default : sig
 
   val ppat_construct :
     loc:location -> longident loc -> pattern option -> pattern
+
+  val pexp_function : loc:location -> Import.cases -> expression
 
   val constructor_declaration :
     loc:location ->

@@ -186,6 +186,7 @@ module Str_generate_of_sexp = struct
     | { ptyp_desc = Ptyp_class (_, _); _ }
     | { ptyp_desc = Ptyp_alias (_, _); _ }
     | { ptyp_desc = Ptyp_package _; _ }
+    | { ptyp_desc = Ptyp_open _; _ }
     | { ptyp_desc = Ptyp_extension _; _ } ->
       Location.raise_errorf ~loc "Type unsupported for ppx [of_sexp] conversion"
 
