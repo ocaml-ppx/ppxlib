@@ -204,7 +204,12 @@ and copy_expression_desc :
                 in
                 {
                   Ast_501.Parsetree.pexp_desc;
-                  pexp_loc = pparam_loc;
+                  pexp_loc =
+                    {
+                      loc_start = param.pparam_loc.loc_start;
+                      loc_end = expr.pexp_loc.loc_end;
+                      loc_ghost = true;
+                    };
                   pexp_loc_stack = [];
                   pexp_attributes = [];
                 }
@@ -214,7 +219,12 @@ and copy_expression_desc :
                 in
                 {
                   Ast_501.Parsetree.pexp_desc;
-                  pexp_loc = pparam_loc;
+                  pexp_loc =
+                    {
+                      loc_start = param.pparam_loc.loc_start;
+                      loc_end = expr.pexp_loc.loc_end;
+                      loc_ghost = true;
+                    };
                   pexp_loc_stack = [];
                   pexp_attributes = [];
                 })
