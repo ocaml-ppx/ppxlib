@@ -664,7 +664,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
   let cookies_and_check st =
     Cookies.call_post_handlers T;
     let errors =
-      if !perform_checks then (
+      if !perform_checks then
         (* TODO: these two passes could be merged, we now have more passes for
            checks than for actual rewriting. *)
         let unused_attributes_errors =
@@ -676,15 +676,15 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
           else []
         in
         let not_seen_errors = Attribute.collect_unseen_errors () in
-        (if !perform_locations_check then
-           let open Location_check in
-           ignore
-             ((enforce_invariants !loc_fname)#structure st
-                Non_intersecting_ranges.empty
-               : Non_intersecting_ranges.t));
-        unused_attributes_errors @ unused_extension_errors @ not_seen_errors)
+        unused_attributes_errors @ unused_extension_errors @ not_seen_errors
       else []
     in
+    (if !perform_locations_check then
+       let open Location_check in
+       ignore
+         ((enforce_invariants !loc_fname)#structure st
+            Non_intersecting_ranges.empty
+           : Non_intersecting_ranges.t));
     with_errors errors st
   in
   let file_path = get_default_path_str st in
@@ -740,7 +740,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
   let cookies_and_check sg =
     Cookies.call_post_handlers T;
     let errors =
-      if !perform_checks then (
+      if !perform_checks then
         (* TODO: these two passes could be merged, we now have more passes for
            checks than for actual rewriting. *)
         let unused_attributes_errors =
@@ -752,15 +752,15 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
           else []
         in
         let not_seen_errors = Attribute.collect_unseen_errors () in
-        (if !perform_locations_check then
-           let open Location_check in
-           ignore
-             ((enforce_invariants !loc_fname)#signature sg
-                Non_intersecting_ranges.empty
-               : Non_intersecting_ranges.t));
-        unused_attributes_errors @ unused_extension_errors @ not_seen_errors)
+        unused_attributes_errors @ unused_extension_errors @ not_seen_errors
       else []
     in
+    (if !perform_locations_check then
+       let open Location_check in
+       ignore
+         ((enforce_invariants !loc_fname)#signature sg
+            Non_intersecting_ranges.empty
+           : Non_intersecting_ranges.t));
     with_errors errors sg
   in
   let file_path = get_default_path_sig sg in

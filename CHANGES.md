@@ -29,6 +29,9 @@ details.
 - Keep location ranges consistent when migrating `Pexp_function` nodes from 5.2+
   to older versions (#504, @jchavarri)
 
+- Fix `-locations-check` behaviour so it is no longer required to pass `-check`
+  as well to enable location checks. (#506, @NathanReb)
+
 
 0.32.1 (2024-04-23)
 -------------------
