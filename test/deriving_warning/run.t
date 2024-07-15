@@ -292,3 +292,99 @@ Same goes for .mli:
   type t = int[@@deriving alias_warn]
   include sig val unit_one : unit end[@@ocaml.doc "@inline"][@@merlin.hide ]
   include sig val unit_two : unit end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+--------------------------------------------------------------------------------
+
+Whenever a set of types has a [@@deriving ...] attached, ppxlib's driver always
+generate structure items meant to disable unused type warnings (warning 34) for
+any of those types.
+
+Let's consider the following piece of OCaml code:
+
+  $ cat > unused_types.ml << EOF
+  > type t = int
+  > and u = string
+  > [@@deriving zero_do_warn]
+  > EOF
+
+If we run the driver:
+
+  $ ./driver.exe -impl unused_types.ml
+  type t = int
+  and u = string[@@deriving zero_do_warn]
+  include struct let _ = fun (_ : t) -> ()
+                 let _ = fun (_ : u) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
+                                                                      ]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      module Zero = struct type t =
+                             | T0  end
+      let zero = Zero.T0
+      let _ = zero
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+We can see that the driver generated two `let _ = fun (_ : ...`, one for each type
+in the set.
+
+As we mentioned before, the driver flag (`-unused-code-warnings`) allows the
+user to disable all warnings . In addition to this more general flag, we have a
+flag that disable only this part, and allows unused type warnings to be reported
+properly. Passing that flag to the driver should remove the two previously
+mentioned items, without affecting the rest of the generated anti-warning items:
+
+  $ ./driver.exe -unused-type-warnings=true -impl unused_types.ml
+  type t = int
+  and u = string[@@deriving zero_do_warn]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      module Zero = struct type t =
+                             | T0  end
+      let zero = Zero.T0
+      let _ = zero
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+Similarly to `-unused-code-warnings`, it is possible to force disabling the generation
+of this construct even when the ppx generator does not allow it.
+
+For example, consider:
+
+  $ ./driver.exe -impl one_no_warn.ml
+  type t = int[@@deriving one_no_warn]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      let _ = fun (_ : t) -> ()
+      module One = struct type 'a t =
+                            | T1 of 'a  end
+      let one = One.T1 zero
+      let _ = one
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+See how `-unused-type-warnings=true` does not affect the generated code:
+
+  $ ./driver.exe -unused-type-warnings=true -impl one_no_warn.ml
+  type t = int[@@deriving one_no_warn]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      let _ = fun (_ : t) -> ()
+      module One = struct type 'a t =
+                            | T1 of 'a  end
+      let one = One.T1 zero
+      let _ = one
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+But if we force it, the driver omits the `let _ = fun (_ : t) -> ()`:
+
+  $ ./driver.exe -unused-type-warnings=force -impl one_no_warn.ml
+  type t = int[@@deriving one_no_warn]
+  include
+    struct
+      [@@@ocaml.warning "-60"]
+      module One = struct type 'a t =
+                            | T1 of 'a  end
+      let one = One.T1 zero
+      let _ = one
+    end[@@ocaml.doc "@inline"][@@merlin.hide ]

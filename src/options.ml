@@ -3,6 +3,7 @@ module Forcable_bool = struct
 end
 
 let default_allow_unused_code_warnings : Forcable_bool.t = False
+let default_allow_unused_type_warnings : Forcable_bool.t = False
 let perform_checks = false
 
 (* The checks on extensions are only to get better error messages

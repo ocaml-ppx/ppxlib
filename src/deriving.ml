@@ -65,15 +65,40 @@ let () =
   Driver.add_arg "-unused-code-warnings"
     (Symbol
        ( [ "true"; "false"; "force" ],
-         function
-         | "true" -> allow_unused_code_warnings := True
-         | "false" -> allow_unused_code_warnings := False
-         | "force" -> allow_unused_code_warnings := Force
-         | _ -> assert false ))
+         fun flag ->
+           allow_unused_code_warnings :=
+             match flag with
+             | "true" -> True
+             | "false" -> False
+             | "force" -> Force
+             | _ -> assert false ))
     ~doc:" Allow ppx derivers to enable unused code warnings (default: false)"
 
 let allow_unused_code_warnings ~ppx_allows_unused_code_warnings =
   match !allow_unused_code_warnings with
+  | Force -> true
+  | False -> false
+  | True -> ppx_allows_unused_code_warnings
+
+let allow_unused_type_warnings = ref Options.default_allow_unused_type_warnings
+
+let () =
+  Driver.add_arg "-unused-type-warnings"
+    (Symbol
+       ( [ "true"; "false"; "force" ],
+         fun flag ->
+           allow_unused_type_warnings :=
+             match flag with
+             | "true" -> True
+             | "false" -> False
+             | "force" -> Force
+             | _ -> assert false ))
+    ~doc:
+      " Allow unused type warnings for types with [@@deriving ...] (default: \
+       false)"
+
+let allow_unused_type_warnings ~ppx_allows_unused_code_warnings =
+  match !allow_unused_type_warnings with
   | Force -> true
   | False -> false
   | True -> ppx_allows_unused_code_warnings
@@ -712,13 +737,16 @@ let wrap_sig ~loc ~hide list =
    | Main expansion                                                  |
    +-----------------------------------------------------------------+ *)
 
-let types_used_by_deriving (tds : type_declaration list) ~unused_code_warnings :
-    structure_item list =
+let types_used_by_deriving (tds : type_declaration list)
+    ~unused_code_warnings:ppx_allows_unused_code_warnings : structure_item list
+    =
   let unused_code_warnings =
-    allow_unused_code_warnings
-      ~ppx_allows_unused_code_warnings:unused_code_warnings
+    allow_unused_code_warnings ~ppx_allows_unused_code_warnings
   in
-  if keep_w32_impl () || unused_code_warnings then []
+  let unused_type_warnings =
+    allow_unused_type_warnings ~ppx_allows_unused_code_warnings
+  in
+  if keep_w32_impl () || unused_code_warnings || unused_type_warnings then []
   else
     List.map tds ~f:(fun td ->
         let typ = Common.core_type_of_type_declaration td in
