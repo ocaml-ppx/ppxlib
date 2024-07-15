@@ -14,6 +14,8 @@ details.
 
 ### Other changes
 
+- Driver: Add `-unused-code-warnings=force` command-line flag argument. (#490, @mbarbin)
+
 - new functions `Ast_builder.{e,p}list_tail` that take an extra tail
   expression/pattern argument parameter compared to `Ast_builder.{e,p}list`, so
   they can build ASTs like `a :: b :: c` instead of only `[ a; b ]`.

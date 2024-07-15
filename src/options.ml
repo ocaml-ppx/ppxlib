@@ -1,4 +1,8 @@
-let default_allow_unused_code_warnings = false
+module Forcable_bool = struct
+  type t = True | False | Force
+end
+
+let default_allow_unused_code_warnings : Forcable_bool.t = False
 let perform_checks = false
 
 (* The checks on extensions are only to get better error messages
