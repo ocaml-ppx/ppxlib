@@ -1,11 +1,10 @@
 (executable
- (name check_locations_integrity)
+ (name driver)
  (enabled_if
   (>= %{ocaml_version} "5.2"))
- (libraries ppxlib ppxlib.ast ppxlib.astlib ocaml-compiler-libs.common
-   compiler-libs.common))
+ (libraries ppxlib))
 
 (cram
  (enabled_if
   (>= %{ocaml_version} "5.2"))
- (deps check_locations_integrity.exe))
+ (deps driver.exe))
