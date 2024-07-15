@@ -253,7 +253,11 @@ module Generator = struct
       List.concat lerr
       |> List.map ~f:(fun err -> ext_to_item ~loc:Location.none err [])
     in
-    List.concat l1 @ [ { items = lerr; unused_code_warnings = false } ]
+    List.concat l1
+    @
+    match lerr with
+    | [] -> []
+    | _ :: _ as lerr -> [ { items = lerr; unused_code_warnings = false } ]
 end
 
 module Deriver = struct
@@ -712,8 +716,13 @@ let wrap_sig ~loc ~hide list =
    | Main expansion                                                  |
    +-----------------------------------------------------------------+ *)
 
-let types_used_by_deriving (tds : type_declaration list) : structure_item list =
-  if keep_w32_impl () then []
+let types_used_by_deriving (tds : type_declaration list) ~unused_code_warnings :
+    structure_item list =
+  let unused_code_warnings =
+    allow_unused_code_warnings
+      ~ppx_allows_unused_code_warnings:unused_code_warnings
+  in
+  if keep_w32_impl () || unused_code_warnings then []
   else
     List.map tds ~f:(fun td ->
         let typ = Common.core_type_of_type_declaration td in
@@ -749,12 +758,22 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
         Ast_builder.Default.pstr_extension ~loc:Location.none err [])
       l_err
   in
-  (* TODO: instead of disabling the unused warning for types themselves, we
-     should add a tag [@@unused]. *)
   let generated =
-    { items = types_used_by_deriving tds @ l_err; unused_code_warnings = false }
-    :: Generator.apply_all ~ctxt (rec_flag, tds) generators
-         Ast_builder.Default.pstr_extension
+    let from_generators =
+      Generator.apply_all ~ctxt (rec_flag, tds) generators
+        Ast_builder.Default.pstr_extension
+    in
+    let unused_code_warnings =
+      List.for_all from_generators
+        ~f:(fun { unused_code_warnings; items = _ } -> unused_code_warnings)
+    in
+    (* TODO: instead of disabling the unused warning for types themselves, we
+       should add a tag [@@unused]. *)
+    {
+      items = types_used_by_deriving tds ~unused_code_warnings @ l_err;
+      unused_code_warnings = false;
+    }
+    :: from_generators
     |> merge_derived
   in
   wrap_str

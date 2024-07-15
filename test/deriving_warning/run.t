@@ -11,7 +11,7 @@ the emission of such warning silencing features.
 
 One such flag and optional argument pair is the `-unused-code-warnings` flag and
 `?unused_code_warning` `Deriving.V2.make` argument. Both of those default to
-`false` and control whether we disable warnings 32 and 60 for generated code
+`false` and control whether we disable warnings 32, 34 and 60 for generated code
 and behave as described by the following table:
 
  Deriver arg | Driver Flag | Unused Code Warnings
@@ -23,7 +23,7 @@ and behave as described by the following table:
  false       | false       | Disabled
  false       | force       | Enabled
 * By adding warning silencers like [@@@ocaml.waring "-60"] or producing code like
-`let _ = zero in...`
+`let _ = zero in...` or `let _ = fun (_ : t) -> ()`.
 
 We have a driver with 4 derivers linked in:
 - zero_do_warn
@@ -60,14 +60,12 @@ Let's call the driver with -unused-code-warnings=false:
 
 The generated code is wrapped in an include struct ... end to disable unused module
 warnings, as expected. The derived value zero is followed by a let _ = zero to
-disable unused value warning.
+disable unused value warning, and the type is used by `let _ = fun (_ : t) -> ()`.
 
 Now if we use -unused-code-warnings=true:
 
   $ ./driver.exe -unused-code-warnings=true -impl zero_do_warn.ml
   type t = int[@@deriving zero_do_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
   include struct module Zero = struct type t =
                                         | T0  end
                  let zero = Zero.T0 end[@@ocaml.doc "@inline"][@@merlin.hide ]
@@ -130,8 +128,6 @@ the deriver `zero_do_warn` already allows the warning to be enabled.
 
   $ ./driver.exe -unused-code-warnings=force -impl zero_do_warn.ml
   type t = int[@@deriving zero_do_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
   include struct module Zero = struct type t =
                                         | T0  end
                  let zero = Zero.T0 end[@@ocaml.doc "@inline"][@@merlin.hide ]
@@ -209,7 +205,6 @@ what the `force` argument for the driver flag is for. See below:
   type t = int[@@deriving one_no_warn]
   include
     struct
-      let _ = fun (_ : t) -> ()
       module One = struct type 'a t =
                             | T1 of 'a  end
       let one = One.T1 zero
@@ -247,8 +242,11 @@ unit_one:
   include struct let unit_two = unit_one
                  let _ = unit_two end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
-As expected, there is a let _ = unit_two but nothing for unit_one. If we turn off
-the unused-code-warnings flag, there will be one for both:
+As expected, there is a let _ = unit_two but nothing for unit_one. Since unit_one does
+not allow the warning 34 to be enabled, you can see that the combination of both derivers
+still keeps the `let _ = fun (_ : t) -> ()` construct.
+
+If we turn off the unused-code-warnings flag, there will be a `let _ = ...` for both:
 
   $ ./driver.exe -unused-code-warnings=false -impl alias_warn.ml
   type t = int[@@deriving alias_warn]
@@ -260,12 +258,10 @@ the unused-code-warnings flag, there will be one for both:
                  let _ = unit_two end[@@ocaml.doc "@inline"][@@merlin.hide ]
 
 As expected, if we force the unused-code-warnings, there will be no let _ for
-any of the two values.
+any of the two values, and no construct to use the type t:
 
   $ ./driver.exe -unused-code-warnings=force -impl alias_warn.ml
   type t = int[@@deriving alias_warn]
-  include struct let _ = fun (_ : t) -> () end[@@ocaml.doc "@inline"][@@merlin.hide
-                                                                      ]
   include struct let unit_one = () end[@@ocaml.doc "@inline"][@@merlin.hide ]
   include struct let unit_two = unit_one end[@@ocaml.doc "@inline"][@@merlin.hide
                                                                      ]
