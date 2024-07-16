@@ -14,6 +14,10 @@ details.
 
 ### Other changes
 
+- Make `-unused-code-warnings` flag to the driver also controls the generation
+  of warning 34 silencing structure items when using `[@@deriving ...]` on type
+  declarations. (#510, @mbarbin, @NathanReb)
+
 - Driver: Add `-unused-code-warnings=force` command-line flag argument. (#490, @mbarbin)
 
 - new functions `Ast_builder.{e,p}list_tail` that take an extra tail
