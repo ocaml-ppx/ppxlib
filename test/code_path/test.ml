@@ -142,3 +142,14 @@ let _ =
 - : string =
 "(code_path(main_module_name Test)(submodule_path())(enclosing_module Test)(enclosing_value())(value())(fully_qualified_path Test))"
 |}]
+
+
+let _ =
+  (* The main module name should properly remove all extensions *)
+  let code_path =
+    Code_path.top_level ~file_path:"some_dir/module_name.cppo.ml"
+  in
+  Code_path.main_module_name code_path
+[%%expect{|
+- : string = "Module_name"
+|}]
