@@ -253,11 +253,7 @@ module Generator = struct
       List.concat lerr
       |> List.map ~f:(fun err -> ext_to_item ~loc:Location.none err [])
     in
-    List.concat l1
-    @
-    match lerr with
-    | [] -> []
-    | _ :: _ as lerr -> [ { items = lerr; unused_code_warnings = false } ]
+    List.concat l1 @ [ { items = lerr; unused_code_warnings = false } ]
 end
 
 module Deriver = struct
@@ -758,22 +754,20 @@ let expand_str_type_decls ~ctxt rec_flag tds values =
         Ast_builder.Default.pstr_extension ~loc:Location.none err [])
       l_err
   in
+  let unused_code_warnings =
+    List.for_all generators ~f:(fun (_, generators, _) ->
+        List.for_all generators ~f:(fun (Generator.T t) ->
+            t.unused_code_warnings))
+  in
+  (* TODO: instead of disabling the unused warning for types themselves, we
+     should add a tag [@@unused]. *)
   let generated =
-    let from_generators =
-      Generator.apply_all ~ctxt (rec_flag, tds) generators
-        Ast_builder.Default.pstr_extension
-    in
-    let unused_code_warnings =
-      List.for_all from_generators
-        ~f:(fun { unused_code_warnings; items = _ } -> unused_code_warnings)
-    in
-    (* TODO: instead of disabling the unused warning for types themselves, we
-       should add a tag [@@unused]. *)
     {
       items = types_used_by_deriving tds ~unused_code_warnings @ l_err;
       unused_code_warnings = false;
     }
-    :: from_generators
+    :: Generator.apply_all ~ctxt (rec_flag, tds) generators
+         Ast_builder.Default.pstr_extension
     |> merge_derived
   in
   wrap_str
