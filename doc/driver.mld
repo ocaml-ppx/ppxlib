@@ -103,6 +103,8 @@ driver.exe [extra_args] [<files>]
                                Do not try to disable warning 60 for the generated code
   -unused-code-warnings {true|false|force}
                                Allow ppx derivers to enable unused code warnings (default: false)
+  -unused-type-warnings {true|false|force}
+                               Allow unused type warnings for types with [@@deriving ...] (default: false)
   -help                        Display this list of options
   --help                       Display this list of options
 
