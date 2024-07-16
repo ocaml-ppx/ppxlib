@@ -296,7 +296,7 @@ Same goes for .mli:
 --------------------------------------------------------------------------------
 
 Whenever a set of types has a [@@deriving ...] attached, ppxlib's driver always
-generate structure items meant to disable unused type warnings (warning 34) for
+generates structure items meant to disable unused type warnings (warning 34) for
 any of those types.
 
 Let's consider the following piece of OCaml code:
@@ -328,8 +328,8 @@ We can see that the driver generated two `let _ = fun (_ : ...`, one for each ty
 in the set.
 
 As we mentioned before, the driver flag (`-unused-code-warnings`) allows the
-user to disable all warnings . In addition to this more general flag, we have a
-flag that disable only this part, and allows unused type warnings to be reported
+user to disable all warnings. In addition to this more general flag, we have a
+flag that disables only this part, and allows unused type warnings to be reported
 properly. Passing that flag to the driver should remove the two previously
 mentioned items, without affecting the rest of the generated anti-warning items:
 

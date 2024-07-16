@@ -1,5 +1,16 @@
 module Forcable_bool = struct
   type t = True | False | Force
+
+  let arg value =
+    Arg.Symbol
+      ( [ "true"; "false"; "force" ],
+        fun flag ->
+          value :=
+            match flag with
+            | "true" -> True
+            | "false" -> False
+            | "force" -> Force
+            | _ -> assert false )
 end
 
 let default_allow_unused_code_warnings : Forcable_bool.t = False

@@ -63,15 +63,7 @@ let allow_unused_code_warnings = ref Options.default_allow_unused_code_warnings
 
 let () =
   Driver.add_arg "-unused-code-warnings"
-    (Symbol
-       ( [ "true"; "false"; "force" ],
-         fun flag ->
-           allow_unused_code_warnings :=
-             match flag with
-             | "true" -> True
-             | "false" -> False
-             | "force" -> Force
-             | _ -> assert false ))
+    (Options.Forcable_bool.arg allow_unused_code_warnings)
     ~doc:" Allow ppx derivers to enable unused code warnings (default: false)"
 
 let allow_unused_code_warnings ~ppx_allows_unused_code_warnings =
@@ -84,15 +76,7 @@ let allow_unused_type_warnings = ref Options.default_allow_unused_type_warnings
 
 let () =
   Driver.add_arg "-unused-type-warnings"
-    (Symbol
-       ( [ "true"; "false"; "force" ],
-         fun flag ->
-           allow_unused_type_warnings :=
-             match flag with
-             | "true" -> True
-             | "false" -> False
-             | "force" -> Force
-             | _ -> assert false ))
+    (Options.Forcable_bool.arg allow_unused_type_warnings)
     ~doc:
       " Allow unused type warnings for types with [@@deriving ...] (default: \
        false)"
