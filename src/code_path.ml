@@ -12,7 +12,7 @@ type t = {
 
 let remove_all_extensions basename =
   match String.split_on_char ~sep:'.' basename with
-  | [] -> assert false
+  | [] -> assert false (* split_on_char never returns the empty list *)
   | name :: _ -> name
 
 let top_level ~file_path =
