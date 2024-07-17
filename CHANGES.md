@@ -14,6 +14,10 @@ details.
 
 ### Other changes
 
+- Fix a bug where `Code_path.main_module_name` would not properly remove
+  extensions from the filename and therefore return an invalid module name.
+  (#512, @NathanReb)
+
 - Add `-unused-type-warnings` flag to the driver to allow users to disable
   only the generation of warning 34 silencing structure items when using
   `[@@deriving ...]` on type declarations. (#511, @mbarbin, @NathanReb)

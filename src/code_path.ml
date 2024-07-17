@@ -10,9 +10,14 @@ type t = {
   in_expr : bool;
 }
 
+let remove_all_extensions basename =
+  match String.split_on_char ~sep:'.' basename with
+  | [] -> assert false (* split_on_char never returns the empty list *)
+  | name :: _ -> name
+
 let top_level ~file_path =
   let main_module_name =
-    file_path |> Stdlib.Filename.basename |> Stdlib.Filename.remove_extension
+    file_path |> Stdlib.Filename.basename |> remove_all_extensions
     |> String.capitalize_ascii
   in
   {
