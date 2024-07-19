@@ -145,6 +145,11 @@ val add_alias :
     for any of the context by passing the specific set in the approriate
     optional argument of [add_alias]. *)
 
+val find : string -> t
+(** Find a deriver by name.
+
+    @raise Not_found *)
+
 val ignore : t -> unit
 (** Ignore a deriver. So that one can write:
     [Deriving.add ... |>

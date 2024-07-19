@@ -20,6 +20,24 @@ let bar =
 val bar : Deriving.t = <abstr>
 |}]
 
+let foobar =
+  Deriving.add_alias "foobar" [bar; foo]
+[%%expect{|
+val foobar : Deriving.t = <abstr>
+|}]
+
+let foobar_find =
+  Deriving.add_alias "foobar_find" [Deriving.find "bar"; Deriving.find "foo"]
+[%%expect{|
+val foobar_find : Deriving.t = <abstr>
+|}]
+
+let baz =
+  Deriving.find "baz"
+[%%expect{|
+Exception: Not_found.
+|}]
+
 let mtd =
   Deriving.add "mtd"
     ~sig_module_type_decl:(
@@ -45,6 +63,20 @@ Error: Deriver foo is needed for bar, you need to add it before in the list
 |}]
 
 type nonrec int = int [@@deriving foo, bar]
+[%%expect{|
+type nonrec int = int
+val foo : int = 42
+val bar : int = 43
+|}]
+
+type nonrec int = int [@@deriving foobar]
+[%%expect{|
+type nonrec int = int
+val foo : int = 42
+val bar : int = 43
+|}]
+
+type nonrec int = int [@@deriving foobar_find]
 [%%expect{|
 type nonrec int = int
 val foo : int = 42
