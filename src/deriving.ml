@@ -540,10 +540,17 @@ module Deriver = struct
     in
     Ppx_derivers.register name (T (Alias alias));
     name
+
+  let find name =
+    match Ppx_derivers.lookup name with
+    | Some (T _) -> name
+    | Some _ -> raise (Not_supported name)
+    | None -> raise Not_found
 end
 
 let add = Deriver.add
 let add_alias = Deriver.add_alias
+let find = Deriver.find
 
 (* +-----------------------------------------------------------------+
    | [@@deriving ] parsing                                           |

@@ -143,7 +143,14 @@ val add_alias :
 (** [add_alias name set] add an alias. When the user write the alias, all the
     generator of [set] will be used instead. It is possible to override the set
     for any of the context by passing the specific set in the approriate
-    optional argument of [add_alias]. *)
+    optional argument of [add_alias].
+
+    The derivers in [set] are added in reverse order, from right to left. *)
+
+val find : string -> t
+(** Find a deriver by name.
+
+    @raise Not_found *)
 
 val ignore : t -> unit
 (** Ignore a deriver. So that one can write:
