@@ -1,19 +1,6 @@
 unreleased
 ----------
 
-### 5.3 support
-
-5.3 support is being added gradually over the course of its development.
-This section should be updated with each relevant PR.
-
-Note to maintainers: until 5.3 support is officially released, this section
-should be excluded from the release, see [RELEASING.md](RELEASING.md) for
-details.
-
-- Add initial OCaml 5.3 support (#487, @NathanReb, @hhugo, @nojb)
-
-### Other changes
-
 - Fix a bug where `Code_path.main_module_name` would not properly remove
   extensions from the filename and therefore return an invalid module name.
   (#512, @NathanReb)
