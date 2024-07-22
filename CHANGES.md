@@ -1,5 +1,5 @@
-unreleased
-----------
+0.33.0 (2024-07-22)
+-------------------
 
 - Fix a bug where `Code_path.main_module_name` would not properly remove
   extensions from the filename and therefore return an invalid module name.
