@@ -17,6 +17,9 @@ details.
 - Fix `deriving_inline` round-trip check so that it works with 5.01 <-> 5.02
   migrations (#519, @NathanReb)
 
+- Add ppxlib's AST pretty-printing utilities in `Ppxlib.Pp_ast` and
+  a `ppxlib-pp-ast` executable (#<PR_NUMBER>, @NathanReb)
+
 0.33.0 (2024-07-22)
 -------------------
 

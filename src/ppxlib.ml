@@ -36,6 +36,7 @@ module Expansion_helpers = Expansion_helpers
 module Merlin_helpers = Merlin_helpers
 module Spellcheck = Spellcheck
 module Keyword = Keyword
+module Pp_ast = Pp_ast
 
 (** {2 Driver-related modules} *)
 

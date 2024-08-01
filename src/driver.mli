@@ -245,3 +245,12 @@ val map_signature : signature -> signature
 val enable_checks : unit -> unit
 val enable_location_check : unit -> unit
 val disable_location_check : unit -> unit
+
+val load_input :
+  kind:Utils.Kind.t ->
+  input_name:string ->
+  relocate:bool ->
+  string ->
+  ( string * Utils.Ast_io.input_version * Utils.Intf_or_impl.t,
+    Location.Error.t * Utils.Ast_io.input_version )
+  result
