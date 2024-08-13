@@ -42,12 +42,11 @@ module type Additional_helpers = sig
   val pexp_tuple_opt : (expression list -> expression option) with_loc
 
   val pexp_fun :
-    loc:location ->
-    arg_label ->
+    (arg_label ->
     expression option ->
     pattern ->
     expression ->
-    expression
+    expression) with_loc
 
   val pconstruct : constructor_declaration -> pattern option -> pattern
   val econstruct : constructor_declaration -> expression option -> expression
