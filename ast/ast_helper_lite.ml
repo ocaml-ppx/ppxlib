@@ -202,13 +202,19 @@ module Exp = struct
   let ident ?loc ?attrs a = mk ?loc ?attrs (Pexp_ident a)
   let constant ?loc ?attrs a = mk ?loc ?attrs (Pexp_constant a)
   let let_ ?loc ?attrs a b c = mk ?loc ?attrs (Pexp_let (a, b, c))
-  let function_ ?loc ?attrs a b c = mk ?loc ?attrs (Pexp_function (a, b, c))
+
+  let function_ ?loc ?attrs ?loc_location cases =
+    let loc_locations =
+      match loc_location with Some l -> l | None -> !default_loc
+    in
+    mk ?loc ?attrs
+      (Pexp_function ([], None, Pfunction_cases (cases, loc_locations, [])))
 
   let fun_ ?loc ?attrs a b c d =
     let pparam_desc = Pparam_val (a, b, c) in
     let body = Pfunction_body d in
     let pparam_loc = match loc with Some loc -> loc | None -> Location.none in
-    function_ ?loc ?attrs [ { pparam_loc; pparam_desc } ] None body
+    mk ?loc ?attrs (Pexp_function ([ { pparam_loc; pparam_desc } ], None, body))
 
   let apply ?loc ?attrs a b = mk ?loc ?attrs (Pexp_apply (a, b))
   let match_ ?loc ?attrs a b = mk ?loc ?attrs (Pexp_match (a, b))

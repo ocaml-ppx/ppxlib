@@ -152,12 +152,7 @@ module Exp : sig
     expression
 
   val function_ :
-    ?loc:loc ->
-    ?attrs:attrs ->
-    function_param list ->
-    type_constraint option ->
-    function_body ->
-    expression
+    ?loc:loc -> ?attrs:attrs -> ?loc_location:loc -> case list -> expression
 
   val apply :
     ?loc:loc ->
