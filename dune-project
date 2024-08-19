@@ -25,7 +25,8 @@
   stdlib-shims
   (ocamlfind :with-test)
   (re (and :with-test (>= 1.9.0)))
-  (cinaps (and :with-test (>= v0.12.1))))
+  (cinaps (and :with-test (>= v0.12.1)))
+  (ocamlformat (and :with-dev-setup (= 0.26.2))))
  (conflicts
   (ocaml-migrate-parsetree (< 2.0.0))
   (ocaml-base-compiler (= 5.1.0~alpha1))

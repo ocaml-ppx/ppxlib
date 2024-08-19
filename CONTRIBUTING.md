@@ -18,14 +18,30 @@ below for details.
 
 ### Developing patches
 
+#### Setting up your dev environment
+
+Before starting development on `ppxlib` you should install ppxlib's
+dependencies. If you're doing it for the first time you can create
+a local switch with all the right dependencies installed by running:
+```
+opam switch create ./ --with-test --with-dev-setup
+```
+or if you want to use a pre-existing switch:
+```
+opam install ./ppxlib.opam --deps-only --with-test --with-dev-setup
+```
+
+Note that the `--with-dev-setup` flag is only available from `opam.2.2.0`.
+If you are running an older opam and do not wish to update it, you will have
+to manually install `ocamlformat`.
+
+#### Submitting patches
+
 Before submitting a PR, please run `dune build @install @runtest @fmt`
 on your machine.
 
-In addition to normal dependencies, you'll need to run something like
-`opam install cinaps ocamlformat.0.26.1`, but with the version
-specified in [`.ocamlformat`](.ocamlformat). [cinaps][cinaps] is used
-to keep up-to-date some parts of the code that are auto-generated and
-committed in the repository.
+[cinaps][cinaps] is used to keep up-to-date some parts of the code that are
+auto-generated and committed in the repository.
 
 ### Submitting patches and code review
 
