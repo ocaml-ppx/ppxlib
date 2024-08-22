@@ -45,16 +45,17 @@ let load_input ~kind ~input_name fn =
           | Intf sig_ -> Ast.Sig sig_))
   | Expression | Pattern | Core_type -> parse_node ~kind ~input_name fn
 
-let pp_ast ast =
+let pp_ast ~config ast =
   match (ast : Ast.t) with
-  | Str str -> Pp_ast.structure Format.std_formatter str
-  | Sig sig_ -> Pp_ast.signature Format.std_formatter sig_
-  | Exp exp -> Pp_ast.expression Format.std_formatter exp
-  | Pat pat -> Pp_ast.pattern Format.std_formatter pat
-  | Typ typ -> Pp_ast.core_type Format.std_formatter typ
+  | Str str -> Pp_ast.structure ~config Format.std_formatter str
+  | Sig sig_ -> Pp_ast.signature ~config Format.std_formatter sig_
+  | Exp exp -> Pp_ast.expression ~config Format.std_formatter exp
+  | Pat pat -> Pp_ast.pattern ~config Format.std_formatter pat
+  | Typ typ -> Pp_ast.core_type ~config Format.std_formatter typ
 
 let input = ref None
 let kind = ref None
+let show_attrs = ref false
 
 let set_input fn =
   match !input with
@@ -86,6 +87,9 @@ let args =
     ( "--typ",
       Arg.Unit (fun () -> set_kind Kind.Core_type),
       "<file> Treat the input as a single OCaml core_type" );
+    ( "--show-attrs",
+      Arg.Set show_attrs,
+      "Show attributes in the pretty printed output" );
   ]
 
 let main () =
@@ -111,7 +115,8 @@ let main () =
       in
       let input_name = match fn with "-" -> "<stdin>" | _ -> fn in
       let ast = load_input ~kind ~input_name fn in
-      pp_ast ast;
+      let config = Pp_ast.Config.make ~show_attrs:!show_attrs () in
+      pp_ast ~config ast;
       Format.printf "%!\n"
 
 let () = main ()

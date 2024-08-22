@@ -1,5 +1,16 @@
 open Import
 
+module Config = struct
+  type t = { show_attrs : bool }
+
+  module Default = struct
+    let show_attrs = false
+  end
+
+  let default = { show_attrs = Default.show_attrs }
+  let make ?(show_attrs = Default.show_attrs) () = { show_attrs }
+end
+
 type simple_val =
   | Unit
   | Int of int
@@ -58,7 +69,10 @@ and pp_field fmt (fname, simple_val) =
 
 class lift_simple_val =
   object (self)
-    inherit [simple_val] Ast_traverse.lift
+    inherit [simple_val] Ast_traverse.lift as super
+    val mutable config = Config.default
+    method set_config new_config = config <- new_config
+    method get_config () = config
     method unit () = Unit
     method int i = Int i
     method string s = String s
@@ -80,21 +94,83 @@ class lift_simple_val =
     method! location _loc = Special "__loc"
     method! location_stack _ls = Special "__lstack"
     method! position _p = Special "__pos"
-    method! attributes _a = Special "__attrs"
     method! loc lift_a a_loc = lift_a a_loc.txt
-    method! core_type ct = self#core_type_desc ct.ptyp_desc
-    method! row_field rf = self#row_field_desc rf.prf_desc
-    method! object_field obf = self#object_field_desc obf.pof_desc
-    method! pattern pat = self#pattern_desc pat.ppat_desc
-    method! expression exp = self#expression_desc exp.pexp_desc
-    method! class_type cty = self#class_type_desc cty.pcty_desc
-    method! class_type_field ctf = self#class_type_field_desc ctf.pctf_desc
-    method! class_expr cl = self#class_expr_desc cl.pcl_desc
-    method! class_field cf = self#class_field_desc cf.pcf_desc
-    method! module_type mty = self#module_type_desc mty.pmty_desc
-    method! signature_item sigi = self#signature_item_desc sigi.psig_desc
-    method! module_expr mod_ = self#module_expr_desc mod_.pmod_desc
+
+    method! attributes attrs =
+      match config.Config.show_attrs with
+      | false -> Special "__attrs"
+      | true -> super#attributes attrs
+
+    method lift_record_with_desc
+        : 'record 'desc.
+          lift_desc:('desc -> simple_val) ->
+          lift_record:('record -> simple_val) ->
+          desc:'desc ->
+          attrs:attributes ->
+          'record ->
+          simple_val =
+      fun ~lift_desc ~lift_record ~desc ~attrs x ->
+        match (config.show_attrs, attrs) with
+        | true, [] | false, _ -> lift_desc desc
+        | true, _ -> lift_record x
+
+    method! core_type ct =
+      self#lift_record_with_desc ~lift_desc:self#core_type_desc
+        ~lift_record:super#core_type ~desc:ct.ptyp_desc
+        ~attrs:ct.ptyp_attributes ct
+
+    method! row_field rf =
+      self#lift_record_with_desc ~lift_desc:self#row_field_desc
+        ~lift_record:super#row_field ~desc:rf.prf_desc ~attrs:rf.prf_attributes
+        rf
+
+    method! object_field obf =
+      self#lift_record_with_desc ~lift_desc:self#object_field_desc
+        ~lift_record:super#object_field ~desc:obf.pof_desc
+        ~attrs:obf.pof_attributes obf
+
+    method! pattern pat =
+      self#lift_record_with_desc ~lift_desc:self#pattern_desc
+        ~lift_record:super#pattern ~desc:pat.ppat_desc
+        ~attrs:pat.ppat_attributes pat
+
+    method! expression exp =
+      self#lift_record_with_desc ~lift_desc:self#expression_desc
+        ~lift_record:super#expression ~desc:exp.pexp_desc
+        ~attrs:exp.pexp_attributes exp
+
+    method! class_type cty =
+      self#lift_record_with_desc ~lift_desc:self#class_type_desc
+        ~lift_record:super#class_type ~desc:cty.pcty_desc
+        ~attrs:cty.pcty_attributes cty
+
+    method! class_type_field ctf =
+      self#lift_record_with_desc ~lift_desc:self#class_type_field_desc
+        ~lift_record:super#class_type_field ~desc:ctf.pctf_desc
+        ~attrs:ctf.pctf_attributes ctf
+
+    method! class_expr cl =
+      self#lift_record_with_desc ~lift_desc:self#class_expr_desc
+        ~lift_record:super#class_expr ~desc:cl.pcl_desc ~attrs:cl.pcl_attributes
+        cl
+
+    method! class_field cf =
+      self#lift_record_with_desc ~lift_desc:self#class_field_desc
+        ~lift_record:super#class_field ~desc:cf.pcf_desc
+        ~attrs:cf.pcf_attributes cf
+
+    method! module_type mty =
+      self#lift_record_with_desc ~lift_desc:self#module_type_desc
+        ~lift_record:super#module_type ~desc:mty.pmty_desc
+        ~attrs:mty.pmty_attributes mty
+
+    method! module_expr mod_ =
+      self#lift_record_with_desc ~lift_desc:self#module_expr_desc
+        ~lift_record:super#module_expr ~desc:mod_.pmod_desc
+        ~attrs:mod_.pmod_attributes mod_
+
     method! structure_item stri = self#structure_item_desc stri.pstr_desc
+    method! signature_item sigi = self#signature_item_desc sigi.psig_desc
 
     method! directive_argument dira =
       self#directive_argument_desc dira.pdira_desc
@@ -147,8 +223,22 @@ class lift_simple_val =
   end
 
 let lift_simple_val = new lift_simple_val
-let structure fmt str = pp_simple_val fmt (lift_simple_val#structure str)
-let signature fmt str = pp_simple_val fmt (lift_simple_val#signature str)
-let expression fmt str = pp_simple_val fmt (lift_simple_val#expression str)
-let pattern fmt str = pp_simple_val fmt (lift_simple_val#pattern str)
-let core_type fmt str = pp_simple_val fmt (lift_simple_val#core_type str)
+
+type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
+
+let with_config ~config ~f =
+  let old_config = lift_simple_val#get_config () in
+  lift_simple_val#set_config config;
+  let res = f () in
+  lift_simple_val#set_config old_config;
+  res
+
+let pp_with_config (type a) (lifter : a -> simple_val)
+    ?(config = Config.default) fmt (x : a) =
+  with_config ~config ~f:(fun () -> pp_simple_val fmt (lifter x))
+
+let structure = pp_with_config lift_simple_val#structure
+let signature = pp_with_config lift_simple_val#signature
+let expression = pp_with_config lift_simple_val#expression
+let pattern = pp_with_config lift_simple_val#pattern
+let core_type = pp_with_config lift_simple_val#core_type
