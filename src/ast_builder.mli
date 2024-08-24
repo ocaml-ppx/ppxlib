@@ -64,6 +64,15 @@ module Default : sig
     loc:location -> longident loc -> pattern option -> pattern
 
   val pexp_function : loc:location -> Import.cases -> expression
+  [@@ocaml.deprecated "use pexp_function_cases instead."]
+  (** @deprecated
+        This function will be used to construct a {! Parsetree.Pexp_function }
+        in the next release, to retain its current functionality migrate to
+        {! pexp_function_cases}. *)
+
+  val pexp_function_cases : loc:location -> Import.cases -> expression
+  (** [pexp_function_cases] builds an expression in the shape
+      [function C1 -> E1 | ...]. *)
 
   val constructor_declaration :
     loc:location ->

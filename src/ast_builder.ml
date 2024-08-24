@@ -43,13 +43,15 @@ module Default = struct
       pexp_desc = Pexp_function ([ case ], None, Pfunction_body e);
     }
 
-  let pexp_function ~loc cases =
+  let pexp_function_cases ~loc cases =
     {
       pexp_loc_stack = [];
       pexp_attributes = [];
       pexp_loc = loc;
       pexp_desc = Pexp_function ([], None, Pfunction_cases (cases, loc, []));
     }
+
+  let pexp_function ~loc cases = pexp_function_cases ~loc cases
 
   let value_binding ~loc ~pat ~expr =
     value_binding ~loc ~pat ~expr ~constraint_:None

@@ -842,7 +842,7 @@ module Str_generate_of_sexp = struct
       [%expr
         let rec [%p Fresh_name.pattern fresh_iter] =
           [%e
-            pexp_function
+            pexp_function_cases
               ~loc
               [ [%pat?
                        Sexplib0.Sexp.List
