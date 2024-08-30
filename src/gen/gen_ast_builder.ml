@@ -11,8 +11,27 @@ end) =
 struct
   open Fixed_loc
 
+  let core_type_of_return_type (typ : type_declaration) =
+    let typ_name = typ.ptype_name.txt in
+    let typ_name =
+      match List.rev (String.split_on_char ~sep:'_' typ_name) with
+      | "desc" :: _ ->
+          String.sub ~pos:0 ~len:(String.length typ_name - 5) typ_name
+      | _ -> typ_name
+    in
+    match typ.ptype_params with
+    | [] -> M.ctyp "%s" typ_name
+    | params ->
+        let params =
+          List.fold_left params ~init:"" ~f:(fun acc (ctyp, _) ->
+              Format.asprintf "%a" A.ctyp ctyp ^ ", " ^ acc)
+        in
+        let params = String.sub params ~pos:0 ~len:(String.length params - 2) in
+        M.ctyp "(%s) %s" params typ_name
+
   let gen_combinator_for_constructor
-      ~wrapper:(wpath, wprefix, has_attrs, has_loc_stack) path ~prefix cd =
+      ~wrapper:(wpath, wprefix, has_attrs, has_loc_stack) path ~prefix
+      return_type cd =
     match cd.pcd_args with
     | Pcstr_record _ ->
         (* TODO. *)
@@ -66,31 +85,53 @@ struct
         let body =
           if fixed_loc then body else M.expr "fun ~loc -> %a" A.expr body
         in
-        M.stri "let %a = %a" A.patt
-          (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
-          A.expr body
+        let str =
+          M.stri "let %a = %a" A.patt
+            (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
+            A.expr body
+        in
+        let typ =
+          List.fold_right cd_args ~init:(core_type_of_return_type return_type)
+            ~f:(fun cty acc -> M.ctyp "%a -> %a" A.ctyp cty A.ctyp acc)
+        in
+        let typ =
+          if fixed_loc then typ else M.ctyp "loc:Location.t -> %a" A.ctyp typ
+        in
+        let doc_comment =
+          Format.asprintf "[%s] constructs an AST node for {! Parsetree.%s}"
+            (function_name_of_id ~prefix cd.pcd_name.txt)
+            cd.pcd_name.txt
+        in
+        let sign =
+          M.sigi "val %a : %a (** %s *)" A.patt
+            (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
+            A.ctyp typ doc_comment
+        in
+        (str, sign)
 
-  let gen_combinator_for_record path ~prefix lds =
+  let gen_combinator_for_record path ~prefix return_type lds =
     let fields =
       List.map lds ~f:(fun ld -> fqn_longident path ld.pld_name.txt)
     in
     let funcs =
       List.map lds ~f:(fun ld ->
-          map_keyword (without_prefix ~prefix ld.pld_name.txt))
+          (ld.pld_type, map_keyword (without_prefix ~prefix ld.pld_name.txt)))
     in
     let body =
       Exp.record
-        (List.map2 fields funcs ~f:(fun field func ->
+        (List.map2 fields funcs ~f:(fun field (_, func) ->
              ( Loc.mk field,
                if func = "attributes" then M.expr "[]" else evar func )))
         None
     in
     let body =
-      let l = List.filter funcs ~f:(fun f -> f <> "loc" && f <> "attributes") in
+      let l =
+        List.filter funcs ~f:(fun (_, f) -> f <> "loc" && f <> "attributes")
+      in
       match l with
-      | [ x ] -> Exp.fun_ Nolabel None (pvar x) body
+      | [ (_, x) ] -> Exp.fun_ Nolabel None (pvar x) body
       | _ ->
-          List.fold_right l ~init:body ~f:(fun func acc ->
+          List.fold_right l ~init:body ~f:(fun (_, func) acc ->
               Exp.fun_ (Labelled func) None (pvar func) acc)
     in
     (* let body =
@@ -100,11 +141,35 @@ struct
            body
        in*)
     let body =
-      if List.mem "loc" ~set:funcs && not fixed_loc then
+      if List.mem "loc" ~set:(List.map ~f:snd funcs) && not fixed_loc then
         M.expr "fun ~loc -> %a" A.expr body
       else body
     in
-    M.stri "let %a = %a" A.patt (pvar (function_name_of_path path)) A.expr body
+    let return_type = core_type_of_return_type return_type in
+    let typ =
+      let l =
+        List.filter funcs ~f:(fun (_, f) -> f <> "loc" && f <> "attributes")
+      in
+      match l with
+      | [ (c, _) ] -> M.ctyp "%a -> %a" A.ctyp c A.ctyp return_type
+      | _ ->
+          List.fold_right l ~init:return_type ~f:(fun (typ, func) acc ->
+              M.ctyp "%s:%a -> %a" func A.ctyp typ A.ctyp acc)
+    in
+    let typ =
+      if List.mem "loc" ~set:(List.map ~f:snd funcs) && not fixed_loc then
+        M.ctyp "loc:Location.t -> %a" A.ctyp typ
+      else typ
+    in
+    let str =
+      M.stri "let %a = %a" A.patt
+        (pvar (function_name_of_path path))
+        A.expr body
+    in
+    let sign =
+      M.sigi "val %a : %a" A.patt (pvar (function_name_of_path path)) A.ctyp typ
+    in
+    (str, sign)
 
   let gen_td ?wrapper path td =
     if is_loc path then []
@@ -117,11 +182,11 @@ struct
               let prefix =
                 common_prefix (List.map cds ~f:(fun cd -> cd.pcd_name.txt))
               in
-              List.map cds ~f:(fun cd ->
-                  gen_combinator_for_constructor ~wrapper path ~prefix cd))
+              List.map cds
+                ~f:(gen_combinator_for_constructor ~wrapper path ~prefix td))
       | Ptype_record lds ->
           let prefix = prefix_of_record lds in
-          [ gen_combinator_for_record path ~prefix lds ]
+          [ gen_combinator_for_record path ~prefix td lds ]
       | Ptype_abstract | Ptype_open -> []
 end
 
@@ -196,10 +261,30 @@ let generate filename =
                 path' td')
     |> List.flatten
   in
+  let mod_items b = items b |> List.map ~f:fst in
+  let mod_sig_items b = items b |> List.map ~f:snd in
+  let mk_intf ~name located =
+    let ident : label with_loc = { txt = name; loc } in
+    let longident = { txt = Lident name; loc } in
+    let items =
+      if located then M.sigi "val loc : Location.t" :: mod_sig_items located
+      else mod_sig_items located
+    in
+    let intf = Str.modtype (Mtd.mk ~typ:(Mty.signature items) ident) in
+    (longident, intf)
+  in
+  let intf_name, intf = mk_intf ~name:"Intf" false in
+  let intf_located_name, intf_located = mk_intf ~name:"Intf_located" true in
   let st =
     [
       Str.open_ (Opn.mk (Mod.ident (Loc.lident "Import")));
-      Str.module_ (Mb.mk (Loc.mk (Some "M")) (Mod.structure (items false)));
+      intf;
+      intf_located;
+      Str.module_
+        (Mb.mk (Loc.mk (Some "M"))
+           (Mod.constraint_
+              (Mod.structure (mod_items false))
+              (Mty.ident intf_name)));
       Str.module_
         (Mb.mk (Loc.mk (Some "Make"))
            (Mod.functor_
@@ -208,7 +293,9 @@ let generate filename =
                    Mty.signature
                      [ Sig.value (Val.mk (Loc.mk "loc") (M.ctyp "Location.t")) ]
                  ))
-              (Mod.structure (M.stri "let loc = Loc.loc" :: items true))));
+              (Mod.constraint_
+                 (Mod.structure (M.stri "let loc = Loc.loc" :: mod_items true))
+                 (Mty.ident intf_located_name))));
     ]
   in
   dump "ast_builder_generated" Pprintast.structure st ~ext:".ml"
