@@ -1,6 +1,43 @@
 open Import
 open Ast_helper
 open Printf
+module Section_map = String.Map
+
+let section_map_of_assoc items =
+  List.fold_left
+    ~f:(fun acc (name, v) ->
+      match Section_map.find_opt name acc with
+      | None -> Section_map.add name [ v ] acc
+      | Some vs -> Section_map.add name (v :: vs) acc)
+    ~init:Section_map.empty items
+
+let doc_comment_from_attribue (attr : attribute) =
+  match attr.attr_name.txt with
+  | "ocaml.doc" -> (
+      match attr.attr_payload with
+      | PStr
+          [
+            {
+              pstr_desc =
+                Pstr_eval
+                  ({ pexp_desc = Pexp_constant (Pconst_string (s, _, _)); _ }, _);
+              _;
+            };
+          ] ->
+          Some s
+      | _ -> None)
+  | _ -> None
+
+let doc_comment ~node_name ~function_name attributes =
+  let parsetree_comment =
+    List.find_map ~f:doc_comment_from_attribue attributes
+  in
+  let pp_parsetree_comment ppf = function
+    | None -> ()
+    | Some pc -> Format.fprintf ppf "{b Example OCaml}\n\n%s" pc
+  in
+  Format.asprintf "[%s] constructs an {! Ast.%s}\n\n%a" function_name node_name
+    pp_parsetree_comment parsetree_comment
 
 let prefix_of_record lds =
   common_prefix (List.map lds ~f:(fun ld -> ld.pld_name.txt))
@@ -90,26 +127,26 @@ struct
             (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
             A.expr body
         in
+        let return_type = core_type_of_return_type return_type in
         let typ =
-          List.fold_right cd_args ~init:(core_type_of_return_type return_type)
-            ~f:(fun cty acc -> M.ctyp "%a -> %a" A.ctyp cty A.ctyp acc)
+          List.fold_right cd_args ~init:return_type ~f:(fun cty acc ->
+              M.ctyp "%a -> %a" A.ctyp cty A.ctyp acc)
         in
         let typ =
           if fixed_loc then typ else M.ctyp "loc:Location.t -> %a" A.ctyp typ
         in
-        let doc_comment =
-          Format.asprintf "[%s] constructs an AST node for {! Parsetree.%s}"
-            (function_name_of_id ~prefix cd.pcd_name.txt)
-            cd.pcd_name.txt
-        in
+
         let sign =
           M.sigi "val %a : %a (** %s *)" A.patt
             (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
-            A.ctyp typ doc_comment
+            A.ctyp typ
+            (doc_comment
+               ~function_name:(function_name_of_id ~prefix cd.pcd_name.txt)
+               ~node_name:cd.pcd_name.txt cd.pcd_attributes)
         in
-        (str, sign)
+        (str, (Format.asprintf "%a" A.ctyp return_type, sign))
 
-  let gen_combinator_for_record path ~prefix return_type lds =
+  let gen_combinator_for_record path ~prefix return_type attrs lds =
     let fields =
       List.map lds ~f:(fun ld -> fqn_longident path ld.pld_name.txt)
     in
@@ -167,9 +204,15 @@ struct
         A.expr body
     in
     let sign =
-      M.sigi "val %a : %a" A.patt (pvar (function_name_of_path path)) A.ctyp typ
+      M.sigi "val %a : %a (** %s *)" A.patt
+        (pvar (function_name_of_path path))
+        A.ctyp typ
+        (doc_comment
+           ~function_name:(function_name_of_path path)
+           ~node_name:(Format.asprintf "%a" A.ctyp return_type)
+           attrs)
     in
-    (str, sign)
+    (str, (Format.asprintf "%a" A.ctyp return_type, sign))
 
   let gen_td ?wrapper path td =
     if is_loc path then []
@@ -186,7 +229,7 @@ struct
                 ~f:(gen_combinator_for_constructor ~wrapper path ~prefix td))
       | Ptype_record lds ->
           let prefix = prefix_of_record lds in
-          [ gen_combinator_for_record path ~prefix td lds ]
+          [ gen_combinator_for_record path ~prefix td td.ptype_attributes lds ]
       | Ptype_abstract | Ptype_open -> []
 end
 
@@ -262,13 +305,27 @@ let generate filename =
     |> List.flatten
   in
   let mod_items b = items b |> List.map ~f:fst in
-  let mod_sig_items b = items b |> List.map ~f:snd in
+  let mod_sig_items b = items b |> List.map ~f:snd |> section_map_of_assoc in
   let mk_intf ~name located =
     let ident : label with_loc = { txt = name; loc } in
     let longident = { txt = Lident name; loc } in
+    let documented_items =
+      Section_map.fold
+        (fun label items acc ->
+          let label =
+            match String.split_on_char ~sep:'_' label with
+            | [] -> assert false
+            | l :: rest ->
+                let bs = Bytes.of_string l in
+                Bytes.set bs 0 (Char.uppercase_ascii @@ Bytes.get bs 0);
+                String.concat ~sep:" " (Bytes.to_string bs :: rest)
+          in
+          (M.sigi "(** {2 %s} *)" label :: items) @ acc)
+        (mod_sig_items located) []
+    in
     let items =
-      if located then M.sigi "val loc : Location.t" :: mod_sig_items located
-      else mod_sig_items located
+      if located then M.sigi "val loc : Location.t" :: documented_items
+      else documented_items
     in
     let intf = Str.modtype (Mtd.mk ~typ:(Mty.signature items) ident) in
     (longident, intf)
