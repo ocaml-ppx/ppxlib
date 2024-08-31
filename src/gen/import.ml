@@ -135,7 +135,7 @@ module M = struct
       (fun s ->
         match Parse.interface (Lexing.from_string s) with
         | [ x ] -> x
-        | _ -> assert false)
+        | _ -> failwith ("Failed to parse: " ^ s))
       fmt
 end
 

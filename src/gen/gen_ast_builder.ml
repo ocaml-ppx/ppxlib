@@ -248,6 +248,26 @@ let dump fn ~ext printer x =
   Format.fprintf ppf "%a@." printer x;
   close_out oc
 
+let floating_comment s =
+  let doc =
+    PStr
+      [
+        {
+          pstr_desc =
+            Pstr_eval
+              ( {
+                  pexp_desc = Pexp_constant (Pconst_string (s, loc, None));
+                  pexp_loc = loc;
+                  pexp_loc_stack = [];
+                  pexp_attributes = [];
+                },
+                [] );
+          pstr_loc = loc;
+        };
+      ]
+  in
+  Sig.attribute (Attr.mk { txt = "ocaml.text"; loc } doc)
+
 let generate filename =
   (*  let fn = Misc.find_in_path_uncap !Config.load_path (unit ^ ".cmi") in*)
   let types = get_types ~filename in
@@ -320,7 +340,7 @@ let generate filename =
                 Bytes.set bs 0 (Char.uppercase_ascii @@ Bytes.get bs 0);
                 String.concat ~sep:" " (Bytes.to_string bs :: rest)
           in
-          (M.sigi "(** {2 %s} *)" label :: items) @ acc)
+          (floating_comment (Format.asprintf "{2 %s}" label) :: items) @ acc)
         (mod_sig_items located) []
     in
     let items =
