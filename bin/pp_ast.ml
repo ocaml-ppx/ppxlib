@@ -64,7 +64,10 @@ let set_input fn =
 
 let set_kind k =
   match !kind with
-  | Some _ -> raise (Arg.Bad "must specify at most one of --impl or --intf")
+  | Some _ ->
+      raise
+        (Arg.Bad
+           "must specify at most one of --str, --sig, --exp, --pat or --typ")
   | _ -> kind := Some k
 
 let exe_name = Stdlib.Filename.basename Stdlib.Sys.executable_name
