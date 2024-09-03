@@ -60,11 +60,9 @@ struct
     | [] -> M.ctyp "%s" typ_name
     | params ->
         let params =
-          List.fold_left params ~init:"" ~f:(fun acc (ctyp, _) ->
-              Format.asprintf "%a" A.ctyp ctyp ^ ", " ^ acc)
+          List.map params ~f:(fun (ctyp, _) -> Format.asprintf "%a" A.ctyp ctyp)
         in
-        let params = String.sub params ~pos:0 ~len:(String.length params - 2) in
-        M.ctyp "(%s) %s" params typ_name
+        M.ctyp "(%s) %s" (String.concat ~sep:", " params) typ_name
 
   let gen_combinator_for_constructor
       ~wrapper:(wpath, wprefix, has_attrs, has_loc_stack) path ~prefix
