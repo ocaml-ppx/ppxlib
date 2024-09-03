@@ -144,7 +144,7 @@ struct
         in
         (str, (Format.asprintf "%a" A.ctyp return_type, sign))
 
-  let gen_combinator_for_record path ~prefix return_type attrs lds =
+  let gen_combinator_for_record path ~prefix return_type lds =
     let fields =
       List.map lds ~f:(fun ld -> fqn_longident path ld.pld_name.txt)
     in
@@ -180,15 +180,15 @@ struct
         M.expr "fun ~loc -> %a" A.expr body
       else body
     in
-    let return_type = core_type_of_return_type return_type in
+    let return_ctyp = core_type_of_return_type return_type in
     let typ =
       let l =
         List.filter funcs ~f:(fun (_, f) -> f <> "loc" && f <> "attributes")
       in
       match l with
-      | [ (c, _) ] -> M.ctyp "%a -> %a" A.ctyp c A.ctyp return_type
+      | [ (c, _) ] -> M.ctyp "%a -> %a" A.ctyp c A.ctyp return_ctyp
       | _ ->
-          List.fold_right l ~init:return_type ~f:(fun (typ, func) acc ->
+          List.fold_right l ~init:return_ctyp ~f:(fun (typ, func) acc ->
               M.ctyp "%s:%a -> %a" func A.ctyp typ A.ctyp acc)
     in
     let typ =
@@ -207,10 +207,10 @@ struct
         A.ctyp typ
         (doc_comment
            ~function_name:(function_name_of_path path)
-           ~node_name:(Format.asprintf "%a" A.ctyp return_type)
-           attrs)
+           ~node_name:(Format.asprintf "%a" A.ctyp return_ctyp)
+           return_type.ptype_attributes)
     in
-    (str, (Format.asprintf "%a" A.ctyp return_type, sign))
+    (str, (Format.asprintf "%a" A.ctyp return_ctyp, sign))
 
   let gen_td ?wrapper path td =
     if is_loc path then []
@@ -227,7 +227,7 @@ struct
                 ~f:(gen_combinator_for_constructor ~wrapper path ~prefix td))
       | Ptype_record lds ->
           let prefix = prefix_of_record lds in
-          [ gen_combinator_for_record path ~prefix td td.ptype_attributes lds ]
+          [ gen_combinator_for_record path ~prefix td lds ]
       | Ptype_abstract | Ptype_open -> []
 end
 
