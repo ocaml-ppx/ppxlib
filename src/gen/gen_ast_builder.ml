@@ -120,11 +120,9 @@ struct
         let body =
           if fixed_loc then body else M.expr "fun ~loc -> %a" A.expr body
         in
-        let str =
-          M.stri "let %a = %a" A.patt
-            (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
-            A.expr body
-        in
+        let function_name = function_name_of_id ~prefix cd.pcd_name.txt in
+        let pvar_function_name = pvar function_name in
+        let str = M.stri "let %a = %a" A.patt pvar_function_name A.expr body in
         let return_type = core_type_of_return_type return_type in
         let typ =
           List.fold_right cd_args ~init:return_type ~f:(fun cty acc ->
@@ -133,14 +131,10 @@ struct
         let typ =
           if fixed_loc then typ else M.ctyp "loc:Location.t -> %a" A.ctyp typ
         in
-
         let sign =
-          M.sigi "val %a : %a (** %s *)" A.patt
-            (pvar (function_name_of_id ~prefix cd.pcd_name.txt))
-            A.ctyp typ
-            (doc_comment
-               ~function_name:(function_name_of_id ~prefix cd.pcd_name.txt)
-               ~node_name:cd.pcd_name.txt cd.pcd_attributes)
+          M.sigi "val %a : %a (** %s *)" A.patt pvar_function_name A.ctyp typ
+            (doc_comment ~function_name ~node_name:cd.pcd_name.txt
+               cd.pcd_attributes)
         in
         (str, (Format.asprintf "%a" A.ctyp return_type, sign))
 
@@ -175,9 +169,11 @@ struct
          else
            body
        in*)
+    let has_loc_field =
+      List.exists ~f:(function _, "loc" -> true | _ -> false) funcs
+    in
     let body =
-      if List.mem "loc" ~set:(List.map ~f:snd funcs) && not fixed_loc then
-        M.expr "fun ~loc -> %a" A.expr body
+      if has_loc_field && not fixed_loc then M.expr "fun ~loc -> %a" A.expr body
       else body
     in
     let return_ctyp = core_type_of_return_type return_type in
@@ -192,19 +188,14 @@ struct
               M.ctyp "%s:%a -> %a" func A.ctyp typ A.ctyp acc)
     in
     let typ =
-      if List.mem "loc" ~set:(List.map ~f:snd funcs) && not fixed_loc then
+      if has_loc_field && not fixed_loc then
         M.ctyp "loc:Location.t -> %a" A.ctyp typ
       else typ
     in
-    let str =
-      M.stri "let %a = %a" A.patt
-        (pvar (function_name_of_path path))
-        A.expr body
-    in
+    let pvar_function_name = pvar (function_name_of_path path) in
+    let str = M.stri "let %a = %a" A.patt pvar_function_name A.expr body in
     let sign =
-      M.sigi "val %a : %a (** %s *)" A.patt
-        (pvar (function_name_of_path path))
-        A.ctyp typ
+      M.sigi "val %a : %a (** %s *)" A.patt pvar_function_name A.ctyp typ
         (doc_comment
            ~function_name:(function_name_of_path path)
            ~node_name:(Format.asprintf "%a" A.ctyp return_ctyp)
