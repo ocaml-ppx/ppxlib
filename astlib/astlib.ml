@@ -89,6 +89,12 @@ module Location = Location
 module Longident = Longident
 module Parse = Parse
 module Pprintast = Pprintast
+module Compiler_pprintast = struct
+  include Ocaml_common.Pprintast
+
+  let structure_item fmt t = structure fmt [t]
+  let signature_item fmt t = signature fmt [t]
+end
 
 let init_error_reporting_style_using_env_vars () =
   (*IF_AT_LEAST 408 Ocaml_common.Compmisc.read_clflags_from_env () *)

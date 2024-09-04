@@ -20,6 +20,7 @@ end
 
 module Make (M : sig
   type t
+  type compiler_t
 
   val get_loc : t -> Location.t
   val end_marker : (t, unit) Attribute.Floating.t
@@ -33,8 +34,9 @@ module Make (M : sig
   end
 
   val parse : Lexing.lexbuf -> t list
-  val pp : Format.formatter -> t -> unit
   val to_sexp : t -> Sexp.t
+  val to_compiler : t -> compiler_t
+  val pp_compiler : Format.formatter -> compiler_t -> unit
 end) =
 struct
   let extract_prefix ~pos l =
@@ -131,7 +133,9 @@ struct
         let y = remove_loc y in
         if Poly.( <> ) x y then (
           let round_trip =
-            remove_loc (parse_string (Format.asprintf "%a@." M.pp x))
+            let compiler_x = M.to_compiler x in
+            remove_loc
+              (parse_string (Format.asprintf "%a@." M.pp_compiler compiler_x))
           in
           if Poly.( <> ) x round_trip then
             Location.raise_errorf ~loc
@@ -151,6 +155,7 @@ end
 (*$*)
 module Str = Make (struct
   type t = structure_item
+  type compiler_t = Ppxlib_ast.Compiler_version.Ast.Parsetree.structure_item
 
   let get_loc x = x.pstr_loc
   let end_marker = end_marker_str
@@ -160,13 +165,15 @@ module Str = Make (struct
   end
 
   let parse = Parse.implementation
-  let pp = Pprintast.structure_item
   let to_sexp = Ast_traverse.sexp_of#structure_item
+  let to_compiler = Ppxlib_ast.Selected_ast.To_ocaml.copy_structure_item
+  let pp_compiler = Astlib.Compiler_pprintast.structure_item
 end)
 
 (*$ str_to_sig _last_text_block *)
 module Sig = Make (struct
   type t = signature_item
+  type compiler_t = Ppxlib_ast.Compiler_version.Ast.Parsetree.signature_item
 
   let get_loc x = x.psig_loc
   let end_marker = end_marker_sig
@@ -176,8 +183,9 @@ module Sig = Make (struct
   end
 
   let parse = Parse.interface
-  let pp = Pprintast.signature_item
   let to_sexp = Ast_traverse.sexp_of#signature_item
+  let to_compiler = Ppxlib_ast.Selected_ast.To_ocaml.copy_signature_item
+  let pp_compiler = Astlib.Compiler_pprintast.signature_item
 end)
 
 (*$*)
