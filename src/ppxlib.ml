@@ -104,8 +104,10 @@ end
 
 (**/**)
 
-(* For tests and Ppx_core compatibility layer *)
+(* For tests, Ppx_core compatibility layer and use by ppxlib-pp-ast
+   and other internal tools. *)
 module Ppxlib_private = struct
   module Common = Common
   module Name = Name
+  module Utils = Utils
 end

@@ -4,8 +4,8 @@ module Kind = struct
   type t = Signature | Structure | Expression | Pattern | Core_type
 
   let to_utils_kind = function
-    | Structure -> Ppxlib__Utils.Kind.Impl
-    | Signature -> Ppxlib__Utils.Kind.Intf
+    | Structure -> Ppxlib_private.Utils.Kind.Impl
+    | Signature -> Ppxlib_private.Utils.Kind.Intf
     | _ -> assert false
 end
 
@@ -40,7 +40,7 @@ let load_input ~kind ~input_name fn =
       match Driver.load_input ~kind ~input_name ~relocate:false fn with
       | Error (loc_err, _ver) -> Location.Error.raise loc_err
       | Ok (_ast_input_name, _version, ast) -> (
-          match (ast : Ppxlib__Utils.Intf_or_impl.t) with
+          match (ast : Ppxlib_private.Utils.Intf_or_impl.t) with
           | Impl str -> Ast.Str str
           | Intf sig_ -> Ast.Sig sig_))
   | Expression | Pattern | Core_type -> parse_node ~kind ~input_name fn
