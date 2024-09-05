@@ -1,3 +1,36 @@
+(** This module implements pretty printers for the OCaml AST's version used by
+    ppxlib.
+
+    Those pretty printers show the AST as its OCaml representation and do not
+    pretty print the corresponding source code. For printing ASTs as source code
+    use the {!Ppxlib.Pprintast} module instead.
+
+    For example, calling [Pp_ast.expression Format.std_formatter [%expr x + 2]]
+    will print:
+    {v
+   Pexp_apply
+     ( Pexp_ident (Lident "+")
+     , [ ( Nolabel, Pexp_ident (Lident "x"))
+       ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+       ]
+     )
+    v}
+
+    To keep the output easily readable, records with [_desc] fields such as
+    {!Ppxlib.Ast.type-expression} or {!Ppxlib.Ast.type-pattern} are not printed
+    as such and only the value of the corresponding [_desc] field is printed
+    instead. This prevents AST nodes metadata, such as locations or attributes,
+    from polluting the output, keeping it relatively concise and clean. The same
+    goes for {!Location.type-loc} values which are printed as the value of their
+    [txt] field.
+
+    {!Location.t} and {!Ppxlib.Ast.attributes} are not displayed by default even
+    outside of the records mentioned above.
+
+    The {!Config} module below allows to override part or all of this behaviour.
+    When configured to display locations or attributes, the entire record will
+    be displayed, not only its [_desc] field. *)
+
 open! Import
 
 module Config : sig
@@ -10,29 +43,21 @@ module Config : sig
     ?loc_mode:[ `Short | `Full ] ->
     unit ->
     t
-  (** Create a custom pretty-printing config.
-
-      Default values are the ones that are used when no configuration is passed
-      to the pretty-printers defined below.
-
-      @param show_attrs
-        controls whether attributes are shown or hidden. It defaults to [false].
-        When set to [true], records such as [expression] that have a [desc]
-        field will only be printed if the list of attributes is non-empty,
-        otherwise their [_desc] field will be printed directly instead, as it is
-        the case when [show_attrs] is [false].
-
-      @param show_loc
+  (** Create a custom pretty-printing config. Default values are the ones that
+      are used when no configuration is passed to the pretty-printers defined in
+      {!Pp_ast}.
+      @param ?show_attrs
+        controls whether attributes are shown or hidden. Defaults to [false].
+      @param ?show_loc
         controls whether locations are shown or hidden. Defaults to [false].
-
-      @param loc_mode
-        controls how locations are shown if they are shown at
-        all.
+      @param ?loc_mode
+        controls how locations are shown if they are shown at all. Defaults to
+        [`Short].
         - When set to [`Short], locations are displayed as ["l1c6..l2c2"] for
           multiline locations and as ["l1c6..12"] for single line locations.
           Ghost locations are suffixed with a ["(g)"].
         - When set to [`Full], locations are displayed as any other record would
-          be. Defaults to [`Short]. *)
+          be. *)
 end
 
 type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
