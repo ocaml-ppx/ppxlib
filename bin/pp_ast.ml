@@ -56,6 +56,8 @@ let pp_ast ~config ast =
 let input = ref None
 let kind = ref None
 let show_attrs = ref false
+let show_locs = ref false
+let loc_mode = ref `Short
 
 let set_input fn =
   match !input with
@@ -93,6 +95,12 @@ let args =
     ( "--show-attrs",
       Arg.Set show_attrs,
       "Show attributes in the pretty printed output" );
+    ( "--show-locs",
+      Arg.Set show_locs,
+      "Show locations in the pretty printed output" );
+    ( "--full-locs",
+      Arg.Unit (fun () -> loc_mode := `Full),
+      "Display locations in long form. Has no effect without --show-locs." );
   ]
 
 let main () =
@@ -118,7 +126,10 @@ let main () =
       in
       let input_name = match fn with "-" -> "<stdin>" | _ -> fn in
       let ast = load_input ~kind ~input_name fn in
-      let config = Pp_ast.Config.make ~show_attrs:!show_attrs () in
+      let config =
+        Pp_ast.Config.make ~show_attrs:!show_attrs ~show_locs:!show_locs
+          ~loc_mode:!loc_mode ()
+      in
       pp_ast ~config ast;
       Format.printf "%!\n"
 

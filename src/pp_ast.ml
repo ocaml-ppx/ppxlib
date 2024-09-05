@@ -1,15 +1,25 @@
 open Import
 
 module Config = struct
-  type t = { show_attrs : bool }
+  type loc_mode = [ `Short | `Full ]
+  type t = { show_attrs : bool; show_locs : bool; loc_mode : loc_mode }
 
   module Default = struct
     let show_attrs = false
+    let show_locs = false
+    let loc_mode = `Short
   end
 
-  let default = { show_attrs = Default.show_attrs }
-  let make ?(show_attrs = Default.show_attrs) () = { show_attrs }
+  let default =
+    let open Default in
+    { show_attrs; show_locs; loc_mode }
+
+  let make ?(show_attrs = Default.show_attrs) ?(show_locs = Default.show_locs)
+      ?(loc_mode = Default.loc_mode) () =
+    { show_attrs; show_locs; loc_mode }
 end
+
+let cnum (pos : Lexing.position) = pos.pos_cnum - pos.pos_bol
 
 type simple_val =
   | Unit
@@ -91,10 +101,36 @@ class lift_simple_val =
       Array (Array.map ~f:lift_a array |> Array.to_list)
 
     method other _a = Special "__"
-    method! location _loc = Special "__loc"
     method! location_stack _ls = Special "__lstack"
-    method! position _p = Special "__pos"
-    method! loc lift_a a_loc = lift_a a_loc.txt
+
+    method! position pos =
+      match (config.Config.show_locs, config.Config.loc_mode) with
+      | true, `Full -> super#position pos
+      | _, _ -> Special "__pos"
+
+    method! loc lift_a a_loc =
+      match config.Config.show_locs with
+      | true -> super#loc lift_a a_loc
+      | false -> lift_a a_loc.txt
+
+    method! location loc =
+      match (config.Config.show_locs, config.Config.loc_mode) with
+      | false, _ -> Special "__loc"
+      | true, `Full -> super#location loc
+      | true, `Short ->
+          let begin_line = loc.loc_start.pos_lnum in
+          let begin_char = cnum loc.loc_start in
+          let end_line = loc.loc_end.pos_lnum in
+          let end_char = cnum loc.loc_end in
+          let repr =
+            if Int.equal begin_line end_line then
+              Format.sprintf "l%ic%i..%i" begin_line begin_char end_char
+            else
+              Format.sprintf "l%ic%i..l%ic%i" begin_line begin_char end_line
+                end_char
+          in
+          let with_ghost = if loc.loc_ghost then repr ^ "(g)" else repr in
+          Special with_ghost
 
     method! attributes attrs =
       match config.Config.show_attrs with
@@ -110,9 +146,9 @@ class lift_simple_val =
           'record ->
           simple_val =
       fun ~lift_desc ~lift_record ~desc ~attrs x ->
-        match (config.show_attrs, attrs) with
-        | true, [] | false, _ -> lift_desc desc
-        | true, _ -> lift_record x
+        match (config.show_locs, config.show_attrs, attrs) with
+        | false, false, _ | false, true, [] -> lift_desc desc
+        | _, true, _ | true, _, _ -> lift_record x
 
     method! core_type ct =
       self#lift_record_with_desc ~lift_desc:self#core_type_desc
