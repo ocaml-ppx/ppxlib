@@ -274,7 +274,9 @@ let pp_with_config (type a) (lifter : a -> simple_val)
   with_config ~config ~f:(fun () -> pp_simple_val fmt (lifter x))
 
 let structure = pp_with_config lift_simple_val#structure
+let structure_item = pp_with_config lift_simple_val#structure_item
 let signature = pp_with_config lift_simple_val#signature
+let signature_item = pp_with_config lift_simple_val#signature_item
 let expression = pp_with_config lift_simple_val#expression
 let pattern = pp_with_config lift_simple_val#pattern
 let core_type = pp_with_config lift_simple_val#core_type

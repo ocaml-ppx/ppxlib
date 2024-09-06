@@ -63,7 +63,9 @@ end
 type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
 
 val structure : structure pp
+val structure_item : structure_item pp
 val signature : signature pp
+val signature_item : signature_item pp
 val expression : expression pp
 val pattern : pattern pp
 val core_type : core_type pp
