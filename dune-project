@@ -46,6 +46,16 @@ allowing to inject a complex structured value into generated code.
 "))
 
 (package
+ (name ppxlib-tools)
+ (synopsis "Tools for PPX users and authors")
+ (description "Set of helper tools for PPX users and authors.
+
+ppxlib-pp-ast: Command line tool to pretty print OCaml ASTs in a human readable
+format.")
+ (depends
+  (ppxlib (= :version))))
+
+(package
  (name ppxlib-bench)
  (synopsis "Run ppxlib benchmarks")
  (description "Third-party code in benchmarks depends on later versions of the ocaml

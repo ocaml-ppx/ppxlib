@@ -1,5 +1,5 @@
 (executable
  (name pp_ast)
  (public_name ppxlib-pp-ast)
- (package ppxlib)
- (libraries ppxlib ppxlib_ast astlib stdppx stdlib-shims))
+ (package ppxlib-tools)
+ (libraries ppxlib ppxlib.ast ppxlib.astlib ppxlib.stdppx stdlib-shims))
