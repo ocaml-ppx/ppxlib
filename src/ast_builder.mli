@@ -74,6 +74,14 @@ module Default : sig
   (** [pexp_function_cases] builds an expression in the shape
       [function C1 -> E1 | ...]. *)
 
+  val coalesce_arity : expression -> expression
+  (** [coalesce_arity e] will produce a maximum arity function from an
+      expression.
+
+      For example, [fun x -> fun y -> x + y] becomes [fun x y -> x + y]. Since
+      OCaml 5.2, these two functions have a different {! Parsetree}
+      representation. *)
+
   val constructor_declaration :
     loc:location ->
     name:label loc ->

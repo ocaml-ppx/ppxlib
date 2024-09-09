@@ -602,3 +602,16 @@ Line _, characters 36-38:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.module_type
 |}]
+
+(* Coalescing arguments from [fun x -> fun y -> fun z -> ...] to
+   [fun x y z -> ...] *)
+let _ =
+  let e = [%expr fun z -> x + y + z] in
+  let f = [%expr fun y -> [%e e]] in
+  let func = [%expr fun x -> [%e f]] in
+  Format.asprintf "%a" Pprintast.expression func
+
+
+[%%expect{|
+- : string = "fun x y z -> (x + y) + z"
+|}]

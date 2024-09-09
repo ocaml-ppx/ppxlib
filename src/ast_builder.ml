@@ -68,6 +68,22 @@ module Default = struct
 
   (*-------------------------------------------------------*)
 
+  let coalesce_arity e =
+    match e.pexp_desc with
+    (* We stop coalescing parameters if there is a constraint on the result of a function
+       (i.e [fun x y : T -> ...] or the body is a function_case. *)
+    | Pexp_function (_, Some _, _) | Pexp_function (_, _, Pfunction_cases _) ->
+        e
+    | Pexp_function
+        (params1, None, Pfunction_body ({ pexp_attributes = []; _ } as body1))
+      -> (
+        match body1.pexp_desc with
+        | Pexp_function (params2, constraint_, body2) ->
+            Latest.pexp_function ~loc:e.pexp_loc (params1 @ params2) constraint_
+              body2
+        | _ -> e)
+    | _ -> e
+
   let pstr_value_list ~loc rec_flag = function
     | [] -> []
     | vbs -> [ pstr_value ~loc rec_flag vbs ]
