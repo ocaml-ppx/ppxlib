@@ -2,4 +2,5 @@
  (name pp_ast)
  (public_name ppxlib-pp-ast)
  (package ppxlib-tools)
- (libraries ppxlib ppxlib.ast ppxlib.astlib ppxlib.stdppx stdlib-shims))
+ (libraries cmdliner ppxlib ppxlib.ast ppxlib.astlib ppxlib.stdppx
+   stdlib-shims))

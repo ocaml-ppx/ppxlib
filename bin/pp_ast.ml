@@ -53,84 +53,90 @@ let pp_ast ~config ast =
   | Pat pat -> Pp_ast.pattern ~config Format.std_formatter pat
   | Typ typ -> Pp_ast.core_type ~config Format.std_formatter typ
 
-let input = ref None
-let kind = ref None
-let show_attrs = ref false
-let show_locs = ref false
-let loc_mode = ref `Short
+let named f = Cmdliner.Term.(app (const f))
 
-let set_input fn =
-  match !input with
-  | None -> input := Some fn
-  | Some _ -> raise (Arg.Bad "too many input files")
+let show_attrs =
+  let doc = "Show atributes in the pretty printed output" in
+  named
+    (fun x -> `Show_attrs x)
+    Cmdliner.Arg.(value & flag & info ~doc [ "show-attrs" ])
 
-let set_kind k =
-  match !kind with
-  | Some _ ->
-      raise
-        (Arg.Bad
-           "must specify at most one of --str, --sig, --exp, --pat or --typ")
-  | _ -> kind := Some k
+let show_locs =
+  let doc = "Show locations in the pretty printed output" in
+  named
+    (fun x -> `Show_locs x)
+    Cmdliner.Arg.(value & flag & info ~doc [ "show-locs" ])
 
-let exe_name = Stdlib.Filename.basename Stdlib.Sys.executable_name
+let loc_mode =
+  let full_locs =
+    let doc =
+      "Display locations in long form. Has no effect without --show-locs."
+    in
+    (`Full, Cmdliner.Arg.info ~doc [ "full-locs" ])
+  in
+  named (fun x -> `Loc_mode x) Cmdliner.Arg.(value & vflag `Short [ full_locs ])
 
-let args =
-  [
-    ("-", Arg.Unit (fun () -> set_input "-"), " Read input from stdin");
-    ( "--str",
-      Arg.Unit (fun () -> set_kind Kind.Structure),
-      "<file> Treat the input as a .ml file" );
-    ( "--sig",
-      Arg.Unit (fun () -> set_kind Kind.Signature),
-      "<file> Treat the input as a .mli file" );
-    ( "--exp",
-      Arg.Unit (fun () -> set_kind Kind.Expression),
-      "<file> Treat the input as a single OCaml expression" );
-    ( "--pat",
-      Arg.Unit (fun () -> set_kind Kind.Pattern),
-      "<file> Treat the input as a single OCaml pattern" );
-    ( "--typ",
-      Arg.Unit (fun () -> set_kind Kind.Core_type),
-      "<file> Treat the input as a single OCaml core_type" );
-    ( "--show-attrs",
-      Arg.Set show_attrs,
-      "Show attributes in the pretty printed output" );
-    ( "--show-locs",
-      Arg.Set show_locs,
-      "Show locations in the pretty printed output" );
-    ( "--full-locs",
-      Arg.Unit (fun () -> loc_mode := `Full),
-      "Display locations in long form. Has no effect without --show-locs." );
-  ]
+let kind =
+  let make_vflag (flag, (kind : Kind.t), doc) =
+    (Some kind, Cmdliner.Arg.info ~doc [ flag ])
+  in
+  let kinds =
+    List.map make_vflag
+      [
+        ("str", Structure, "Treat the input as a $(b,.ml) file");
+        ("sig", Signature, "Treat the input as a $(b,.mli) file");
+        ("exp", Expression, "Treat the input as a single OCaml expression");
+        ("pat", Pattern, "Treat the input as a single OCaml pattern");
+        ("typ", Core_type, "Treat the input as a single OCaml core_type");
+      ]
+  in
+  named (fun x -> `Kind x) Cmdliner.Arg.(value & vflag None kinds)
 
-let main () =
-  let usage = Printf.sprintf "%s [extra_args] [<file>/-]" exe_name in
-  Arg.parse (Arg.align args) set_input usage;
-  match !input with
-  | None ->
-      Printf.eprintf "%s: no input file given\n%!" exe_name;
-      Stdlib.exit 2
-  | Some fn ->
-      let kind =
-        match !kind with
-        | Some k -> k
-        | None -> (
-            match Ppxlib__Utils.Kind.of_filename fn with
-            | Some Intf -> Signature
-            | Some Impl -> Structure
-            | None ->
-                Printf.eprintf
-                  "%s: Could not guess kind from filename %S\n\
-                  \ Please use relevant CLI flag" exe_name fn;
-                Stdlib.exit 2)
-      in
-      let input_name = match fn with "-" -> "<stdin>" | _ -> fn in
-      let ast = load_input ~kind ~input_name fn in
-      let config =
-        Pp_ast.Config.make ~show_attrs:!show_attrs ~show_locs:!show_locs
-          ~loc_mode:!loc_mode ()
-      in
-      pp_ast ~config ast;
-      Format.printf "%!\n"
+let input =
+  let docv = "INPUT" in
+  let doc =
+    "The $(docv) AST. Can be a binary AST file or a source file. Pass $(b,-) \
+     to read from stdin instead."
+  in
+  named
+    (fun x -> `Input x)
+    Cmdliner.Arg.(required & pos 0 (some string) None & info ~doc ~docv [])
 
-let () = main ()
+let errorf fmt = Printf.ksprintf (fun s -> Error s) fmt
+
+let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
+    (`Kind kind) (`Input fn) =
+  let open Stdppx.Result in
+  let kind =
+    match kind with
+    | Some k -> Ok k
+    | None -> (
+        match Ppxlib_private.Utils.Kind.of_filename fn with
+        | Some Intf -> Ok Kind.Signature
+        | Some Impl -> Ok Kind.Structure
+        | None ->
+            errorf
+              "Could not guess kind from input %S\n\
+              \ Please use relevant CLI flag" fn)
+  in
+  kind >>= fun kind ->
+  let input_name = match fn with "-" -> "<stdin>" | _ -> fn in
+  let ast = load_input ~kind ~input_name fn in
+  let config = Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode () in
+  pp_ast ~config ast;
+  Format.printf "%!\n";
+  Ok ()
+
+let tool_name = "ppxlib-pp-ast"
+
+let info =
+  let open Cmdliner in
+  Cmd.info tool_name ~version:"%%VERSION%%" ~exits:Cmd.Exit.defaults
+    ~doc:"Pretty prints ppxlib's versioned ASTs from OCaml sources"
+
+let term =
+  Cmdliner.Term.(const run $ show_attrs $ show_locs $ loc_mode $ kind $ input)
+
+let () =
+  let exit_code = Cmdliner.Cmd.eval_result (Cmdliner.Cmd.v info term) in
+  exit exit_code

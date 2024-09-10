@@ -53,7 +53,8 @@ allowing to inject a complex structured value into generated code.
 ppxlib-pp-ast: Command line tool to pretty print OCaml ASTs in a human readable
 format.")
  (depends
-  (ppxlib (= :version))))
+  (ppxlib (= :version))
+  cmdliner))
 
 (package
  (name ppxlib-bench)
