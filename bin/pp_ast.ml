@@ -152,15 +152,67 @@ let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
   Format.printf "%!\n";
   Ok ()
 
+let term =
+  Cmdliner.Term.(const run $ show_attrs $ show_locs $ loc_mode $ kind $ input)
+
 let tool_name = "ppxlib-pp-ast"
 
 let info =
+  let p fmt = Printf.ksprintf (fun s -> `P s) fmt in
   let open Cmdliner in
   Cmd.info tool_name ~version:"%%VERSION%%" ~exits:Cmd.Exit.defaults
-    ~doc:"Pretty prints ppxlib's versioned ASTs from OCaml sources"
-
-let term =
-  Cmdliner.Term.(const run $ show_attrs $ show_locs $ loc_mode $ kind $ input)
+    ~doc:"Pretty prints ppxlib's ASTs from OCaml sources"
+    ~man:
+      [
+        `S "DESCRIPTION";
+        p
+          "$(b,%s) can be used to pretty print the OCaml AST for a given piece \
+           of source code."
+          tool_name;
+        `P
+          "It prints the AST version used by ppxlib internally. This means the \
+           code will be parsed (or the AST unmarshalled) using the installed \
+           compiler and eventually migrated to ppxlib's expected version.";
+        `P
+          "It can read the source code directly from the command line or read \
+           it from a file/the standard input. In the latter case you can pass \
+           regular $(b,.ml) or $(b,.mli) files, marshalled AST files as the \
+           ones produced by the ppxlib driver or a fragment of OCaml source \
+           corresponding to an expression, a pattern or a core_type.";
+        `P
+          "When the input is not an $(b,.ml) or $(b,.mli) file you will have \
+           to explicitly pass the expected AST node using flags such as \
+           $(b,--str) or $(b,--exp).";
+        `P "By default the output looks like this:";
+        p "$(b,\\$ %s --exp \"x + 2\")" tool_name;
+        `Noblank;
+        `Pre
+          (String.concat "\n"
+             [
+               {|Pexp_apply|};
+               {|  ( Pexp_ident (Lident "+")|};
+               {|  , [ ( Nolabel, Pexp_ident (Lident "x"))|};
+               {|    ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))|};
+               {|    ]|};
+               {|  )|};
+             ]);
+        `P
+          "If you are already familiar with the OCaml AST you will note that \
+           it prints a somewhat lighter version to keep the output concise. \
+           Locations and attributes are not printed. Some specific record \
+           types, such as $(b,expression) or $(b,pattern), are \"skipped\" to \
+           avoid too much nesting. This does not hurt comprehension of the \
+           underlying AST as these records only wrap a variant type to attach \
+           metadata to it. The tool supports a set of flags you can use to \
+           force printing of such metadata.";
+        `S "EXAMPLES";
+        p "$(b,%s test.ml)" tool_name;
+        p "$(b,cat test.ml | %s -)" tool_name;
+        p "$(b,%s test.pp.ml)" tool_name;
+        p "$(b,%s --exp \"x + 2\")" tool_name;
+        p "$(b,%s --typ \"(int, string\\) Result.t\")" tool_name;
+        p "$(b,%s --show-locs --full-locs --pat \"_::tl\")" tool_name;
+      ]
 
 let () =
   let exit_code = Cmdliner.Cmd.eval_result (Cmdliner.Cmd.v info term) in
