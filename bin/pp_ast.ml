@@ -18,32 +18,53 @@ module Ast = struct
     | Typ of core_type
 end
 
-let parse_node ~kind ~input_name fn =
-  let all_source =
-    match fn with
-    | "-" -> Stdppx.In_channel.input_all stdin
-    | _ -> Stdppx.In_channel.(with_file fn ~f:input_all)
-  in
-  let lexbuf = Lexing.from_string all_source in
+module Input = struct
+  type t = Stdin | File of string | Source of string
+
+  let to_lexbuf t =
+    let all_source =
+      match t with
+      | Stdin -> Stdppx.In_channel.input_all stdin
+      | File fn -> Stdppx.In_channel.(with_file fn ~f:input_all)
+      | Source s -> s
+    in
+    Lexing.from_string all_source
+
+  let from_string = function
+    | "-" -> Stdin
+    | s when Sys.file_exists s -> File s
+    | s -> Source s
+
+  let to_driver_fn = function
+    | Stdin -> "-"
+    | File fn -> fn
+    | Source _ -> assert false
+end
+
+let parse_node ~kind ~input_name input =
+  let lexbuf = Input.to_lexbuf input in
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = input_name };
   Astlib.Location.set_input_lexbuf (Some lexbuf);
   match (kind : Kind.t) with
   | Expression -> Ast.Exp (Parse.expression lexbuf)
   | Pattern -> Ast.Pat (Parse.pattern lexbuf)
   | Core_type -> Ast.Typ (Parse.core_type lexbuf)
-  | Signature | Structure -> assert false
+  | Signature -> Ast.Str (Parse.implementation lexbuf)
+  | Structure -> Ast.Sig (Parse.interface lexbuf)
 
-let load_input ~kind ~input_name fn =
-  match (kind : Kind.t) with
-  | Structure | Signature -> (
+let load_input ~kind ~input_name input =
+  match ((kind : Kind.t), (input : Input.t)) with
+  | (Structure | Signature), (Stdin | File _) -> (
       let kind = Kind.to_utils_kind kind in
+      let fn = Input.to_driver_fn input in
       match Driver.load_input ~kind ~input_name ~relocate:false fn with
       | Error (loc_err, _ver) -> Location.Error.raise loc_err
       | Ok (_ast_input_name, _version, ast) -> (
           match (ast : Ppxlib_private.Utils.Intf_or_impl.t) with
           | Impl str -> Ast.Str str
           | Intf sig_ -> Ast.Sig sig_))
-  | Expression | Pattern | Core_type -> parse_node ~kind ~input_name fn
+  | (Expression | Pattern | Core_type), _ | _, Source _ ->
+      parse_node ~kind ~input_name input
 
 let pp_ast ~config ast =
   match (ast : Ast.t) with
@@ -95,8 +116,8 @@ let kind =
 let input =
   let docv = "INPUT" in
   let doc =
-    "The $(docv) AST. Can be a binary AST file or a source file. Pass $(b,-) \
-     to read from stdin instead."
+    "The $(docv) AST. Can be a binary AST file, a source file or a valid OCaml \
+     source string. Pass $(b,-) to read from stdin instead."
   in
   named
     (fun x -> `Input x)
@@ -105,23 +126,27 @@ let input =
 let errorf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
-    (`Kind kind) (`Input fn) =
+    (`Kind kind) (`Input input) =
   let open Stdppx.Result in
   let kind =
     match kind with
     | Some k -> Ok k
     | None -> (
-        match Ppxlib_private.Utils.Kind.of_filename fn with
+        match Ppxlib_private.Utils.Kind.of_filename input with
         | Some Intf -> Ok Kind.Signature
         | Some Impl -> Ok Kind.Structure
         | None ->
             errorf
-              "Could not guess kind from input %S\n\
-              \ Please use relevant CLI flag" fn)
+              "Could not guess kind from input %S. Please use relevant CLI \
+               flag."
+              input)
   in
   kind >>= fun kind ->
-  let input_name = match fn with "-" -> "<stdin>" | _ -> fn in
-  let ast = load_input ~kind ~input_name fn in
+  let input = Input.from_string input in
+  let input_name =
+    match input with Stdin -> "<stdin>" | File fn -> fn | Source _ -> "<cli>"
+  in
+  let ast = load_input ~kind ~input_name input in
   let config = Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode () in
   pp_ast ~config ast;
   Format.printf "%!\n";
