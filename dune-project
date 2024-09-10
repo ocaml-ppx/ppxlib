@@ -1,7 +1,6 @@
-(lang dune 2.7)
+(lang dune 2.8)
 (name ppxlib)
 (using cinaps 1.0)
-(allow_approximate_merlin)
 (implicit_transitive_deps false)
 (cram enable)
 (generate_opam_files true)

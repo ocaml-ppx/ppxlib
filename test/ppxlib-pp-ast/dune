@@ -1,4 +1,5 @@
 (cram
+ (package ppxlib-tools)
  (deps
   ../../bin/pp_ast.exe
   (package ppxlib)))
