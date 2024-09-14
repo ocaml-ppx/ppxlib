@@ -33,16 +33,6 @@ module Default = struct
       ppat_desc = Ppat_construct (lid, Option.map p ~f:(fun p -> ([], p)));
     }
 
-  let pexp_fun ~loc (label : arg_label) expr p e =
-    let pparam_desc = Pparam_val (label, expr, p) in
-    let case = { pparam_desc; pparam_loc = loc } in
-    {
-      pexp_loc_stack = [];
-      pexp_attributes = [];
-      pexp_loc = loc;
-      pexp_desc = Pexp_function ([ case ], None, Pfunction_body e);
-    }
-
   let pexp_function_cases ~loc cases =
     {
       pexp_loc_stack = [];
@@ -51,7 +41,24 @@ module Default = struct
       pexp_desc = Pexp_function ([], None, Pfunction_cases (cases, loc, []));
     }
 
-  let pexp_function ~loc cases = pexp_function_cases ~loc cases
+  (* let pexp_function ~loc cases = pexp_function_cases ~loc cases *)
+
+  let add_fun_params return_constraint ~loc params body =
+    match params with
+    | [] -> body
+    | _ -> (
+        match body.pexp_desc with
+        | Pexp_function (more_params, constraint_, func_body) ->
+            pexp_function ~loc (params @ more_params) constraint_ func_body
+        | _ ->
+            assert (match params with [] -> false | _ -> true);
+            pexp_function ~loc params return_constraint (Pfunction_body body))
+
+  let pexp_fun ~loc (label : arg_label) expr p e =
+    let param : function_param =
+      { pparam_desc = Pparam_val (label, expr, p); pparam_loc = loc }
+    in
+    add_fun_params ~loc None [ param ] e
 
   let value_binding ~loc ~pat ~expr =
     value_binding ~loc ~pat ~expr ~constraint_:None

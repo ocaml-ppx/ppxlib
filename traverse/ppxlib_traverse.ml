@@ -520,26 +520,11 @@ let gen_mapper ~(what : what) td =
         | None -> what#any ~loc
         | Some te -> type_expr_mapper ~what te)
   in
-  let params =
-    List.map
-      ~f:(fun (ty, _) ->
-        let loc = ty.ptyp_loc in
-        let desc =
-          match ty.ptyp_desc with
-          | Ptyp_var s -> pvar ~loc ("_" ^ s)
-          | _ -> ppat_any ~loc
-        in
-        let pparam_desc = Pparam_val (Nolabel, None, desc) in
-        { pparam_loc = loc; pparam_desc })
-      td.ptype_params
-  in
-  let pexp_desc = Pexp_function (params, None, Pfunction_body body) in
-  {
-    pexp_desc;
-    pexp_loc = td.ptype_loc;
-    pexp_loc_stack = [];
-    pexp_attributes = [];
-  }
+  List.fold_right td.ptype_params ~init:body ~f:(fun (ty, _) acc ->
+      let loc = ty.ptyp_loc in
+      match ty.ptyp_desc with
+      | Ptyp_var s -> pexp_fun ~loc Nolabel None (pvar ~loc ("_" ^ s)) acc
+      | _ -> pexp_fun ~loc Nolabel None (ppat_any ~loc) acc)
 
 let type_deps =
   let collect =
