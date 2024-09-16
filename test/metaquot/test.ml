@@ -609,7 +609,7 @@ let _ =
   let e = [%expr fun z -> x + y + z] in
   let f = [%expr fun y -> [%e e]] in
   let func = [%expr fun x -> [%e f]] in
-  Format.asprintf "%a" Pprintast.expression func
+  Format.asprintf "%a" Astlib.Pprintast.expression func
 
 
 [%%expect{|
