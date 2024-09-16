@@ -13,9 +13,8 @@
 (*                                                                        *)
 (**************************************************************************)
 
-(** Definition of the OCaml AST *)
-
 open Import
+(** Definition of the OCaml AST *)
 
 (* This file is obtained by:
 
@@ -28,13 +27,13 @@ open Import
    - - Location.t -> location
    - - Longident.t -> longident
    - adding a type longident_loc = longident loc and replacing all the occurrences of the
-   latter by the former. This is so that we can override iteration an the level of a
+   latter by the former. This is so that we can override iteration at the level of a
    longident loc
    - adding a type cases = case list
-   - replacing all occurences of "case list" by "cases"
+   - replacing all occurrences of "case list" by "cases"
    - replacing all the (*IF_CURRENT = Foo.bar*) by: = Foo.bar
    - removing the extra values at the end of the file
-   - replacing app [type ...] by [and ...] to make everything one recursive block
+   - replacing all [type ...] by [and ...] to make everything one recursive block
    - adding [@@deriving_inline traverse][@@@end] at the end
 
    To update it to a newer OCaml version, create a new module with the above from the
@@ -135,7 +134,7 @@ and attribute = Parsetree.attribute = {
   attr_payload : payload;
   attr_loc : location;
 }
-(** Attributes such as [[@id ARG]] and [[@@id ARG]].
+(** Attributes such as [[\@id ARG]] and [[\@\@id ARG]].
 
     Metadata containers passed around within the AST. The compiler ignores
     unknown attributes. *)
@@ -161,7 +160,7 @@ and core_type = Parsetree.core_type = {
   ptyp_desc : core_type_desc;
   ptyp_loc : location;
   ptyp_loc_stack : location_stack;
-  ptyp_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  ptyp_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and core_type_desc = Parsetree.core_type_desc =
@@ -169,7 +168,6 @@ and core_type_desc = Parsetree.core_type_desc =
   | Ptyp_var of string  (** A type variable such as ['a] *)
   | Ptyp_arrow of arg_label * core_type * core_type
       (** [Ptyp_arrow(lbl, T1, T2)] represents:
-
           - [T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]},
           - [~l:T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Labelled}
             [Labelled]},
@@ -180,29 +178,25 @@ and core_type_desc = Parsetree.core_type_desc =
           [T1 * ... * Tn].
 
           Invariant: [n >= 2]. *)
-  | Ptyp_constr of longident_loc * core_type list
+  | Ptyp_constr of longident loc * core_type list
       (** [Ptyp_constr(lident, l)] represents:
-
           - [tconstr] when [l=[]],
           - [T tconstr] when [l=[T]],
           - [(T1, ..., Tn) tconstr] when [l=[T1 ; ... ; Tn]]. *)
   | Ptyp_object of object_field list * closed_flag
       (** [Ptyp_object([ l1:T1; ...; ln:Tn ], flag)] represents:
-
           - [< l1:T1; ...; ln:Tn >] when [flag] is
             {{!Asttypes.closed_flag.Closed} [Closed]},
           - [< l1:T1; ...; ln:Tn; .. >] when [flag] is
             {{!Asttypes.closed_flag.Open} [Open]}. *)
-  | Ptyp_class of longident_loc * core_type list
+  | Ptyp_class of longident loc * core_type list
       (** [Ptyp_class(tconstr, l)] represents:
-
           - [#tconstr] when [l=[]],
           - [T #tconstr] when [l=[T]],
           - [(T1, ..., Tn) #tconstr] when [l=[T1 ; ... ; Tn]]. *)
-  | Ptyp_alias of core_type * string  (** [T as 'a]. *)
+  | Ptyp_alias of core_type * string loc  (** [T as 'a]. *)
   | Ptyp_variant of row_field list * closed_flag * label list option
       (** [Ptyp_variant([`A;`B], flag, labels)] represents:
-
           - [[ `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Closed}
             [Closed]}, and [labels] is [None],
           - [[> `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Open} [Open]},
@@ -241,11 +235,11 @@ and core_type_desc = Parsetree.core_type_desc =
           - As the {{!value_description.pval_type} [pval_type]} field of a
             {!value_description}. *)
   | Ptyp_package of package_type  (** [(module S)]. *)
+  | Ptyp_open of longident loc * core_type  (** [M.(T)] *)
   | Ptyp_extension of extension  (** [[%id]]. *)
 
-and package_type = longident_loc * (longident_loc * core_type) list
+and package_type = longident loc * (longident loc * core_type) list
 (** As {!package_type} typed values:
-
     - [(S, [])] represents [(module S)],
     - [(S, [(t1, T1) ; ... ; (tn, Tn)])] represents
       [(module S with type t1 = T1 and ... and tn = Tn)]. *)
@@ -259,7 +253,6 @@ and row_field = Parsetree.row_field = {
 and row_field_desc = Parsetree.row_field_desc =
   | Rtag of label loc * bool * core_type list
       (** [Rtag(`A, b, l)] represents:
-
           - [`A] when [b] is [true] and [l] is [[]],
           - [`A of T] when [b] is [false] and [l] is [[T]],
           - [`A of T1 & .. & Tn] when [b] is [false] and [l] is [[T1;...Tn]],
@@ -287,7 +280,7 @@ and pattern = Parsetree.pattern = {
   ppat_desc : pattern_desc;
   ppat_loc : location;
   ppat_loc_stack : location_stack;
-  ppat_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  ppat_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and pattern_desc = Parsetree.pattern_desc =
@@ -306,9 +299,8 @@ and pattern_desc = Parsetree.pattern_desc =
       (** Patterns [(P1, ..., Pn)].
 
           Invariant: [n >= 2] *)
-  | Ppat_construct of longident_loc * (string loc list * pattern) option
+  | Ppat_construct of longident loc * (string loc list * pattern) option
       (** [Ppat_construct(C, args)] represents:
-
           - [C] when [args] is [None],
           - [C P] when [args] is [Some ([], P)]
           - [C (P1, ..., Pn)] when [args] is
@@ -316,12 +308,10 @@ and pattern_desc = Parsetree.pattern_desc =
           - [C (type a b) P] when [args] is [Some ([a; b], P)] *)
   | Ppat_variant of label * pattern option
       (** [Ppat_variant(`A, pat)] represents:
-
           - [`A] when [pat] is [None],
           - [`A P] when [pat] is [Some P] *)
-  | Ppat_record of (longident_loc * pattern) list * closed_flag
+  | Ppat_record of (longident loc * pattern) list * closed_flag
       (** [Ppat_record([(l1, P1) ; ... ; (ln, Pn)], flag)] represents:
-
           - [{ l1=P1; ...; ln=Pn }] when [flag] is
             {{!Asttypes.closed_flag.Closed} [Closed]}
           - [{ l1=P1; ...; ln=Pn; _}] when [flag] is
@@ -331,11 +321,10 @@ and pattern_desc = Parsetree.pattern_desc =
   | Ppat_array of pattern list  (** Pattern [[| P1; ...; Pn |]] *)
   | Ppat_or of pattern * pattern  (** Pattern [P1 | P2] *)
   | Ppat_constraint of pattern * core_type  (** Pattern [(P : T)] *)
-  | Ppat_type of longident_loc  (** Pattern [#tconst] *)
+  | Ppat_type of longident loc  (** Pattern [#tconst] *)
   | Ppat_lazy of pattern  (** Pattern [lazy P] *)
   | Ppat_unpack of string option loc
       (** [Ppat_unpack(s)] represents:
-
           - [(module P)] when [s] is [Some "P"]
           - [(module _)] when [s] is [None]
 
@@ -343,7 +332,7 @@ and pattern_desc = Parsetree.pattern_desc =
           [Ppat_constraint(Ppat_unpack(Some "P"), Ptyp_package S)] *)
   | Ppat_exception of pattern  (** Pattern [exception P] *)
   | Ppat_extension of extension  (** Pattern [[%id]] *)
-  | Ppat_open of longident_loc * pattern  (** Pattern [M.(P)] *)
+  | Ppat_open of longident loc * pattern  (** Pattern [M.(P)] *)
 
 (** {2 Value expressions} *)
 
@@ -351,43 +340,31 @@ and expression = Parsetree.expression = {
   pexp_desc : expression_desc;
   pexp_loc : location;
   pexp_loc_stack : location_stack;
-  pexp_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  pexp_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and expression_desc = Parsetree.expression_desc =
-  | Pexp_ident of longident_loc  (** Identifiers such as [x] and [M.x] *)
+  | Pexp_ident of longident loc  (** Identifiers such as [x] and [M.x] *)
   | Pexp_constant of constant
       (** Expressions constant such as [1], ['a'], ["true"], [1.0], [1l], [1L],
           [1n] *)
   | Pexp_let of rec_flag * value_binding list * expression
       (** [Pexp_let(flag, [(P1,E1) ; ... ; (Pn,En)], E)] represents:
-
           - [let P1 = E1 and ... and Pn = EN in E] when [flag] is
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN in E] when [flag] is
             {{!Asttypes.rec_flag.Recursive} [Recursive]}. *)
-  | Pexp_function of cases  (** [function P1 -> E1 | ... | Pn -> En] *)
-  | Pexp_fun of arg_label * expression option * pattern * expression
-      (** [Pexp_fun(lbl, exp0, P, E1)] represents:
-
-          - [fun P -> E1] when [lbl] is {{!Asttypes.arg_label.Nolabel}
-            [Nolabel]} and [exp0] is [None]
-          - [fun ~l:P -> E1] when [lbl] is {{!Asttypes.arg_label.Labelled}
-            [Labelled l]} and [exp0] is [None]
-          - [fun ?l:P -> E1] when [lbl] is {{!Asttypes.arg_label.Optional}
-            [Optional l]} and [exp0] is [None]
-          - [fun ?l:(P = E0) -> E1] when [lbl] is
-            {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is
-            [Some E0]
-
-          Notes:
-
-          - If [E0] is provided, only {{!Asttypes.arg_label.Optional}
-            [Optional]} is allowed.
-          - [fun P1 P2 .. Pn -> E1] is represented as nested
-            {{!expression_desc.Pexp_fun} [Pexp_fun]}.
-          - [let f P = E] is represented using {{!expression_desc.Pexp_fun}
-            [Pexp_fun]}. *)
+  | Pexp_function of
+      function_param list * type_constraint option * function_body
+      (** [Pexp_function ([P1; ...; Pn], C, body)] represents any construct
+          involving [fun] or [function], including:
+          - [fun P1 ... Pn -> E] when [body = Pfunction_body E]
+          - [fun P1 ... Pn -> function p1 -> e1 | ... | pm -> em] when
+            [body = Pfunction_cases [ p1 -> e1; ...; pm -> em ]] [C] represents
+            a type constraint or coercion placed immediately before the arrow,
+            e.g. [fun P1 ... Pn : ty -> ...] when [C = Some (Pconstraint ty)]. A
+            function must have parameters. [Pexp_function (params, _, body)]
+            must have non-empty [params] or a [Pfunction_cases _] body. *)
   | Pexp_apply of expression * (arg_label * expression) list
       (** [Pexp_apply(E0, [(l1, E1) ; ... ; (ln, En)])] represents
           [E0 ~l1:E1 ... ~ln:En]
@@ -406,26 +383,23 @@ and expression_desc = Parsetree.expression_desc =
       (** Expressions [(E1, ..., En)]
 
           Invariant: [n >= 2] *)
-  | Pexp_construct of longident_loc * expression option
+  | Pexp_construct of longident loc * expression option
       (** [Pexp_construct(C, exp)] represents:
-
           - [C] when [exp] is [None],
           - [C E] when [exp] is [Some E],
           - [C (E1, ..., En)] when [exp] is [Some (Pexp_tuple[E1;...;En])] *)
   | Pexp_variant of label * expression option
       (** [Pexp_variant(`A, exp)] represents
-
           - [`A] when [exp] is [None]
           - [`A E] when [exp] is [Some E] *)
-  | Pexp_record of (longident_loc * expression) list * expression option
+  | Pexp_record of (longident loc * expression) list * expression option
       (** [Pexp_record([(l1,P1) ; ... ; (ln,Pn)], exp0)] represents
-
           - [{ l1=P1; ...; ln=Pn }] when [exp0] is [None]
           - [{ E0 with l1=P1; ...; ln=Pn }] when [exp0] is [Some E0]
 
           Invariant: [n > 0] *)
-  | Pexp_field of expression * longident_loc  (** [E.l] *)
-  | Pexp_setfield of expression * longident_loc * expression
+  | Pexp_field of expression * longident loc  (** [E.l] *)
+  | Pexp_setfield of expression * longident loc * expression
       (** [E1.l <- E2] *)
   | Pexp_array of expression list  (** [[| E1; ...; En |]] *)
   | Pexp_ifthenelse of expression * expression * expression option
@@ -434,7 +408,6 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_while of expression * expression  (** [while E1 do E2 done] *)
   | Pexp_for of pattern * expression * expression * direction_flag * expression
       (** [Pexp_for(i, E1, E2, direction, E3)] represents:
-
           - [for i = E1 to E2 do E3 done] when [direction] is
             {{!Asttypes.direction_flag.Upto} [Upto]}
           - [for i = E1 downto E2 do E3 done] when [direction] is
@@ -442,11 +415,10 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_constraint of expression * core_type  (** [(E : T)] *)
   | Pexp_coerce of expression * core_type option * core_type
       (** [Pexp_coerce(E, from, T)] represents
-
           - [(E :> T)] when [from] is [None],
           - [(E : T0 :> T)] when [from] is [Some T0]. *)
   | Pexp_send of expression * label loc  (** [E # m] *)
-  | Pexp_new of longident_loc  (** [new M.c] *)
+  | Pexp_new of longident loc  (** [new M.c] *)
   | Pexp_setinstvar of label loc * expression  (** [x <- 2] *)
   | Pexp_override of (label loc * expression) list
       (** [{< x1 = E1; ...; xn = En >}] *)
@@ -502,17 +474,71 @@ and binding_op = Parsetree.binding_op = {
   pbop_loc : location;
 }
 
+and function_param_desc = Parsetree.function_param_desc =
+  | Pparam_val of arg_label * expression option * pattern
+      (** [Pparam_val (lbl, exp0, P)] represents the parameter:
+          - [P] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]} and
+            [exp0] is [None]
+          - [~l:P] when [lbl] is {{!Asttypes.arg_label.Labelled} [Labelled l]}
+            and [exp0] is [None]
+          - [?l:P] when [lbl] is {{!Asttypes.arg_label.Optional} [Optional l]}
+            and [exp0] is [None]
+          - [?l:(P = E0)] when [lbl] is {{!Asttypes.arg_label.Optional}
+            [Optional l]} and [exp0] is [Some E0]
+
+          Note: If [E0] is provided, only {{!Asttypes.arg_label.Optional}
+          [Optional]} is allowed. *)
+  | Pparam_newtype of string loc
+      (** [Pparam_newtype x] represents the parameter [(type x)]. [x] carries
+          the location of the identifier, whereas the [pparam_loc] on the
+          enclosing [function_param] node is the location of the [(type x)] as a
+          whole.
+
+          Multiple parameters [(type a b c)] are represented as multiple
+          [Pparam_newtype] nodes, let's say:
+
+          {[
+            [
+              { pparam_kind = Pparam_newtype a; pparam_loc = loc1 };
+              { pparam_kind = Pparam_newtype b; pparam_loc = loc2 };
+              { pparam_kind = Pparam_newtype c; pparam_loc = loc3 };
+            ]
+          ]}
+
+          Here, the first loc [loc1] is the location of [(type a b c)], and the
+          subsequent locs [loc2] and [loc3] are the same as [loc1], except
+          marked as ghost locations. The locations on [a], [b], [c], correspond
+          to the variables [a], [b], and [c] in the source code. *)
+
+and function_param = Parsetree.function_param = {
+  pparam_loc : location;
+  pparam_desc : function_param_desc;
+}
+
+(** See the comment on {{!expression_desc.Pexp_function} [Pexp_function]}. *)
+and function_body = Parsetree.function_body =
+  | Pfunction_body of expression
+  | Pfunction_cases of cases * location * attributes
+      (** In [Pfunction_cases (_, loc, attrs)], the location extends from the
+          start of the [function] keyword to the end of the last case. The
+          compiler will only use typechecking-related attributes from [attrs],
+          e.g. enabling or disabling a warning. *)
+
+and type_constraint = Parsetree.type_constraint =
+  | Pconstraint of core_type
+  | Pcoerce of core_type option * core_type
+      (** See the comment on {{!expression_desc.Pexp_function} [Pexp_function]}. *)
+
 (** {2 Value descriptions} *)
 
 and value_description = Parsetree.value_description = {
   pval_name : string loc;
   pval_type : core_type;
   pval_prim : string list;
-  pval_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pval_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
   pval_loc : location;
 }
 (** Values of type {!value_description} represents:
-
     - [val x: T], when {{!value_description.pval_prim} [pval_prim]} is [[]]
     - [external x: T = "s1" ... "sn"] when {{!value_description.pval_prim}
       [pval_prim]} is [["s1";..."sn"]] *)
@@ -528,13 +554,12 @@ and type_declaration = Parsetree.type_declaration = {
   ptype_kind : type_kind;
   ptype_private : private_flag;  (** for [= private ...] *)
   ptype_manifest : core_type option;  (** represents [= T] *)
-  ptype_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  ptype_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
   ptype_loc : location;
 }
 (** Here are type declarations and their representation, for various
     {{!type_declaration.ptype_kind} [ptype_kind]} and
     {{!type_declaration.ptype_manifest} [ptype_manifest]} values:
-
     - [type t] when [type_kind] is {{!type_kind.Ptype_abstract}
       [Ptype_abstract]}, and [manifest] is [None],
     - [type t = T0] when [type_kind] is {{!type_kind.Ptype_abstract}
@@ -561,7 +586,7 @@ and label_declaration = Parsetree.label_declaration = {
   pld_mutable : mutable_flag;
   pld_type : core_type;
   pld_loc : location;
-  pld_attributes : attributes;  (** [l : T [@id1] [@id2]] *)
+  pld_attributes : attributes;  (** [l : T [\@id1] [\@id2]] *)
 }
 (** - [{ ...; l: T; ... }] when {{!label_declaration.pld_mutable} [pld_mutable]}
       is {{!Asttypes.mutable_flag.Immutable} [Immutable]},
@@ -576,7 +601,7 @@ and constructor_declaration = Parsetree.constructor_declaration = {
   pcd_args : constructor_arguments;
   pcd_res : core_type option;
   pcd_loc : location;
-  pcd_attributes : attributes;  (** [C of ... [@id1] [@id2]] *)
+  pcd_attributes : attributes;  (** [C of ... [\@id1] [\@id2]] *)
 }
 
 and constructor_arguments = Parsetree.constructor_arguments =
@@ -584,7 +609,6 @@ and constructor_arguments = Parsetree.constructor_arguments =
   | Pcstr_record of label_declaration list
       (** Values of type {!constructor_declaration} represents the constructor
           arguments of:
-
           - [C of T1 * ... * Tn] when [res = None], and
             [args = Pcstr_tuple [T1; ... ; Tn]],
           - [C: T0] when [res = Some T0], and [args = Pcstr_tuple []],
@@ -595,12 +619,12 @@ and constructor_arguments = Parsetree.constructor_arguments =
             [args = Pcstr_record [...]]. *)
 
 and type_extension = Parsetree.type_extension = {
-  ptyext_path : longident_loc;
+  ptyext_path : longident loc;
   ptyext_params : (core_type * (variance * injectivity)) list;
   ptyext_constructors : extension_constructor list;
   ptyext_private : private_flag;
   ptyext_loc : location;
-  ptyext_attributes : attributes;  (** ... [@@id1] [@@id2] *)
+  ptyext_attributes : attributes;  (** ... [\@\@id1] [\@\@id2] *)
 }
 (** Definition of new extensions constructors for the extensive sum type [t]
     ([type t += ...]). *)
@@ -609,13 +633,13 @@ and extension_constructor = Parsetree.extension_constructor = {
   pext_name : string loc;
   pext_kind : extension_constructor_kind;
   pext_loc : location;
-  pext_attributes : attributes;  (** [C of ... [@id1] [@id2]] *)
+  pext_attributes : attributes;  (** [C of ... [\@id1] [\@id2]] *)
 }
 
 and type_exception = Parsetree.type_exception = {
   ptyexn_constructor : extension_constructor;
   ptyexn_loc : location;
-  ptyexn_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  ptyexn_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
 }
 (** Definition of a new exception ([exception E]). *)
 
@@ -623,38 +647,33 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
   | Pext_decl of string loc list * constructor_arguments * core_type option
       (** [Pext_decl(existentials, c_args, t_opt)] describes a new extension
           constructor. It can be:
-
           {ul
            {- [C of T1 * ... * Tn]
               when:
-
               - [existentials] is [[]],
               - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [None].
            }
            {- [C: T0]
               when
-
               - [existentials] is [[]],
               - [c_args] is [[]],
               - [t_opt] is [Some T0].
            }
            {- [C: T1 * ... * Tn -> T0]
               when
-
               - [existentials] is [[]],
               - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [Some T0].
            }
            {- [C: 'a... . T1 * ... * Tn -> T0]
               when
-
               - [existentials] is [['a;...]],
               - [c_args] is [[T1; ... ; Tn]],
               - [t_opt] is [Some T0].
            }
           } *)
-  | Pext_rebind of longident_loc
+  | Pext_rebind of longident loc
       (** [Pext_rebind(D)] re-export the constructor [D] with the new name [C] *)
 
 (** {1 Class language} *)
@@ -663,17 +682,16 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
 and class_type = Parsetree.class_type = {
   pcty_desc : class_type_desc;
   pcty_loc : location;
-  pcty_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  pcty_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and class_type_desc = Parsetree.class_type_desc =
-  | Pcty_constr of longident_loc * core_type list
+  | Pcty_constr of longident loc * core_type list
       (** - [c]
           - [['a1, ..., 'an] c] *)
   | Pcty_signature of class_signature  (** [object ... end] *)
   | Pcty_arrow of arg_label * core_type * class_type
       (** [Pcty_arrow(lbl, T, CT)] represents:
-
           - [T -> CT] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]},
           - [~l:T -> CT] when [lbl] is {{!Asttypes.arg_label.Labelled}
             [Labelled l]},
@@ -687,7 +705,6 @@ and class_signature = Parsetree.class_signature = {
   pcsig_fields : class_type_field list;
 }
 (** Values of type [class_signature] represents:
-
     - [object('selfpat) ... end]
     - [object ... end] when {{!class_signature.pcsig_self} [pcsig_self]} is
       {{!core_type_desc.Ptyp_any} [Ptyp_any]} *)
@@ -695,7 +712,7 @@ and class_signature = Parsetree.class_signature = {
 and class_type_field = Parsetree.class_type_field = {
   pctf_desc : class_type_field_desc;
   pctf_loc : location;
-  pctf_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pctf_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
 }
 
 and class_type_field_desc = Parsetree.class_type_field_desc =
@@ -707,7 +724,7 @@ and class_type_field_desc = Parsetree.class_type_field_desc =
 
           Note: [T] can be a {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}. *)
   | Pctf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
-  | Pctf_attribute of attribute  (** [[@@@id]] *)
+  | Pctf_attribute of attribute  (** [[\@\@\@id]] *)
   | Pctf_extension of extension  (** [[%%id]] *)
 
 and 'a class_infos = 'a Parsetree.class_infos = {
@@ -716,10 +733,9 @@ and 'a class_infos = 'a Parsetree.class_infos = {
   pci_name : string loc;
   pci_expr : 'a;
   pci_loc : location;
-  pci_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pci_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
 }
 (** Values of type [class_expr class_infos] represents:
-
     - [class c = ...]
     - [class ['a1,...,'an] c = ...]
     - [class virtual c = ...]
@@ -734,16 +750,15 @@ and class_type_declaration = class_type class_infos
 and class_expr = Parsetree.class_expr = {
   pcl_desc : class_expr_desc;
   pcl_loc : location;
-  pcl_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  pcl_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and class_expr_desc = Parsetree.class_expr_desc =
-  | Pcl_constr of longident_loc * core_type list
+  | Pcl_constr of longident loc * core_type list
       (** [c] and [['a1, ..., 'an] c] *)
   | Pcl_structure of class_structure  (** [object ... end] *)
   | Pcl_fun of arg_label * expression option * pattern * class_expr
       (** [Pcl_fun(lbl, exp0, P, CE)] represents:
-
           - [fun P -> CE] when [lbl] is {{!Asttypes.arg_label.Nolabel}
             [Nolabel]} and [exp0] is [None],
           - [fun ~l:P -> CE] when [lbl] is {{!Asttypes.arg_label.Labelled}
@@ -761,7 +776,6 @@ and class_expr_desc = Parsetree.class_expr_desc =
           Invariant: [n > 0] *)
   | Pcl_let of rec_flag * value_binding list * class_expr
       (** [Pcl_let(rec, [(P1, E1); ... ; (Pn, En)], CE)] represents:
-
           - [let P1 = E1 and ... and Pn = EN in CE] when [rec] is
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN in CE] when [rec] is
@@ -775,7 +789,6 @@ and class_structure = Parsetree.class_structure = {
   pcstr_fields : class_field list;
 }
 (** Values of type {!class_structure} represents:
-
     - [object(selfpat) ... end]
     - [object ... end] when {{!class_structure.pcstr_self} [pcstr_self]} is
       {{!pattern_desc.Ppat_any} [Ppat_any]} *)
@@ -783,13 +796,12 @@ and class_structure = Parsetree.class_structure = {
 and class_field = Parsetree.class_field = {
   pcf_desc : class_field_desc;
   pcf_loc : location;
-  pcf_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pcf_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
 }
 
 and class_field_desc = Parsetree.class_field_desc =
   | Pcf_inherit of override_flag * class_expr * string loc option
       (** [Pcf_inherit(flag, CE, s)] represents:
-
           - [inherit CE] when [flag] is {{!Asttypes.override_flag.Fresh}
             [Fresh]} and [s] is [None],
           - [inherit CE as x] when [flag] is {{!Asttypes.override_flag.Fresh}
@@ -800,7 +812,6 @@ and class_field_desc = Parsetree.class_field_desc =
             {{!Asttypes.override_flag.Override} [Override]} and [s] is [Some x] *)
   | Pcf_val of (label loc * mutable_flag * class_field_kind)
       (** [Pcf_val(x,flag, kind)] represents:
-
           - [val x = E] when [flag] is {{!Asttypes.mutable_flag.Immutable}
             [Immutable]} and [kind] is {{!class_field_kind.Cfk_concrete}
             [Cfk_concrete(Fresh, E)]}
@@ -820,7 +831,7 @@ and class_field_desc = Parsetree.class_field_desc =
             [Ptyp_poly]}) *)
   | Pcf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
   | Pcf_initializer of expression  (** [initializer E] *)
-  | Pcf_attribute of attribute  (** [[@@@id]] *)
+  | Pcf_attribute of attribute  (** [[\@\@\@id]] *)
   | Pcf_extension of extension  (** [[%%id]] *)
 
 and class_field_kind = Parsetree.class_field_kind =
@@ -835,24 +846,23 @@ and class_declaration = class_expr class_infos
 and module_type = Parsetree.module_type = {
   pmty_desc : module_type_desc;
   pmty_loc : location;
-  pmty_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  pmty_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and module_type_desc = Parsetree.module_type_desc =
-  | Pmty_ident of longident_loc  (** [Pmty_ident(S)] represents [S] *)
+  | Pmty_ident of longident loc  (** [Pmty_ident(S)] represents [S] *)
   | Pmty_signature of signature  (** [sig ... end] *)
   | Pmty_functor of functor_parameter * module_type
       (** [functor(X : MT1) -> MT2] *)
   | Pmty_with of module_type * with_constraint list  (** [MT with ...] *)
   | Pmty_typeof of module_expr  (** [module type of ME] *)
   | Pmty_extension of extension  (** [[%id]] *)
-  | Pmty_alias of longident_loc  (** [(module M)] *)
+  | Pmty_alias of longident loc  (** [(module M)] *)
 
 and functor_parameter = Parsetree.functor_parameter =
   | Unit  (** [()] *)
   | Named of string option loc * module_type
       (** [Named(name, MT)] represents:
-
           - [(X : MT)] when [name] is [Some X],
           - [(_ : MT)] when [name] is [None] *)
 
@@ -886,21 +896,21 @@ and signature_item_desc = Parsetree.signature_item_desc =
       (** [class c1 : ... and ... and cn : ...] *)
   | Psig_class_type of class_type_declaration list
       (** [class type ct1 = ... and ... and ctn = ...] *)
-  | Psig_attribute of attribute  (** [[@@@id]] *)
+  | Psig_attribute of attribute  (** [[\@\@\@id]] *)
   | Psig_extension of extension * attributes  (** [[%%id]] *)
 
 and module_declaration = Parsetree.module_declaration = {
   pmd_name : string option loc;
   pmd_type : module_type;
-  pmd_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pmd_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
   pmd_loc : location;
 }
 (** Values of type [module_declaration] represents [S : MT] *)
 
 and module_substitution = Parsetree.module_substitution = {
   pms_name : string loc;
-  pms_manifest : longident_loc;
-  pms_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pms_manifest : longident loc;
+  pms_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
   pms_loc : location;
 }
 (** Values of type [module_substitution] represents [S := M] *)
@@ -908,11 +918,10 @@ and module_substitution = Parsetree.module_substitution = {
 and module_type_declaration = Parsetree.module_type_declaration = {
   pmtd_name : string loc;
   pmtd_type : module_type option;
-  pmtd_attributes : attributes;  (** [... [@@id1] [@@id2]] *)
+  pmtd_attributes : attributes;  (** [... [\@\@id1] [\@\@id2]] *)
   pmtd_loc : location;
 }
 (** Values of type [module_type_declaration] represents:
-
     - [S = MT],
     - [S] for abstract module type declaration, when
       {{!module_type_declaration.pmtd_type} [pmtd_type]} is [None]. *)
@@ -924,22 +933,19 @@ and 'a open_infos = 'a Parsetree.open_infos = {
   popen_attributes : attributes;
 }
 (** Values of type ['a open_infos] represents:
-
     - [open! X] when {{!open_infos.popen_override} [popen_override]} is
       {{!Asttypes.override_flag.Override} [Override]} (silences the "used
       identifier shadowing" warning)
     - [open  X] when {{!open_infos.popen_override} [popen_override]} is
       {{!Asttypes.override_flag.Fresh} [Fresh]} *)
 
-and open_description = longident_loc open_infos
+and open_description = longident loc open_infos
 (** Values of type [open_description] represents:
-
     - [open M.N]
     - [open M(N).O] *)
 
 and open_declaration = module_expr open_infos
 (** Values of type [open_declaration] represents:
-
     - [open M.N]
     - [open M(N).O]
     - [open struct ... end] *)
@@ -957,19 +963,19 @@ and include_declaration = module_expr include_infos
 (** Values of type [include_declaration] represents [include ME] *)
 
 and with_constraint = Parsetree.with_constraint =
-  | Pwith_type of longident_loc * type_declaration
+  | Pwith_type of longident loc * type_declaration
       (** [with type X.t = ...]
 
           Note: the last component of the longident must match the name of the
           type_declaration. *)
-  | Pwith_module of longident_loc * longident_loc  (** [with module X.Y = Z] *)
-  | Pwith_modtype of longident_loc * module_type
+  | Pwith_module of longident loc * longident loc  (** [with module X.Y = Z] *)
+  | Pwith_modtype of longident loc * module_type
       (** [with module type X.Y = Z] *)
-  | Pwith_modtypesubst of longident_loc * module_type
+  | Pwith_modtypesubst of longident loc * module_type
       (** [with module type X.Y := sig end] *)
-  | Pwith_typesubst of longident_loc * type_declaration
+  | Pwith_typesubst of longident loc * type_declaration
       (** [with type X.t := ..., same format as [Pwith_type]] *)
-  | Pwith_modsubst of longident_loc * longident_loc
+  | Pwith_modsubst of longident loc * longident loc
       (** [with module X.Y := Z] *)
 
 (** {2 Value expressions for the module language} *)
@@ -977,15 +983,16 @@ and with_constraint = Parsetree.with_constraint =
 and module_expr = Parsetree.module_expr = {
   pmod_desc : module_expr_desc;
   pmod_loc : location;
-  pmod_attributes : attributes;  (** [... [@id1] [@id2]] *)
+  pmod_attributes : attributes;  (** [... [\@id1] [\@id2]] *)
 }
 
 and module_expr_desc = Parsetree.module_expr_desc =
-  | Pmod_ident of longident_loc  (** [X] *)
+  | Pmod_ident of longident loc  (** [X] *)
   | Pmod_structure of structure  (** [struct ... end] *)
   | Pmod_functor of functor_parameter * module_expr
       (** [functor(X : MT1) -> ME] *)
   | Pmod_apply of module_expr * module_expr  (** [ME1(ME2)] *)
+  | Pmod_apply_unit of module_expr  (** [ME1()] *)
   | Pmod_constraint of module_expr * module_type  (** [(ME : MT)] *)
   | Pmod_unpack of expression  (** [(val E)] *)
   | Pmod_extension of extension  (** [[%id]] *)
@@ -1001,7 +1008,6 @@ and structure_item_desc = Parsetree.structure_item_desc =
   | Pstr_eval of expression * attributes  (** [E] *)
   | Pstr_value of rec_flag * value_binding list
       (** [Pstr_value(rec, [(P1, E1 ; ... ; (Pn, En))])] represents:
-
           - [let P1 = E1 and ... and Pn = EN] when [rec] is
             {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN ] when [rec] is
@@ -1025,12 +1031,20 @@ and structure_item_desc = Parsetree.structure_item_desc =
   | Pstr_class_type of class_type_declaration list
       (** [class type ct1 = ... and ... and ctn = ...] *)
   | Pstr_include of include_declaration  (** [include ME] *)
-  | Pstr_attribute of attribute  (** [[@@@id]] *)
+  | Pstr_attribute of attribute  (** [[\@\@\@id]] *)
   | Pstr_extension of extension * attributes  (** [[%%id]] *)
+
+and value_constraint = Parsetree.value_constraint =
+  | Pvc_constraint of {
+      locally_abstract_univars : string loc list;
+      typ : core_type;
+    }
+  | Pvc_coercion of { ground : core_type option; coercion : core_type }
 
 and value_binding = Parsetree.value_binding = {
   pvb_pat : pattern;
   pvb_expr : expression;
+  pvb_constraint : value_constraint option;
   pvb_attributes : attributes;
   pvb_loc : location;
 }
@@ -1219,7 +1233,7 @@ class virtual map =
             let a = self#list self#core_type a in
             Ptyp_tuple a
         | Ptyp_constr (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             Ptyp_constr (a, b)
         | Ptyp_object (a, b) ->
@@ -1227,12 +1241,12 @@ class virtual map =
             let b = self#closed_flag b in
             Ptyp_object (a, b)
         | Ptyp_class (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             Ptyp_class (a, b)
         | Ptyp_alias (a, b) ->
             let a = self#core_type a in
-            let b = self#string b in
+            let b = self#loc self#string b in
             Ptyp_alias (a, b)
         | Ptyp_variant (a, b, c) ->
             let a = self#list self#row_field a in
@@ -1246,17 +1260,21 @@ class virtual map =
         | Ptyp_package a ->
             let a = self#package_type a in
             Ptyp_package a
+        | Ptyp_open (a, b) ->
+            let a = self#loc self#longident a in
+            let b = self#core_type b in
+            Ptyp_open (a, b)
         | Ptyp_extension a ->
             let a = self#extension a in
             Ptyp_extension a
 
     method package_type : package_type -> package_type =
       fun (a, b) ->
-        let a = self#longident_loc a in
+        let a = self#loc self#longident a in
         let b =
           self#list
             (fun (a, b) ->
-              let a = self#longident_loc a in
+              let a = self#loc self#longident a in
               let b = self#core_type b in
               (a, b))
             b
@@ -1330,7 +1348,7 @@ class virtual map =
             let a = self#list self#pattern a in
             Ppat_tuple a
         | Ppat_construct (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b =
               self#option
                 (fun (a, b) ->
@@ -1348,7 +1366,7 @@ class virtual map =
             let a =
               self#list
                 (fun (a, b) ->
-                  let a = self#longident_loc a in
+                  let a = self#loc self#longident a in
                   let b = self#pattern b in
                   (a, b))
                 a
@@ -1367,7 +1385,7 @@ class virtual map =
             let b = self#core_type b in
             Ppat_constraint (a, b)
         | Ppat_type a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Ppat_type a
         | Ppat_lazy a ->
             let a = self#pattern a in
@@ -1382,7 +1400,7 @@ class virtual map =
             let a = self#extension a in
             Ppat_extension a
         | Ppat_open (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#pattern b in
             Ppat_open (a, b)
 
@@ -1398,7 +1416,7 @@ class virtual map =
       fun x ->
         match x with
         | Pexp_ident a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Pexp_ident a
         | Pexp_constant a ->
             let a = self#constant a in
@@ -1408,15 +1426,11 @@ class virtual map =
             let b = self#list self#value_binding b in
             let c = self#expression c in
             Pexp_let (a, b, c)
-        | Pexp_function a ->
-            let a = self#cases a in
-            Pexp_function a
-        | Pexp_fun (a, b, c, d) ->
-            let a = self#arg_label a in
-            let b = self#option self#expression b in
-            let c = self#pattern c in
-            let d = self#expression d in
-            Pexp_fun (a, b, c, d)
+        | Pexp_function (a, b, c) ->
+            let a = self#list self#function_param a in
+            let b = self#option self#type_constraint b in
+            let c = self#function_body c in
+            Pexp_function (a, b, c)
         | Pexp_apply (a, b) ->
             let a = self#expression a in
             let b =
@@ -1440,7 +1454,7 @@ class virtual map =
             let a = self#list self#expression a in
             Pexp_tuple a
         | Pexp_construct (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#option self#expression b in
             Pexp_construct (a, b)
         | Pexp_variant (a, b) ->
@@ -1451,7 +1465,7 @@ class virtual map =
             let a =
               self#list
                 (fun (a, b) ->
-                  let a = self#longident_loc a in
+                  let a = self#loc self#longident a in
                   let b = self#expression b in
                   (a, b))
                 a
@@ -1460,11 +1474,11 @@ class virtual map =
             Pexp_record (a, b)
         | Pexp_field (a, b) ->
             let a = self#expression a in
-            let b = self#longident_loc b in
+            let b = self#loc self#longident b in
             Pexp_field (a, b)
         | Pexp_setfield (a, b, c) ->
             let a = self#expression a in
-            let b = self#longident_loc b in
+            let b = self#loc self#longident b in
             let c = self#expression c in
             Pexp_setfield (a, b, c)
         | Pexp_array a ->
@@ -1504,7 +1518,7 @@ class virtual map =
             let b = self#loc self#label b in
             Pexp_send (a, b)
         | Pexp_new a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Pexp_new a
         | Pexp_setinstvar (a, b) ->
             let a = self#loc self#label a in
@@ -1582,6 +1596,47 @@ class virtual map =
         let pbop_exp = self#expression pbop_exp in
         let pbop_loc = self#location pbop_loc in
         { pbop_op; pbop_pat; pbop_exp; pbop_loc }
+
+    method function_param_desc : function_param_desc -> function_param_desc =
+      fun x ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            let a = self#arg_label a in
+            let b = self#option self#expression b in
+            let c = self#pattern c in
+            Pparam_val (a, b, c)
+        | Pparam_newtype a ->
+            let a = self#loc self#string a in
+            Pparam_newtype a
+
+    method function_param : function_param -> function_param =
+      fun { pparam_loc; pparam_desc } ->
+        let pparam_loc = self#location pparam_loc in
+        let pparam_desc = self#function_param_desc pparam_desc in
+        { pparam_loc; pparam_desc }
+
+    method function_body : function_body -> function_body =
+      fun x ->
+        match x with
+        | Pfunction_body a ->
+            let a = self#expression a in
+            Pfunction_body a
+        | Pfunction_cases (a, b, c) ->
+            let a = self#cases a in
+            let b = self#location b in
+            let c = self#attributes c in
+            Pfunction_cases (a, b, c)
+
+    method type_constraint : type_constraint -> type_constraint =
+      fun x ->
+        match x with
+        | Pconstraint a ->
+            let a = self#core_type a in
+            Pconstraint a
+        | Pcoerce (a, b) ->
+            let a = self#option self#core_type a in
+            let b = self#core_type b in
+            Pcoerce (a, b)
 
     method value_description : value_description -> value_description =
       fun { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } ->
@@ -1695,7 +1750,7 @@ class virtual map =
             ptyext_loc;
             ptyext_attributes;
           } ->
-        let ptyext_path = self#longident_loc ptyext_path in
+        let ptyext_path = self#loc self#longident ptyext_path in
         let ptyext_params =
           self#list
             (fun (a, b) ->
@@ -1753,7 +1808,7 @@ class virtual map =
             let c = self#option self#core_type c in
             Pext_decl (a, b, c)
         | Pext_rebind a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Pext_rebind a
 
     method class_type : class_type -> class_type =
@@ -1767,7 +1822,7 @@ class virtual map =
       fun x ->
         match x with
         | Pcty_constr (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             Pcty_constr (a, b)
         | Pcty_signature a ->
@@ -1886,7 +1941,7 @@ class virtual map =
       fun x ->
         match x with
         | Pcl_constr (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             Pcl_constr (a, b)
         | Pcl_structure a ->
@@ -2011,7 +2066,7 @@ class virtual map =
       fun x ->
         match x with
         | Pmty_ident a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Pmty_ident a
         | Pmty_signature a ->
             let a = self#signature a in
@@ -2031,7 +2086,7 @@ class virtual map =
             let a = self#extension a in
             Pmty_extension a
         | Pmty_alias a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Pmty_alias a
 
     method functor_parameter : functor_parameter -> functor_parameter =
@@ -2116,7 +2171,7 @@ class virtual map =
     method module_substitution : module_substitution -> module_substitution =
       fun { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         let pms_name = self#loc self#string pms_name in
-        let pms_manifest = self#longident_loc pms_manifest in
+        let pms_manifest = self#loc self#longident pms_manifest in
         let pms_attributes = self#attributes pms_attributes in
         let pms_loc = self#location pms_loc in
         { pms_name; pms_manifest; pms_attributes; pms_loc }
@@ -2139,7 +2194,7 @@ class virtual map =
         { popen_expr; popen_override; popen_loc; popen_attributes }
 
     method open_description : open_description -> open_description =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration : open_declaration -> open_declaration =
       self#open_infos self#module_expr
@@ -2162,28 +2217,28 @@ class virtual map =
       fun x ->
         match x with
         | Pwith_type (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#type_declaration b in
             Pwith_type (a, b)
         | Pwith_module (a, b) ->
-            let a = self#longident_loc a in
-            let b = self#longident_loc b in
+            let a = self#loc self#longident a in
+            let b = self#loc self#longident b in
             Pwith_module (a, b)
         | Pwith_modtype (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#module_type b in
             Pwith_modtype (a, b)
         | Pwith_modtypesubst (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#module_type b in
             Pwith_modtypesubst (a, b)
         | Pwith_typesubst (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#type_declaration b in
             Pwith_typesubst (a, b)
         | Pwith_modsubst (a, b) ->
-            let a = self#longident_loc a in
-            let b = self#longident_loc b in
+            let a = self#loc self#longident a in
+            let b = self#loc self#longident b in
             Pwith_modsubst (a, b)
 
     method module_expr : module_expr -> module_expr =
@@ -2197,7 +2252,7 @@ class virtual map =
       fun x ->
         match x with
         | Pmod_ident a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             Pmod_ident a
         | Pmod_structure a ->
             let a = self#structure a in
@@ -2210,6 +2265,9 @@ class virtual map =
             let a = self#module_expr a in
             let b = self#module_expr b in
             Pmod_apply (a, b)
+        | Pmod_apply_unit a ->
+            let a = self#module_expr a in
+            Pmod_apply_unit a
         | Pmod_constraint (a, b) ->
             let a = self#module_expr a in
             let b = self#module_type b in
@@ -2282,13 +2340,28 @@ class virtual map =
             let b = self#attributes b in
             Pstr_extension (a, b)
 
+    method value_constraint : value_constraint -> value_constraint =
+      fun x ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            let locally_abstract_univars =
+              self#list (self#loc self#string) locally_abstract_univars
+            in
+            let typ = self#core_type typ in
+            Pvc_constraint { locally_abstract_univars; typ }
+        | Pvc_coercion { ground; coercion } ->
+            let ground = self#option self#core_type ground in
+            let coercion = self#core_type coercion in
+            Pvc_coercion { ground; coercion }
+
     method value_binding : value_binding -> value_binding =
-      fun { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } ->
+      fun { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } ->
         let pvb_pat = self#pattern pvb_pat in
         let pvb_expr = self#expression pvb_expr in
+        let pvb_constraint = self#option self#value_constraint pvb_constraint in
         let pvb_attributes = self#attributes pvb_attributes in
         let pvb_loc = self#location pvb_loc in
-        { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
+        { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc }
 
     method module_binding : module_binding -> module_binding =
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
@@ -2458,17 +2531,17 @@ class virtual iter =
             self#core_type c
         | Ptyp_tuple a -> self#list self#core_type a
         | Ptyp_constr (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#list self#core_type b
         | Ptyp_object (a, b) ->
             self#list self#object_field a;
             self#closed_flag b
         | Ptyp_class (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#list self#core_type b
         | Ptyp_alias (a, b) ->
             self#core_type a;
-            self#string b
+            self#loc self#string b
         | Ptyp_variant (a, b, c) ->
             self#list self#row_field a;
             self#closed_flag b;
@@ -2477,14 +2550,17 @@ class virtual iter =
             self#list (self#loc self#string) a;
             self#core_type b
         | Ptyp_package a -> self#package_type a
+        | Ptyp_open (a, b) ->
+            self#loc self#longident a;
+            self#core_type b
         | Ptyp_extension a -> self#extension a
 
     method package_type : package_type -> unit =
       fun (a, b) ->
-        self#longident_loc a;
+        self#loc self#longident a;
         self#list
           (fun (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#core_type b)
           b
 
@@ -2538,7 +2614,7 @@ class virtual iter =
             self#constant b
         | Ppat_tuple a -> self#list self#pattern a
         | Ppat_construct (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#option
               (fun (a, b) ->
                 self#list (self#loc self#string) a;
@@ -2550,7 +2626,7 @@ class virtual iter =
         | Ppat_record (a, b) ->
             self#list
               (fun (a, b) ->
-                self#longident_loc a;
+                self#loc self#longident a;
                 self#pattern b)
               a;
             self#closed_flag b
@@ -2561,13 +2637,13 @@ class virtual iter =
         | Ppat_constraint (a, b) ->
             self#pattern a;
             self#core_type b
-        | Ppat_type a -> self#longident_loc a
+        | Ppat_type a -> self#loc self#longident a
         | Ppat_lazy a -> self#pattern a
         | Ppat_unpack a -> self#loc (self#option self#string) a
         | Ppat_exception a -> self#pattern a
         | Ppat_extension a -> self#extension a
         | Ppat_open (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#pattern b
 
     method expression : expression -> unit =
@@ -2580,18 +2656,16 @@ class virtual iter =
     method expression_desc : expression_desc -> unit =
       fun x ->
         match x with
-        | Pexp_ident a -> self#longident_loc a
+        | Pexp_ident a -> self#loc self#longident a
         | Pexp_constant a -> self#constant a
         | Pexp_let (a, b, c) ->
             self#rec_flag a;
             self#list self#value_binding b;
             self#expression c
-        | Pexp_function a -> self#cases a
-        | Pexp_fun (a, b, c, d) ->
-            self#arg_label a;
-            self#option self#expression b;
-            self#pattern c;
-            self#expression d
+        | Pexp_function (a, b, c) ->
+            self#list self#function_param a;
+            self#option self#type_constraint b;
+            self#function_body c
         | Pexp_apply (a, b) ->
             self#expression a;
             self#list
@@ -2607,7 +2681,7 @@ class virtual iter =
             self#cases b
         | Pexp_tuple a -> self#list self#expression a
         | Pexp_construct (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#option self#expression b
         | Pexp_variant (a, b) ->
             self#label a;
@@ -2615,16 +2689,16 @@ class virtual iter =
         | Pexp_record (a, b) ->
             self#list
               (fun (a, b) ->
-                self#longident_loc a;
+                self#loc self#longident a;
                 self#expression b)
               a;
             self#option self#expression b
         | Pexp_field (a, b) ->
             self#expression a;
-            self#longident_loc b
+            self#loc self#longident b
         | Pexp_setfield (a, b, c) ->
             self#expression a;
-            self#longident_loc b;
+            self#loc self#longident b;
             self#expression c
         | Pexp_array a -> self#list self#expression a
         | Pexp_ifthenelse (a, b, c) ->
@@ -2653,7 +2727,7 @@ class virtual iter =
         | Pexp_send (a, b) ->
             self#expression a;
             self#loc self#label b
-        | Pexp_new a -> self#longident_loc a
+        | Pexp_new a -> self#loc self#longident a
         | Pexp_setinstvar (a, b) ->
             self#loc self#label a;
             self#expression b
@@ -2705,6 +2779,37 @@ class virtual iter =
         self#pattern pbop_pat;
         self#expression pbop_exp;
         self#location pbop_loc
+
+    method function_param_desc : function_param_desc -> unit =
+      fun x ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            self#arg_label a;
+            self#option self#expression b;
+            self#pattern c
+        | Pparam_newtype a -> self#loc self#string a
+
+    method function_param : function_param -> unit =
+      fun { pparam_loc; pparam_desc } ->
+        self#location pparam_loc;
+        self#function_param_desc pparam_desc
+
+    method function_body : function_body -> unit =
+      fun x ->
+        match x with
+        | Pfunction_body a -> self#expression a
+        | Pfunction_cases (a, b, c) ->
+            self#cases a;
+            self#location b;
+            self#attributes c
+
+    method type_constraint : type_constraint -> unit =
+      fun x ->
+        match x with
+        | Pconstraint a -> self#core_type a
+        | Pcoerce (a, b) ->
+            self#option self#core_type a;
+            self#core_type b
 
     method value_description : value_description -> unit =
       fun { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } ->
@@ -2786,7 +2891,7 @@ class virtual iter =
             ptyext_loc;
             ptyext_attributes;
           } ->
-        self#longident_loc ptyext_path;
+        self#loc self#longident ptyext_path;
         self#list
           (fun (a, b) ->
             self#core_type a;
@@ -2820,7 +2925,7 @@ class virtual iter =
             self#list (self#loc self#string) a;
             self#constructor_arguments b;
             self#option self#core_type c
-        | Pext_rebind a -> self#longident_loc a
+        | Pext_rebind a -> self#loc self#longident a
 
     method class_type : class_type -> unit =
       fun { pcty_desc; pcty_loc; pcty_attributes } ->
@@ -2832,7 +2937,7 @@ class virtual iter =
       fun x ->
         match x with
         | Pcty_constr (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#list self#core_type b
         | Pcty_signature a -> self#class_signature a
         | Pcty_arrow (a, b, c) ->
@@ -2914,7 +3019,7 @@ class virtual iter =
       fun x ->
         match x with
         | Pcl_constr (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#list self#core_type b
         | Pcl_structure a -> self#class_structure a
         | Pcl_fun (a, b, c, d) ->
@@ -3000,7 +3105,7 @@ class virtual iter =
     method module_type_desc : module_type_desc -> unit =
       fun x ->
         match x with
-        | Pmty_ident a -> self#longident_loc a
+        | Pmty_ident a -> self#loc self#longident a
         | Pmty_signature a -> self#signature a
         | Pmty_functor (a, b) ->
             self#functor_parameter a;
@@ -3010,7 +3115,7 @@ class virtual iter =
             self#list self#with_constraint b
         | Pmty_typeof a -> self#module_expr a
         | Pmty_extension a -> self#extension a
-        | Pmty_alias a -> self#longident_loc a
+        | Pmty_alias a -> self#loc self#longident a
 
     method functor_parameter : functor_parameter -> unit =
       fun x ->
@@ -3061,7 +3166,7 @@ class virtual iter =
     method module_substitution : module_substitution -> unit =
       fun { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         self#loc self#string pms_name;
-        self#longident_loc pms_manifest;
+        self#loc self#longident pms_manifest;
         self#attributes pms_attributes;
         self#location pms_loc
 
@@ -3080,7 +3185,7 @@ class virtual iter =
         self#attributes popen_attributes
 
     method open_description : open_description -> unit =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration : open_declaration -> unit =
       self#open_infos self#module_expr
@@ -3101,23 +3206,23 @@ class virtual iter =
       fun x ->
         match x with
         | Pwith_type (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#type_declaration b
         | Pwith_module (a, b) ->
-            self#longident_loc a;
-            self#longident_loc b
+            self#loc self#longident a;
+            self#loc self#longident b
         | Pwith_modtype (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#module_type b
         | Pwith_modtypesubst (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#module_type b
         | Pwith_typesubst (a, b) ->
-            self#longident_loc a;
+            self#loc self#longident a;
             self#type_declaration b
         | Pwith_modsubst (a, b) ->
-            self#longident_loc a;
-            self#longident_loc b
+            self#loc self#longident a;
+            self#loc self#longident b
 
     method module_expr : module_expr -> unit =
       fun { pmod_desc; pmod_loc; pmod_attributes } ->
@@ -3128,7 +3233,7 @@ class virtual iter =
     method module_expr_desc : module_expr_desc -> unit =
       fun x ->
         match x with
-        | Pmod_ident a -> self#longident_loc a
+        | Pmod_ident a -> self#loc self#longident a
         | Pmod_structure a -> self#structure a
         | Pmod_functor (a, b) ->
             self#functor_parameter a;
@@ -3136,6 +3241,7 @@ class virtual iter =
         | Pmod_apply (a, b) ->
             self#module_expr a;
             self#module_expr b
+        | Pmod_apply_unit a -> self#module_expr a
         | Pmod_constraint (a, b) ->
             self#module_expr a;
             self#module_type b
@@ -3176,10 +3282,21 @@ class virtual iter =
             self#extension a;
             self#attributes b
 
+    method value_constraint : value_constraint -> unit =
+      fun x ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            self#list (self#loc self#string) locally_abstract_univars;
+            self#core_type typ
+        | Pvc_coercion { ground; coercion } ->
+            self#option self#core_type ground;
+            self#core_type coercion
+
     method value_binding : value_binding -> unit =
-      fun { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } ->
+      fun { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } ->
         self#pattern pvb_pat;
         self#expression pvb_expr;
+        self#option self#value_constraint pvb_constraint;
         self#attributes pvb_attributes;
         self#location pvb_loc
 
@@ -3355,7 +3472,7 @@ class virtual ['acc] fold =
             acc
         | Ptyp_tuple a -> self#list self#core_type a acc
         | Ptyp_constr (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#list self#core_type b acc in
             acc
         | Ptyp_object (a, b) ->
@@ -3363,12 +3480,12 @@ class virtual ['acc] fold =
             let acc = self#closed_flag b acc in
             acc
         | Ptyp_class (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#list self#core_type b acc in
             acc
         | Ptyp_alias (a, b) ->
             let acc = self#core_type a acc in
-            let acc = self#string b acc in
+            let acc = self#loc self#string b acc in
             acc
         | Ptyp_variant (a, b, c) ->
             let acc = self#list self#row_field a acc in
@@ -3380,15 +3497,19 @@ class virtual ['acc] fold =
             let acc = self#core_type b acc in
             acc
         | Ptyp_package a -> self#package_type a acc
+        | Ptyp_open (a, b) ->
+            let acc = self#loc self#longident a acc in
+            let acc = self#core_type b acc in
+            acc
         | Ptyp_extension a -> self#extension a acc
 
     method package_type : package_type -> 'acc -> 'acc =
       fun (a, b) acc ->
-        let acc = self#longident_loc a acc in
+        let acc = self#loc self#longident a acc in
         let acc =
           self#list
             (fun (a, b) acc ->
-              let acc = self#longident_loc a acc in
+              let acc = self#loc self#longident a acc in
               let acc = self#core_type b acc in
               acc)
             b acc
@@ -3452,7 +3573,7 @@ class virtual ['acc] fold =
             acc
         | Ppat_tuple a -> self#list self#pattern a acc
         | Ppat_construct (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc =
               self#option
                 (fun (a, b) acc ->
@@ -3470,7 +3591,7 @@ class virtual ['acc] fold =
             let acc =
               self#list
                 (fun (a, b) acc ->
-                  let acc = self#longident_loc a acc in
+                  let acc = self#loc self#longident a acc in
                   let acc = self#pattern b acc in
                   acc)
                 a acc
@@ -3486,13 +3607,13 @@ class virtual ['acc] fold =
             let acc = self#pattern a acc in
             let acc = self#core_type b acc in
             acc
-        | Ppat_type a -> self#longident_loc a acc
+        | Ppat_type a -> self#loc self#longident a acc
         | Ppat_lazy a -> self#pattern a acc
         | Ppat_unpack a -> self#loc (self#option self#string) a acc
         | Ppat_exception a -> self#pattern a acc
         | Ppat_extension a -> self#extension a acc
         | Ppat_open (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#pattern b acc in
             acc
 
@@ -3507,19 +3628,17 @@ class virtual ['acc] fold =
     method expression_desc : expression_desc -> 'acc -> 'acc =
       fun x acc ->
         match x with
-        | Pexp_ident a -> self#longident_loc a acc
+        | Pexp_ident a -> self#loc self#longident a acc
         | Pexp_constant a -> self#constant a acc
         | Pexp_let (a, b, c) ->
             let acc = self#rec_flag a acc in
             let acc = self#list self#value_binding b acc in
             let acc = self#expression c acc in
             acc
-        | Pexp_function a -> self#cases a acc
-        | Pexp_fun (a, b, c, d) ->
-            let acc = self#arg_label a acc in
-            let acc = self#option self#expression b acc in
-            let acc = self#pattern c acc in
-            let acc = self#expression d acc in
+        | Pexp_function (a, b, c) ->
+            let acc = self#list self#function_param a acc in
+            let acc = self#option self#type_constraint b acc in
+            let acc = self#function_body c acc in
             acc
         | Pexp_apply (a, b) ->
             let acc = self#expression a acc in
@@ -3542,7 +3661,7 @@ class virtual ['acc] fold =
             acc
         | Pexp_tuple a -> self#list self#expression a acc
         | Pexp_construct (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#option self#expression b acc in
             acc
         | Pexp_variant (a, b) ->
@@ -3553,7 +3672,7 @@ class virtual ['acc] fold =
             let acc =
               self#list
                 (fun (a, b) acc ->
-                  let acc = self#longident_loc a acc in
+                  let acc = self#loc self#longident a acc in
                   let acc = self#expression b acc in
                   acc)
                 a acc
@@ -3562,11 +3681,11 @@ class virtual ['acc] fold =
             acc
         | Pexp_field (a, b) ->
             let acc = self#expression a acc in
-            let acc = self#longident_loc b acc in
+            let acc = self#loc self#longident b acc in
             acc
         | Pexp_setfield (a, b, c) ->
             let acc = self#expression a acc in
-            let acc = self#longident_loc b acc in
+            let acc = self#loc self#longident b acc in
             let acc = self#expression c acc in
             acc
         | Pexp_array a -> self#list self#expression a acc
@@ -3603,7 +3722,7 @@ class virtual ['acc] fold =
             let acc = self#expression a acc in
             let acc = self#loc self#label b acc in
             acc
-        | Pexp_new a -> self#longident_loc a acc
+        | Pexp_new a -> self#loc self#longident a acc
         | Pexp_setinstvar (a, b) ->
             let acc = self#loc self#label a acc in
             let acc = self#expression b acc in
@@ -3665,6 +3784,41 @@ class virtual ['acc] fold =
         let acc = self#expression pbop_exp acc in
         let acc = self#location pbop_loc acc in
         acc
+
+    method function_param_desc : function_param_desc -> 'acc -> 'acc =
+      fun x acc ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            let acc = self#arg_label a acc in
+            let acc = self#option self#expression b acc in
+            let acc = self#pattern c acc in
+            acc
+        | Pparam_newtype a -> self#loc self#string a acc
+
+    method function_param : function_param -> 'acc -> 'acc =
+      fun { pparam_loc; pparam_desc } acc ->
+        let acc = self#location pparam_loc acc in
+        let acc = self#function_param_desc pparam_desc acc in
+        acc
+
+    method function_body : function_body -> 'acc -> 'acc =
+      fun x acc ->
+        match x with
+        | Pfunction_body a -> self#expression a acc
+        | Pfunction_cases (a, b, c) ->
+            let acc = self#cases a acc in
+            let acc = self#location b acc in
+            let acc = self#attributes c acc in
+            acc
+
+    method type_constraint : type_constraint -> 'acc -> 'acc =
+      fun x acc ->
+        match x with
+        | Pconstraint a -> self#core_type a acc
+        | Pcoerce (a, b) ->
+            let acc = self#option self#core_type a acc in
+            let acc = self#core_type b acc in
+            acc
 
     method value_description : value_description -> 'acc -> 'acc =
       fun { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } acc ->
@@ -3759,7 +3913,7 @@ class virtual ['acc] fold =
             ptyext_loc;
             ptyext_attributes;
           } acc ->
-        let acc = self#longident_loc ptyext_path acc in
+        let acc = self#loc self#longident ptyext_path acc in
         let acc =
           self#list
             (fun (a, b) acc ->
@@ -3806,7 +3960,7 @@ class virtual ['acc] fold =
             let acc = self#constructor_arguments b acc in
             let acc = self#option self#core_type c acc in
             acc
-        | Pext_rebind a -> self#longident_loc a acc
+        | Pext_rebind a -> self#loc self#longident a acc
 
     method class_type : class_type -> 'acc -> 'acc =
       fun { pcty_desc; pcty_loc; pcty_attributes } acc ->
@@ -3819,7 +3973,7 @@ class virtual ['acc] fold =
       fun x acc ->
         match x with
         | Pcty_constr (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#list self#core_type b acc in
             acc
         | Pcty_signature a -> self#class_signature a acc
@@ -3919,7 +4073,7 @@ class virtual ['acc] fold =
       fun x acc ->
         match x with
         | Pcl_constr (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#list self#core_type b acc in
             acc
         | Pcl_structure a -> self#class_structure a acc
@@ -4022,7 +4176,7 @@ class virtual ['acc] fold =
     method module_type_desc : module_type_desc -> 'acc -> 'acc =
       fun x acc ->
         match x with
-        | Pmty_ident a -> self#longident_loc a acc
+        | Pmty_ident a -> self#loc self#longident a acc
         | Pmty_signature a -> self#signature a acc
         | Pmty_functor (a, b) ->
             let acc = self#functor_parameter a acc in
@@ -4034,7 +4188,7 @@ class virtual ['acc] fold =
             acc
         | Pmty_typeof a -> self#module_expr a acc
         | Pmty_extension a -> self#extension a acc
-        | Pmty_alias a -> self#longident_loc a acc
+        | Pmty_alias a -> self#loc self#longident a acc
 
     method functor_parameter : functor_parameter -> 'acc -> 'acc =
       fun x acc ->
@@ -4090,7 +4244,7 @@ class virtual ['acc] fold =
     method module_substitution : module_substitution -> 'acc -> 'acc =
       fun { pms_name; pms_manifest; pms_attributes; pms_loc } acc ->
         let acc = self#loc self#string pms_name acc in
-        let acc = self#longident_loc pms_manifest acc in
+        let acc = self#loc self#longident pms_manifest acc in
         let acc = self#attributes pms_attributes acc in
         let acc = self#location pms_loc acc in
         acc
@@ -4113,7 +4267,7 @@ class virtual ['acc] fold =
         acc
 
     method open_description : open_description -> 'acc -> 'acc =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration : open_declaration -> 'acc -> 'acc =
       self#open_infos self#module_expr
@@ -4136,28 +4290,28 @@ class virtual ['acc] fold =
       fun x acc ->
         match x with
         | Pwith_type (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#type_declaration b acc in
             acc
         | Pwith_module (a, b) ->
-            let acc = self#longident_loc a acc in
-            let acc = self#longident_loc b acc in
+            let acc = self#loc self#longident a acc in
+            let acc = self#loc self#longident b acc in
             acc
         | Pwith_modtype (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#module_type b acc in
             acc
         | Pwith_modtypesubst (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#module_type b acc in
             acc
         | Pwith_typesubst (a, b) ->
-            let acc = self#longident_loc a acc in
+            let acc = self#loc self#longident a acc in
             let acc = self#type_declaration b acc in
             acc
         | Pwith_modsubst (a, b) ->
-            let acc = self#longident_loc a acc in
-            let acc = self#longident_loc b acc in
+            let acc = self#loc self#longident a acc in
+            let acc = self#loc self#longident b acc in
             acc
 
     method module_expr : module_expr -> 'acc -> 'acc =
@@ -4170,7 +4324,7 @@ class virtual ['acc] fold =
     method module_expr_desc : module_expr_desc -> 'acc -> 'acc =
       fun x acc ->
         match x with
-        | Pmod_ident a -> self#longident_loc a acc
+        | Pmod_ident a -> self#loc self#longident a acc
         | Pmod_structure a -> self#structure a acc
         | Pmod_functor (a, b) ->
             let acc = self#functor_parameter a acc in
@@ -4180,6 +4334,7 @@ class virtual ['acc] fold =
             let acc = self#module_expr a acc in
             let acc = self#module_expr b acc in
             acc
+        | Pmod_apply_unit a -> self#module_expr a acc
         | Pmod_constraint (a, b) ->
             let acc = self#module_expr a acc in
             let acc = self#module_type b acc in
@@ -4226,10 +4381,25 @@ class virtual ['acc] fold =
             let acc = self#attributes b acc in
             acc
 
+    method value_constraint : value_constraint -> 'acc -> 'acc =
+      fun x acc ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            let acc =
+              self#list (self#loc self#string) locally_abstract_univars acc
+            in
+            let acc = self#core_type typ acc in
+            acc
+        | Pvc_coercion { ground; coercion } ->
+            let acc = self#option self#core_type ground acc in
+            let acc = self#core_type coercion acc in
+            acc
+
     method value_binding : value_binding -> 'acc -> 'acc =
-      fun { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } acc ->
+      fun { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } acc ->
         let acc = self#pattern pvb_pat acc in
         let acc = self#expression pvb_expr acc in
+        let acc = self#option self#value_constraint pvb_constraint acc in
         let acc = self#attributes pvb_attributes acc in
         let acc = self#location pvb_loc acc in
         acc
@@ -4447,7 +4617,7 @@ class virtual ['acc] fold_map =
             let a, acc = self#list self#core_type a acc in
             (Ptyp_tuple a, acc)
         | Ptyp_constr (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#list self#core_type b acc in
             (Ptyp_constr (a, b), acc)
         | Ptyp_object (a, b) ->
@@ -4455,12 +4625,12 @@ class virtual ['acc] fold_map =
             let b, acc = self#closed_flag b acc in
             (Ptyp_object (a, b), acc)
         | Ptyp_class (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#list self#core_type b acc in
             (Ptyp_class (a, b), acc)
         | Ptyp_alias (a, b) ->
             let a, acc = self#core_type a acc in
-            let b, acc = self#string b acc in
+            let b, acc = self#loc self#string b acc in
             (Ptyp_alias (a, b), acc)
         | Ptyp_variant (a, b, c) ->
             let a, acc = self#list self#row_field a acc in
@@ -4474,17 +4644,21 @@ class virtual ['acc] fold_map =
         | Ptyp_package a ->
             let a, acc = self#package_type a acc in
             (Ptyp_package a, acc)
+        | Ptyp_open (a, b) ->
+            let a, acc = self#loc self#longident a acc in
+            let b, acc = self#core_type b acc in
+            (Ptyp_open (a, b), acc)
         | Ptyp_extension a ->
             let a, acc = self#extension a acc in
             (Ptyp_extension a, acc)
 
     method package_type : package_type -> 'acc -> package_type * 'acc =
       fun (a, b) acc ->
-        let a, acc = self#longident_loc a acc in
+        let a, acc = self#loc self#longident a acc in
         let b, acc =
           self#list
             (fun (a, b) acc ->
-              let a, acc = self#longident_loc a acc in
+              let a, acc = self#loc self#longident a acc in
               let b, acc = self#core_type b acc in
               ((a, b), acc))
             b acc
@@ -4559,7 +4733,7 @@ class virtual ['acc] fold_map =
             let a, acc = self#list self#pattern a acc in
             (Ppat_tuple a, acc)
         | Ppat_construct (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc =
               self#option
                 (fun (a, b) acc ->
@@ -4577,7 +4751,7 @@ class virtual ['acc] fold_map =
             let a, acc =
               self#list
                 (fun (a, b) acc ->
-                  let a, acc = self#longident_loc a acc in
+                  let a, acc = self#loc self#longident a acc in
                   let b, acc = self#pattern b acc in
                   ((a, b), acc))
                 a acc
@@ -4596,7 +4770,7 @@ class virtual ['acc] fold_map =
             let b, acc = self#core_type b acc in
             (Ppat_constraint (a, b), acc)
         | Ppat_type a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Ppat_type a, acc)
         | Ppat_lazy a ->
             let a, acc = self#pattern a acc in
@@ -4611,7 +4785,7 @@ class virtual ['acc] fold_map =
             let a, acc = self#extension a acc in
             (Ppat_extension a, acc)
         | Ppat_open (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#pattern b acc in
             (Ppat_open (a, b), acc)
 
@@ -4627,7 +4801,7 @@ class virtual ['acc] fold_map =
       fun x acc ->
         match x with
         | Pexp_ident a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Pexp_ident a, acc)
         | Pexp_constant a ->
             let a, acc = self#constant a acc in
@@ -4637,15 +4811,11 @@ class virtual ['acc] fold_map =
             let b, acc = self#list self#value_binding b acc in
             let c, acc = self#expression c acc in
             (Pexp_let (a, b, c), acc)
-        | Pexp_function a ->
-            let a, acc = self#cases a acc in
-            (Pexp_function a, acc)
-        | Pexp_fun (a, b, c, d) ->
-            let a, acc = self#arg_label a acc in
-            let b, acc = self#option self#expression b acc in
-            let c, acc = self#pattern c acc in
-            let d, acc = self#expression d acc in
-            (Pexp_fun (a, b, c, d), acc)
+        | Pexp_function (a, b, c) ->
+            let a, acc = self#list self#function_param a acc in
+            let b, acc = self#option self#type_constraint b acc in
+            let c, acc = self#function_body c acc in
+            (Pexp_function (a, b, c), acc)
         | Pexp_apply (a, b) ->
             let a, acc = self#expression a acc in
             let b, acc =
@@ -4669,7 +4839,7 @@ class virtual ['acc] fold_map =
             let a, acc = self#list self#expression a acc in
             (Pexp_tuple a, acc)
         | Pexp_construct (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#option self#expression b acc in
             (Pexp_construct (a, b), acc)
         | Pexp_variant (a, b) ->
@@ -4680,7 +4850,7 @@ class virtual ['acc] fold_map =
             let a, acc =
               self#list
                 (fun (a, b) acc ->
-                  let a, acc = self#longident_loc a acc in
+                  let a, acc = self#loc self#longident a acc in
                   let b, acc = self#expression b acc in
                   ((a, b), acc))
                 a acc
@@ -4689,11 +4859,11 @@ class virtual ['acc] fold_map =
             (Pexp_record (a, b), acc)
         | Pexp_field (a, b) ->
             let a, acc = self#expression a acc in
-            let b, acc = self#longident_loc b acc in
+            let b, acc = self#loc self#longident b acc in
             (Pexp_field (a, b), acc)
         | Pexp_setfield (a, b, c) ->
             let a, acc = self#expression a acc in
-            let b, acc = self#longident_loc b acc in
+            let b, acc = self#loc self#longident b acc in
             let c, acc = self#expression c acc in
             (Pexp_setfield (a, b, c), acc)
         | Pexp_array a ->
@@ -4733,7 +4903,7 @@ class virtual ['acc] fold_map =
             let b, acc = self#loc self#label b acc in
             (Pexp_send (a, b), acc)
         | Pexp_new a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Pexp_new a, acc)
         | Pexp_setinstvar (a, b) ->
             let a, acc = self#loc self#label a acc in
@@ -4811,6 +4981,48 @@ class virtual ['acc] fold_map =
         let pbop_exp, acc = self#expression pbop_exp acc in
         let pbop_loc, acc = self#location pbop_loc acc in
         ({ pbop_op; pbop_pat; pbop_exp; pbop_loc }, acc)
+
+    method function_param_desc
+        : function_param_desc -> 'acc -> function_param_desc * 'acc =
+      fun x acc ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            let a, acc = self#arg_label a acc in
+            let b, acc = self#option self#expression b acc in
+            let c, acc = self#pattern c acc in
+            (Pparam_val (a, b, c), acc)
+        | Pparam_newtype a ->
+            let a, acc = self#loc self#string a acc in
+            (Pparam_newtype a, acc)
+
+    method function_param : function_param -> 'acc -> function_param * 'acc =
+      fun { pparam_loc; pparam_desc } acc ->
+        let pparam_loc, acc = self#location pparam_loc acc in
+        let pparam_desc, acc = self#function_param_desc pparam_desc acc in
+        ({ pparam_loc; pparam_desc }, acc)
+
+    method function_body : function_body -> 'acc -> function_body * 'acc =
+      fun x acc ->
+        match x with
+        | Pfunction_body a ->
+            let a, acc = self#expression a acc in
+            (Pfunction_body a, acc)
+        | Pfunction_cases (a, b, c) ->
+            let a, acc = self#cases a acc in
+            let b, acc = self#location b acc in
+            let c, acc = self#attributes c acc in
+            (Pfunction_cases (a, b, c), acc)
+
+    method type_constraint : type_constraint -> 'acc -> type_constraint * 'acc =
+      fun x acc ->
+        match x with
+        | Pconstraint a ->
+            let a, acc = self#core_type a acc in
+            (Pconstraint a, acc)
+        | Pcoerce (a, b) ->
+            let a, acc = self#option self#core_type a acc in
+            let b, acc = self#core_type b acc in
+            (Pcoerce (a, b), acc)
 
     method value_description
         : value_description -> 'acc -> value_description * 'acc =
@@ -4930,7 +5142,7 @@ class virtual ['acc] fold_map =
             ptyext_loc;
             ptyext_attributes;
           } acc ->
-        let ptyext_path, acc = self#longident_loc ptyext_path acc in
+        let ptyext_path, acc = self#loc self#longident ptyext_path acc in
         let ptyext_params, acc =
           self#list
             (fun (a, b) acc ->
@@ -4991,7 +5203,7 @@ class virtual ['acc] fold_map =
             let c, acc = self#option self#core_type c acc in
             (Pext_decl (a, b, c), acc)
         | Pext_rebind a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Pext_rebind a, acc)
 
     method class_type : class_type -> 'acc -> class_type * 'acc =
@@ -5005,7 +5217,7 @@ class virtual ['acc] fold_map =
       fun x acc ->
         match x with
         | Pcty_constr (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#list self#core_type b acc in
             (Pcty_constr (a, b), acc)
         | Pcty_signature a ->
@@ -5135,7 +5347,7 @@ class virtual ['acc] fold_map =
       fun x acc ->
         match x with
         | Pcl_constr (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#list self#core_type b acc in
             (Pcl_constr (a, b), acc)
         | Pcl_structure a ->
@@ -5264,7 +5476,7 @@ class virtual ['acc] fold_map =
       fun x acc ->
         match x with
         | Pmty_ident a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Pmty_ident a, acc)
         | Pmty_signature a ->
             let a, acc = self#signature a acc in
@@ -5284,7 +5496,7 @@ class virtual ['acc] fold_map =
             let a, acc = self#extension a acc in
             (Pmty_extension a, acc)
         | Pmty_alias a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Pmty_alias a, acc)
 
     method functor_parameter
@@ -5374,7 +5586,7 @@ class virtual ['acc] fold_map =
         : module_substitution -> 'acc -> module_substitution * 'acc =
       fun { pms_name; pms_manifest; pms_attributes; pms_loc } acc ->
         let pms_name, acc = self#loc self#string pms_name acc in
-        let pms_manifest, acc = self#longident_loc pms_manifest acc in
+        let pms_manifest, acc = self#loc self#longident pms_manifest acc in
         let pms_attributes, acc = self#attributes pms_attributes acc in
         let pms_loc, acc = self#location pms_loc acc in
         ({ pms_name; pms_manifest; pms_attributes; pms_loc }, acc)
@@ -5403,7 +5615,7 @@ class virtual ['acc] fold_map =
 
     method open_description
         : open_description -> 'acc -> open_description * 'acc =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration
         : open_declaration -> 'acc -> open_declaration * 'acc =
@@ -5433,28 +5645,28 @@ class virtual ['acc] fold_map =
       fun x acc ->
         match x with
         | Pwith_type (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#type_declaration b acc in
             (Pwith_type (a, b), acc)
         | Pwith_module (a, b) ->
-            let a, acc = self#longident_loc a acc in
-            let b, acc = self#longident_loc b acc in
+            let a, acc = self#loc self#longident a acc in
+            let b, acc = self#loc self#longident b acc in
             (Pwith_module (a, b), acc)
         | Pwith_modtype (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#module_type b acc in
             (Pwith_modtype (a, b), acc)
         | Pwith_modtypesubst (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#module_type b acc in
             (Pwith_modtypesubst (a, b), acc)
         | Pwith_typesubst (a, b) ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             let b, acc = self#type_declaration b acc in
             (Pwith_typesubst (a, b), acc)
         | Pwith_modsubst (a, b) ->
-            let a, acc = self#longident_loc a acc in
-            let b, acc = self#longident_loc b acc in
+            let a, acc = self#loc self#longident a acc in
+            let b, acc = self#loc self#longident b acc in
             (Pwith_modsubst (a, b), acc)
 
     method module_expr : module_expr -> 'acc -> module_expr * 'acc =
@@ -5469,7 +5681,7 @@ class virtual ['acc] fold_map =
       fun x acc ->
         match x with
         | Pmod_ident a ->
-            let a, acc = self#longident_loc a acc in
+            let a, acc = self#loc self#longident a acc in
             (Pmod_ident a, acc)
         | Pmod_structure a ->
             let a, acc = self#structure a acc in
@@ -5482,6 +5694,9 @@ class virtual ['acc] fold_map =
             let a, acc = self#module_expr a acc in
             let b, acc = self#module_expr b acc in
             (Pmod_apply (a, b), acc)
+        | Pmod_apply_unit a ->
+            let a, acc = self#module_expr a acc in
+            (Pmod_apply_unit a, acc)
         | Pmod_constraint (a, b) ->
             let a, acc = self#module_expr a acc in
             let b, acc = self#module_type b acc in
@@ -5556,13 +5771,31 @@ class virtual ['acc] fold_map =
             let b, acc = self#attributes b acc in
             (Pstr_extension (a, b), acc)
 
+    method value_constraint
+        : value_constraint -> 'acc -> value_constraint * 'acc =
+      fun x acc ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            let locally_abstract_univars, acc =
+              self#list (self#loc self#string) locally_abstract_univars acc
+            in
+            let typ, acc = self#core_type typ acc in
+            (Pvc_constraint { locally_abstract_univars; typ }, acc)
+        | Pvc_coercion { ground; coercion } ->
+            let ground, acc = self#option self#core_type ground acc in
+            let coercion, acc = self#core_type coercion acc in
+            (Pvc_coercion { ground; coercion }, acc)
+
     method value_binding : value_binding -> 'acc -> value_binding * 'acc =
-      fun { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } acc ->
+      fun { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } acc ->
         let pvb_pat, acc = self#pattern pvb_pat acc in
         let pvb_expr, acc = self#expression pvb_expr acc in
+        let pvb_constraint, acc =
+          self#option self#value_constraint pvb_constraint acc
+        in
         let pvb_attributes, acc = self#attributes pvb_attributes acc in
         let pvb_loc, acc = self#location pvb_loc acc in
-        ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, acc)
+        ({ pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc }, acc)
 
     method module_binding : module_binding -> 'acc -> module_binding * 'acc =
       fun { pmb_name; pmb_expr; pmb_attributes; pmb_loc } acc ->
@@ -5778,7 +6011,7 @@ class virtual ['ctx] map_with_context =
             let a = self#list self#core_type ctx a in
             Ptyp_tuple a
         | Ptyp_constr (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             Ptyp_constr (a, b)
         | Ptyp_object (a, b) ->
@@ -5786,12 +6019,12 @@ class virtual ['ctx] map_with_context =
             let b = self#closed_flag ctx b in
             Ptyp_object (a, b)
         | Ptyp_class (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             Ptyp_class (a, b)
         | Ptyp_alias (a, b) ->
             let a = self#core_type ctx a in
-            let b = self#string ctx b in
+            let b = self#loc self#string ctx b in
             Ptyp_alias (a, b)
         | Ptyp_variant (a, b, c) ->
             let a = self#list self#row_field ctx a in
@@ -5805,17 +6038,21 @@ class virtual ['ctx] map_with_context =
         | Ptyp_package a ->
             let a = self#package_type ctx a in
             Ptyp_package a
+        | Ptyp_open (a, b) ->
+            let a = self#loc self#longident ctx a in
+            let b = self#core_type ctx b in
+            Ptyp_open (a, b)
         | Ptyp_extension a ->
             let a = self#extension ctx a in
             Ptyp_extension a
 
     method package_type : 'ctx -> package_type -> package_type =
       fun ctx (a, b) ->
-        let a = self#longident_loc ctx a in
+        let a = self#loc self#longident ctx a in
         let b =
           self#list
             (fun ctx (a, b) ->
-              let a = self#longident_loc ctx a in
+              let a = self#loc self#longident ctx a in
               let b = self#core_type ctx b in
               (a, b))
             ctx b
@@ -5889,7 +6126,7 @@ class virtual ['ctx] map_with_context =
             let a = self#list self#pattern ctx a in
             Ppat_tuple a
         | Ppat_construct (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b =
               self#option
                 (fun ctx (a, b) ->
@@ -5907,7 +6144,7 @@ class virtual ['ctx] map_with_context =
             let a =
               self#list
                 (fun ctx (a, b) ->
-                  let a = self#longident_loc ctx a in
+                  let a = self#loc self#longident ctx a in
                   let b = self#pattern ctx b in
                   (a, b))
                 ctx a
@@ -5926,7 +6163,7 @@ class virtual ['ctx] map_with_context =
             let b = self#core_type ctx b in
             Ppat_constraint (a, b)
         | Ppat_type a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Ppat_type a
         | Ppat_lazy a ->
             let a = self#pattern ctx a in
@@ -5941,7 +6178,7 @@ class virtual ['ctx] map_with_context =
             let a = self#extension ctx a in
             Ppat_extension a
         | Ppat_open (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#pattern ctx b in
             Ppat_open (a, b)
 
@@ -5957,7 +6194,7 @@ class virtual ['ctx] map_with_context =
       fun ctx x ->
         match x with
         | Pexp_ident a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Pexp_ident a
         | Pexp_constant a ->
             let a = self#constant ctx a in
@@ -5967,15 +6204,11 @@ class virtual ['ctx] map_with_context =
             let b = self#list self#value_binding ctx b in
             let c = self#expression ctx c in
             Pexp_let (a, b, c)
-        | Pexp_function a ->
-            let a = self#cases ctx a in
-            Pexp_function a
-        | Pexp_fun (a, b, c, d) ->
-            let a = self#arg_label ctx a in
-            let b = self#option self#expression ctx b in
-            let c = self#pattern ctx c in
-            let d = self#expression ctx d in
-            Pexp_fun (a, b, c, d)
+        | Pexp_function (a, b, c) ->
+            let a = self#list self#function_param ctx a in
+            let b = self#option self#type_constraint ctx b in
+            let c = self#function_body ctx c in
+            Pexp_function (a, b, c)
         | Pexp_apply (a, b) ->
             let a = self#expression ctx a in
             let b =
@@ -5999,7 +6232,7 @@ class virtual ['ctx] map_with_context =
             let a = self#list self#expression ctx a in
             Pexp_tuple a
         | Pexp_construct (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#option self#expression ctx b in
             Pexp_construct (a, b)
         | Pexp_variant (a, b) ->
@@ -6010,7 +6243,7 @@ class virtual ['ctx] map_with_context =
             let a =
               self#list
                 (fun ctx (a, b) ->
-                  let a = self#longident_loc ctx a in
+                  let a = self#loc self#longident ctx a in
                   let b = self#expression ctx b in
                   (a, b))
                 ctx a
@@ -6019,11 +6252,11 @@ class virtual ['ctx] map_with_context =
             Pexp_record (a, b)
         | Pexp_field (a, b) ->
             let a = self#expression ctx a in
-            let b = self#longident_loc ctx b in
+            let b = self#loc self#longident ctx b in
             Pexp_field (a, b)
         | Pexp_setfield (a, b, c) ->
             let a = self#expression ctx a in
-            let b = self#longident_loc ctx b in
+            let b = self#loc self#longident ctx b in
             let c = self#expression ctx c in
             Pexp_setfield (a, b, c)
         | Pexp_array a ->
@@ -6063,7 +6296,7 @@ class virtual ['ctx] map_with_context =
             let b = self#loc self#label ctx b in
             Pexp_send (a, b)
         | Pexp_new a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Pexp_new a
         | Pexp_setinstvar (a, b) ->
             let a = self#loc self#label ctx a in
@@ -6141,6 +6374,48 @@ class virtual ['ctx] map_with_context =
         let pbop_exp = self#expression ctx pbop_exp in
         let pbop_loc = self#location ctx pbop_loc in
         { pbop_op; pbop_pat; pbop_exp; pbop_loc }
+
+    method function_param_desc
+        : 'ctx -> function_param_desc -> function_param_desc =
+      fun ctx x ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            let a = self#arg_label ctx a in
+            let b = self#option self#expression ctx b in
+            let c = self#pattern ctx c in
+            Pparam_val (a, b, c)
+        | Pparam_newtype a ->
+            let a = self#loc self#string ctx a in
+            Pparam_newtype a
+
+    method function_param : 'ctx -> function_param -> function_param =
+      fun ctx { pparam_loc; pparam_desc } ->
+        let pparam_loc = self#location ctx pparam_loc in
+        let pparam_desc = self#function_param_desc ctx pparam_desc in
+        { pparam_loc; pparam_desc }
+
+    method function_body : 'ctx -> function_body -> function_body =
+      fun ctx x ->
+        match x with
+        | Pfunction_body a ->
+            let a = self#expression ctx a in
+            Pfunction_body a
+        | Pfunction_cases (a, b, c) ->
+            let a = self#cases ctx a in
+            let b = self#location ctx b in
+            let c = self#attributes ctx c in
+            Pfunction_cases (a, b, c)
+
+    method type_constraint : 'ctx -> type_constraint -> type_constraint =
+      fun ctx x ->
+        match x with
+        | Pconstraint a ->
+            let a = self#core_type ctx a in
+            Pconstraint a
+        | Pcoerce (a, b) ->
+            let a = self#option self#core_type ctx a in
+            let b = self#core_type ctx b in
+            Pcoerce (a, b)
 
     method value_description : 'ctx -> value_description -> value_description =
       fun ctx { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } ->
@@ -6256,7 +6531,7 @@ class virtual ['ctx] map_with_context =
             ptyext_loc;
             ptyext_attributes;
           } ->
-        let ptyext_path = self#longident_loc ctx ptyext_path in
+        let ptyext_path = self#loc self#longident ctx ptyext_path in
         let ptyext_params =
           self#list
             (fun ctx (a, b) ->
@@ -6314,7 +6589,7 @@ class virtual ['ctx] map_with_context =
             let c = self#option self#core_type ctx c in
             Pext_decl (a, b, c)
         | Pext_rebind a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Pext_rebind a
 
     method class_type : 'ctx -> class_type -> class_type =
@@ -6328,7 +6603,7 @@ class virtual ['ctx] map_with_context =
       fun ctx x ->
         match x with
         | Pcty_constr (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             Pcty_constr (a, b)
         | Pcty_signature a ->
@@ -6448,7 +6723,7 @@ class virtual ['ctx] map_with_context =
       fun ctx x ->
         match x with
         | Pcl_constr (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             Pcl_constr (a, b)
         | Pcl_structure a ->
@@ -6573,7 +6848,7 @@ class virtual ['ctx] map_with_context =
       fun ctx x ->
         match x with
         | Pmty_ident a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Pmty_ident a
         | Pmty_signature a ->
             let a = self#signature ctx a in
@@ -6593,7 +6868,7 @@ class virtual ['ctx] map_with_context =
             let a = self#extension ctx a in
             Pmty_extension a
         | Pmty_alias a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Pmty_alias a
 
     method functor_parameter : 'ctx -> functor_parameter -> functor_parameter =
@@ -6682,7 +6957,7 @@ class virtual ['ctx] map_with_context =
         : 'ctx -> module_substitution -> module_substitution =
       fun ctx { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         let pms_name = self#loc self#string ctx pms_name in
-        let pms_manifest = self#longident_loc ctx pms_manifest in
+        let pms_manifest = self#loc self#longident ctx pms_manifest in
         let pms_attributes = self#attributes ctx pms_attributes in
         let pms_loc = self#location ctx pms_loc in
         { pms_name; pms_manifest; pms_attributes; pms_loc }
@@ -6706,7 +6981,7 @@ class virtual ['ctx] map_with_context =
         { popen_expr; popen_override; popen_loc; popen_attributes }
 
     method open_description : 'ctx -> open_description -> open_description =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration : 'ctx -> open_declaration -> open_declaration =
       self#open_infos self#module_expr
@@ -6732,28 +7007,28 @@ class virtual ['ctx] map_with_context =
       fun ctx x ->
         match x with
         | Pwith_type (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#type_declaration ctx b in
             Pwith_type (a, b)
         | Pwith_module (a, b) ->
-            let a = self#longident_loc ctx a in
-            let b = self#longident_loc ctx b in
+            let a = self#loc self#longident ctx a in
+            let b = self#loc self#longident ctx b in
             Pwith_module (a, b)
         | Pwith_modtype (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#module_type ctx b in
             Pwith_modtype (a, b)
         | Pwith_modtypesubst (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#module_type ctx b in
             Pwith_modtypesubst (a, b)
         | Pwith_typesubst (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#type_declaration ctx b in
             Pwith_typesubst (a, b)
         | Pwith_modsubst (a, b) ->
-            let a = self#longident_loc ctx a in
-            let b = self#longident_loc ctx b in
+            let a = self#loc self#longident ctx a in
+            let b = self#loc self#longident ctx b in
             Pwith_modsubst (a, b)
 
     method module_expr : 'ctx -> module_expr -> module_expr =
@@ -6767,7 +7042,7 @@ class virtual ['ctx] map_with_context =
       fun ctx x ->
         match x with
         | Pmod_ident a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             Pmod_ident a
         | Pmod_structure a ->
             let a = self#structure ctx a in
@@ -6780,6 +7055,9 @@ class virtual ['ctx] map_with_context =
             let a = self#module_expr ctx a in
             let b = self#module_expr ctx b in
             Pmod_apply (a, b)
+        | Pmod_apply_unit a ->
+            let a = self#module_expr ctx a in
+            Pmod_apply_unit a
         | Pmod_constraint (a, b) ->
             let a = self#module_expr ctx a in
             let b = self#module_type ctx b in
@@ -6854,13 +7132,30 @@ class virtual ['ctx] map_with_context =
             let b = self#attributes ctx b in
             Pstr_extension (a, b)
 
+    method value_constraint : 'ctx -> value_constraint -> value_constraint =
+      fun ctx x ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            let locally_abstract_univars =
+              self#list (self#loc self#string) ctx locally_abstract_univars
+            in
+            let typ = self#core_type ctx typ in
+            Pvc_constraint { locally_abstract_univars; typ }
+        | Pvc_coercion { ground; coercion } ->
+            let ground = self#option self#core_type ctx ground in
+            let coercion = self#core_type ctx coercion in
+            Pvc_coercion { ground; coercion }
+
     method value_binding : 'ctx -> value_binding -> value_binding =
-      fun ctx { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } ->
+      fun ctx { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } ->
         let pvb_pat = self#pattern ctx pvb_pat in
         let pvb_expr = self#expression ctx pvb_expr in
+        let pvb_constraint =
+          self#option self#value_constraint ctx pvb_constraint
+        in
         let pvb_attributes = self#attributes ctx pvb_attributes in
         let pvb_loc = self#location ctx pvb_loc in
-        { pvb_pat; pvb_expr; pvb_attributes; pvb_loc }
+        { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc }
 
     method module_binding : 'ctx -> module_binding -> module_binding =
       fun ctx { pmb_name; pmb_expr; pmb_attributes; pmb_loc } ->
@@ -7134,7 +7429,7 @@ class virtual ['res] lift =
             let a = self#list self#core_type a in
             self#constr "Ptyp_tuple" [ a ]
         | Ptyp_constr (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             self#constr "Ptyp_constr" [ a; b ]
         | Ptyp_object (a, b) ->
@@ -7142,12 +7437,12 @@ class virtual ['res] lift =
             let b = self#closed_flag b in
             self#constr "Ptyp_object" [ a; b ]
         | Ptyp_class (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             self#constr "Ptyp_class" [ a; b ]
         | Ptyp_alias (a, b) ->
             let a = self#core_type a in
-            let b = self#string b in
+            let b = self#loc self#string b in
             self#constr "Ptyp_alias" [ a; b ]
         | Ptyp_variant (a, b, c) ->
             let a = self#list self#row_field a in
@@ -7161,17 +7456,21 @@ class virtual ['res] lift =
         | Ptyp_package a ->
             let a = self#package_type a in
             self#constr "Ptyp_package" [ a ]
+        | Ptyp_open (a, b) ->
+            let a = self#loc self#longident a in
+            let b = self#core_type b in
+            self#constr "Ptyp_open" [ a; b ]
         | Ptyp_extension a ->
             let a = self#extension a in
             self#constr "Ptyp_extension" [ a ]
 
     method package_type : package_type -> 'res =
       fun (a, b) ->
-        let a = self#longident_loc a in
+        let a = self#loc self#longident a in
         let b =
           self#list
             (fun (a, b) ->
-              let a = self#longident_loc a in
+              let a = self#loc self#longident a in
               let b = self#core_type b in
               self#tuple [ a; b ])
             b
@@ -7261,7 +7560,7 @@ class virtual ['res] lift =
             let a = self#list self#pattern a in
             self#constr "Ppat_tuple" [ a ]
         | Ppat_construct (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b =
               self#option
                 (fun (a, b) ->
@@ -7279,7 +7578,7 @@ class virtual ['res] lift =
             let a =
               self#list
                 (fun (a, b) ->
-                  let a = self#longident_loc a in
+                  let a = self#loc self#longident a in
                   let b = self#pattern b in
                   self#tuple [ a; b ])
                 a
@@ -7298,7 +7597,7 @@ class virtual ['res] lift =
             let b = self#core_type b in
             self#constr "Ppat_constraint" [ a; b ]
         | Ppat_type a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Ppat_type" [ a ]
         | Ppat_lazy a ->
             let a = self#pattern a in
@@ -7313,7 +7612,7 @@ class virtual ['res] lift =
             let a = self#extension a in
             self#constr "Ppat_extension" [ a ]
         | Ppat_open (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#pattern b in
             self#constr "Ppat_open" [ a; b ]
 
@@ -7335,7 +7634,7 @@ class virtual ['res] lift =
       fun x ->
         match x with
         | Pexp_ident a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Pexp_ident" [ a ]
         | Pexp_constant a ->
             let a = self#constant a in
@@ -7345,15 +7644,11 @@ class virtual ['res] lift =
             let b = self#list self#value_binding b in
             let c = self#expression c in
             self#constr "Pexp_let" [ a; b; c ]
-        | Pexp_function a ->
-            let a = self#cases a in
-            self#constr "Pexp_function" [ a ]
-        | Pexp_fun (a, b, c, d) ->
-            let a = self#arg_label a in
-            let b = self#option self#expression b in
-            let c = self#pattern c in
-            let d = self#expression d in
-            self#constr "Pexp_fun" [ a; b; c; d ]
+        | Pexp_function (a, b, c) ->
+            let a = self#list self#function_param a in
+            let b = self#option self#type_constraint b in
+            let c = self#function_body c in
+            self#constr "Pexp_function" [ a; b; c ]
         | Pexp_apply (a, b) ->
             let a = self#expression a in
             let b =
@@ -7377,7 +7672,7 @@ class virtual ['res] lift =
             let a = self#list self#expression a in
             self#constr "Pexp_tuple" [ a ]
         | Pexp_construct (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#option self#expression b in
             self#constr "Pexp_construct" [ a; b ]
         | Pexp_variant (a, b) ->
@@ -7388,7 +7683,7 @@ class virtual ['res] lift =
             let a =
               self#list
                 (fun (a, b) ->
-                  let a = self#longident_loc a in
+                  let a = self#loc self#longident a in
                   let b = self#expression b in
                   self#tuple [ a; b ])
                 a
@@ -7397,11 +7692,11 @@ class virtual ['res] lift =
             self#constr "Pexp_record" [ a; b ]
         | Pexp_field (a, b) ->
             let a = self#expression a in
-            let b = self#longident_loc b in
+            let b = self#loc self#longident b in
             self#constr "Pexp_field" [ a; b ]
         | Pexp_setfield (a, b, c) ->
             let a = self#expression a in
-            let b = self#longident_loc b in
+            let b = self#loc self#longident b in
             let c = self#expression c in
             self#constr "Pexp_setfield" [ a; b; c ]
         | Pexp_array a ->
@@ -7441,7 +7736,7 @@ class virtual ['res] lift =
             let b = self#loc self#label b in
             self#constr "Pexp_send" [ a; b ]
         | Pexp_new a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Pexp_new" [ a ]
         | Pexp_setinstvar (a, b) ->
             let a = self#loc self#label a in
@@ -7526,6 +7821,47 @@ class virtual ['res] lift =
             ("pbop_exp", pbop_exp);
             ("pbop_loc", pbop_loc);
           ]
+
+    method function_param_desc : function_param_desc -> 'res =
+      fun x ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            let a = self#arg_label a in
+            let b = self#option self#expression b in
+            let c = self#pattern c in
+            self#constr "Pparam_val" [ a; b; c ]
+        | Pparam_newtype a ->
+            let a = self#loc self#string a in
+            self#constr "Pparam_newtype" [ a ]
+
+    method function_param : function_param -> 'res =
+      fun { pparam_loc; pparam_desc } ->
+        let pparam_loc = self#location pparam_loc in
+        let pparam_desc = self#function_param_desc pparam_desc in
+        self#record [ ("pparam_loc", pparam_loc); ("pparam_desc", pparam_desc) ]
+
+    method function_body : function_body -> 'res =
+      fun x ->
+        match x with
+        | Pfunction_body a ->
+            let a = self#expression a in
+            self#constr "Pfunction_body" [ a ]
+        | Pfunction_cases (a, b, c) ->
+            let a = self#cases a in
+            let b = self#location b in
+            let c = self#attributes c in
+            self#constr "Pfunction_cases" [ a; b; c ]
+
+    method type_constraint : type_constraint -> 'res =
+      fun x ->
+        match x with
+        | Pconstraint a ->
+            let a = self#core_type a in
+            self#constr "Pconstraint" [ a ]
+        | Pcoerce (a, b) ->
+            let a = self#option self#core_type a in
+            let b = self#core_type b in
+            self#constr "Pcoerce" [ a; b ]
 
     method value_description : value_description -> 'res =
       fun { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } ->
@@ -7660,7 +7996,7 @@ class virtual ['res] lift =
             ptyext_loc;
             ptyext_attributes;
           } ->
-        let ptyext_path = self#longident_loc ptyext_path in
+        let ptyext_path = self#loc self#longident ptyext_path in
         let ptyext_params =
           self#list
             (fun (a, b) ->
@@ -7728,7 +8064,7 @@ class virtual ['res] lift =
             let c = self#option self#core_type c in
             self#constr "Pext_decl" [ a; b; c ]
         | Pext_rebind a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Pext_rebind" [ a ]
 
     method class_type : class_type -> 'res =
@@ -7747,7 +8083,7 @@ class virtual ['res] lift =
       fun x ->
         match x with
         | Pcty_constr (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             self#constr "Pcty_constr" [ a; b ]
         | Pcty_signature a ->
@@ -7883,7 +8219,7 @@ class virtual ['res] lift =
       fun x ->
         match x with
         | Pcl_constr (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#list self#core_type b in
             self#constr "Pcl_constr" [ a; b ]
         | Pcl_structure a ->
@@ -8019,7 +8355,7 @@ class virtual ['res] lift =
       fun x ->
         match x with
         | Pmty_ident a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Pmty_ident" [ a ]
         | Pmty_signature a ->
             let a = self#signature a in
@@ -8039,7 +8375,7 @@ class virtual ['res] lift =
             let a = self#extension a in
             self#constr "Pmty_extension" [ a ]
         | Pmty_alias a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Pmty_alias" [ a ]
 
     method functor_parameter : functor_parameter -> 'res =
@@ -8130,7 +8466,7 @@ class virtual ['res] lift =
     method module_substitution : module_substitution -> 'res =
       fun { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         let pms_name = self#loc self#string pms_name in
-        let pms_manifest = self#longident_loc pms_manifest in
+        let pms_manifest = self#loc self#longident pms_manifest in
         let pms_attributes = self#attributes pms_attributes in
         let pms_loc = self#location pms_loc in
         self#record
@@ -8170,7 +8506,7 @@ class virtual ['res] lift =
           ]
 
     method open_description : open_description -> 'res =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration : open_declaration -> 'res =
       self#open_infos self#module_expr
@@ -8197,28 +8533,28 @@ class virtual ['res] lift =
       fun x ->
         match x with
         | Pwith_type (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#type_declaration b in
             self#constr "Pwith_type" [ a; b ]
         | Pwith_module (a, b) ->
-            let a = self#longident_loc a in
-            let b = self#longident_loc b in
+            let a = self#loc self#longident a in
+            let b = self#loc self#longident b in
             self#constr "Pwith_module" [ a; b ]
         | Pwith_modtype (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#module_type b in
             self#constr "Pwith_modtype" [ a; b ]
         | Pwith_modtypesubst (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#module_type b in
             self#constr "Pwith_modtypesubst" [ a; b ]
         | Pwith_typesubst (a, b) ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             let b = self#type_declaration b in
             self#constr "Pwith_typesubst" [ a; b ]
         | Pwith_modsubst (a, b) ->
-            let a = self#longident_loc a in
-            let b = self#longident_loc b in
+            let a = self#loc self#longident a in
+            let b = self#loc self#longident b in
             self#constr "Pwith_modsubst" [ a; b ]
 
     method module_expr : module_expr -> 'res =
@@ -8237,7 +8573,7 @@ class virtual ['res] lift =
       fun x ->
         match x with
         | Pmod_ident a ->
-            let a = self#longident_loc a in
+            let a = self#loc self#longident a in
             self#constr "Pmod_ident" [ a ]
         | Pmod_structure a ->
             let a = self#structure a in
@@ -8250,6 +8586,9 @@ class virtual ['res] lift =
             let a = self#module_expr a in
             let b = self#module_expr b in
             self#constr "Pmod_apply" [ a; b ]
+        | Pmod_apply_unit a ->
+            let a = self#module_expr a in
+            self#constr "Pmod_apply_unit" [ a ]
         | Pmod_constraint (a, b) ->
             let a = self#module_expr a in
             let b = self#module_type b in
@@ -8322,16 +8661,40 @@ class virtual ['res] lift =
             let b = self#attributes b in
             self#constr "Pstr_extension" [ a; b ]
 
+    method value_constraint : value_constraint -> 'res =
+      fun x ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            let locally_abstract_univars =
+              self#list (self#loc self#string) locally_abstract_univars
+            in
+            let typ = self#core_type typ in
+            self#constr "Pvc_constraint"
+              [
+                self#record
+                  [
+                    ("locally_abstract_univars", locally_abstract_univars);
+                    ("typ", typ);
+                  ];
+              ]
+        | Pvc_coercion { ground; coercion } ->
+            let ground = self#option self#core_type ground in
+            let coercion = self#core_type coercion in
+            self#constr "Pvc_coercion"
+              [ self#record [ ("ground", ground); ("coercion", coercion) ] ]
+
     method value_binding : value_binding -> 'res =
-      fun { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } ->
+      fun { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } ->
         let pvb_pat = self#pattern pvb_pat in
         let pvb_expr = self#expression pvb_expr in
+        let pvb_constraint = self#option self#value_constraint pvb_constraint in
         let pvb_attributes = self#attributes pvb_attributes in
         let pvb_loc = self#location pvb_loc in
         self#record
           [
             ("pvb_pat", pvb_pat);
             ("pvb_expr", pvb_expr);
+            ("pvb_constraint", pvb_constraint);
             ("pvb_attributes", pvb_attributes);
             ("pvb_loc", pvb_loc);
           ]
@@ -8637,7 +9000,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Ptyp_tuple (Stdlib.fst a),
               self#constr ctx "Ptyp_tuple" [ Stdlib.snd a ] )
         | Ptyp_constr (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             ( Ptyp_constr (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Ptyp_constr" [ Stdlib.snd a; Stdlib.snd b ] )
@@ -8647,13 +9010,13 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Ptyp_object (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Ptyp_object" [ Stdlib.snd a; Stdlib.snd b ] )
         | Ptyp_class (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             ( Ptyp_class (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Ptyp_class" [ Stdlib.snd a; Stdlib.snd b ] )
         | Ptyp_alias (a, b) ->
             let a = self#core_type ctx a in
-            let b = self#string ctx b in
+            let b = self#loc self#string ctx b in
             ( Ptyp_alias (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Ptyp_alias" [ Stdlib.snd a; Stdlib.snd b ] )
         | Ptyp_variant (a, b, c) ->
@@ -8672,6 +9035,11 @@ class virtual ['ctx, 'res] lift_map_with_context =
             let a = self#package_type ctx a in
             ( Ptyp_package (Stdlib.fst a),
               self#constr ctx "Ptyp_package" [ Stdlib.snd a ] )
+        | Ptyp_open (a, b) ->
+            let a = self#loc self#longident ctx a in
+            let b = self#core_type ctx b in
+            ( Ptyp_open (Stdlib.fst a, Stdlib.fst b),
+              self#constr ctx "Ptyp_open" [ Stdlib.snd a; Stdlib.snd b ] )
         | Ptyp_extension a ->
             let a = self#extension ctx a in
             ( Ptyp_extension (Stdlib.fst a),
@@ -8679,11 +9047,11 @@ class virtual ['ctx, 'res] lift_map_with_context =
 
     method package_type : 'ctx -> package_type -> package_type * 'res =
       fun ctx (a, b) ->
-        let a = self#longident_loc ctx a in
+        let a = self#loc self#longident ctx a in
         let b =
           self#list
             (fun ctx (a, b) ->
-              let a = self#longident_loc ctx a in
+              let a = self#loc self#longident ctx a in
               let b = self#core_type ctx b in
               ( (Stdlib.fst a, Stdlib.fst b),
                 self#tuple ctx [ Stdlib.snd a; Stdlib.snd b ] ))
@@ -8802,7 +9170,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Ppat_tuple (Stdlib.fst a),
               self#constr ctx "Ppat_tuple" [ Stdlib.snd a ] )
         | Ppat_construct (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b =
               self#option
                 (fun ctx (a, b) ->
@@ -8823,7 +9191,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             let a =
               self#list
                 (fun ctx (a, b) ->
-                  let a = self#longident_loc ctx a in
+                  let a = self#loc self#longident ctx a in
                   let b = self#pattern ctx b in
                   ( (Stdlib.fst a, Stdlib.fst b),
                     self#tuple ctx [ Stdlib.snd a; Stdlib.snd b ] ))
@@ -8848,7 +9216,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
               self#constr ctx "Ppat_constraint" [ Stdlib.snd a; Stdlib.snd b ]
             )
         | Ppat_type a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Ppat_type (Stdlib.fst a),
               self#constr ctx "Ppat_type" [ Stdlib.snd a ] )
         | Ppat_lazy a ->
@@ -8868,7 +9236,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Ppat_extension (Stdlib.fst a),
               self#constr ctx "Ppat_extension" [ Stdlib.snd a ] )
         | Ppat_open (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#pattern ctx b in
             ( Ppat_open (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Ppat_open" [ Stdlib.snd a; Stdlib.snd b ] )
@@ -8897,7 +9265,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x ->
         match x with
         | Pexp_ident a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Pexp_ident (Stdlib.fst a),
               self#constr ctx "Pexp_ident" [ Stdlib.snd a ] )
         | Pexp_constant a ->
@@ -8911,18 +9279,13 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pexp_let (Stdlib.fst a, Stdlib.fst b, Stdlib.fst c),
               self#constr ctx "Pexp_let"
                 [ Stdlib.snd a; Stdlib.snd b; Stdlib.snd c ] )
-        | Pexp_function a ->
-            let a = self#cases ctx a in
-            ( Pexp_function (Stdlib.fst a),
-              self#constr ctx "Pexp_function" [ Stdlib.snd a ] )
-        | Pexp_fun (a, b, c, d) ->
-            let a = self#arg_label ctx a in
-            let b = self#option self#expression ctx b in
-            let c = self#pattern ctx c in
-            let d = self#expression ctx d in
-            ( Pexp_fun (Stdlib.fst a, Stdlib.fst b, Stdlib.fst c, Stdlib.fst d),
-              self#constr ctx "Pexp_fun"
-                [ Stdlib.snd a; Stdlib.snd b; Stdlib.snd c; Stdlib.snd d ] )
+        | Pexp_function (a, b, c) ->
+            let a = self#list self#function_param ctx a in
+            let b = self#option self#type_constraint ctx b in
+            let c = self#function_body ctx c in
+            ( Pexp_function (Stdlib.fst a, Stdlib.fst b, Stdlib.fst c),
+              self#constr ctx "Pexp_function"
+                [ Stdlib.snd a; Stdlib.snd b; Stdlib.snd c ] )
         | Pexp_apply (a, b) ->
             let a = self#expression ctx a in
             let b =
@@ -8951,7 +9314,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pexp_tuple (Stdlib.fst a),
               self#constr ctx "Pexp_tuple" [ Stdlib.snd a ] )
         | Pexp_construct (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#option self#expression ctx b in
             ( Pexp_construct (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pexp_construct" [ Stdlib.snd a; Stdlib.snd b ] )
@@ -8964,7 +9327,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             let a =
               self#list
                 (fun ctx (a, b) ->
-                  let a = self#longident_loc ctx a in
+                  let a = self#loc self#longident ctx a in
                   let b = self#expression ctx b in
                   ( (Stdlib.fst a, Stdlib.fst b),
                     self#tuple ctx [ Stdlib.snd a; Stdlib.snd b ] ))
@@ -8975,12 +9338,12 @@ class virtual ['ctx, 'res] lift_map_with_context =
               self#constr ctx "Pexp_record" [ Stdlib.snd a; Stdlib.snd b ] )
         | Pexp_field (a, b) ->
             let a = self#expression ctx a in
-            let b = self#longident_loc ctx b in
+            let b = self#loc self#longident ctx b in
             ( Pexp_field (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pexp_field" [ Stdlib.snd a; Stdlib.snd b ] )
         | Pexp_setfield (a, b, c) ->
             let a = self#expression ctx a in
-            let b = self#longident_loc ctx b in
+            let b = self#loc self#longident ctx b in
             let c = self#expression ctx c in
             ( Pexp_setfield (Stdlib.fst a, Stdlib.fst b, Stdlib.fst c),
               self#constr ctx "Pexp_setfield"
@@ -9045,7 +9408,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pexp_send (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pexp_send" [ Stdlib.snd a; Stdlib.snd b ] )
         | Pexp_new a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Pexp_new (Stdlib.fst a),
               self#constr ctx "Pexp_new" [ Stdlib.snd a ] )
         | Pexp_setinstvar (a, b) ->
@@ -9174,6 +9537,64 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pbop_exp", Stdlib.snd pbop_exp);
               ("pbop_loc", Stdlib.snd pbop_loc);
             ] )
+
+    method function_param_desc
+        : 'ctx -> function_param_desc -> function_param_desc * 'res =
+      fun ctx x ->
+        match x with
+        | Pparam_val (a, b, c) ->
+            let a = self#arg_label ctx a in
+            let b = self#option self#expression ctx b in
+            let c = self#pattern ctx c in
+            ( Pparam_val (Stdlib.fst a, Stdlib.fst b, Stdlib.fst c),
+              self#constr ctx "Pparam_val"
+                [ Stdlib.snd a; Stdlib.snd b; Stdlib.snd c ] )
+        | Pparam_newtype a ->
+            let a = self#loc self#string ctx a in
+            ( Pparam_newtype (Stdlib.fst a),
+              self#constr ctx "Pparam_newtype" [ Stdlib.snd a ] )
+
+    method function_param : 'ctx -> function_param -> function_param * 'res =
+      fun ctx { pparam_loc; pparam_desc } ->
+        let pparam_loc = self#location ctx pparam_loc in
+        let pparam_desc = self#function_param_desc ctx pparam_desc in
+        ( {
+            pparam_loc = Stdlib.fst pparam_loc;
+            pparam_desc = Stdlib.fst pparam_desc;
+          },
+          self#record ctx
+            [
+              ("pparam_loc", Stdlib.snd pparam_loc);
+              ("pparam_desc", Stdlib.snd pparam_desc);
+            ] )
+
+    method function_body : 'ctx -> function_body -> function_body * 'res =
+      fun ctx x ->
+        match x with
+        | Pfunction_body a ->
+            let a = self#expression ctx a in
+            ( Pfunction_body (Stdlib.fst a),
+              self#constr ctx "Pfunction_body" [ Stdlib.snd a ] )
+        | Pfunction_cases (a, b, c) ->
+            let a = self#cases ctx a in
+            let b = self#location ctx b in
+            let c = self#attributes ctx c in
+            ( Pfunction_cases (Stdlib.fst a, Stdlib.fst b, Stdlib.fst c),
+              self#constr ctx "Pfunction_cases"
+                [ Stdlib.snd a; Stdlib.snd b; Stdlib.snd c ] )
+
+    method type_constraint : 'ctx -> type_constraint -> type_constraint * 'res =
+      fun ctx x ->
+        match x with
+        | Pconstraint a ->
+            let a = self#core_type ctx a in
+            ( Pconstraint (Stdlib.fst a),
+              self#constr ctx "Pconstraint" [ Stdlib.snd a ] )
+        | Pcoerce (a, b) ->
+            let a = self#option self#core_type ctx a in
+            let b = self#core_type ctx b in
+            ( Pcoerce (Stdlib.fst a, Stdlib.fst b),
+              self#constr ctx "Pcoerce" [ Stdlib.snd a; Stdlib.snd b ] )
 
     method value_description
         : 'ctx -> value_description -> value_description * 'res =
@@ -9354,7 +9775,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ptyext_loc;
             ptyext_attributes;
           } ->
-        let ptyext_path = self#longident_loc ctx ptyext_path in
+        let ptyext_path = self#loc self#longident ctx ptyext_path in
         let ptyext_params =
           self#list
             (fun ctx (a, b) ->
@@ -9449,7 +9870,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
               self#constr ctx "Pext_decl"
                 [ Stdlib.snd a; Stdlib.snd b; Stdlib.snd c ] )
         | Pext_rebind a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Pext_rebind (Stdlib.fst a),
               self#constr ctx "Pext_rebind" [ Stdlib.snd a ] )
 
@@ -9474,7 +9895,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x ->
         match x with
         | Pcty_constr (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             ( Pcty_constr (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pcty_constr" [ Stdlib.snd a; Stdlib.snd b ] )
@@ -9665,7 +10086,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x ->
         match x with
         | Pcl_constr (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#list self#core_type ctx b in
             ( Pcl_constr (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pcl_constr" [ Stdlib.snd a; Stdlib.snd b ] )
@@ -9845,7 +10266,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x ->
         match x with
         | Pmty_ident a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Pmty_ident (Stdlib.fst a),
               self#constr ctx "Pmty_ident" [ Stdlib.snd a ] )
         | Pmty_signature a ->
@@ -9871,7 +10292,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pmty_extension (Stdlib.fst a),
               self#constr ctx "Pmty_extension" [ Stdlib.snd a ] )
         | Pmty_alias a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Pmty_alias (Stdlib.fst a),
               self#constr ctx "Pmty_alias" [ Stdlib.snd a ] )
 
@@ -9996,7 +10417,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
         : 'ctx -> module_substitution -> module_substitution * 'res =
       fun ctx { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         let pms_name = self#loc self#string ctx pms_name in
-        let pms_manifest = self#longident_loc ctx pms_manifest in
+        let pms_manifest = self#loc self#longident ctx pms_manifest in
         let pms_attributes = self#attributes ctx pms_attributes in
         let pms_loc = self#location ctx pms_loc in
         ( {
@@ -10061,7 +10482,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
 
     method open_description
         : 'ctx -> open_description -> open_description * 'res =
-      self#open_infos self#longident_loc
+      self#open_infos (self#loc self#longident)
 
     method open_declaration
         : 'ctx -> open_declaration -> open_declaration * 'res =
@@ -10101,35 +10522,35 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x ->
         match x with
         | Pwith_type (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#type_declaration ctx b in
             ( Pwith_type (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pwith_type" [ Stdlib.snd a; Stdlib.snd b ] )
         | Pwith_module (a, b) ->
-            let a = self#longident_loc ctx a in
-            let b = self#longident_loc ctx b in
+            let a = self#loc self#longident ctx a in
+            let b = self#loc self#longident ctx b in
             ( Pwith_module (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pwith_module" [ Stdlib.snd a; Stdlib.snd b ] )
         | Pwith_modtype (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#module_type ctx b in
             ( Pwith_modtype (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pwith_modtype" [ Stdlib.snd a; Stdlib.snd b ] )
         | Pwith_modtypesubst (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#module_type ctx b in
             ( Pwith_modtypesubst (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pwith_modtypesubst"
                 [ Stdlib.snd a; Stdlib.snd b ] )
         | Pwith_typesubst (a, b) ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             let b = self#type_declaration ctx b in
             ( Pwith_typesubst (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pwith_typesubst" [ Stdlib.snd a; Stdlib.snd b ]
             )
         | Pwith_modsubst (a, b) ->
-            let a = self#longident_loc ctx a in
-            let b = self#longident_loc ctx b in
+            let a = self#loc self#longident ctx a in
+            let b = self#loc self#longident ctx b in
             ( Pwith_modsubst (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pwith_modsubst" [ Stdlib.snd a; Stdlib.snd b ] )
 
@@ -10155,7 +10576,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x ->
         match x with
         | Pmod_ident a ->
-            let a = self#longident_loc ctx a in
+            let a = self#loc self#longident ctx a in
             ( Pmod_ident (Stdlib.fst a),
               self#constr ctx "Pmod_ident" [ Stdlib.snd a ] )
         | Pmod_structure a ->
@@ -10172,6 +10593,10 @@ class virtual ['ctx, 'res] lift_map_with_context =
             let b = self#module_expr ctx b in
             ( Pmod_apply (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pmod_apply" [ Stdlib.snd a; Stdlib.snd b ] )
+        | Pmod_apply_unit a ->
+            let a = self#module_expr ctx a in
+            ( Pmod_apply_unit (Stdlib.fst a),
+              self#constr ctx "Pmod_apply_unit" [ Stdlib.snd a ] )
         | Pmod_constraint (a, b) ->
             let a = self#module_expr ctx a in
             let b = self#module_type ctx b in
@@ -10270,15 +10695,56 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pstr_extension (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Pstr_extension" [ Stdlib.snd a; Stdlib.snd b ] )
 
+    method value_constraint
+        : 'ctx -> value_constraint -> value_constraint * 'res =
+      fun ctx x ->
+        match x with
+        | Pvc_constraint { locally_abstract_univars; typ } ->
+            let locally_abstract_univars =
+              self#list (self#loc self#string) ctx locally_abstract_univars
+            in
+            let typ = self#core_type ctx typ in
+            ( Pvc_constraint
+                {
+                  locally_abstract_univars = Stdlib.fst locally_abstract_univars;
+                  typ = Stdlib.fst typ;
+                },
+              self#constr ctx "Pvc_constraint"
+                [
+                  self#record ctx
+                    [
+                      ( "locally_abstract_univars",
+                        Stdlib.snd locally_abstract_univars );
+                      ("typ", Stdlib.snd typ);
+                    ];
+                ] )
+        | Pvc_coercion { ground; coercion } ->
+            let ground = self#option self#core_type ctx ground in
+            let coercion = self#core_type ctx coercion in
+            ( Pvc_coercion
+                { ground = Stdlib.fst ground; coercion = Stdlib.fst coercion },
+              self#constr ctx "Pvc_coercion"
+                [
+                  self#record ctx
+                    [
+                      ("ground", Stdlib.snd ground);
+                      ("coercion", Stdlib.snd coercion);
+                    ];
+                ] )
+
     method value_binding : 'ctx -> value_binding -> value_binding * 'res =
-      fun ctx { pvb_pat; pvb_expr; pvb_attributes; pvb_loc } ->
+      fun ctx { pvb_pat; pvb_expr; pvb_constraint; pvb_attributes; pvb_loc } ->
         let pvb_pat = self#pattern ctx pvb_pat in
         let pvb_expr = self#expression ctx pvb_expr in
+        let pvb_constraint =
+          self#option self#value_constraint ctx pvb_constraint
+        in
         let pvb_attributes = self#attributes ctx pvb_attributes in
         let pvb_loc = self#location ctx pvb_loc in
         ( {
             pvb_pat = Stdlib.fst pvb_pat;
             pvb_expr = Stdlib.fst pvb_expr;
+            pvb_constraint = Stdlib.fst pvb_constraint;
             pvb_attributes = Stdlib.fst pvb_attributes;
             pvb_loc = Stdlib.fst pvb_loc;
           },
@@ -10286,6 +10752,7 @@ class virtual ['ctx, 'res] lift_map_with_context =
             [
               ("pvb_pat", Stdlib.snd pvb_pat);
               ("pvb_expr", Stdlib.snd pvb_expr);
+              ("pvb_constraint", Stdlib.snd pvb_constraint);
               ("pvb_attributes", Stdlib.snd pvb_attributes);
               ("pvb_loc", Stdlib.snd pvb_loc);
             ] )
@@ -10380,5 +10847,4 @@ class virtual ['ctx, 'res] lift_map_with_context =
     method cases : 'ctx -> cases -> cases * 'res = self#list self#case
   end
 
-[@@@end]
 [@@@end]

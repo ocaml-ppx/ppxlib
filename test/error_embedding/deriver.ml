@@ -11,6 +11,7 @@ let derive_a_string ~ctxt (_rec_flag, _type_declarations) =
           pvb_expr = estring ~loc "derived_string";
           pvb_attributes = [];
           pvb_loc = loc;
+          pvb_constraint = None;
         };
       ];
   ]

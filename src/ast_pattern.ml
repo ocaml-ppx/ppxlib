@@ -205,6 +205,7 @@ let pack3 t = map t ~f:(fun f x y z -> f (x, y, z))
 
 include Ast_pattern_generated
 
+let value_binding ~pat ~expr = value_binding ~pat ~expr
 let echar t = pexp_constant (pconst_char t)
 let estring t = pexp_constant (pconst_string t drop drop)
 let efloat t = pexp_constant (pconst_float t drop)
