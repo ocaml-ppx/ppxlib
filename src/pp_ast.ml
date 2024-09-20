@@ -2,21 +2,28 @@ open Import
 
 module Config = struct
   type loc_mode = [ `Short | `Full ]
-  type t = { show_attrs : bool; show_locs : bool; loc_mode : loc_mode }
+
+  type t = {
+    show_attrs : bool;
+    show_locs : bool;
+    loc_mode : loc_mode;
+    json : bool;
+  }
 
   module Default = struct
     let show_attrs = false
     let show_locs = false
     let loc_mode = `Short
+    let json = false
   end
 
   let default =
     let open Default in
-    { show_attrs; show_locs; loc_mode }
+    { show_attrs; show_locs; loc_mode; json }
 
   let make ?(show_attrs = Default.show_attrs) ?(show_locs = Default.show_locs)
-      ?(loc_mode = Default.loc_mode) () =
-    { show_attrs; show_locs; loc_mode }
+      ?(json = Default.json) ?(loc_mode = Default.loc_mode) () =
+    { show_attrs; show_locs; loc_mode; json }
 end
 
 let cnum (pos : Lexing.position) = pos.pos_cnum - pos.pos_bol
@@ -76,6 +83,29 @@ let rec pp_simple_val fmt simple_val =
 
 and pp_field fmt (fname, simple_val) =
   Format.fprintf fmt "@[<hv 2>%s =@ %a@]" fname pp_simple_val simple_val
+
+let rec pp_simple_val_to_yojson = function
+  | Unit -> `String "null"
+  | Int i -> `Int i
+  | String s -> `String s
+  | Bool b -> `Bool b
+  | Char c -> `String (String.make 1 c)
+  | Array l -> `List (List.map ~f:pp_simple_val_to_yojson l)
+  | Float f -> `Float f
+  | Int32 i32 -> `Int (Int32.to_int i32)
+  | Int64 i64 -> `Int (Int64.to_int i64)
+  | Nativeint ni -> `Int (Nativeint.to_int ni)
+  | Record fields ->
+      `Assoc (List.map ~f:(fun (k, v) -> (k, pp_simple_val_to_yojson v)) fields)
+  | Constr (cname, []) -> `String cname
+  | Constr (cname, [ (Constr (_, _ :: _) as x) ]) ->
+      `Assoc [ (cname, pp_simple_val_to_yojson x) ]
+  | Constr (cname, [ x ]) -> `Assoc [ (cname, pp_simple_val_to_yojson x) ]
+  | Constr (cname, l) ->
+      `Assoc [ (cname, `List (List.map ~f:pp_simple_val_to_yojson l)) ]
+  | Tuple l -> `List (List.map ~f:pp_simple_val_to_yojson l)
+  | List l -> `List (List.map ~f:pp_simple_val_to_yojson l)
+  | Special s -> `String s
 
 class lift_simple_val =
   object (self)
@@ -271,7 +301,11 @@ let with_config ~config ~f =
 
 let pp_with_config (type a) (lifter : a -> simple_val)
     ?(config = Config.default) fmt (x : a) =
-  with_config ~config ~f:(fun () -> pp_simple_val fmt (lifter x))
+  with_config ~config ~f:(fun () ->
+      if config.json then
+        Format.fprintf fmt "%s"
+          (Yojson.pretty_to_string (pp_simple_val_to_yojson (lifter x)))
+      else pp_simple_val fmt (lifter x))
 
 let structure = pp_with_config lift_simple_val#structure
 let structure_item = pp_with_config lift_simple_val#structure_item
