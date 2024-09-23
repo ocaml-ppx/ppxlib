@@ -114,6 +114,21 @@ struct
   let parse_string s =
     match M.parse (Lexing.from_string s) with [ x ] -> x | _ -> assert false
 
+  (* To round trip our AST we convert it to the compiler's version, print it as
+     source using the compiler pretty-printers, parse it back using the
+     compiler's parser and migrate it back to our version.
+
+     Skipping the first migration can lead to errors because some subtleties may
+     be lost by older parsers. For instance in OCaml 5.02 [fun x y -> z] and
+     [fun x -> fun y -> z] have different representation but in OCaml 5.01 they
+     both parse to the same AST. Running the migration to the compiler AST first
+     anotates the AST using attributes allowing the final migration to preserve
+     such differences. *)
+  let round_trip ast =
+    let compiler_ast = M.to_compiler ast in
+    remove_loc
+      (parse_string (Format.asprintf "%a@." M.pp_compiler compiler_ast))
+
   let rec match_loop ~end_pos ~mismatch_handler ~expected ~source =
     match (expected, source) with
     | [], [] -> ()
@@ -132,11 +147,7 @@ struct
         let x = remove_loc x in
         let y = remove_loc y in
         if Poly.( <> ) x y then (
-          let round_trip =
-            let compiler_x = M.to_compiler x in
-            remove_loc
-              (parse_string (Format.asprintf "%a@." M.pp_compiler compiler_x))
-          in
+          let round_trip = round_trip x in
           if Poly.( <> ) x round_trip then
             Location.raise_errorf ~loc
               "ppxlib: the corrected code doesn't round-trip.\n\
