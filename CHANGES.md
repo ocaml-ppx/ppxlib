@@ -14,6 +14,9 @@ details.
 
 ### Other changes
 
+- Fix `deriving_inline` round-trip check so that it works with 5.01 <-> 5.02
+  migrations (#519, @NathanReb)
+
 0.33.0 (2024-07-22)
 -------------------
 
