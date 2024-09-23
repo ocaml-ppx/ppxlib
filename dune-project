@@ -1,7 +1,6 @@
-(lang dune 2.7)
+(lang dune 2.8)
 (name ppxlib)
 (using cinaps 1.0)
-(allow_approximate_merlin)
 (implicit_transitive_deps false)
 (cram enable)
 (generate_opam_files true)
@@ -44,6 +43,18 @@ OCaml syntax directly and `ppxlib.traverse` which provides various
 ways of automatically traversing values of a given type, in particular
 allowing to inject a complex structured value into generated code.
 "))
+
+(package
+ (name ppxlib-tools)
+ (synopsis "Tools for PPX users and authors")
+ (description "Set of helper tools for PPX users and authors.
+
+ppxlib-pp-ast: Command line tool to pretty print OCaml ASTs in a human readable
+format.")
+ (depends
+  (ocaml (>= 4.08.0))
+  (ppxlib (= :version))
+  (cmdliner (>= 1.3.0))))
 
 (package
  (name ppxlib-bench)
