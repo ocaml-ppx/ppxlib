@@ -29,8 +29,7 @@
  (conflicts
   (ocaml-migrate-parsetree (< 2.0.0))
   (ocaml-base-compiler (= 5.1.0~alpha1))
-  (ocaml-variants (= 5.1.0~alpha1+options))
-  base-effects)
+  (ocaml-variants (= 5.1.0~alpha1+options)))
  (synopsis "Standard infrastructure for ppx rewriters")
  (description "Ppxlib is the standard infrastructure for ppx rewriters
 and other programs that manipulate the in-memory representation of
