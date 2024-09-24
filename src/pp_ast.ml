@@ -280,3 +280,45 @@ let signature_item = pp_with_config lift_simple_val#signature_item
 let expression = pp_with_config lift_simple_val#expression
 let pattern = pp_with_config lift_simple_val#pattern
 let core_type = pp_with_config lift_simple_val#core_type
+
+module Kind = struct
+  type t = Signature | Structure | Expression | Pattern | Core_type
+end
+
+module Ast = struct
+  type t =
+    | Str of structure
+    | Sig of signature
+    | Exp of expression
+    | Pat of pattern
+    | Typ of core_type
+end
+
+let parse_node ~kind lexbuf =
+  match (kind : Kind.t) with
+  | Expression -> Ast.Exp (Parse.expression lexbuf)
+  | Pattern -> Ast.Pat (Parse.pattern lexbuf)
+  | Core_type -> Ast.Typ (Parse.core_type lexbuf)
+  | Structure -> Ast.Str (Parse.implementation lexbuf)
+  | Signature -> Ast.Sig (Parse.interface lexbuf)
+
+let pp_ast ~config ast formatter =
+  match (ast : Ast.t) with
+  | Str str -> structure ~config formatter str
+  | Sig sig_ -> signature ~config formatter sig_
+  | Exp exp -> expression ~config formatter exp
+  | Pat pat -> pattern ~config formatter pat
+  | Typ typ -> core_type ~config formatter typ
+
+let sprint ?(show_attrs = false) ?(show_locs = false) ?(loc_mode = `Short)
+    ?(kind = Kind.Expression) input =
+  let buffer = Buffer.create 256 in
+  let formatter = Format.formatter_of_buffer buffer in
+  let lexbuf = Lexing.from_string input in
+  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = "none" };
+  Astlib.Location.set_input_lexbuf (Some lexbuf);
+  let ast = parse_node ~kind lexbuf in
+  let config = Config.make ~show_attrs ~show_locs ~loc_mode () in
+  pp_ast ~config ast formatter;
+  Format.pp_print_flush formatter ();
+  Buffer.contents buffer

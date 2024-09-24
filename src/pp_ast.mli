@@ -69,3 +69,27 @@ val signature_item : signature_item pp
 val expression : expression pp
 val pattern : pattern pp
 val core_type : core_type pp
+
+module Kind : sig
+  type t = Signature | Structure | Expression | Pattern | Core_type
+end
+
+module Ast : sig
+  type t =
+    | Str of structure
+    | Sig of signature
+    | Exp of expression
+    | Pat of pattern
+    | Typ of core_type
+end
+
+val parse_node : kind:Kind.t -> Lexing.lexbuf -> Ast.t
+val pp_ast : config:Config.t -> Ast.t -> Format.formatter -> unit
+
+val sprint :
+  ?show_attrs:bool ->
+  ?show_locs:bool ->
+  ?loc_mode:[ `Full | `Short ] ->
+  ?kind:Kind.t ->
+  string ->
+  string

@@ -1,0 +1,9 @@
+(test
+ (name test)
+ (libraries ppxlib alcotest))
+
+(rule
+ (alias runtest)
+ (deps test.exe)
+ (action
+  (run %{deps})))
