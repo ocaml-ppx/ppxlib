@@ -62,7 +62,14 @@ module Ast_helper = Ppxlib_ast.Ast_helper
 module Asttypes = Ppxlib_ast.Asttypes
 module Parse = Ppxlib_ast.Parse
 module Parsetree = Ppxlib_ast.Parsetree
-module Pprintast = Ppxlib_ast.Pprintast
+
+module Pprintast = struct
+  include Ppxlib_ast.Pprintast
+  module Kind = Pp_ast.Kind
+
+  let sprint = Pp_ast.sprint
+end
+
 module Selected_ast = Ppxlib_ast.Selected_ast
 module Location = Location
 module Longident = Longident
