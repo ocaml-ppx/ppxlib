@@ -208,6 +208,50 @@ class lift_simple_val =
     method! structure_item stri = self#structure_item_desc stri.pstr_desc
     method! signature_item sigi = self#signature_item_desc sigi.psig_desc
 
+    method! structure str =
+      match config.show_attrs with
+      | true -> super#structure str
+      | false ->
+          List.filter
+            ~f:(function
+              | { pstr_desc = Pstr_attribute _; _ } -> false | _ -> true)
+            str
+          |> super#structure
+
+    method! signature sig_ =
+      match config.show_attrs with
+      | true -> super#signature sig_
+      | false ->
+          List.filter
+            ~f:(function
+              | { psig_desc = Psig_attribute _; _ } -> false | _ -> true)
+            sig_
+          |> super#signature
+
+    method! class_structure cstr =
+      match config.show_attrs with
+      | true -> super#class_structure cstr
+      | false ->
+          let pcstr_fields =
+            List.filter
+              ~f:(function
+                | { pcf_desc = Pcf_attribute _; _ } -> false | _ -> true)
+              cstr.pcstr_fields
+          in
+          super#class_structure { cstr with pcstr_fields }
+
+    method! class_signature csig =
+      match config.show_attrs with
+      | true -> super#class_signature csig
+      | false ->
+          let pcsig_fields =
+            List.filter
+              ~f:(function
+                | { pctf_desc = Pctf_attribute _; _ } -> false | _ -> true)
+              csig.pcsig_fields
+          in
+          super#class_signature { csig with pcsig_fields }
+
     method! directive_argument dira =
       self#directive_argument_desc dira.pdira_desc
 
