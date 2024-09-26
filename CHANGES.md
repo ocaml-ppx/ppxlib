@@ -21,6 +21,10 @@ details.
   a `ppxlib-pp-ast` executable in a new separate `ppxlib-tools` package
   (#517, @NathanReb)
 
+- Change `-dparsetree` from a sexp output to a pretty printed AST, closer
+  to what the compiler's `-dparsetree` is.
+  (#530, @NathanReb)
+
 0.33.0 (2024-07-22)
 -------------------
 
