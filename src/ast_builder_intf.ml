@@ -142,10 +142,6 @@ type 'a with_location = loc:Location.t -> 'a
 
 module type S = sig
   module Located : Located with type 'a with_loc := 'a without_location
-
-  include module type of Ast_builder_generated.Make (struct
-    let loc = Location.none
-  end)
-
+  include Ast_builder_generated.Intf_located
   include Additional_helpers with type 'a with_loc := 'a without_location
 end

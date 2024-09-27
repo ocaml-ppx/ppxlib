@@ -14,6 +14,8 @@ details.
 
 ### Other changes
 
+- Add Parsetree documentation comments to `Ast_builder` functions (#518, @patricoferris)
+
 - Fix `deriving_inline` round-trip check so that it works with 5.01 <-> 5.02
   migrations (#519, @NathanReb)
 
