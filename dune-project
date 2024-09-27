@@ -22,6 +22,7 @@
   (sexplib0 (>= v0.12))
   (sexplib0 (and :with-test (>= "v0.15"))) ; Printexc.register_printer in sexplib0 changed
   stdlib-shims
+  yojson
   (ocamlfind :with-test)
   (re (and :with-test (>= 1.9.0)))
   (cinaps (and :with-test (>= v0.12.1)))
