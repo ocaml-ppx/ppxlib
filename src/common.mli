@@ -31,7 +31,8 @@ val get_type_param_name_res :
     [tp] if it is a type parameter, as a result. *)
 
 val get_type_param_name : core_type * (variance * injectivity) -> string Loc.t
-(** See {!get_type_param_name_res}. Raises a located error in case of failure. *)
+(** See {!get_type_param_name_res}. Raises a located error in case of failure.
+*)
 
 (** [(new type_is_recursive rec_flag tds)#go ()] returns whether [rec_flag, tds]
     is really a recursive type. We disregard recursive occurrences appearing in
@@ -45,14 +46,16 @@ class type_is_recursive : rec_flag -> type_declaration list -> object
 end
 
 val really_recursive : rec_flag -> type_declaration list -> rec_flag
-(** [really_recursive rec_flag tds = (new type_is_recursive rec_flag tds)#go ()] *)
+(** [really_recursive rec_flag tds = (new type_is_recursive rec_flag tds)#go ()]
+*)
 
 val loc_of_payload : attribute -> Location.t
 val loc_of_attribute : attribute -> Location.t
 val loc_of_extension : extension -> Location.t
 
 val curry_applications : expression -> expression
-(** convert multi-arg function applications into a cascade of 1-arg applications *)
+(** convert multi-arg function applications into a cascade of 1-arg applications
+*)
 
 val attribute_of_warning : Location.t -> string -> attribute
 (** Encode a warning message into an 'ocaml.ppwarning' attribute which can be

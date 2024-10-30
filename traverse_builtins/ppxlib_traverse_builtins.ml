@@ -115,20 +115,19 @@ class ['ctx] map_with_context =
     method bool : ('ctx, bool) T.map_with_context = any
     method char : ('ctx, char) T.map_with_context = any
 
-    method option
-        : 'a.
-          ('ctx, 'a) T.map_with_context -> ('ctx, 'a option) T.map_with_context
-        =
+    method option :
+        'a.
+        ('ctx, 'a) T.map_with_context -> ('ctx, 'a option) T.map_with_context =
       fun f ctx x -> match x with None -> None | Some x -> Some (f ctx x)
 
-    method list
-        : 'a.
-          ('ctx, 'a) T.map_with_context -> ('ctx, 'a list) T.map_with_context =
+    method list :
+        'a. ('ctx, 'a) T.map_with_context -> ('ctx, 'a list) T.map_with_context
+        =
       fun f ctx l -> List.map (f ctx) l
 
-    method array
-        : 'a.
-          ('ctx, 'a) T.map_with_context -> ('ctx, 'a array) T.map_with_context =
+    method array :
+        'a. ('ctx, 'a) T.map_with_context -> ('ctx, 'a array) T.map_with_context
+        =
       fun f ctx a -> Array.map (f ctx) a
   end
 
@@ -184,10 +183,10 @@ class virtual ['ctx, 'res] lift_map_with_context =
     method virtual constr : 'ctx -> string -> 'res list -> 'res
     method virtual tuple : 'ctx -> 'res list -> 'res
 
-    method option
-        : 'a.
-          ('ctx, 'a, 'res) T.lift_map_with_context ->
-          ('ctx, 'a option, 'res) T.lift_map_with_context =
+    method option :
+        'a.
+        ('ctx, 'a, 'res) T.lift_map_with_context ->
+        ('ctx, 'a option, 'res) T.lift_map_with_context =
       fun f ctx x ->
         match x with
         | None -> (None, self#constr ctx "None" [])
@@ -195,10 +194,10 @@ class virtual ['ctx, 'res] lift_map_with_context =
             let x, res = f ctx x in
             (Some x, self#constr ctx "Some" [ res ])
 
-    method list
-        : 'a.
-          ('ctx, 'a, 'res) T.lift_map_with_context ->
-          ('ctx, 'a list, 'res) T.lift_map_with_context =
+    method list :
+        'a.
+        ('ctx, 'a, 'res) T.lift_map_with_context ->
+        ('ctx, 'a list, 'res) T.lift_map_with_context =
       fun f ctx l ->
         match l with
         | [] -> ([], self#constr ctx "[]" [])
