@@ -118,12 +118,12 @@ class map_with_expansion_context_and_errors =
     method nativeint = return
     method unit = return
 
-    method array
-        : 'a.
-          (Expansion_context.Base.t -> 'a -> 'a * Location.Error.t list) ->
-          Expansion_context.Base.t ->
-          'a array ->
-          'a array * Location.Error.t list =
+    method array :
+        'a.
+        (Expansion_context.Base.t -> 'a -> 'a * Location.Error.t list) ->
+        Expansion_context.Base.t ->
+        'a array ->
+        'a array * Location.Error.t list =
       fun f ctx a ->
         let list, errors = self#list f ctx (Array.to_list a) in
         (Array.of_list list, errors)
