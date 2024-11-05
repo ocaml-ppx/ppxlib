@@ -57,3 +57,27 @@ let is_keyword = function
   | "lsr" -> true
   | "asr" -> true
   | _ -> false
+
+let apply_keyword_edition () =
+  match Sys.getenv "OCAMLPARAM" with
+  | s ->
+      let items =
+        if String.equal s "" then []
+        else
+          (* cf. Compenv.parse_args *)
+          match s.[0] with
+          | (':' | '|' | ';' | ' ' | ',') as c ->
+              List.tl (String.split_on_char c s)
+          | _ -> String.split_on_char ',' s
+      in
+      let fold_settings acc item =
+        let len = String.length item in
+        if len >= 9 && String.sub item 0 9 = "keywords=" then
+          Some (String.sub item 9 (len - 9))
+        else acc
+      in
+      let keyword_edition = List.fold_left fold_settings None items in
+      (*IF_AT_LEAST 503 let () = if Option.is_some keyword_edition then Clflags.keyword_edition := keyword_edition in*)
+      (*IF_NOT_AT_LEAST 503 let () = ignore keyword_edition in*)
+      ()
+  | exception Not_found -> ()

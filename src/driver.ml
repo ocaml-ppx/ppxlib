@@ -1417,6 +1417,7 @@ let get_args ?(standalone_args = standalone_args) () =
 let standalone_main () =
   let usage = Printf.sprintf "%s [extra_args] [<files>]" exe_name in
   let args = get_args () in
+  Astlib.Keyword.apply_keyword_edition ();
   Arg.parse (Arg.align args) set_input usage;
   interpret_mask ();
   if !request_print_transformations then (
