@@ -12,6 +12,10 @@ details.
 
 - Add initial OCaml 5.3 support (#487, @NathanReb, @hhugo, @nojb)
 
+- Initialise OCaml 5.3's lexer with the `keywords` setting from `OCAMLPARAM` to
+  allow the standalone ppx driver to process old packages using `effect` as an
+  identifier (#535, @dra27)
+
 ### Other changes
 
 - Fix `deriving_inline` round-trip check so that it works with 5.01 <-> 5.02
