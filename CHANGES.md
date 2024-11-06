@@ -19,7 +19,7 @@ details.
 
 - Add ppxlib's AST pretty-printing utilities in `Ppxlib.Pp_ast` and
   a `ppxlib-pp-ast` executable in a new separate `ppxlib-tools` package
-  (#517, @NathanReb)
+  (#517, #525, #537, @NathanReb)
 
 - Change `-dparsetree` from a sexp output to a pretty printed AST, closer
   to what the compiler's `-dparsetree` is.

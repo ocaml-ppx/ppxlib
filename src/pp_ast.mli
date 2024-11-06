@@ -60,6 +60,26 @@ module Config : sig
           be. *)
 end
 
+module type Conf = sig
+  val config : Config.t
+end
+
+module type Configured = sig
+  val structure : Format.formatter -> structure -> unit
+  val structure_item : Format.formatter -> structure_item -> unit
+  val signature : Format.formatter -> signature -> unit
+  val signature_item : Format.formatter -> signature_item -> unit
+  val expression : Format.formatter -> expression -> unit
+  val pattern : Format.formatter -> pattern -> unit
+  val core_type : Format.formatter -> core_type -> unit
+end
+
+module Make (Conf : Conf) : Configured
+
+val make : Config.t -> (module Configured)
+
+module Default : Configured
+
 type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
 
 val structure : structure pp

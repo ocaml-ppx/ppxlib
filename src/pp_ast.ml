@@ -302,6 +302,44 @@ class lift_simple_val =
       | NoInjectivity -> Constr ("NoInjectivity", [])
   end
 
+module type Conf = sig
+  val config : Config.t
+end
+
+module type Configured = sig
+  val structure : Format.formatter -> structure -> unit
+  val structure_item : Format.formatter -> structure_item -> unit
+  val signature : Format.formatter -> signature -> unit
+  val signature_item : Format.formatter -> signature_item -> unit
+  val expression : Format.formatter -> expression -> unit
+  val pattern : Format.formatter -> pattern -> unit
+  val core_type : Format.formatter -> core_type -> unit
+end
+
+module Make (Conf : Conf) : Configured = struct
+  let lsv =
+    let lift_simple_val = new lift_simple_val in
+    lift_simple_val#set_config Conf.config;
+    lift_simple_val
+
+  let structure fmt str = pp_simple_val fmt (lsv#structure str)
+  let structure_item fmt str = pp_simple_val fmt (lsv#structure_item str)
+  let signature fmt str = pp_simple_val fmt (lsv#signature str)
+  let signature_item fmt str = pp_simple_val fmt (lsv#signature_item str)
+  let expression fmt str = pp_simple_val fmt (lsv#expression str)
+  let pattern fmt str = pp_simple_val fmt (lsv#pattern str)
+  let core_type fmt str = pp_simple_val fmt (lsv#core_type str)
+end
+
+let make config =
+  (module Make (struct
+    let config = config
+  end) : Configured)
+
+module Default = Make (struct
+  let config = Config.default
+end)
+
 let lift_simple_val = new lift_simple_val
 
 type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
