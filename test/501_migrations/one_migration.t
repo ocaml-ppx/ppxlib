@@ -3,70 +3,11 @@ as the ppxlib AST is either 5.0.0 or 5.1.0. While the ppxlib AST is on 5.0.0, th
 test checks whether parsing on 5.0.0 (result of test running on 5.0.0) is the same as
 parsing on 5.1.0 and then migrating down to 5.0.0 (result of test running on 5.1.0).
 
-The test is mostly useful for debuggung problems in a full round-trip. Since Ppxlib's
-`dparsetree` option doesn't compactify or strip locations, its output is very long.
-So let's only keep one example.
+The test is mostly useful for debugging problems in a full round-trip.
 
   $ echo "let x : int = 5" > file.ml
   $ ./identity_driver.exe -dparsetree file.ml
-  [ Pstr_attribute
-      { attr_name = "ocaml.ppx.context"
-      ; attr_payload =
-          PStr
-            [ Pstr_eval
-                ( Pexp_record
-                    ( [ ( Lident "tool_name"
-                        , Pexp_constant
-                            (Pconst_string ( "ppxlib_driver", __loc, None))
-                        )
-                      ; ( Lident "include_dirs"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ; ( Lident "load_path"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ; ( Lident "open_modules"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ; ( Lident "for_package"
-                        , Pexp_construct ( Lident "None", None)
-                        )
-                      ; ( Lident "debug"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "use_threads"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "use_vmthreads"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "recursive_types"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "principal"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "transparent_modules"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "unboxed_types"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "unsafe_string"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "cookies"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ]
-                    , None
-                    )
-                , __attrs
-                )
-            ]
-      ; attr_loc = __loc
-      }
-  ; Pstr_value
+  [ Pstr_value
       ( Nonrecursive
       , [ { pvb_pat =
               Ppat_constraint
@@ -90,64 +31,7 @@ So let's only keep one example.
   > module M = F ()
   > EOF
   $ ./identity_driver.exe -dparsetree file.ml
-  [ Pstr_attribute
-      { attr_name = "ocaml.ppx.context"
-      ; attr_payload =
-          PStr
-            [ Pstr_eval
-                ( Pexp_record
-                    ( [ ( Lident "tool_name"
-                        , Pexp_constant
-                            (Pconst_string ( "ppxlib_driver", __loc, None))
-                        )
-                      ; ( Lident "include_dirs"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ; ( Lident "load_path"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ; ( Lident "open_modules"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ; ( Lident "for_package"
-                        , Pexp_construct ( Lident "None", None)
-                        )
-                      ; ( Lident "debug"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "use_threads"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "use_vmthreads"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "recursive_types"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "principal"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "transparent_modules"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "unboxed_types"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "unsafe_string"
-                        , Pexp_construct ( Lident "false", None)
-                        )
-                      ; ( Lident "cookies"
-                        , Pexp_construct ( Lident "[]", None)
-                        )
-                      ]
-                    , None
-                    )
-                , __attrs
-                )
-            ]
-      ; attr_loc = __loc
-      }
-  ; Pstr_module
+  [ Pstr_module
       { pmb_name = Some "F"
       ; pmb_expr = Pmod_functor ( Unit, Pmod_structure [])
       ; pmb_attributes = __attrs
