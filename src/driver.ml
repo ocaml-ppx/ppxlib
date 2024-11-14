@@ -24,6 +24,7 @@ let pretty = ref false
 let styler = ref None
 let output_metadata_filename = ref None
 let corrected_suffix = ref ".ppx-corrected"
+let keywords = ref None
 
 let ghost =
   object
@@ -1409,6 +1410,14 @@ let standalone_args =
     ( "-corrected-suffix",
       Arg.Set_string corrected_suffix,
       "SUFFIX Suffix to append to corrected files" );
+    ( "-keywords",
+      Arg.String (fun s -> keywords := Some s),
+      "<version+list> Set keywords according to the version+list \
+       specification. Allows using a set of keywords different from the one of \
+       the current compiler for backword compatibility." );
+    ( "--keywords",
+      Arg.String (fun s -> keywords := Some s),
+      "<version+list> Same as -keywords" );
   ]
 
 let get_args ?(standalone_args = standalone_args) () =
@@ -1417,8 +1426,8 @@ let get_args ?(standalone_args = standalone_args) () =
 let standalone_main () =
   let usage = Printf.sprintf "%s [extra_args] [<files>]" exe_name in
   let args = get_args () in
-  Astlib.Keyword.apply_keyword_edition ();
   Arg.parse (Arg.align args) set_input usage;
+  Astlib.Keyword.apply_keyword_edition ~cli:!keywords ();
   interpret_mask ();
   if !request_print_transformations then (
     print_transformations ();
