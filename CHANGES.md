@@ -14,6 +14,9 @@ details.
 
 ### Other changes
 
+- Support class type declarations in derivers with the new, optional arguments
+  `{str,sig}_class_type_decl` in `Deriving.add` (#538, @patricoferris)
+
 - Fix `deriving_inline` round-trip check so that it works with 5.01 <-> 5.02
   migrations (#519, @NathanReb)
 

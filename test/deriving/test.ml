@@ -32,10 +32,12 @@ let mtd =
 val mtd : Deriving.t = <abstr>
 |}]
 
-type t = int [@@deriving bar]
+let cd =
+  Deriving.add "cd"
+    ~sig_class_type_decl:(Deriving.Generator.make_noarg (fun ~loc ~path:_ _ -> [%sig: val y : int]))
+    ~str_class_type_decl:(Deriving.Generator.make_noarg (fun ~loc ~path:_ _ -> [%str let y = 42]))
 [%%expect{|
-Line _, characters 25-28:
-Error: Deriver foo is needed for bar, you need to add it before in the list
+val cd : Deriving.t = <abstr>
 |}]
 
 type t = int [@@deriving bar, foo]
@@ -72,4 +74,10 @@ end = struct
 end
 [%%expect{|
 module Y : sig module type X = sig end val y : int end
+|}]
+
+class type x = object end[@@deriving cd]
+[%%expect{|
+class type x = object  end
+val y : int = 42
 |}]
