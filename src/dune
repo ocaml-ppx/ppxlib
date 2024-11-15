@@ -9,6 +9,7 @@
   ppx_derivers
   ppxlib_traverse_builtins
   stdppx
+  yojson
   stdlib-shims
   sexplib0)
  (flags
