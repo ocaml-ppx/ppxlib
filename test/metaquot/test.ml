@@ -532,73 +532,123 @@ let _ =
 (* mistyped escapes (not producing ASTs at all) *)
 
 let _ = [%expr [%e ()]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 19-21:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.expression
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 19-21:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.expression
+|}]
 
 let _ = [%pat? [%p ()]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 19-21:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.pattern
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 19-21:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.pattern
+|}]
 
 let _ = [%type: [%t ()]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 20-22:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.core_type
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 20-22:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.core_type
+|}]
 
 let _ = [%stri [%%i ()]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 20-22:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.structure_item
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 20-22:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.structure_item
+|}]
 
 let _ = [%sigi: [%%i ()]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 21-23:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.signature_item
+|}]
+[%%expect_in 5.3 + {|
+Line _, characters 21-23:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.signature_item
 |}]
 
 (* mistyped escapes (not producing ASTs at all) with attributes *)
 
 let _ = [%expr [%e ()] [@attr]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 19-21:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.expression
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 19-21:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.expression
+|}]
 
 let _ = [%pat? [%p ()] [@attr]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 19-21:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.pattern
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 19-21:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.pattern
+|}]
 
 let _ = [%type: [%t ()] [@attr]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 20-22:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.core_type
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 20-22:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.core_type
+|}]
 
 let _ = [%stri module M = [%m ()] [@attr]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 30-32:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.module_expr
 |}]
+[%%expect_in 5.3 + {|
+Line _, characters 30-32:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.module_expr
+|}]
 
 let _ = [%sigi: module type M = [%m ()] [@attr]]
-[%%expect{|
+[%%expect_in 5.2 - {|
 Line _, characters 36-38:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib_ast.Ast.module_type
+|}]
+[%%expect_in 5.3 + {|
+Line _, characters 36-38:
+Error: This expression should not be a unit literal, the expected type is
+       Ppxlib.module_type
 |}]

@@ -25,7 +25,6 @@ let read_file file =
 let run_expect_test file ~f =
   let file_contents = read_file file in
   let lexbuf = Lexing.from_string file_contents in
-  Lexing.set_filename lexbuf file;
   lexbuf.lex_curr_p <-
     { pos_fname = file; pos_cnum = 0; pos_lnum = 1; pos_bol = 0 };
 
