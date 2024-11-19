@@ -122,7 +122,7 @@ let handle_versioned_expect_blocks ppf starting_pos code vexpect_blocks =
   let matched = ref false in
   let loc =
     {
-      Location.loc_start = starting_pos;
+      Ppxlib.Location.loc_start = starting_pos;
       loc_end = starting_pos;
       loc_ghost = false;
     }
@@ -135,13 +135,13 @@ let handle_versioned_expect_blocks ppf starting_pos code vexpect_blocks =
         run_code ppf starting_pos code;
         Format.fprintf ppf "@?|}]@.")
       else if include_compiler_version range && !matched then
-        Location.raise_errorf ~loc
+        Ppxlib.Location.raise_errorf ~loc
           "Multiple versioned expect block in a group matched our compiler \
            version %a"
           pp_version compiler_version
       else Format.fprintf ppf "%s|}]@." content);
   if not !matched then
-    Location.raise_errorf ~loc
+    Ppxlib.Location.raise_errorf ~loc
       "No versioned expect block in a group matched our compiler version %a"
       pp_version compiler_version
 
