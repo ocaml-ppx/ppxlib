@@ -33,7 +33,7 @@ rule code txt start = parse
     Lexing.new_line lexbuf;
     (start, s, []) :: expectation txt lexbuf
   }
-  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) "+ {|\n" {
+  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) " + {|\n" {
       let s = extract_chunk txt start lexbuf in
       Lexing.new_line lexbuf;
       let version = make_version major minor in
@@ -41,7 +41,7 @@ rule code txt start = parse
       let cstart = lexbuf.lex_curr_p in
       versioned_expectation_content txt (start, s) [] (range, cstart) lexbuf
   }
-  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) "- {|\n" {
+  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) " - {|\n" {
       let s = extract_chunk txt start lexbuf in
       Lexing.new_line lexbuf;
       let version = make_version major minor in
@@ -51,7 +51,7 @@ rule code txt start = parse
   }
   | "[%%expect_in "
     (digit+ as major1) '.' (digit+ as minor1)
-    ".."
+    " >> "
     (digit+ as major2) '.' (digit+ as minor2)
     " {|\n" {
       let s = extract_chunk txt start lexbuf in
@@ -92,7 +92,7 @@ and expectation txt = parse
 (* Parses the content of a [%%expect_in .. {| ... |}] block along with following
    blocks in the same group *)
 and versioned_expectation_content txt code_chunk vexpects curr = parse
-  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) "+ {|\n" {
+  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) " + {|\n" {
     let range, start = curr in
     let s = extract_chunk txt start lexbuf in
     Lexing.new_line lexbuf;
@@ -104,7 +104,7 @@ and versioned_expectation_content txt code_chunk vexpects curr = parse
     versioned_expectation_content txt code_chunk
       (block::vexpects) (next_range, cstart) lexbuf
   }
-  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) "- {|\n" {
+  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) " - {|\n" {
     let range, start = curr in
     let s = extract_chunk txt start lexbuf in
     Lexing.new_line lexbuf;
@@ -118,7 +118,7 @@ and versioned_expectation_content txt code_chunk vexpects curr = parse
   }
   | "|}]\n[%%expect_in "
     (digit+ as major1) '.' (digit+ as minor1)
-    ".."
+    " >> "
     (digit+ as major2) '.' (digit+ as minor2)
     " {|\n" {
     let range, start = curr in
