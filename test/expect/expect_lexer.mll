@@ -4,9 +4,10 @@ open StdLabels
 type version = int * int
 
 type version_range =
-  | Up_to of version
-  | From of version
-  | Between of version * version
+  | Only of version (* ex: [%%expect_in 5.3 *)
+  | Up_to of version (* ex: [%%expect_in 5.3 - *)
+  | From of version (* ex: [%%expect_in 5.3 + *)
+  | Between of version * version (* ex: [%%expect_in 5.0 >> 5.3 *)
 
 type versioned_expect = version_range * string
 
@@ -32,6 +33,14 @@ rule code txt start = parse
     let s = extract_chunk txt start lexbuf in
     Lexing.new_line lexbuf;
     (start, s, []) :: expectation txt lexbuf
+  }
+  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) " {|\n" {
+      let s = extract_chunk txt start lexbuf in
+      Lexing.new_line lexbuf;
+      let version = make_version major minor in
+      let range = Only version in
+      let cstart = lexbuf.lex_curr_p in
+      versioned_expectation_content txt (start, s) [] (range, cstart) lexbuf
   }
   | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) " + {|\n" {
       let s = extract_chunk txt start lexbuf in
@@ -92,6 +101,18 @@ and expectation txt = parse
 (* Parses the content of a [%%expect_in .. {| ... |}] block along with following
    blocks in the same group *)
 and versioned_expectation_content txt code_chunk vexpects curr = parse
+  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) " {|\n" {
+    let range, start = curr in
+    let s = extract_chunk txt start lexbuf in
+    Lexing.new_line lexbuf;
+    Lexing.new_line lexbuf;
+    let block = range, s in
+    let version = make_version major minor in
+    let next_range = Only version in
+    let cstart = lexbuf.lex_curr_p in
+    versioned_expectation_content txt code_chunk
+      (block::vexpects) (next_range, cstart) lexbuf
+  }
   | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) " + {|\n" {
     let range, start = curr in
     let s = extract_chunk txt start lexbuf in

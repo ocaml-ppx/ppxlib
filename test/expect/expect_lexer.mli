@@ -1,6 +1,7 @@
 type version = int * int
 
 type version_range =
+  | Only of version
   | Up_to of version
   | From of version
   | Between of version * version

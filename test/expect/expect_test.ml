@@ -8,6 +8,7 @@ let compiler_version =
 let include_compiler_version range =
   let cmajor, cminor = compiler_version in
   match (range : Expect_lexer.version_range) with
+  | Only (major, minor) -> cmajor = major && cminor = minor
   | From (major, minor) -> cmajor > major || (cmajor = major && cminor >= minor)
   | Up_to (major, minor) -> cmajor < major || (cmajor = major && cminor <= minor)
   | Between ((min_major, min_minor), (max_major, max_minor)) ->
@@ -92,6 +93,7 @@ let pp_version ppf (major, minor) = Format.fprintf ppf "%d.%d" major minor
 
 let pp_range ppf range =
   match (range : Expect_lexer.version_range) with
+  | Only v -> pp_version ppf v
   | From v -> Format.fprintf ppf "%a +" pp_version v
   | Up_to v -> Format.fprintf ppf "%a -" pp_version v
   | Between (v1, v2) ->
