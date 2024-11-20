@@ -6,9 +6,16 @@ type version_range =
   | From of version
   | Between of version * version
 
-type versioned_expect = version_range * string
+(*[[%%ignore]], [[%%expect{|...|}] or [%%expect_in 5.3 {|...|}]*)
+type expect_block =
+  | Ignore
+  | Regular
+  | Versioned of (version_range * string) list
 
-val split_file :
-  file_contents:string ->
-  Lexing.lexbuf ->
-  (Lexing.position * string * versioned_expect list) list
+type chunk = {
+  phrases : string;
+  phrases_start : Lexing.position;
+  expect : expect_block;
+}
+
+val split_file : file_contents:string -> Lexing.lexbuf -> chunk list

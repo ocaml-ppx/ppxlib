@@ -114,6 +114,14 @@ let run_code ppf starting_pos code =
           execute_phrase ppf phr
         with exn -> Location.report_exception ppf exn))
 
+let trash_buffer = Buffer.create 1024
+let trash_ppf = Format.formatter_of_buffer trash_buffer
+
+let handle_ignore_block ppf starting_pos code =
+  Format.fprintf ppf "%s[%%%%ignore]@." code;
+  run_code trash_ppf starting_pos code;
+  Buffer.clear trash_buffer
+
 let handle_regular_expect_block ppf starting_pos code =
   Format.fprintf ppf "%s[%%%%expect{|@." code;
   run_code ppf starting_pos code;
@@ -192,10 +200,13 @@ let main () =
          is statically linked in *)
       Topfind.load_deeply [ "ppxlib" ];
 
-      List.iter chunks ~f:(fun (pos, s, vexpects) ->
-          match vexpects with
-          | [] -> handle_regular_expect_block ppf pos s
-          | _ -> handle_versioned_expect_blocks ppf pos s vexpects);
+      List.iter chunks
+        ~f:(fun { Expect_lexer.phrases; phrases_start; expect } ->
+          match expect with
+          | Ignore -> handle_ignore_block ppf phrases_start phrases
+          | Regular -> handle_regular_expect_block ppf phrases_start phrases
+          | Versioned vexpects ->
+              handle_versioned_expect_blocks ppf phrases_start phrases vexpects);
       Buffer.contents buf)
 
 let () =
