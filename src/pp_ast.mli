@@ -60,32 +60,32 @@ module Config : sig
           be. *)
 end
 
+type 'a pp = Format.formatter -> 'a -> unit
+type 'a configurable = ?config:Config.t -> 'a pp
+type 'a configured = 'a pp
+
+module type S = sig
+  type 'a printer
+
+  val structure : structure printer
+  val structure_item : structure_item printer
+  val signature : signature printer
+  val signature_item : signature_item printer
+  val expression : expression printer
+  val pattern : pattern printer
+  val core_type : core_type printer
+end
+
 module type Conf = sig
   val config : Config.t
 end
 
-module type Configured = sig
-  val structure : Format.formatter -> structure -> unit
-  val structure_item : Format.formatter -> structure_item -> unit
-  val signature : Format.formatter -> signature -> unit
-  val signature_item : Format.formatter -> signature_item -> unit
-  val expression : Format.formatter -> expression -> unit
-  val pattern : Format.formatter -> pattern -> unit
-  val core_type : Format.formatter -> core_type -> unit
-end
+module type Configured = S with type 'a printer = 'a configured
+module type Configurable = S with type 'a printer = 'a configurable
 
 module Make (Conf : Conf) : Configured
 
 val make : Config.t -> (module Configured)
 
 module Default : Configured
-
-type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
-
-val structure : structure pp
-val structure_item : structure_item pp
-val signature : signature pp
-val signature_item : signature_item pp
-val expression : expression pp
-val pattern : pattern pp
-val core_type : core_type pp
+include Configurable
