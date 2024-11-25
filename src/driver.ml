@@ -1414,7 +1414,7 @@ let standalone_args =
       Arg.String (fun s -> keywords := Some s),
       "<version+list> Set keywords according to the version+list \
        specification. Allows using a set of keywords different from the one of \
-       the current compiler for backword compatibility." );
+       the current compiler for backward compatibility." );
     ( "--keywords",
       Arg.String (fun s -> keywords := Some s),
       "<version+list> Same as -keywords" );
