@@ -5,9 +5,9 @@ type version = int * int
 
 type version_range =
   | Only of version (* ex: [%%expect_in 5.3 *)
-  | Up_to of version (* ex: [%%expect_in 5.3 - *)
-  | From of version (* ex: [%%expect_in 5.3 + *)
-  | Between of version * version (* ex: [%%expect_in 5.0 >> 5.3 *)
+  | Up_to of version (* ex: [%%expect_in <= 5.3 *)
+  | From of version (* ex: [%%expect_in >= 5.3 *)
+  | Between of version * version (* ex: [%%expect_in 5.0 <=> 5.3 *)
 
 (*[%%ignore], [%%expect] or [%%expect_in]*)
 type expect_block =
@@ -60,7 +60,7 @@ rule code all_file phrases_start = parse
       versioned_expectation_content all_file
         (phrases_start, phrases) [] (range, start) lexbuf
   }
-  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) " + {|\n" {
+  | "[%%expect_in >= " (digit+ as major) '.' (digit+ as minor) " {|\n" {
       let phrases = extract_string all_file phrases_start lexbuf in
       Lexing.new_line lexbuf;
       let version = make_version major minor in
@@ -69,7 +69,7 @@ rule code all_file phrases_start = parse
       versioned_expectation_content all_file
         (phrases_start, phrases) [] (range, start) lexbuf
   }
-  | "[%%expect_in " (digit+ as major) '.' (digit+ as minor) " - {|\n" {
+  | "[%%expect_in <= " (digit+ as major) '.' (digit+ as minor) " {|\n" {
       let phrases = extract_string all_file phrases_start lexbuf in
       Lexing.new_line lexbuf;
       let version = make_version major minor in
@@ -80,7 +80,7 @@ rule code all_file phrases_start = parse
   }
   | "[%%expect_in "
     (digit+ as major1) '.' (digit+ as minor1)
-    " >> "
+    " <=> "
     (digit+ as major2) '.' (digit+ as minor2)
     " {|\n" {
       let phrases = extract_string all_file phrases_start lexbuf in
@@ -134,7 +134,7 @@ and versioned_expectation_content all_file code_chunk vexpects curr = parse
     versioned_expectation_content all_file code_chunk
       (block::vexpects) (next_range, cstart) lexbuf
   }
-  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) " + {|\n" {
+  | "|}]\n[%%expect_in >= " (digit+ as major) '.' (digit+ as minor) " {|\n" {
     let range, start = curr in
     let s = extract_string all_file start lexbuf in
     Lexing.new_line lexbuf;
@@ -146,7 +146,7 @@ and versioned_expectation_content all_file code_chunk vexpects curr = parse
     versioned_expectation_content all_file code_chunk
       (block::vexpects) (next_range, cstart) lexbuf
   }
-  | "|}]\n[%%expect_in " (digit+ as major) '.' (digit+ as minor) " - {|\n" {
+  | "|}]\n[%%expect_in <= " (digit+ as major) '.' (digit+ as minor) " {|\n" {
     let range, start = curr in
     let s = extract_string all_file start lexbuf in
     Lexing.new_line lexbuf;
@@ -160,7 +160,7 @@ and versioned_expectation_content all_file code_chunk vexpects curr = parse
   }
   | "|}]\n[%%expect_in "
     (digit+ as major1) '.' (digit+ as minor1)
-    " >> "
+    " <=> "
     (digit+ as major2) '.' (digit+ as minor2)
     " {|\n" {
     let range, start = curr in

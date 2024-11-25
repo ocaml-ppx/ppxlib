@@ -94,10 +94,10 @@ let pp_version ppf (major, minor) = Format.fprintf ppf "%d.%d" major minor
 let pp_range ppf range =
   match (range : Expect_lexer.version_range) with
   | Only v -> pp_version ppf v
-  | From v -> Format.fprintf ppf "%a +" pp_version v
-  | Up_to v -> Format.fprintf ppf "%a -" pp_version v
+  | From v -> Format.fprintf ppf ">= %a" pp_version v
+  | Up_to v -> Format.fprintf ppf "<= %a" pp_version v
   | Between (v1, v2) ->
-      Format.fprintf ppf "%a >> %a" pp_version v1 pp_version v2
+      Format.fprintf ppf "%a <=> %a" pp_version v1 pp_version v2
 
 let run_code ppf starting_pos code =
   let lexbuf = Lexing.from_string code in
