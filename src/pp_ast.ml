@@ -302,9 +302,58 @@ class lift_simple_val =
       | NoInjectivity -> Constr ("NoInjectivity", [])
   end
 
-let lift_simple_val = new lift_simple_val
+type 'a pp = Format.formatter -> 'a -> unit
+type 'a configurable = ?config:Config.t -> 'a pp
+type 'a configured = 'a pp
 
-type 'node pp = ?config:Config.t -> Format.formatter -> 'node -> unit
+module type S = sig
+  type 'a printer
+
+  val structure : structure printer
+  val structure_item : structure_item printer
+  val signature : signature printer
+  val signature_item : signature_item printer
+  val expression : expression printer
+  val pattern : pattern printer
+  val core_type : core_type printer
+end
+
+module type Conf = sig
+  val config : Config.t
+end
+
+module type Configured = S with type 'a printer = 'a configured
+module type Configurable = S with type 'a printer = 'a configurable
+
+module Make (Conf : Conf) : Configured = struct
+  type 'a printer = 'a configured
+
+  let lsv =
+    let lift_simple_val = new lift_simple_val in
+    lift_simple_val#set_config Conf.config;
+    lift_simple_val
+
+  let structure fmt str = pp_simple_val fmt (lsv#structure str)
+  let structure_item fmt str = pp_simple_val fmt (lsv#structure_item str)
+  let signature fmt str = pp_simple_val fmt (lsv#signature str)
+  let signature_item fmt str = pp_simple_val fmt (lsv#signature_item str)
+  let expression fmt str = pp_simple_val fmt (lsv#expression str)
+  let pattern fmt str = pp_simple_val fmt (lsv#pattern str)
+  let core_type fmt str = pp_simple_val fmt (lsv#core_type str)
+end
+
+let make config =
+  (module Make (struct
+    let config = config
+  end) : Configured)
+
+module Default = Make (struct
+  let config = Config.default
+end)
+
+type 'a printer = 'a configurable
+
+let lift_simple_val = new lift_simple_val
 
 let with_config ~config ~f =
   let old_config = lift_simple_val#get_config () in
