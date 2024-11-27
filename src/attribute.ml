@@ -23,6 +23,7 @@ module Context = struct
     | Class_infos : _ class_infos t
     | Class_expr : class_expr t
     | Class_field : class_field t
+    | Class_type_decl : class_type_declaration t
     | Module_type : module_type t
     | Module_declaration : module_declaration t
     | Module_type_declaration : module_type_declaration t
@@ -54,6 +55,7 @@ module Context = struct
   let class_infos = Class_infos
   let class_expr = Class_expr
   let class_field = Class_field
+  let class_type_decl = Class_type_decl
   let module_type = Module_type
   let module_declaration = Module_declaration
   let module_type_declaration = Module_type_declaration
@@ -101,6 +103,7 @@ module Context = struct
     | Class_infos -> x.pci_attributes
     | Class_expr -> x.pcl_attributes
     | Class_field -> x.pcf_attributes
+    | Class_type_decl -> x.pci_attributes
     | Module_type -> x.pmty_attributes
     | Module_declaration -> x.pmd_attributes
     | Module_type_declaration -> x.pmtd_attributes
@@ -135,6 +138,7 @@ module Context = struct
     | Class_infos -> { x with pci_attributes = attrs }
     | Class_expr -> { x with pcl_attributes = attrs }
     | Class_field -> { x with pcf_attributes = attrs }
+    | Class_type_decl -> { x with pci_attributes = attrs }
     | Module_type -> { x with pmty_attributes = attrs }
     | Module_declaration -> { x with pmd_attributes = attrs }
     | Module_type_declaration -> { x with pmtd_attributes = attrs }
@@ -176,6 +180,7 @@ module Context = struct
     | Class_infos -> "class declaration"
     | Class_expr -> "class expression"
     | Class_field -> "class field"
+    | Class_type_decl -> "class type declaration"
     | Module_type -> "module type"
     | Module_declaration -> "module declaration"
     | Module_type_declaration -> "module type declaration"
