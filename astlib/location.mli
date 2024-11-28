@@ -52,6 +52,10 @@ val set_input_lexbuf : Lexing.lexbuf option -> unit
 val none : t
 (** An arbitrary value of type [t]; describes an empty ghost range. *)
 
+val dummy_pos : Lexing.position
+(** A location that is guaranteed to match the compiler's dummy position for
+    whichever compiler is being used. *)
+
 (** {1 Automatically reporting errors for raised exceptions} *)
 
 val register_error_of_exn : (exn -> Error.t option) -> unit

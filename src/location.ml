@@ -8,7 +8,7 @@ type t = location = {
 }
 
 let in_file name =
-  let loc = { pos_fname = name; pos_lnum = 1; pos_bol = 0; pos_cnum = -1 } in
+  let loc = { L.dummy_pos with pos_fname = name } in
   { loc_start = loc; loc_end = loc; loc_ghost = true }
 
 let set_filename loc fn =

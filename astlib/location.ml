@@ -3,6 +3,10 @@ include Ocaml_common.Location
 let set_input_name name = input_name := name
 let set_input_lexbuf lexbuf_opt = input_lexbuf := lexbuf_opt
 
+let dummy_pos =
+  (*IF_NOT_AT_LEAST 407 { Lexing.pos_fname = ""; pos_lnum = 1; pos_bol = 0; pos_cnum = -1; } *)
+  (*IF_AT_LEAST 408 Lexing.dummy_pos *)
+
 module Error = struct
   [@@@warning "-37"]
 
