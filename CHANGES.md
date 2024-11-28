@@ -28,6 +28,9 @@ details.
   to what the compiler's `-dparsetree` is.
   (#530, @NathanReb)
 
+- Change the default, dummy position in `Location.ml` to match the compiler's
+  (#540, @ncik-roberts, @patricoferris)
+
 0.33.0 (2024-07-22)
 -------------------
 
