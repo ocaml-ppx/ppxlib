@@ -1109,8 +1109,8 @@ module Class = struct
   let refine { name } sort = { name; sort }
   let same x y = Name.equal x.name y.name
 
-  let equal :
-      type a b. (a, _) t -> (b, _) t -> (a obj, b obj) Type_equal.t option =
+  let equal : type a b.
+      (a, _) t -> (b, _) t -> (a obj, b obj) Type_equal.t option =
    fun x y -> Option.some_if (same x y) Type_equal.T
 
   let assert_equal x y =
@@ -2294,8 +2294,7 @@ module Knowledge = struct
 
     type 'a ord = comparator_witness
 
-    let derive :
-        type a b.
+    let derive : type a b.
         (a, b) cls ->
         (module S
            with type t = (a, b) cls t
@@ -2405,9 +2404,9 @@ module Knowledge = struct
      fun cls ->
       objects cls >>= fun objs ->
       with_new_object objs @@ fun obj objs ->
-      (update @@ function
-       | { classes } as s ->
-           { s with classes = Map.set classes ~key:cls.name ~data:objs })
+      ( update @@ function
+        | { classes } as s ->
+            { s with classes = Map.set classes ~key:cls.name ~data:objs } )
       >>| fun () -> obj
 
     let null _ = Oid.zero
@@ -2539,8 +2538,7 @@ module Knowledge = struct
       include Binable.S with type t := t
     end
 
-    let derive :
-        type a.
+    let derive : type a.
         (a, _) cls ->
         (module S with type t = a obj and type comparator_witness = a ord) =
      fun _ ->
