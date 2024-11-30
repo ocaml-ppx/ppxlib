@@ -14,9 +14,6 @@ details.
 
 ### Other changes
 
-- Support class type declarations in derivers with the new, optional arguments
-  `{str,sig}_class_type_decl` in `Deriving.add` (#538, @patricoferris)
-
 - Fix `deriving_inline` round-trip check so that it works with 5.01 <-> 5.02
   migrations (#519, @NathanReb)
 
@@ -27,6 +24,11 @@ details.
 - Change `-dparsetree` from a sexp output to a pretty printed AST, closer
   to what the compiler's `-dparsetree` is.
   (#530, @NathanReb)
+
+- Add Parsetree documentation comments to `Ast_builder` functions (#518, @patricoferris)
+
+- Support class type declarations in derivers with the new, optional arguments
+  `{str,sig}_class_type_decl` in `Deriving.add` (#538, @patricoferris)
 
 0.33.0 (2024-07-22)
 -------------------
