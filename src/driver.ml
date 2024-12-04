@@ -24,6 +24,7 @@ let pretty = ref false
 let styler = ref None
 let output_metadata_filename = ref None
 let corrected_suffix = ref ".ppx-corrected"
+let no_corrections = ref false
 
 let ghost =
   object
@@ -1409,6 +1410,9 @@ let standalone_args =
     ( "-corrected-suffix",
       Arg.Set_string corrected_suffix,
       "SUFFIX Suffix to append to corrected files" );
+    ( "-no-corrections",
+      Arg.Set no_corrections,
+      "Skip correction generations such as [@@deriving_inline]" );
   ]
 
 let get_args ?(standalone_args = standalone_args) () =
