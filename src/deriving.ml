@@ -128,8 +128,8 @@ module Args = struct
       | I_nil : ('m, 'm) instance
       | I_cons : ('m1, 'a -> 'm2) instance * 'a -> ('m1, 'm2) instance
 
-    let rec create :
-        type a b. (a, b) t -> (string * expression) list -> (a, b) instance =
+    let rec create : type a b.
+        (a, b) t -> (string * expression) list -> (a, b) instance =
      fun spec args ->
       match spec with
       | Nil -> I_nil
