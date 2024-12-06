@@ -462,6 +462,35 @@ let handle_attr_inline attrs ~convert_exn ~item ~expanded_item ~loc ~base_ctxt
             let error_item = [ convert_exn exn ] in
             return (error_item :: acc)))
 
+let handle_attr_group_inline_expect attrs rf ~items ~expanded_items ~loc
+    ~base_ctxt ~embed_errors ~convert_exn ~no_corrections =
+  if no_corrections then
+    (* Mark expect attributes as seen *)
+    List.fold_left attrs ~init:(return ())
+      ~f:(fun acc (Rule.Attr_group_inline.T group) ->
+        acc >>= fun () ->
+        get_group group.attribute items >>= fun _ ->
+        get_group group.attribute expanded_items >>= fun _ -> return ())
+    >>= fun () -> return []
+  else
+    handle_attr_group_inline attrs rf ~items ~expanded_items ~loc ~base_ctxt
+      ~embed_errors ~convert_exn
+
+let handle_attr_inline_expect attrs ~convert_exn ~item ~expanded_item ~loc
+    ~base_ctxt ~embed_errors ~no_corrections =
+  if no_corrections then
+    (* Mark expect attributes as seen *)
+    List.fold_left attrs ~init:(return ()) ~f:(fun acc (Rule.Attr_inline.T a) ->
+        acc >>= fun () ->
+        Attribute.get_res a.attribute item |> of_result ~default:None
+        >>= fun _ ->
+        Attribute.get_res a.attribute expanded_item |> of_result ~default:None
+        >>= fun _ -> return ())
+    >>= fun () -> return []
+  else
+    handle_attr_inline attrs ~item ~expanded_item ~loc ~base_ctxt ~embed_errors
+      ~convert_exn
+
 module Expect_mismatch_handler = struct
   type t = {
     f : 'a. 'a Attribute.Floating.Context.t -> Location.t -> 'a list -> unit;
@@ -471,8 +500,8 @@ module Expect_mismatch_handler = struct
 end
 
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
-  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = false) rules
-  =
+  ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = false)
+  ?(no_corrections = false) rules =
   let hook = generated_code_hook in
 
   let special_functions =
@@ -546,6 +575,12 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   let map_nodes = map_nodes ~hook ~embed_errors in
   let handle_attr_group_inline = handle_attr_group_inline ~embed_errors in
   let handle_attr_inline = handle_attr_inline ~embed_errors in
+  let handle_attr_group_inline_expect =
+    handle_attr_group_inline_expect ~no_corrections ~embed_errors
+  in
+  let handle_attr_inline_expect =
+    handle_attr_inline_expect ~no_corrections ~embed_errors
+  in
 
   object (self)
     inherit Ast_traverse.map_with_expansion_context_and_errors as super
@@ -780,8 +815,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_group_inline attr_str_type_decls rf ~items:tds
                       ~expanded_items:exp_tds ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_group_inline attr_str_type_decls_expect rf
-                      ~items:tds ~expanded_items:exp_tds ~loc ~base_ctxt
+                    handle_attr_group_inline_expect attr_str_type_decls_expect
+                      rf ~items:tds ~expanded_items:exp_tds ~loc ~base_ctxt
                       ~convert_exn
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
@@ -790,7 +825,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_inline attr_str_module_type_decls ~item:mtd
                       ~expanded_item:exp_mtd ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_inline attr_str_module_type_decls_expect
+                    handle_attr_inline_expect attr_str_module_type_decls_expect
                       ~item:mtd ~expanded_item:exp_mtd ~loc ~base_ctxt
                       ~convert_exn
                     >>= fun expect_items ->
@@ -800,7 +835,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_inline attr_str_type_exts ~item:te
                       ~expanded_item:exp_te ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_inline attr_str_type_exts_expect ~item:te
+                    handle_attr_inline_expect attr_str_type_exts_expect ~item:te
                       ~expanded_item:exp_te ~loc ~base_ctxt ~convert_exn
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
@@ -809,8 +844,9 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_inline attr_str_exceptions ~item:ec
                       ~expanded_item:exp_ec ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_inline attr_str_exceptions_expect ~item:ec
-                      ~expanded_item:exp_ec ~loc ~base_ctxt ~convert_exn
+                    handle_attr_inline_expect attr_str_exceptions_expect
+                      ~item:ec ~expanded_item:exp_ec ~loc ~base_ctxt
+                      ~convert_exn
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
@@ -819,7 +855,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                       ~items:cds ~expanded_items:exp_cds ~loc ~base_ctxt
                       ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_group_inline attr_str_class_decls_expect
+                    handle_attr_group_inline_expect attr_str_class_decls_expect
                       Nonrecursive ~items:cds ~expanded_items:exp_cds ~loc
                       ~base_ctxt ~convert_exn
                     >>= fun expect_items ->
@@ -889,8 +925,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_group_inline attr_sig_type_decls rf ~items:tds
                       ~expanded_items:exp_tds ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_group_inline attr_sig_type_decls_expect rf
-                      ~items:tds ~expanded_items:exp_tds ~loc ~base_ctxt
+                    handle_attr_group_inline_expect attr_sig_type_decls_expect
+                      rf ~items:tds ~expanded_items:exp_tds ~loc ~base_ctxt
                       ~convert_exn
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
@@ -899,7 +935,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_inline attr_sig_module_type_decls ~item:mtd
                       ~expanded_item:exp_mtd ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_inline attr_sig_module_type_decls_expect
+                    handle_attr_inline_expect attr_sig_module_type_decls_expect
                       ~item:mtd ~expanded_item:exp_mtd ~loc ~base_ctxt
                       ~convert_exn
                     >>= fun expect_items ->
@@ -909,7 +945,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_inline attr_sig_type_exts ~item:te
                       ~expanded_item:exp_te ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_inline attr_sig_type_exts_expect ~item:te
+                    handle_attr_inline_expect attr_sig_type_exts_expect ~item:te
                       ~expanded_item:exp_te ~loc ~base_ctxt ~convert_exn
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
@@ -918,8 +954,9 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     handle_attr_inline attr_sig_exceptions ~item:ec
                       ~expanded_item:exp_ec ~loc ~base_ctxt ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_inline attr_sig_exceptions_expect ~item:ec
-                      ~expanded_item:exp_ec ~loc ~base_ctxt ~convert_exn
+                    handle_attr_inline_expect attr_sig_exceptions_expect
+                      ~item:ec ~expanded_item:exp_ec ~loc ~base_ctxt
+                      ~convert_exn
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
@@ -928,7 +965,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                       ~items:cds ~expanded_items:exp_cds ~loc ~base_ctxt
                       ~convert_exn
                     >>= fun extra_items ->
-                    handle_attr_group_inline attr_sig_class_decls_expect
+                    handle_attr_group_inline_expect attr_sig_class_decls_expect
                       Nonrecursive ~items:cds ~expanded_items:exp_cds ~loc
                       ~base_ctxt ~convert_exn
                     >>= fun expect_items ->
