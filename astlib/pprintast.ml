@@ -1756,3 +1756,5 @@ let module_type = module_type reset_ctxt
 let signature_item = signature_item reset_ctxt
 let structure_item = structure_item reset_ctxt
 let type_declaration = type_declaration reset_ctxt
+let binding = binding reset_ctxt
+let payload = payload reset_ctxt
