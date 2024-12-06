@@ -676,10 +676,10 @@ and copy_extension : From.Parsetree.extension -> To.Parsetree.extension =
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
 and copy_class_infos :
-      'f0 'g0.
-      ('f0 -> 'g0) ->
-      'f0 From.Parsetree.class_infos ->
-      'g0 To.Parsetree.class_infos =
+    'f0 'g0.
+    ('f0 -> 'g0) ->
+    'f0 From.Parsetree.class_infos ->
+    'g0 To.Parsetree.class_infos =
  fun f0
      {
        From.Parsetree.pci_virt;
@@ -713,10 +713,10 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0.
-      ('f0 -> 'g0) ->
-      'f0 From.Parsetree.include_infos ->
-      'g0 To.Parsetree.include_infos =
+    'f0 'g0.
+    ('f0 -> 'g0) ->
+    'f0 From.Parsetree.include_infos ->
+    'g0 To.Parsetree.include_infos =
  fun f0
      {
        From.Parsetree.pincl_mod;
@@ -975,7 +975,7 @@ and copy_option : 'f0 'g0. ('f0 -> 'g0) -> 'f0 option -> 'g0 option =
 and copy_longident : Longident.t -> Longident.t = fun x -> x
 
 and copy_loc :
-      'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Asttypes.loc -> 'g0 To.Asttypes.loc =
+    'f0 'g0. ('f0 -> 'g0) -> 'f0 From.Asttypes.loc -> 'g0 To.Asttypes.loc =
  fun f0 { From.Asttypes.txt; From.Asttypes.loc } ->
   { To.Asttypes.txt = f0 txt; To.Asttypes.loc = copy_location loc }
 

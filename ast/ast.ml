@@ -121,7 +121,8 @@ and constant = Parsetree.constant =
       (** Constant string such as ["constant"] or
           [{delim|other constant|delim}].
 
-          The location span the content of the string, without the delimiters. *)
+          The location span the content of the string, without the delimiters.
+      *)
   | Pconst_float of string * char option
       (** Float constant such as [3.4], [2e5] or [1.4e-4].
 
@@ -171,10 +172,10 @@ and core_type_desc = Parsetree.core_type_desc =
       (** [Ptyp_arrow(lbl, T1, T2)] represents:
 
           - [T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]},
-          - [~l:T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Labelled}
-            [Labelled]},
-          - [?l:T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Optional}
-            [Optional]}. *)
+          - [~l:T1 -> T2] when [lbl] is
+            {{!Asttypes.arg_label.Labelled} [Labelled]},
+          - [?l:T1 -> T2] when [lbl] is
+            {{!Asttypes.arg_label.Optional} [Optional]}. *)
   | Ptyp_tuple of core_type list
       (** [Ptyp_tuple([T1 ; ... ; Tn])] represents a product type
           [T1 * ... * Tn].
@@ -203,22 +204,24 @@ and core_type_desc = Parsetree.core_type_desc =
   | Ptyp_variant of row_field list * closed_flag * label list option
       (** [Ptyp_variant([`A;`B], flag, labels)] represents:
 
-          - [[ `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Closed}
-            [Closed]}, and [labels] is [None],
+          - [[ `A|`B ]] when [flag] is
+            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is [None],
           - [[> `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Open} [Open]},
             and [labels] is [None],
-          - [[< `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Closed}
-            [Closed]}, and [labels] is [Some []],
-          - [[< `A|`B > `X `Y ]] when [flag] is {{!Asttypes.closed_flag.Closed}
-            [Closed]}, and [labels] is [Some ["X";"Y"]]. *)
+          - [[< `A|`B ]] when [flag] is
+            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is
+            [Some []],
+          - [[< `A|`B > `X `Y ]] when [flag] is
+            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is
+            [Some ["X";"Y"]]. *)
   | Ptyp_poly of string loc list * core_type
       (** ['a1 ... 'an. T]
 
           Can only appear in the following context:
 
-          - As the {!core_type} of a {{!pattern_desc.Ppat_constraint}
-            [Ppat_constraint]} node corresponding to a constraint on a
-            let-binding:
+          - As the {!core_type} of a
+            {{!pattern_desc.Ppat_constraint} [Ppat_constraint]} node
+            corresponding to a constraint on a let-binding:
 
           {[
             let x : 'a1 ... 'an. T = e ...
@@ -226,8 +229,8 @@ and core_type_desc = Parsetree.core_type_desc =
           - Under {{!class_field_kind.Cfk_virtual} [Cfk_virtual]} for methods
             (not values).
 
-          - As the {!core_type} of a {{!class_type_field_desc.Pctf_method}
-            [Pctf_method]} node.
+          - As the {!core_type} of a
+            {{!class_type_field_desc.Pctf_method} [Pctf_method]} node.
 
           - As the {!core_type} of a {{!expression_desc.Pexp_poly} [Pexp_poly]}
             node.
@@ -370,24 +373,24 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_fun of arg_label * expression option * pattern * expression
       (** [Pexp_fun(lbl, exp0, P, E1)] represents:
 
-          - [fun P -> E1] when [lbl] is {{!Asttypes.arg_label.Nolabel}
-            [Nolabel]} and [exp0] is [None]
-          - [fun ~l:P -> E1] when [lbl] is {{!Asttypes.arg_label.Labelled}
-            [Labelled l]} and [exp0] is [None]
-          - [fun ?l:P -> E1] when [lbl] is {{!Asttypes.arg_label.Optional}
-            [Optional l]} and [exp0] is [None]
+          - [fun P -> E1] when [lbl] is
+            {{!Asttypes.arg_label.Nolabel} [Nolabel]} and [exp0] is [None]
+          - [fun ~l:P -> E1] when [lbl] is
+            {{!Asttypes.arg_label.Labelled} [Labelled l]} and [exp0] is [None]
+          - [fun ?l:P -> E1] when [lbl] is
+            {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is [None]
           - [fun ?l:(P = E0) -> E1] when [lbl] is
             {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is
             [Some E0]
 
           Notes:
 
-          - If [E0] is provided, only {{!Asttypes.arg_label.Optional}
-            [Optional]} is allowed.
+          - If [E0] is provided, only
+            {{!Asttypes.arg_label.Optional} [Optional]} is allowed.
           - [fun P1 P2 .. Pn -> E1] is represented as nested
             {{!expression_desc.Pexp_fun} [Pexp_fun]}.
-          - [let f P = E] is represented using {{!expression_desc.Pexp_fun}
-            [Pexp_fun]}. *)
+          - [let f P = E] is represented using
+            {{!expression_desc.Pexp_fun} [Pexp_fun]}. *)
   | Pexp_apply of expression * (arg_label * expression) list
       (** [Pexp_apply(E0, [(l1, E1) ; ... ; (ln, En)])] represents
           [E0 ~l1:E1 ... ~ln:En]
@@ -457,7 +460,8 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_assert of expression
       (** [assert E].
 
-          Note: [assert false] is treated in a special way by the type-checker. *)
+          Note: [assert false] is treated in a special way by the type-checker.
+      *)
   | Pexp_lazy of expression  (** [lazy E] *)
   | Pexp_poly of expression * core_type option
       (** Used for method bodies.
@@ -514,8 +518,8 @@ and value_description = Parsetree.value_description = {
 (** Values of type {!value_description} represents:
 
     - [val x: T], when {{!value_description.pval_prim} [pval_prim]} is [[]]
-    - [external x: T = "s1" ... "sn"] when {{!value_description.pval_prim}
-      [pval_prim]} is [["s1";..."sn"]] *)
+    - [external x: T = "s1" ... "sn"] when
+      {{!value_description.pval_prim} [pval_prim]} is [["s1";..."sn"]] *)
 
 (** {2 Type declarations} *)
 
@@ -535,16 +539,17 @@ and type_declaration = Parsetree.type_declaration = {
     {{!type_declaration.ptype_kind} [ptype_kind]} and
     {{!type_declaration.ptype_manifest} [ptype_manifest]} values:
 
-    - [type t] when [type_kind] is {{!type_kind.Ptype_abstract}
-      [Ptype_abstract]}, and [manifest] is [None],
-    - [type t = T0] when [type_kind] is {{!type_kind.Ptype_abstract}
-      [Ptype_abstract]}, and [manifest] is [Some T0],
-    - [type t = C of T | ...] when [type_kind] is {{!type_kind.Ptype_variant}
-      [Ptype_variant]}, and [manifest] is [None],
+    - [type t] when [type_kind] is
+      {{!type_kind.Ptype_abstract} [Ptype_abstract]}, and [manifest] is [None],
+    - [type t = T0] when [type_kind] is
+      {{!type_kind.Ptype_abstract} [Ptype_abstract]}, and [manifest] is
+      [Some T0],
+    - [type t = C of T | ...] when [type_kind] is
+      {{!type_kind.Ptype_variant} [Ptype_variant]}, and [manifest] is [None],
     - [type t = T0 = C of T | ...] when [type_kind] is
       {{!type_kind.Ptype_variant} [Ptype_variant]}, and [manifest] is [Some T0],
-    - [type t = {l: T; ...}] when [type_kind] is {{!type_kind.Ptype_record}
-      [Ptype_record]}, and [manifest] is [None],
+    - [type t = {l: T; ...}] when [type_kind] is
+      {{!type_kind.Ptype_record} [Ptype_record]}, and [manifest] is [None],
     - [type t = T0 = {l : T; ...}] when [type_kind] is
       {{!type_kind.Ptype_record} [Ptype_record]}, and [manifest] is [Some T0],
     - [type t = ..] when [type_kind] is {{!type_kind.Ptype_open} [Ptype_open]},
@@ -565,8 +570,9 @@ and label_declaration = Parsetree.label_declaration = {
 }
 (** - [{ ...; l: T; ... }] when {{!label_declaration.pld_mutable} [pld_mutable]}
       is {{!Asttypes.mutable_flag.Immutable} [Immutable]},
-    - [{ ...; mutable l: T; ... }] when {{!label_declaration.pld_mutable}
-      [pld_mutable]} is {{!Asttypes.mutable_flag.Mutable} [Mutable]}.
+    - [{ ...; mutable l: T; ... }] when
+      {{!label_declaration.pld_mutable} [pld_mutable]} is
+      {{!Asttypes.mutable_flag.Mutable} [Mutable]}.
 
     Note: [T] can be a {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}. *)
 
@@ -625,29 +631,25 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
           constructor. It can be:
 
           {ul
-           {- [C of T1 * ... * Tn]
-              when:
+           {- [C of T1 * ... * Tn] when:
 
               - [existentials] is [[]],
               - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [None].
            }
-           {- [C: T0]
-              when
+           {- [C: T0] when
 
               - [existentials] is [[]],
               - [c_args] is [[]],
               - [t_opt] is [Some T0].
            }
-           {- [C: T1 * ... * Tn -> T0]
-              when
+           {- [C: T1 * ... * Tn -> T0] when
 
               - [existentials] is [[]],
               - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [Some T0].
            }
-           {- [C: 'a... . T1 * ... * Tn -> T0]
-              when
+           {- [C: 'a... . T1 * ... * Tn -> T0] when
 
               - [existentials] is [['a;...]],
               - [c_args] is [[T1; ... ; Tn]],
@@ -655,7 +657,8 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
            }
           } *)
   | Pext_rebind of longident_loc
-      (** [Pext_rebind(D)] re-export the constructor [D] with the new name [C] *)
+      (** [Pext_rebind(D)] re-export the constructor [D] with the new name [C]
+      *)
 
 (** {1 Class language} *)
 (** {2 Type expressions for the class language} *)
@@ -675,10 +678,10 @@ and class_type_desc = Parsetree.class_type_desc =
       (** [Pcty_arrow(lbl, T, CT)] represents:
 
           - [T -> CT] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]},
-          - [~l:T -> CT] when [lbl] is {{!Asttypes.arg_label.Labelled}
-            [Labelled l]},
-          - [?l:T -> CT] when [lbl] is {{!Asttypes.arg_label.Optional}
-            [Optional l]}. *)
+          - [~l:T -> CT] when [lbl] is
+            {{!Asttypes.arg_label.Labelled} [Labelled l]},
+          - [?l:T -> CT] when [lbl] is
+            {{!Asttypes.arg_label.Optional} [Optional l]}. *)
   | Pcty_extension of extension  (** [%id] *)
   | Pcty_open of open_description * class_type  (** [let open M in CT] *)
 
@@ -744,12 +747,12 @@ and class_expr_desc = Parsetree.class_expr_desc =
   | Pcl_fun of arg_label * expression option * pattern * class_expr
       (** [Pcl_fun(lbl, exp0, P, CE)] represents:
 
-          - [fun P -> CE] when [lbl] is {{!Asttypes.arg_label.Nolabel}
-            [Nolabel]} and [exp0] is [None],
-          - [fun ~l:P -> CE] when [lbl] is {{!Asttypes.arg_label.Labelled}
-            [Labelled l]} and [exp0] is [None],
-          - [fun ?l:P -> CE] when [lbl] is {{!Asttypes.arg_label.Optional}
-            [Optional l]} and [exp0] is [None],
+          - [fun P -> CE] when [lbl] is
+            {{!Asttypes.arg_label.Nolabel} [Nolabel]} and [exp0] is [None],
+          - [fun ~l:P -> CE] when [lbl] is
+            {{!Asttypes.arg_label.Labelled} [Labelled l]} and [exp0] is [None],
+          - [fun ?l:P -> CE] when [lbl] is
+            {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is [None],
           - [fun ?l:(P = E0) -> CE] when [lbl] is
             {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is
             [Some E0]. *)
@@ -790,34 +793,35 @@ and class_field_desc = Parsetree.class_field_desc =
   | Pcf_inherit of override_flag * class_expr * string loc option
       (** [Pcf_inherit(flag, CE, s)] represents:
 
-          - [inherit CE] when [flag] is {{!Asttypes.override_flag.Fresh}
-            [Fresh]} and [s] is [None],
-          - [inherit CE as x] when [flag] is {{!Asttypes.override_flag.Fresh}
-            [Fresh]} and [s] is [Some x],
-          - [inherit! CE] when [flag] is {{!Asttypes.override_flag.Override}
-            [Override]} and [s] is [None],
+          - [inherit CE] when [flag] is
+            {{!Asttypes.override_flag.Fresh} [Fresh]} and [s] is [None],
+          - [inherit CE as x] when [flag] is
+            {{!Asttypes.override_flag.Fresh} [Fresh]} and [s] is [Some x],
+          - [inherit! CE] when [flag] is
+            {{!Asttypes.override_flag.Override} [Override]} and [s] is [None],
           - [inherit! CE as x] when [flag] is
-            {{!Asttypes.override_flag.Override} [Override]} and [s] is [Some x] *)
+            {{!Asttypes.override_flag.Override} [Override]} and [s] is [Some x]
+      *)
   | Pcf_val of (label loc * mutable_flag * class_field_kind)
       (** [Pcf_val(x,flag, kind)] represents:
 
-          - [val x = E] when [flag] is {{!Asttypes.mutable_flag.Immutable}
-            [Immutable]} and [kind] is {{!class_field_kind.Cfk_concrete}
-            [Cfk_concrete(Fresh, E)]}
+          - [val x = E] when [flag] is
+            {{!Asttypes.mutable_flag.Immutable} [Immutable]} and [kind] is
+            {{!class_field_kind.Cfk_concrete} [Cfk_concrete(Fresh, E)]}
           - [val virtual x: T] when [flag] is
             {{!Asttypes.mutable_flag.Immutable} [Immutable]} and [kind] is
             {{!class_field_kind.Cfk_virtual} [Cfk_virtual(T)]}
-          - [val mutable x = E] when [flag] is {{!Asttypes.mutable_flag.Mutable}
-            [Mutable]} and [kind] is {{!class_field_kind.Cfk_concrete}
-            [Cfk_concrete(Fresh, E)]}
+          - [val mutable x = E] when [flag] is
+            {{!Asttypes.mutable_flag.Mutable} [Mutable]} and [kind] is
+            {{!class_field_kind.Cfk_concrete} [Cfk_concrete(Fresh, E)]}
           - [val mutable virtual x: T] when [flag] is
             {{!Asttypes.mutable_flag.Mutable} [Mutable]} and [kind] is
             {{!class_field_kind.Cfk_virtual} [Cfk_virtual(T)]} *)
   | Pcf_method of (label loc * private_flag * class_field_kind)
-      (** - [method x = E] ([E] can be a {{!expression_desc.Pexp_poly}
-            [Pexp_poly]})
-          - [method virtual x: T] ([T] can be a {{!core_type_desc.Ptyp_poly}
-            [Ptyp_poly]}) *)
+      (** - [method x = E] ([E] can be a
+            {{!expression_desc.Pexp_poly} [Pexp_poly]})
+          - [method virtual x: T] ([T] can be a
+            {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}) *)
   | Pcf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
   | Pcf_initializer of expression  (** [initializer E] *)
   | Pcf_attribute of attribute  (** [[@@@id]] *)
@@ -1664,8 +1668,8 @@ class virtual map =
         let pld_attributes = self#attributes pld_attributes in
         { pld_name; pld_mutable; pld_type; pld_loc; pld_attributes }
 
-    method constructor_declaration
-        : constructor_declaration -> constructor_declaration =
+    method constructor_declaration :
+        constructor_declaration -> constructor_declaration =
       fun { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } ->
         let pcd_name = self#loc self#string pcd_name in
         let pcd_vars = self#list (self#loc self#string) pcd_vars in
@@ -1675,8 +1679,8 @@ class virtual map =
         let pcd_attributes = self#attributes pcd_attributes in
         { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }
 
-    method constructor_arguments
-        : constructor_arguments -> constructor_arguments =
+    method constructor_arguments :
+        constructor_arguments -> constructor_arguments =
       fun x ->
         match x with
         | Pcstr_tuple a ->
@@ -1725,8 +1729,8 @@ class virtual map =
           ptyext_attributes;
         }
 
-    method extension_constructor
-        : extension_constructor -> extension_constructor =
+    method extension_constructor :
+        extension_constructor -> extension_constructor =
       fun { pext_name; pext_kind; pext_loc; pext_attributes } ->
         let pext_name = self#loc self#string pext_name in
         let pext_kind = self#extension_constructor_kind pext_kind in
@@ -1743,8 +1747,8 @@ class virtual map =
         let ptyexn_attributes = self#attributes ptyexn_attributes in
         { ptyexn_constructor; ptyexn_loc; ptyexn_attributes }
 
-    method extension_constructor_kind
-        : extension_constructor_kind -> extension_constructor_kind =
+    method extension_constructor_kind :
+        extension_constructor_kind -> extension_constructor_kind =
       fun x ->
         match x with
         | Pext_decl (a, b, c) ->
@@ -1799,8 +1803,8 @@ class virtual map =
         let pctf_attributes = self#attributes pctf_attributes in
         { pctf_desc; pctf_loc; pctf_attributes }
 
-    method class_type_field_desc
-        : class_type_field_desc -> class_type_field_desc =
+    method class_type_field_desc :
+        class_type_field_desc -> class_type_field_desc =
       fun x ->
         match x with
         | Pctf_inherit a ->
@@ -1871,8 +1875,8 @@ class virtual map =
     method class_description : class_description -> class_description =
       self#class_infos self#class_type
 
-    method class_type_declaration
-        : class_type_declaration -> class_type_declaration =
+    method class_type_declaration :
+        class_type_declaration -> class_type_declaration =
       self#class_infos self#class_type
 
     method class_expr : class_expr -> class_expr =
@@ -2121,8 +2125,8 @@ class virtual map =
         let pms_loc = self#location pms_loc in
         { pms_name; pms_manifest; pms_attributes; pms_loc }
 
-    method module_type_declaration
-        : module_type_declaration -> module_type_declaration =
+    method module_type_declaration :
+        module_type_declaration -> module_type_declaration =
       fun { pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc } ->
         let pmtd_name = self#loc self#string pmtd_name in
         let pmtd_type = self#option self#module_type pmtd_type in
@@ -2144,8 +2148,8 @@ class virtual map =
     method open_declaration : open_declaration -> open_declaration =
       self#open_infos self#module_expr
 
-    method include_infos
-        : 'a. ('a -> 'a) -> 'a include_infos -> 'a include_infos =
+    method include_infos :
+        'a. ('a -> 'a) -> 'a include_infos -> 'a include_infos =
       fun _a { pincl_mod; pincl_loc; pincl_attributes } ->
         let pincl_mod = _a pincl_mod in
         let pincl_loc = self#location pincl_loc in
@@ -2321,8 +2325,8 @@ class virtual map =
         let pdira_loc = self#location pdira_loc in
         { pdira_desc; pdira_loc }
 
-    method directive_argument_desc
-        : directive_argument_desc -> directive_argument_desc =
+    method directive_argument_desc :
+        directive_argument_desc -> directive_argument_desc =
       fun x ->
         match x with
         | Pdir_string a ->
@@ -3735,7 +3739,8 @@ class virtual ['acc] fold =
         acc
 
     method constructor_declaration : constructor_declaration -> 'acc -> 'acc =
-      fun { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } acc ->
+      fun { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }
+          acc ->
         let acc = self#loc self#string pcd_name acc in
         let acc = self#list (self#loc self#string) pcd_vars acc in
         let acc = self#constructor_arguments pcd_args acc in
@@ -3797,8 +3802,8 @@ class virtual ['acc] fold =
         let acc = self#attributes ptyexn_attributes acc in
         acc
 
-    method extension_constructor_kind
-        : extension_constructor_kind -> 'acc -> 'acc =
+    method extension_constructor_kind :
+        extension_constructor_kind -> 'acc -> 'acc =
       fun x acc ->
         match x with
         | Pext_decl (a, b, c) ->
@@ -3876,8 +3881,8 @@ class virtual ['acc] fold =
         | Pctf_attribute a -> self#attribute a acc
         | Pctf_extension a -> self#extension a acc
 
-    method class_infos
-        : 'a. ('a -> 'acc -> 'acc) -> 'a class_infos -> 'acc -> 'acc =
+    method class_infos :
+        'a. ('a -> 'acc -> 'acc) -> 'a class_infos -> 'acc -> 'acc =
       fun _a
           { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes }
           acc ->
@@ -4103,8 +4108,8 @@ class virtual ['acc] fold =
         let acc = self#location pmtd_loc acc in
         acc
 
-    method open_infos
-        : 'a. ('a -> 'acc -> 'acc) -> 'a open_infos -> 'acc -> 'acc =
+    method open_infos :
+        'a. ('a -> 'acc -> 'acc) -> 'a open_infos -> 'acc -> 'acc =
       fun _a { popen_expr; popen_override; popen_loc; popen_attributes } acc ->
         let acc = _a popen_expr acc in
         let acc = self#override_flag popen_override acc in
@@ -4118,8 +4123,8 @@ class virtual ['acc] fold =
     method open_declaration : open_declaration -> 'acc -> 'acc =
       self#open_infos self#module_expr
 
-    method include_infos
-        : 'a. ('a -> 'acc -> 'acc) -> 'a include_infos -> 'acc -> 'acc =
+    method include_infos :
+        'a. ('a -> 'acc -> 'acc) -> 'a include_infos -> 'acc -> 'acc =
       fun _a { pincl_mod; pincl_loc; pincl_attributes } acc ->
         let acc = _a pincl_mod acc in
         let acc = self#location pincl_loc acc in
@@ -4307,8 +4312,8 @@ class virtual ['acc] fold_map =
     method location_stack : location_stack -> 'acc -> location_stack * 'acc =
       self#list self#location
 
-    method loc
-        : 'a. ('a -> 'acc -> 'a * 'acc) -> 'a loc -> 'acc -> 'a loc * 'acc =
+    method loc :
+        'a. ('a -> 'acc -> 'a * 'acc) -> 'a loc -> 'acc -> 'a loc * 'acc =
       fun _a { txt; loc } acc ->
         let txt, acc = _a txt acc in
         let loc, acc = self#location loc acc in
@@ -4517,8 +4522,8 @@ class virtual ['acc] fold_map =
         let pof_attributes, acc = self#attributes pof_attributes acc in
         ({ pof_desc; pof_loc; pof_attributes }, acc)
 
-    method object_field_desc
-        : object_field_desc -> 'acc -> object_field_desc * 'acc =
+    method object_field_desc :
+        object_field_desc -> 'acc -> object_field_desc * 'acc =
       fun x acc ->
         match x with
         | Otag (a, b) ->
@@ -4812,8 +4817,8 @@ class virtual ['acc] fold_map =
         let pbop_loc, acc = self#location pbop_loc acc in
         ({ pbop_op; pbop_pat; pbop_exp; pbop_loc }, acc)
 
-    method value_description
-        : value_description -> 'acc -> value_description * 'acc =
+    method value_description :
+        value_description -> 'acc -> value_description * 'acc =
       fun { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } acc ->
         let pval_name, acc = self#loc self#string pval_name acc in
         let pval_type, acc = self#core_type pval_type acc in
@@ -4822,8 +4827,8 @@ class virtual ['acc] fold_map =
         let pval_loc, acc = self#location pval_loc acc in
         ({ pval_name; pval_type; pval_prim; pval_attributes; pval_loc }, acc)
 
-    method type_declaration
-        : type_declaration -> 'acc -> type_declaration * 'acc =
+    method type_declaration :
+        type_declaration -> 'acc -> type_declaration * 'acc =
       fun {
             ptype_name;
             ptype_params;
@@ -4889,8 +4894,8 @@ class virtual ['acc] fold_map =
             (Ptype_record a, acc)
         | Ptype_open -> (Ptype_open, acc)
 
-    method label_declaration
-        : label_declaration -> 'acc -> label_declaration * 'acc =
+    method label_declaration :
+        label_declaration -> 'acc -> label_declaration * 'acc =
       fun { pld_name; pld_mutable; pld_type; pld_loc; pld_attributes } acc ->
         let pld_name, acc = self#loc self#string pld_name acc in
         let pld_mutable, acc = self#mutable_flag pld_mutable acc in
@@ -4899,9 +4904,10 @@ class virtual ['acc] fold_map =
         let pld_attributes, acc = self#attributes pld_attributes acc in
         ({ pld_name; pld_mutable; pld_type; pld_loc; pld_attributes }, acc)
 
-    method constructor_declaration
-        : constructor_declaration -> 'acc -> constructor_declaration * 'acc =
-      fun { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } acc ->
+    method constructor_declaration :
+        constructor_declaration -> 'acc -> constructor_declaration * 'acc =
+      fun { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }
+          acc ->
         let pcd_name, acc = self#loc self#string pcd_name acc in
         let pcd_vars, acc = self#list (self#loc self#string) pcd_vars acc in
         let pcd_args, acc = self#constructor_arguments pcd_args acc in
@@ -4910,8 +4916,8 @@ class virtual ['acc] fold_map =
         let pcd_attributes, acc = self#attributes pcd_attributes acc in
         ({ pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }, acc)
 
-    method constructor_arguments
-        : constructor_arguments -> 'acc -> constructor_arguments * 'acc =
+    method constructor_arguments :
+        constructor_arguments -> 'acc -> constructor_arguments * 'acc =
       fun x acc ->
         match x with
         | Pcstr_tuple a ->
@@ -4961,8 +4967,8 @@ class virtual ['acc] fold_map =
           },
           acc )
 
-    method extension_constructor
-        : extension_constructor -> 'acc -> extension_constructor * 'acc =
+    method extension_constructor :
+        extension_constructor -> 'acc -> extension_constructor * 'acc =
       fun { pext_name; pext_kind; pext_loc; pext_attributes } acc ->
         let pext_name, acc = self#loc self#string pext_name acc in
         let pext_kind, acc = self#extension_constructor_kind pext_kind acc in
@@ -4979,10 +4985,9 @@ class virtual ['acc] fold_map =
         let ptyexn_attributes, acc = self#attributes ptyexn_attributes acc in
         ({ ptyexn_constructor; ptyexn_loc; ptyexn_attributes }, acc)
 
-    method extension_constructor_kind
-        : extension_constructor_kind ->
-          'acc ->
-          extension_constructor_kind * 'acc =
+    method extension_constructor_kind :
+        extension_constructor_kind -> 'acc -> extension_constructor_kind * 'acc
+        =
       fun x acc ->
         match x with
         | Pext_decl (a, b, c) ->
@@ -5032,16 +5037,16 @@ class virtual ['acc] fold_map =
         in
         ({ pcsig_self; pcsig_fields }, acc)
 
-    method class_type_field
-        : class_type_field -> 'acc -> class_type_field * 'acc =
+    method class_type_field :
+        class_type_field -> 'acc -> class_type_field * 'acc =
       fun { pctf_desc; pctf_loc; pctf_attributes } acc ->
         let pctf_desc, acc = self#class_type_field_desc pctf_desc acc in
         let pctf_loc, acc = self#location pctf_loc acc in
         let pctf_attributes, acc = self#attributes pctf_attributes acc in
         ({ pctf_desc; pctf_loc; pctf_attributes }, acc)
 
-    method class_type_field_desc
-        : class_type_field_desc -> 'acc -> class_type_field_desc * 'acc =
+    method class_type_field_desc :
+        class_type_field_desc -> 'acc -> class_type_field_desc * 'acc =
       fun x acc ->
         match x with
         | Pctf_inherit a ->
@@ -5085,12 +5090,12 @@ class virtual ['acc] fold_map =
             let a, acc = self#extension a acc in
             (Pctf_extension a, acc)
 
-    method class_infos
-        : 'a.
-          ('a -> 'acc -> 'a * 'acc) ->
-          'a class_infos ->
-          'acc ->
-          'a class_infos * 'acc =
+    method class_infos :
+        'a.
+        ('a -> 'acc -> 'a * 'acc) ->
+        'a class_infos ->
+        'acc ->
+        'a class_infos * 'acc =
       fun _a
           { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes }
           acc ->
@@ -5116,12 +5121,12 @@ class virtual ['acc] fold_map =
         ( { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes },
           acc )
 
-    method class_description
-        : class_description -> 'acc -> class_description * 'acc =
+    method class_description :
+        class_description -> 'acc -> class_description * 'acc =
       self#class_infos self#class_type
 
-    method class_type_declaration
-        : class_type_declaration -> 'acc -> class_type_declaration * 'acc =
+    method class_type_declaration :
+        class_type_declaration -> 'acc -> class_type_declaration * 'acc =
       self#class_infos self#class_type
 
     method class_expr : class_expr -> 'acc -> class_expr * 'acc =
@@ -5188,8 +5193,8 @@ class virtual ['acc] fold_map =
         let pcf_attributes, acc = self#attributes pcf_attributes acc in
         ({ pcf_desc; pcf_loc; pcf_attributes }, acc)
 
-    method class_field_desc
-        : class_field_desc -> 'acc -> class_field_desc * 'acc =
+    method class_field_desc :
+        class_field_desc -> 'acc -> class_field_desc * 'acc =
       fun x acc ->
         match x with
         | Pcf_inherit (a, b, c) ->
@@ -5236,8 +5241,8 @@ class virtual ['acc] fold_map =
             let a, acc = self#extension a acc in
             (Pcf_extension a, acc)
 
-    method class_field_kind
-        : class_field_kind -> 'acc -> class_field_kind * 'acc =
+    method class_field_kind :
+        class_field_kind -> 'acc -> class_field_kind * 'acc =
       fun x acc ->
         match x with
         | Cfk_virtual a ->
@@ -5248,8 +5253,8 @@ class virtual ['acc] fold_map =
             let b, acc = self#expression b acc in
             (Cfk_concrete (a, b), acc)
 
-    method class_declaration
-        : class_declaration -> 'acc -> class_declaration * 'acc =
+    method class_declaration :
+        class_declaration -> 'acc -> class_declaration * 'acc =
       self#class_infos self#class_expr
 
     method module_type : module_type -> 'acc -> module_type * 'acc =
@@ -5259,8 +5264,8 @@ class virtual ['acc] fold_map =
         let pmty_attributes, acc = self#attributes pmty_attributes acc in
         ({ pmty_desc; pmty_loc; pmty_attributes }, acc)
 
-    method module_type_desc
-        : module_type_desc -> 'acc -> module_type_desc * 'acc =
+    method module_type_desc :
+        module_type_desc -> 'acc -> module_type_desc * 'acc =
       fun x acc ->
         match x with
         | Pmty_ident a ->
@@ -5287,8 +5292,8 @@ class virtual ['acc] fold_map =
             let a, acc = self#longident_loc a acc in
             (Pmty_alias a, acc)
 
-    method functor_parameter
-        : functor_parameter -> 'acc -> functor_parameter * 'acc =
+    method functor_parameter :
+        functor_parameter -> 'acc -> functor_parameter * 'acc =
       fun x acc ->
         match x with
         | Unit -> (Unit, acc)
@@ -5306,8 +5311,8 @@ class virtual ['acc] fold_map =
         let psig_loc, acc = self#location psig_loc acc in
         ({ psig_desc; psig_loc }, acc)
 
-    method signature_item_desc
-        : signature_item_desc -> 'acc -> signature_item_desc * 'acc =
+    method signature_item_desc :
+        signature_item_desc -> 'acc -> signature_item_desc * 'acc =
       fun x acc ->
         match x with
         | Psig_value a ->
@@ -5361,8 +5366,8 @@ class virtual ['acc] fold_map =
             let b, acc = self#attributes b acc in
             (Psig_extension (a, b), acc)
 
-    method module_declaration
-        : module_declaration -> 'acc -> module_declaration * 'acc =
+    method module_declaration :
+        module_declaration -> 'acc -> module_declaration * 'acc =
       fun { pmd_name; pmd_type; pmd_attributes; pmd_loc } acc ->
         let pmd_name, acc = self#loc (self#option self#string) pmd_name acc in
         let pmd_type, acc = self#module_type pmd_type acc in
@@ -5370,8 +5375,8 @@ class virtual ['acc] fold_map =
         let pmd_loc, acc = self#location pmd_loc acc in
         ({ pmd_name; pmd_type; pmd_attributes; pmd_loc }, acc)
 
-    method module_substitution
-        : module_substitution -> 'acc -> module_substitution * 'acc =
+    method module_substitution :
+        module_substitution -> 'acc -> module_substitution * 'acc =
       fun { pms_name; pms_manifest; pms_attributes; pms_loc } acc ->
         let pms_name, acc = self#loc self#string pms_name acc in
         let pms_manifest, acc = self#longident_loc pms_manifest acc in
@@ -5379,8 +5384,8 @@ class virtual ['acc] fold_map =
         let pms_loc, acc = self#location pms_loc acc in
         ({ pms_name; pms_manifest; pms_attributes; pms_loc }, acc)
 
-    method module_type_declaration
-        : module_type_declaration -> 'acc -> module_type_declaration * 'acc =
+    method module_type_declaration :
+        module_type_declaration -> 'acc -> module_type_declaration * 'acc =
       fun { pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc } acc ->
         let pmtd_name, acc = self#loc self#string pmtd_name acc in
         let pmtd_type, acc = self#option self#module_type pmtd_type acc in
@@ -5388,12 +5393,12 @@ class virtual ['acc] fold_map =
         let pmtd_loc, acc = self#location pmtd_loc acc in
         ({ pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc }, acc)
 
-    method open_infos
-        : 'a.
-          ('a -> 'acc -> 'a * 'acc) ->
-          'a open_infos ->
-          'acc ->
-          'a open_infos * 'acc =
+    method open_infos :
+        'a.
+        ('a -> 'acc -> 'a * 'acc) ->
+        'a open_infos ->
+        'acc ->
+        'a open_infos * 'acc =
       fun _a { popen_expr; popen_override; popen_loc; popen_attributes } acc ->
         let popen_expr, acc = _a popen_expr acc in
         let popen_override, acc = self#override_flag popen_override acc in
@@ -5401,32 +5406,32 @@ class virtual ['acc] fold_map =
         let popen_attributes, acc = self#attributes popen_attributes acc in
         ({ popen_expr; popen_override; popen_loc; popen_attributes }, acc)
 
-    method open_description
-        : open_description -> 'acc -> open_description * 'acc =
+    method open_description :
+        open_description -> 'acc -> open_description * 'acc =
       self#open_infos self#longident_loc
 
-    method open_declaration
-        : open_declaration -> 'acc -> open_declaration * 'acc =
+    method open_declaration :
+        open_declaration -> 'acc -> open_declaration * 'acc =
       self#open_infos self#module_expr
 
-    method include_infos
-        : 'a.
-          ('a -> 'acc -> 'a * 'acc) ->
-          'a include_infos ->
-          'acc ->
-          'a include_infos * 'acc =
+    method include_infos :
+        'a.
+        ('a -> 'acc -> 'a * 'acc) ->
+        'a include_infos ->
+        'acc ->
+        'a include_infos * 'acc =
       fun _a { pincl_mod; pincl_loc; pincl_attributes } acc ->
         let pincl_mod, acc = _a pincl_mod acc in
         let pincl_loc, acc = self#location pincl_loc acc in
         let pincl_attributes, acc = self#attributes pincl_attributes acc in
         ({ pincl_mod; pincl_loc; pincl_attributes }, acc)
 
-    method include_description
-        : include_description -> 'acc -> include_description * 'acc =
+    method include_description :
+        include_description -> 'acc -> include_description * 'acc =
       self#include_infos self#module_type
 
-    method include_declaration
-        : include_declaration -> 'acc -> include_declaration * 'acc =
+    method include_declaration :
+        include_declaration -> 'acc -> include_declaration * 'acc =
       self#include_infos self#module_expr
 
     method with_constraint : with_constraint -> 'acc -> with_constraint * 'acc =
@@ -5464,8 +5469,8 @@ class virtual ['acc] fold_map =
         let pmod_attributes, acc = self#attributes pmod_attributes acc in
         ({ pmod_desc; pmod_loc; pmod_attributes }, acc)
 
-    method module_expr_desc
-        : module_expr_desc -> 'acc -> module_expr_desc * 'acc =
+    method module_expr_desc :
+        module_expr_desc -> 'acc -> module_expr_desc * 'acc =
       fun x acc ->
         match x with
         | Pmod_ident a ->
@@ -5502,8 +5507,8 @@ class virtual ['acc] fold_map =
         let pstr_loc, acc = self#location pstr_loc acc in
         ({ pstr_desc; pstr_loc }, acc)
 
-    method structure_item_desc
-        : structure_item_desc -> 'acc -> structure_item_desc * 'acc =
+    method structure_item_desc :
+        structure_item_desc -> 'acc -> structure_item_desc * 'acc =
       fun x acc ->
         match x with
         | Pstr_eval (a, b) ->
@@ -5582,23 +5587,23 @@ class virtual ['acc] fold_map =
             let a, acc = self#toplevel_directive a acc in
             (Ptop_dir a, acc)
 
-    method toplevel_directive
-        : toplevel_directive -> 'acc -> toplevel_directive * 'acc =
+    method toplevel_directive :
+        toplevel_directive -> 'acc -> toplevel_directive * 'acc =
       fun { pdir_name; pdir_arg; pdir_loc } acc ->
         let pdir_name, acc = self#loc self#string pdir_name acc in
         let pdir_arg, acc = self#option self#directive_argument pdir_arg acc in
         let pdir_loc, acc = self#location pdir_loc acc in
         ({ pdir_name; pdir_arg; pdir_loc }, acc)
 
-    method directive_argument
-        : directive_argument -> 'acc -> directive_argument * 'acc =
+    method directive_argument :
+        directive_argument -> 'acc -> directive_argument * 'acc =
       fun { pdira_desc; pdira_loc } acc ->
         let pdira_desc, acc = self#directive_argument_desc pdira_desc acc in
         let pdira_loc, acc = self#location pdira_loc acc in
         ({ pdira_desc; pdira_loc }, acc)
 
-    method directive_argument_desc
-        : directive_argument_desc -> 'acc -> directive_argument_desc * 'acc =
+    method directive_argument_desc :
+        directive_argument_desc -> 'acc -> directive_argument_desc * 'acc =
       fun x acc ->
         match x with
         | Pdir_string a ->
@@ -6224,9 +6229,10 @@ class virtual ['ctx] map_with_context =
         let pld_attributes = self#attributes ctx pld_attributes in
         { pld_name; pld_mutable; pld_type; pld_loc; pld_attributes }
 
-    method constructor_declaration
-        : 'ctx -> constructor_declaration -> constructor_declaration =
-      fun ctx { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } ->
+    method constructor_declaration :
+        'ctx -> constructor_declaration -> constructor_declaration =
+      fun ctx
+          { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } ->
         let pcd_name = self#loc self#string ctx pcd_name in
         let pcd_vars = self#list (self#loc self#string) ctx pcd_vars in
         let pcd_args = self#constructor_arguments ctx pcd_args in
@@ -6235,8 +6241,8 @@ class virtual ['ctx] map_with_context =
         let pcd_attributes = self#attributes ctx pcd_attributes in
         { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes }
 
-    method constructor_arguments
-        : 'ctx -> constructor_arguments -> constructor_arguments =
+    method constructor_arguments :
+        'ctx -> constructor_arguments -> constructor_arguments =
       fun ctx x ->
         match x with
         | Pcstr_tuple a ->
@@ -6286,8 +6292,8 @@ class virtual ['ctx] map_with_context =
           ptyext_attributes;
         }
 
-    method extension_constructor
-        : 'ctx -> extension_constructor -> extension_constructor =
+    method extension_constructor :
+        'ctx -> extension_constructor -> extension_constructor =
       fun ctx { pext_name; pext_kind; pext_loc; pext_attributes } ->
         let pext_name = self#loc self#string ctx pext_name in
         let pext_kind = self#extension_constructor_kind ctx pext_kind in
@@ -6304,8 +6310,8 @@ class virtual ['ctx] map_with_context =
         let ptyexn_attributes = self#attributes ctx ptyexn_attributes in
         { ptyexn_constructor; ptyexn_loc; ptyexn_attributes }
 
-    method extension_constructor_kind
-        : 'ctx -> extension_constructor_kind -> extension_constructor_kind =
+    method extension_constructor_kind :
+        'ctx -> extension_constructor_kind -> extension_constructor_kind =
       fun ctx x ->
         match x with
         | Pext_decl (a, b, c) ->
@@ -6360,8 +6366,8 @@ class virtual ['ctx] map_with_context =
         let pctf_attributes = self#attributes ctx pctf_attributes in
         { pctf_desc; pctf_loc; pctf_attributes }
 
-    method class_type_field_desc
-        : 'ctx -> class_type_field_desc -> class_type_field_desc =
+    method class_type_field_desc :
+        'ctx -> class_type_field_desc -> class_type_field_desc =
       fun ctx x ->
         match x with
         | Pctf_inherit a ->
@@ -6405,8 +6411,8 @@ class virtual ['ctx] map_with_context =
             let a = self#extension ctx a in
             Pctf_extension a
 
-    method class_infos
-        : 'a. ('ctx -> 'a -> 'a) -> 'ctx -> 'a class_infos -> 'a class_infos =
+    method class_infos :
+        'a. ('ctx -> 'a -> 'a) -> 'ctx -> 'a class_infos -> 'a class_infos =
       fun _a ctx
           { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes } ->
         let pci_virt = self#virtual_flag ctx pci_virt in
@@ -6433,8 +6439,8 @@ class virtual ['ctx] map_with_context =
     method class_description : 'ctx -> class_description -> class_description =
       self#class_infos self#class_type
 
-    method class_type_declaration
-        : 'ctx -> class_type_declaration -> class_type_declaration =
+    method class_type_declaration :
+        'ctx -> class_type_declaration -> class_type_declaration =
       self#class_infos self#class_type
 
     method class_expr : 'ctx -> class_expr -> class_expr =
@@ -6614,8 +6620,8 @@ class virtual ['ctx] map_with_context =
         let psig_loc = self#location ctx psig_loc in
         { psig_desc; psig_loc }
 
-    method signature_item_desc
-        : 'ctx -> signature_item_desc -> signature_item_desc =
+    method signature_item_desc :
+        'ctx -> signature_item_desc -> signature_item_desc =
       fun ctx x ->
         match x with
         | Psig_value a ->
@@ -6678,8 +6684,8 @@ class virtual ['ctx] map_with_context =
         let pmd_loc = self#location ctx pmd_loc in
         { pmd_name; pmd_type; pmd_attributes; pmd_loc }
 
-    method module_substitution
-        : 'ctx -> module_substitution -> module_substitution =
+    method module_substitution :
+        'ctx -> module_substitution -> module_substitution =
       fun ctx { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         let pms_name = self#loc self#string ctx pms_name in
         let pms_manifest = self#longident_loc ctx pms_manifest in
@@ -6687,8 +6693,8 @@ class virtual ['ctx] map_with_context =
         let pms_loc = self#location ctx pms_loc in
         { pms_name; pms_manifest; pms_attributes; pms_loc }
 
-    method module_type_declaration
-        : 'ctx -> module_type_declaration -> module_type_declaration =
+    method module_type_declaration :
+        'ctx -> module_type_declaration -> module_type_declaration =
       fun ctx { pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc } ->
         let pmtd_name = self#loc self#string ctx pmtd_name in
         let pmtd_type = self#option self#module_type ctx pmtd_type in
@@ -6696,8 +6702,8 @@ class virtual ['ctx] map_with_context =
         let pmtd_loc = self#location ctx pmtd_loc in
         { pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc }
 
-    method open_infos
-        : 'a. ('ctx -> 'a -> 'a) -> 'ctx -> 'a open_infos -> 'a open_infos =
+    method open_infos :
+        'a. ('ctx -> 'a -> 'a) -> 'ctx -> 'a open_infos -> 'a open_infos =
       fun _a ctx { popen_expr; popen_override; popen_loc; popen_attributes } ->
         let popen_expr = _a ctx popen_expr in
         let popen_override = self#override_flag ctx popen_override in
@@ -6711,21 +6717,20 @@ class virtual ['ctx] map_with_context =
     method open_declaration : 'ctx -> open_declaration -> open_declaration =
       self#open_infos self#module_expr
 
-    method include_infos
-        : 'a. ('ctx -> 'a -> 'a) -> 'ctx -> 'a include_infos -> 'a include_infos
-        =
+    method include_infos :
+        'a. ('ctx -> 'a -> 'a) -> 'ctx -> 'a include_infos -> 'a include_infos =
       fun _a ctx { pincl_mod; pincl_loc; pincl_attributes } ->
         let pincl_mod = _a ctx pincl_mod in
         let pincl_loc = self#location ctx pincl_loc in
         let pincl_attributes = self#attributes ctx pincl_attributes in
         { pincl_mod; pincl_loc; pincl_attributes }
 
-    method include_description
-        : 'ctx -> include_description -> include_description =
+    method include_description :
+        'ctx -> include_description -> include_description =
       self#include_infos self#module_type
 
-    method include_declaration
-        : 'ctx -> include_declaration -> include_declaration =
+    method include_declaration :
+        'ctx -> include_declaration -> include_declaration =
       self#include_infos self#module_expr
 
     method with_constraint : 'ctx -> with_constraint -> with_constraint =
@@ -6800,8 +6805,8 @@ class virtual ['ctx] map_with_context =
         let pstr_loc = self#location ctx pstr_loc in
         { pstr_desc; pstr_loc }
 
-    method structure_item_desc
-        : 'ctx -> structure_item_desc -> structure_item_desc =
+    method structure_item_desc :
+        'ctx -> structure_item_desc -> structure_item_desc =
       fun ctx x ->
         match x with
         | Pstr_eval (a, b) ->
@@ -6895,8 +6900,8 @@ class virtual ['ctx] map_with_context =
         let pdira_loc = self#location ctx pdira_loc in
         { pdira_desc; pdira_loc }
 
-    method directive_argument_desc
-        : 'ctx -> directive_argument_desc -> directive_argument_desc =
+    method directive_argument_desc :
+        'ctx -> directive_argument_desc -> directive_argument_desc =
       fun ctx x ->
         match x with
         | Pdir_string a ->
@@ -8456,8 +8461,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
     method location_stack : 'ctx -> location_stack -> location_stack * 'res =
       self#list self#location
 
-    method loc
-        : 'a. ('ctx -> 'a -> 'a * 'res) -> 'ctx -> 'a loc -> 'a loc * 'res =
+    method loc :
+        'a. ('ctx -> 'a -> 'a * 'res) -> 'ctx -> 'a loc -> 'a loc * 'res =
       fun _a ctx { txt; loc } ->
         let txt = _a ctx txt in
         let loc = self#location ctx loc in
@@ -8741,8 +8746,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pof_attributes", Stdlib.snd pof_attributes);
             ] )
 
-    method object_field_desc
-        : 'ctx -> object_field_desc -> object_field_desc * 'res =
+    method object_field_desc :
+        'ctx -> object_field_desc -> object_field_desc * 'res =
       fun ctx x ->
         match x with
         | Otag (a, b) ->
@@ -9175,8 +9180,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pbop_loc", Stdlib.snd pbop_loc);
             ] )
 
-    method value_description
-        : 'ctx -> value_description -> value_description * 'res =
+    method value_description :
+        'ctx -> value_description -> value_description * 'res =
       fun ctx { pval_name; pval_type; pval_prim; pval_attributes; pval_loc } ->
         let pval_name = self#loc self#string ctx pval_name in
         let pval_type = self#core_type ctx pval_type in
@@ -9199,8 +9204,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pval_loc", Stdlib.snd pval_loc);
             ] )
 
-    method type_declaration
-        : 'ctx -> type_declaration -> type_declaration * 'res =
+    method type_declaration :
+        'ctx -> type_declaration -> type_declaration * 'res =
       fun ctx
           {
             ptype_name;
@@ -9280,8 +9285,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               self#constr ctx "Ptype_record" [ Stdlib.snd a ] )
         | Ptype_open -> (Ptype_open, self#constr ctx "Ptype_open" [])
 
-    method label_declaration
-        : 'ctx -> label_declaration -> label_declaration * 'res =
+    method label_declaration :
+        'ctx -> label_declaration -> label_declaration * 'res =
       fun ctx { pld_name; pld_mutable; pld_type; pld_loc; pld_attributes } ->
         let pld_name = self#loc self#string ctx pld_name in
         let pld_mutable = self#mutable_flag ctx pld_mutable in
@@ -9304,9 +9309,10 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pld_attributes", Stdlib.snd pld_attributes);
             ] )
 
-    method constructor_declaration
-        : 'ctx -> constructor_declaration -> constructor_declaration * 'res =
-      fun ctx { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } ->
+    method constructor_declaration :
+        'ctx -> constructor_declaration -> constructor_declaration * 'res =
+      fun ctx
+          { pcd_name; pcd_vars; pcd_args; pcd_res; pcd_loc; pcd_attributes } ->
         let pcd_name = self#loc self#string ctx pcd_name in
         let pcd_vars = self#list (self#loc self#string) ctx pcd_vars in
         let pcd_args = self#constructor_arguments ctx pcd_args in
@@ -9331,8 +9337,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pcd_attributes", Stdlib.snd pcd_attributes);
             ] )
 
-    method constructor_arguments
-        : 'ctx -> constructor_arguments -> constructor_arguments * 'res =
+    method constructor_arguments :
+        'ctx -> constructor_arguments -> constructor_arguments * 'res =
       fun ctx x ->
         match x with
         | Pcstr_tuple a ->
@@ -9395,8 +9401,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("ptyext_attributes", Stdlib.snd ptyext_attributes);
             ] )
 
-    method extension_constructor
-        : 'ctx -> extension_constructor -> extension_constructor * 'res =
+    method extension_constructor :
+        'ctx -> extension_constructor -> extension_constructor * 'res =
       fun ctx { pext_name; pext_kind; pext_loc; pext_attributes } ->
         let pext_name = self#loc self#string ctx pext_name in
         let pext_kind = self#extension_constructor_kind ctx pext_kind in
@@ -9435,10 +9441,9 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("ptyexn_attributes", Stdlib.snd ptyexn_attributes);
             ] )
 
-    method extension_constructor_kind
-        : 'ctx ->
-          extension_constructor_kind ->
-          extension_constructor_kind * 'res =
+    method extension_constructor_kind :
+        'ctx -> extension_constructor_kind -> extension_constructor_kind * 'res
+        =
       fun ctx x ->
         match x with
         | Pext_decl (a, b, c) ->
@@ -9513,8 +9518,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pcsig_fields", Stdlib.snd pcsig_fields);
             ] )
 
-    method class_type_field
-        : 'ctx -> class_type_field -> class_type_field * 'res =
+    method class_type_field :
+        'ctx -> class_type_field -> class_type_field * 'res =
       fun ctx { pctf_desc; pctf_loc; pctf_attributes } ->
         let pctf_desc = self#class_type_field_desc ctx pctf_desc in
         let pctf_loc = self#location ctx pctf_loc in
@@ -9531,8 +9536,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pctf_attributes", Stdlib.snd pctf_attributes);
             ] )
 
-    method class_type_field_desc
-        : 'ctx -> class_type_field_desc -> class_type_field_desc * 'res =
+    method class_type_field_desc :
+        'ctx -> class_type_field_desc -> class_type_field_desc * 'res =
       fun ctx x ->
         match x with
         | Pctf_inherit a ->
@@ -9589,12 +9594,12 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pctf_extension (Stdlib.fst a),
               self#constr ctx "Pctf_extension" [ Stdlib.snd a ] )
 
-    method class_infos
-        : 'a.
-          ('ctx -> 'a -> 'a * 'res) ->
-          'ctx ->
-          'a class_infos ->
-          'a class_infos * 'res =
+    method class_infos :
+        'a.
+        ('ctx -> 'a -> 'a * 'res) ->
+        'ctx ->
+        'a class_infos ->
+        'a class_infos * 'res =
       fun _a ctx
           { pci_virt; pci_params; pci_name; pci_expr; pci_loc; pci_attributes } ->
         let pci_virt = self#virtual_flag ctx pci_virt in
@@ -9636,12 +9641,12 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pci_attributes", Stdlib.snd pci_attributes);
             ] )
 
-    method class_description
-        : 'ctx -> class_description -> class_description * 'res =
+    method class_description :
+        'ctx -> class_description -> class_description * 'res =
       self#class_infos self#class_type
 
-    method class_type_declaration
-        : 'ctx -> class_type_declaration -> class_type_declaration * 'res =
+    method class_type_declaration :
+        'ctx -> class_type_declaration -> class_type_declaration * 'res =
       self#class_infos self#class_type
 
     method class_expr : 'ctx -> class_expr -> class_expr * 'res =
@@ -9747,8 +9752,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pcf_attributes", Stdlib.snd pcf_attributes);
             ] )
 
-    method class_field_desc
-        : 'ctx -> class_field_desc -> class_field_desc * 'res =
+    method class_field_desc :
+        'ctx -> class_field_desc -> class_field_desc * 'res =
       fun ctx x ->
         match x with
         | Pcf_inherit (a, b, c) ->
@@ -9805,8 +9810,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pcf_extension (Stdlib.fst a),
               self#constr ctx "Pcf_extension" [ Stdlib.snd a ] )
 
-    method class_field_kind
-        : 'ctx -> class_field_kind -> class_field_kind * 'res =
+    method class_field_kind :
+        'ctx -> class_field_kind -> class_field_kind * 'res =
       fun ctx x ->
         match x with
         | Cfk_virtual a ->
@@ -9819,8 +9824,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Cfk_concrete (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Cfk_concrete" [ Stdlib.snd a; Stdlib.snd b ] )
 
-    method class_declaration
-        : 'ctx -> class_declaration -> class_declaration * 'res =
+    method class_declaration :
+        'ctx -> class_declaration -> class_declaration * 'res =
       self#class_infos self#class_expr
 
     method module_type : 'ctx -> module_type -> module_type * 'res =
@@ -9840,8 +9845,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pmty_attributes", Stdlib.snd pmty_attributes);
             ] )
 
-    method module_type_desc
-        : 'ctx -> module_type_desc -> module_type_desc * 'res =
+    method module_type_desc :
+        'ctx -> module_type_desc -> module_type_desc * 'res =
       fun ctx x ->
         match x with
         | Pmty_ident a ->
@@ -9875,8 +9880,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Pmty_alias (Stdlib.fst a),
               self#constr ctx "Pmty_alias" [ Stdlib.snd a ] )
 
-    method functor_parameter
-        : 'ctx -> functor_parameter -> functor_parameter * 'res =
+    method functor_parameter :
+        'ctx -> functor_parameter -> functor_parameter * 'res =
       fun ctx x ->
         match x with
         | Unit -> (Unit, self#constr ctx "Unit" [])
@@ -9900,8 +9905,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("psig_loc", Stdlib.snd psig_loc);
             ] )
 
-    method signature_item_desc
-        : 'ctx -> signature_item_desc -> signature_item_desc * 'res =
+    method signature_item_desc :
+        'ctx -> signature_item_desc -> signature_item_desc * 'res =
       fun ctx x ->
         match x with
         | Psig_value a ->
@@ -9971,8 +9976,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Psig_extension (Stdlib.fst a, Stdlib.fst b),
               self#constr ctx "Psig_extension" [ Stdlib.snd a; Stdlib.snd b ] )
 
-    method module_declaration
-        : 'ctx -> module_declaration -> module_declaration * 'res =
+    method module_declaration :
+        'ctx -> module_declaration -> module_declaration * 'res =
       fun ctx { pmd_name; pmd_type; pmd_attributes; pmd_loc } ->
         let pmd_name = self#loc (self#option self#string) ctx pmd_name in
         let pmd_type = self#module_type ctx pmd_type in
@@ -9992,8 +9997,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pmd_loc", Stdlib.snd pmd_loc);
             ] )
 
-    method module_substitution
-        : 'ctx -> module_substitution -> module_substitution * 'res =
+    method module_substitution :
+        'ctx -> module_substitution -> module_substitution * 'res =
       fun ctx { pms_name; pms_manifest; pms_attributes; pms_loc } ->
         let pms_name = self#loc self#string ctx pms_name in
         let pms_manifest = self#longident_loc ctx pms_manifest in
@@ -10013,8 +10018,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pms_loc", Stdlib.snd pms_loc);
             ] )
 
-    method module_type_declaration
-        : 'ctx -> module_type_declaration -> module_type_declaration * 'res =
+    method module_type_declaration :
+        'ctx -> module_type_declaration -> module_type_declaration * 'res =
       fun ctx { pmtd_name; pmtd_type; pmtd_attributes; pmtd_loc } ->
         let pmtd_name = self#loc self#string ctx pmtd_name in
         let pmtd_type = self#option self#module_type ctx pmtd_type in
@@ -10034,12 +10039,12 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pmtd_loc", Stdlib.snd pmtd_loc);
             ] )
 
-    method open_infos
-        : 'a.
-          ('ctx -> 'a -> 'a * 'res) ->
-          'ctx ->
-          'a open_infos ->
-          'a open_infos * 'res =
+    method open_infos :
+        'a.
+        ('ctx -> 'a -> 'a * 'res) ->
+        'ctx ->
+        'a open_infos ->
+        'a open_infos * 'res =
       fun _a ctx { popen_expr; popen_override; popen_loc; popen_attributes } ->
         let popen_expr = _a ctx popen_expr in
         let popen_override = self#override_flag ctx popen_override in
@@ -10059,20 +10064,20 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("popen_attributes", Stdlib.snd popen_attributes);
             ] )
 
-    method open_description
-        : 'ctx -> open_description -> open_description * 'res =
+    method open_description :
+        'ctx -> open_description -> open_description * 'res =
       self#open_infos self#longident_loc
 
-    method open_declaration
-        : 'ctx -> open_declaration -> open_declaration * 'res =
+    method open_declaration :
+        'ctx -> open_declaration -> open_declaration * 'res =
       self#open_infos self#module_expr
 
-    method include_infos
-        : 'a.
-          ('ctx -> 'a -> 'a * 'res) ->
-          'ctx ->
-          'a include_infos ->
-          'a include_infos * 'res =
+    method include_infos :
+        'a.
+        ('ctx -> 'a -> 'a * 'res) ->
+        'ctx ->
+        'a include_infos ->
+        'a include_infos * 'res =
       fun _a ctx { pincl_mod; pincl_loc; pincl_attributes } ->
         let pincl_mod = _a ctx pincl_mod in
         let pincl_loc = self#location ctx pincl_loc in
@@ -10089,12 +10094,12 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pincl_attributes", Stdlib.snd pincl_attributes);
             ] )
 
-    method include_description
-        : 'ctx -> include_description -> include_description * 'res =
+    method include_description :
+        'ctx -> include_description -> include_description * 'res =
       self#include_infos self#module_type
 
-    method include_declaration
-        : 'ctx -> include_declaration -> include_declaration * 'res =
+    method include_declaration :
+        'ctx -> include_declaration -> include_declaration * 'res =
       self#include_infos self#module_expr
 
     method with_constraint : 'ctx -> with_constraint -> with_constraint * 'res =
@@ -10150,8 +10155,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pmod_attributes", Stdlib.snd pmod_attributes);
             ] )
 
-    method module_expr_desc
-        : 'ctx -> module_expr_desc -> module_expr_desc * 'res =
+    method module_expr_desc :
+        'ctx -> module_expr_desc -> module_expr_desc * 'res =
       fun ctx x ->
         match x with
         | Pmod_ident a ->
@@ -10201,8 +10206,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pstr_loc", Stdlib.snd pstr_loc);
             ] )
 
-    method structure_item_desc
-        : 'ctx -> structure_item_desc -> structure_item_desc * 'res =
+    method structure_item_desc :
+        'ctx -> structure_item_desc -> structure_item_desc * 'res =
       fun ctx x ->
         match x with
         | Pstr_eval (a, b) ->
@@ -10322,8 +10327,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
             ( Ptop_dir (Stdlib.fst a),
               self#constr ctx "Ptop_dir" [ Stdlib.snd a ] )
 
-    method toplevel_directive
-        : 'ctx -> toplevel_directive -> toplevel_directive * 'res =
+    method toplevel_directive :
+        'ctx -> toplevel_directive -> toplevel_directive * 'res =
       fun ctx { pdir_name; pdir_arg; pdir_loc } ->
         let pdir_name = self#loc self#string ctx pdir_name in
         let pdir_arg = self#option self#directive_argument ctx pdir_arg in
@@ -10340,8 +10345,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pdir_loc", Stdlib.snd pdir_loc);
             ] )
 
-    method directive_argument
-        : 'ctx -> directive_argument -> directive_argument * 'res =
+    method directive_argument :
+        'ctx -> directive_argument -> directive_argument * 'res =
       fun ctx { pdira_desc; pdira_loc } ->
         let pdira_desc = self#directive_argument_desc ctx pdira_desc in
         let pdira_loc = self#location ctx pdira_loc in
@@ -10355,8 +10360,8 @@ class virtual ['ctx, 'res] lift_map_with_context =
               ("pdira_loc", Stdlib.snd pdira_loc);
             ] )
 
-    method directive_argument_desc
-        : 'ctx -> directive_argument_desc -> directive_argument_desc * 'res =
+    method directive_argument_desc :
+        'ctx -> directive_argument_desc -> directive_argument_desc * 'res =
       fun ctx x ->
         match x with
         | Pdir_string a ->
