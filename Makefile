@@ -36,3 +36,8 @@ bench:
 
 .PHONY: default install uninstall reinstall clean test doc bench
 .PHONY: all-supported-ocaml-versions opam-release
+
+
+.PHONY: $(TARGET)
+example-%: 
+	DUNE_CONFIG__GLOBAL_LOCK=disabled opam exec -- dune exec $*-example
