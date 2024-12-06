@@ -9,3 +9,5 @@
 
 #The commit upgrading to ocamlformat.0.26.1
 dab938d3e6f316c20cc141aaff534a0f5f0ab70f
+# Upgrade to OCamlformat 0.27.0
+17c22600bc8b7c05b56cd20340ce2251f2ac575c
