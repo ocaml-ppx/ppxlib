@@ -1,0 +1,7 @@
+(library
+ (name context_free)
+ (kind ppx_rewriter)
+ (package ppxlib)
+ (libraries ppxlib yojson ppxlib.astlib)
+ (preprocess
+  (pps ppxlib.metaquot)))

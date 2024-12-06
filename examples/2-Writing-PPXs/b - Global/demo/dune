@@ -1,0 +1,6 @@
+(executable
+ (name global_demo)
+ (public_name global-example)
+ (package ppxlib)
+ (preprocess
+  (pps global)))
