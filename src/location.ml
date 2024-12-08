@@ -18,6 +18,14 @@ let set_filename loc fn =
 
 let none = in_file "_none_"
 
+let none_4_08_0_plus =
+  let loc =
+    { pos_fname = "_none_"; pos_lnum = 0; pos_bol = 0; pos_cnum = -1 }
+  in
+  { loc_start = loc; loc_end = loc; loc_ghost = true }
+
+let is_none v = Poly.( = ) v none || Poly.( = ) v none_4_08_0_plus
+
 let init lexbuf fname =
   let open Lexing in
   lexbuf.lex_curr_p <-
