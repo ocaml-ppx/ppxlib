@@ -1,0 +1,36 @@
+(library
+ (name ppx_deriving_x)
+ (modules ppx_deriving_x)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (kind ppx_deriver))
+
+(library
+ (name ppx_deriving_y)
+ (modules ppx_deriving_y)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (kind ppx_deriver))
+
+(library
+ (name ppx_gen_stuff)
+ (modules ppx_gen_stuff)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot))
+ (kind ppx_deriver))
+
+(executable
+ (name driver_all)
+ (modules driver_all)
+ (libraries ppxlib ppx_deriving_x ppx_deriving_y ppx_gen_stuff))
+
+(executable
+ (name driver_deriving_x)
+ (modules driver_deriving_x)
+ (libraries ppxlib ppx_deriving_x))
+
+(cram
+ (deps driver_all.exe driver_deriving_x.exe))
