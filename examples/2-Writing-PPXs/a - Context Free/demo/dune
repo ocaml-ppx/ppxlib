@@ -1,0 +1,6 @@
+(executable
+ (name context_free_demo)
+ (package ppxlib)
+ (public_name context-free-example)
+ (preprocess
+  (pps context_free)))

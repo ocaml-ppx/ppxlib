@@ -1,0 +1,6 @@
+(library
+ (name global)
+ (kind ppx_rewriter)
+ (libraries context_free ppxlib ppxlib.astlib)
+ (preprocess
+  (pps ppxlib.metaquot)))
