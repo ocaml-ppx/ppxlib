@@ -68,22 +68,22 @@ module Rule = struct
       | Extension : Extension.t t
       | Special_function : Special_function.t t
       | Constant : Constant.t t
-      | Attr_str_type_decl
-          : (structure_item, type_declaration) Attr_group_inline.t t
-      | Attr_sig_type_decl
-          : (signature_item, type_declaration) Attr_group_inline.t t
-      | Attr_str_module_type_decl
-          : (structure_item, module_type_declaration) Attr_inline.t t
-      | Attr_sig_module_type_decl
-          : (signature_item, module_type_declaration) Attr_inline.t t
+      | Attr_str_type_decl :
+          (structure_item, type_declaration) Attr_group_inline.t t
+      | Attr_sig_type_decl :
+          (signature_item, type_declaration) Attr_group_inline.t t
+      | Attr_str_module_type_decl :
+          (structure_item, module_type_declaration) Attr_inline.t t
+      | Attr_sig_module_type_decl :
+          (signature_item, module_type_declaration) Attr_inline.t t
       | Attr_str_type_ext : (structure_item, type_extension) Attr_inline.t t
       | Attr_sig_type_ext : (signature_item, type_extension) Attr_inline.t t
       | Attr_str_exception : (structure_item, type_exception) Attr_inline.t t
       | Attr_sig_exception : (signature_item, type_exception) Attr_inline.t t
-      | Attr_str_class_type_decl
-          : (structure_item, class_type_declaration) Attr_group_inline.t t
-      | Attr_sig_class_type_decl
-          : (signature_item, class_type_declaration) Attr_group_inline.t t
+      | Attr_str_class_type_decl :
+          (structure_item, class_type_declaration) Attr_group_inline.t t
+      | Attr_sig_class_type_decl :
+          (signature_item, class_type_declaration) Attr_group_inline.t t
 
     type (_, _) equality = Eq : ('a, 'a) equality | Ne : (_, _) equality
 
@@ -680,17 +680,17 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         x
 
     method! module_expr base_ctxt x =
-      ((* Make sure code-path attribute is applied before expanding. *)
-       Attribute.get_res Ast_traverse.enter_module x |> of_result ~default:None
-       >>= function
-       | None -> return (base_ctxt, x)
-       | Some { loc; txt } ->
-           Attribute.remove_seen_res Module_expr
-             [ T Ast_traverse.enter_module ]
-             x
-           |> of_result ~default:x
-           >>| fun x ->
-           (Expansion_context.Base.enter_module ~loc txt base_ctxt, x))
+      ( (* Make sure code-path attribute is applied before expanding. *)
+        Attribute.get_res Ast_traverse.enter_module x |> of_result ~default:None
+      >>= function
+        | None -> return (base_ctxt, x)
+        | Some { loc; txt } ->
+            Attribute.remove_seen_res Module_expr
+              [ T Ast_traverse.enter_module ]
+              x
+            |> of_result ~default:x
+            >>| fun x ->
+            (Expansion_context.Base.enter_module ~loc txt base_ctxt, x) )
       >>= fun (base_ctxt, x) ->
       map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
         x

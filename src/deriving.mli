@@ -151,5 +151,4 @@ val add_alias :
 
 val ignore : t -> unit
 (** Ignore a deriver. So that one can write:
-    [Deriving.add ... |>
-    Deriving.ignore] *)
+    [Deriving.add ... |> Deriving.ignore] *)
