@@ -1,5 +1,21 @@
 open StdLabels
 
+let compiler_version =
+  match String.split_on_char ~sep:'.' Sys.ocaml_version with
+  | major :: minor :: _ -> (int_of_string major, int_of_string minor)
+  | _ -> assert false
+
+let include_compiler_version range =
+  let cmajor, cminor = compiler_version in
+  match (range : Expect_lexer.version_range) with
+  | Only (major, minor) -> cmajor = major && cminor = minor
+  | From (major, minor) -> cmajor > major || (cmajor = major && cminor >= minor)
+  | Up_to (major, minor) -> cmajor < major || (cmajor = major && cminor <= minor)
+  | Between ((min_major, min_minor), (max_major, max_minor)) ->
+      (cmajor > min_major && cmajor < max_major)
+      || (cmajor = min_major && cminor >= min_minor)
+      || (cmajor = max_major && cminor <= max_minor)
+
 let read_file file =
   let ic = open_in_bin file in
   let len = in_channel_length ic in
@@ -73,6 +89,71 @@ let execute_phrase ppf phr =
   in
   match trimmed with "" -> () | _ -> Format.fprintf ppf "%s\n" trimmed
 
+let pp_version ppf (major, minor) = Format.fprintf ppf "%d.%d" major minor
+
+let pp_range ppf range =
+  match (range : Expect_lexer.version_range) with
+  | Only v -> pp_version ppf v
+  | From v -> Format.fprintf ppf ">= %a" pp_version v
+  | Up_to v -> Format.fprintf ppf "<= %a" pp_version v
+  | Between (v1, v2) ->
+      Format.fprintf ppf "%a <=> %a" pp_version v1 pp_version v2
+
+let run_code ppf starting_pos code =
+  let lexbuf = Lexing.from_string code in
+  lexbuf.lex_curr_p <- { starting_pos with pos_lnum = 1 };
+  let phrases = !Toploop.parse_use_file lexbuf in
+  List.iter phrases ~f:(function
+    | Parsetree.Ptop_def [] -> ()
+    | phr -> (
+        try
+          let phr = apply_rewriters phr in
+          if !Clflags.dump_source then
+            Format.fprintf ppf "%a@?" Ppxlib.Pprintast.top_phrase
+              (Ppxlib.Selected_ast.Of_ocaml.copy_toplevel_phrase phr);
+          execute_phrase ppf phr
+        with exn -> Location.report_exception ppf exn))
+
+let trash_buffer = Buffer.create 1024
+let trash_ppf = Format.formatter_of_buffer trash_buffer
+
+let handle_ignore_block ppf starting_pos code =
+  Format.fprintf ppf "%s[%%%%ignore]@." code;
+  run_code trash_ppf starting_pos code;
+  Buffer.clear trash_buffer
+
+let handle_regular_expect_block ppf starting_pos code =
+  Format.fprintf ppf "%s[%%%%expect{|@." code;
+  run_code ppf starting_pos code;
+  Format.fprintf ppf "@?|}]@."
+
+let handle_versioned_expect_blocks ppf starting_pos code vexpect_blocks =
+  let matched = ref false in
+  let loc =
+    {
+      Ppxlib.Location.loc_start = starting_pos;
+      loc_end = starting_pos;
+      loc_ghost = false;
+    }
+  in
+  Format.fprintf ppf "%s@?" code;
+  List.iter vexpect_blocks ~f:(fun (range, content) ->
+      Format.fprintf ppf "[%%%%expect_in %a {|@." pp_range range;
+      if include_compiler_version range && not !matched then (
+        matched := true;
+        run_code ppf starting_pos code;
+        Format.fprintf ppf "@?|}]@.")
+      else if include_compiler_version range && !matched then
+        Ppxlib.Location.raise_errorf ~loc
+          "Multiple versioned expect block in a group matched our compiler \
+           version %a"
+          pp_version compiler_version
+      else Format.fprintf ppf "%s|}]@." content);
+  if not !matched then
+    Ppxlib.Location.raise_errorf ~loc
+      "No versioned expect block in a group matched our compiler version %a"
+      pp_version compiler_version
+
 let main () =
   let rec map_tree = function
     | Outcometree.Oval_constr (name, params) ->
@@ -119,22 +200,13 @@ let main () =
          is statically linked in *)
       Topfind.load_deeply [ "ppxlib" ];
 
-      List.iter chunks ~f:(fun (pos, s) ->
-          Format.fprintf ppf "%s[%%%%expect{|@." s;
-          let lexbuf = Lexing.from_string s in
-          lexbuf.lex_curr_p <- { pos with pos_lnum = 1 };
-          let phrases = !Toploop.parse_use_file lexbuf in
-          List.iter phrases ~f:(function
-            | Parsetree.Ptop_def [] -> ()
-            | phr -> (
-                try
-                  let phr = apply_rewriters phr in
-                  if !Clflags.dump_source then
-                    Format.fprintf ppf "%a@?" Ppxlib.Pprintast.top_phrase
-                      (Ppxlib.Selected_ast.Of_ocaml.copy_toplevel_phrase phr);
-                  execute_phrase ppf phr
-                with exn -> Location.report_exception ppf exn));
-          Format.fprintf ppf "@?|}]@.");
+      List.iter chunks
+        ~f:(fun { Expect_lexer.phrases; phrases_start; expect } ->
+          match expect with
+          | Ignore -> handle_ignore_block ppf phrases_start phrases
+          | Regular -> handle_regular_expect_block ppf phrases_start phrases
+          | Versioned vexpects ->
+              handle_versioned_expect_blocks ppf phrases_start phrases vexpects);
       Buffer.contents buf)
 
 let () =

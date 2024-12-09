@@ -117,6 +117,18 @@ module Rule : sig
 
   val attr_sig_exception_expect :
     (signature_item, type_exception, _) attr_inline
+
+  val attr_str_class_type_decl :
+    (structure_item, class_type_declaration, _) attr_group_inline
+
+  val attr_sig_class_type_decl :
+    (signature_item, class_type_declaration, _) attr_group_inline
+
+  val attr_str_class_type_decl_expect :
+    (structure_item, class_type_declaration, _) attr_group_inline
+
+  val attr_sig_class_type_decl_expect :
+    (signature_item, class_type_declaration, _) attr_group_inline
 end
 
 (**/**)

@@ -271,12 +271,16 @@ module Deriver = struct
       name : string;
       str_type_decl :
         (structure, rec_flag * type_declaration list) Generator.t option;
+      str_class_type_decl :
+        (structure, class_type_declaration list) Generator.t option;
       str_type_ext : (structure, type_extension) Generator.t option;
       str_exception : (structure, type_exception) Generator.t option;
       str_module_type_decl :
         (structure, module_type_declaration) Generator.t option;
       sig_type_decl :
         (signature, rec_flag * type_declaration list) Generator.t option;
+      sig_class_type_decl :
+        (signature, class_type_declaration list) Generator.t option;
       sig_type_ext : (signature, type_extension) Generator.t option;
       sig_exception : (signature, type_exception) Generator.t option;
       sig_module_type_decl :
@@ -289,10 +293,12 @@ module Deriver = struct
   module Alias = struct
     type t = {
       str_type_decl : string list;
+      str_class_type_decl : string list;
       str_type_ext : string list;
       str_exception : string list;
       str_module_type_decl : string list;
       sig_type_decl : string list;
+      sig_class_type_decl : string list;
       sig_type_ext : string list;
       sig_exception : string list;
       sig_module_type_decl : string list;
@@ -315,6 +321,14 @@ module Deriver = struct
         name = "type";
         get = (fun t -> t.str_type_decl);
         get_set = (fun t -> t.str_type_decl);
+      }
+
+    let str_class_type_decl =
+      {
+        kind = Str;
+        name = "class type declaration";
+        get = (fun t -> t.str_class_type_decl);
+        get_set = (fun t -> t.str_class_type_decl);
       }
 
     let str_type_ext =
@@ -347,6 +361,14 @@ module Deriver = struct
         name = "signature type";
         get = (fun t -> t.sig_type_decl);
         get_set = (fun t -> t.sig_type_decl);
+      }
+
+    let sig_class_type_decl =
+      {
+        kind = Sig;
+        name = "signature class type";
+        get = (fun t -> t.sig_class_type_decl);
+        get_set = (fun t -> t.sig_class_type_decl);
       }
 
     let sig_type_ext =
@@ -493,17 +515,19 @@ module Deriver = struct
     in
     (result, derivers_and_args_errors @ dep_errors)
 
-  let add ?str_type_decl ?str_type_ext ?str_exception ?str_module_type_decl
-      ?sig_type_decl ?sig_type_ext ?sig_exception ?sig_module_type_decl
-      ?extension name =
+  let add ?str_type_decl ?str_class_type_decl ?str_type_ext ?str_exception
+      ?str_module_type_decl ?sig_type_decl ?sig_class_type_decl ?sig_type_ext
+      ?sig_exception ?sig_module_type_decl ?extension name =
     let actual_deriver : Actual_deriver.t =
       {
         name;
         str_type_decl;
+        str_class_type_decl;
         str_type_ext;
         str_exception;
         str_module_type_decl;
         sig_type_decl;
+        sig_class_type_decl;
         sig_type_ext;
         sig_exception;
         sig_module_type_decl;
@@ -522,17 +546,19 @@ module Deriver = struct
           ~rules:[ Context_free.Rule.extension extension ]);
     name
 
-  let add_alias name ?str_type_decl ?str_type_ext ?str_exception
-      ?str_module_type_decl ?sig_type_decl ?sig_type_ext ?sig_exception
-      ?sig_module_type_decl set =
+  let add_alias name ?str_type_decl ?str_class_type_decl ?str_type_ext
+      ?str_exception ?str_module_type_decl ?sig_type_decl ?sig_class_type_decl
+      ?sig_type_ext ?sig_exception ?sig_module_type_decl set =
     let alias : Alias.t =
       let get = function None -> set | Some set -> set in
       {
         str_type_decl = get str_type_decl;
+        str_class_type_decl = get str_class_type_decl;
         str_type_ext = get str_type_ext;
         str_exception = get str_exception;
         str_module_type_decl = get str_module_type_decl;
         sig_type_decl = get sig_type_decl;
+        sig_class_type_decl = get sig_class_type_decl;
         sig_type_ext = get sig_type_ext;
         sig_exception = get sig_exception;
         sig_module_type_decl = get sig_module_type_decl;
@@ -932,6 +958,48 @@ let expand_sig_type_ext ~ctxt te generators =
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
+let expand_str_class_type_decls ~ctxt _rec_flag cds values =
+  let generators, l_err =
+    merge_generators Deriver.Field.str_class_type_decl values
+  in
+  let l_err =
+    List.map
+      ~f:(fun err ->
+        Ast_builder.Default.pstr_extension ~loc:Location.none err [])
+      l_err
+  in
+  let generated =
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt cds generators
+         Ast_builder.Default.pstr_extension
+    |> merge_derived
+  in
+  wrap_str
+    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
+    generated
+
+let expand_sig_class_decls ~ctxt _rec_flag cds values =
+  let generators, l_err =
+    merge_generators Deriver.Field.sig_class_type_decl values
+  in
+  let l_err =
+    List.map
+      ~f:(fun err ->
+        Ast_builder.Default.psig_extension ~loc:Location.none err [])
+      l_err
+  in
+  let generated =
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt cds generators
+         Ast_builder.Default.psig_extension
+    |> merge_derived
+  in
+  wrap_sig
+    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
+    generated
+
 let rules ~typ ~expand_sig ~expand_str ~rule_str ~rule_sig ~rule_str_expect
     ~rule_sig_expect =
   let prefix = "ppxlib." in
@@ -976,9 +1044,23 @@ let rules_module_type_decl =
     ~rule_str_expect:Context_free.Rule.attr_str_module_type_decl_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_module_type_decl_expect
 
+let rules_class_type_decl =
+  rules ~typ:Class_type_decl ~expand_str:expand_str_class_type_decls
+    ~expand_sig:expand_sig_class_decls
+    ~rule_str:Context_free.Rule.attr_str_class_type_decl
+    ~rule_sig:Context_free.Rule.attr_sig_class_type_decl
+    ~rule_str_expect:Context_free.Rule.attr_str_class_type_decl_expect
+    ~rule_sig_expect:Context_free.Rule.attr_sig_class_type_decl_expect
+
 let () =
   let rules =
-    [ rules_type_decl; rules_type_ext; rules_exception; rules_module_type_decl ]
+    [
+      rules_type_decl;
+      rules_type_ext;
+      rules_exception;
+      rules_module_type_decl;
+      rules_class_type_decl;
+    ]
     |> List.concat
   in
   Driver.register_transformation "deriving" ~aliases:[ "type_conv" ] ~rules

@@ -105,10 +105,12 @@ with type deriver := t
 
 val add :
   ?str_type_decl:(structure, rec_flag * type_declaration list) Generator.t ->
+  ?str_class_type_decl:(structure, class_type_declaration list) Generator.t ->
   ?str_type_ext:(structure, type_extension) Generator.t ->
   ?str_exception:(structure, type_exception) Generator.t ->
   ?str_module_type_decl:(structure, module_type_declaration) Generator.t ->
   ?sig_type_decl:(signature, rec_flag * type_declaration list) Generator.t ->
+  ?sig_class_type_decl:(signature, class_type_declaration list) Generator.t ->
   ?sig_type_ext:(signature, type_extension) Generator.t ->
   ?sig_exception:(signature, type_exception) Generator.t ->
   ?sig_module_type_decl:(signature, module_type_declaration) Generator.t ->
@@ -131,10 +133,12 @@ val add :
 val add_alias :
   string ->
   ?str_type_decl:t list ->
+  ?str_class_type_decl:t list ->
   ?str_type_ext:t list ->
   ?str_exception:t list ->
   ?str_module_type_decl:t list ->
   ?sig_type_decl:t list ->
+  ?sig_class_type_decl:t list ->
   ?sig_type_ext:t list ->
   ?sig_exception:t list ->
   ?sig_module_type_decl:t list ->

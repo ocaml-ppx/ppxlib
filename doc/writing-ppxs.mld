@@ -448,8 +448,6 @@ Global transformations are the most general kind of transformation. As such, the
   factorised, resulting in slower compilation time.
 - If you don't make sure that you really follow all {{!"good-practices"}good practices}, you might end up messing up the global developer experience.
 
-- If you don't make sure that you really follow all {{!"good-practices"}good practices}, you might end up messing up the global developer experience.
-
 For all these reasons, a global transformation should be avoided whenever a
 context-free transformation could do the job, which by experience seems to be most of the time.
 The API for defining a global transformation is easy. A global transformation consists simply of the function and can be directly be registered with {{!Ppxlib.Driver.register_transformation}[Driver.register_transformation]}.

@@ -1154,8 +1154,8 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
           let ppf = Stdlib.Format.formatter_of_out_channel oc in
           let ast = add_cookies ast in
           (match ast with
-          | Intf ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#signature ast)
-          | Impl ast -> Sexp.pp_hum ppf (Ast_traverse.sexp_of#structure ast));
+          | Intf ast -> Pp_ast.signature ppf ast
+          | Impl ast -> Pp_ast.structure ppf ast);
           Stdlib.Format.pp_print_newline ppf ())
   | Reconcile mode ->
       Reconcile.reconcile !replacements

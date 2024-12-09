@@ -19,7 +19,16 @@ details.
 
 - Add ppxlib's AST pretty-printing utilities in `Ppxlib.Pp_ast` and
   a `ppxlib-pp-ast` executable in a new separate `ppxlib-tools` package
-  (#517, @NathanReb)
+  (#517, #525, #537, @NathanReb)
+
+- Change `-dparsetree` from a sexp output to a pretty printed AST, closer
+  to what the compiler's `-dparsetree` is.
+  (#530, @NathanReb)
+
+- Add Parsetree documentation comments to `Ast_builder` functions (#518, @patricoferris)
+
+- Support class type declarations in derivers with the new, optional arguments
+  `{str,sig}_class_type_decl` in `Deriving.add` (#538, @patricoferris)
 
 0.33.0 (2024-07-22)
 -------------------
