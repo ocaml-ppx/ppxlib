@@ -12,6 +12,11 @@ details.
 
 - Add initial OCaml 5.3 support (#487, @NathanReb, @hhugo, @nojb)
 
+- Initialise OCaml 5.3's lexer with the `keywords` setting from `OCAMLPARAM` or
+  the new `-keywords` driver's CLI option to allow the standalone ppx driver to
+  process old packages using `effect` as an identifier
+  (#535, @dra27, @NathanReb)
+
 ### Other changes
 
 - Add `Pprintast.binding`, `longident` and `payload` (#542, @mattiasdrp)
