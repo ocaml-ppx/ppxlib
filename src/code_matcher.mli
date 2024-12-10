@@ -39,3 +39,12 @@ val match_signature :
   signature ->
   unit
 (** Same for signatures *)
+
+(** The following functions mark [@@@deriving.end] as seen. Useful when
+    purposefully ignoring correction based transformations. *)
+
+val see_end_marker_str :
+  structure_item -> (unit, Location.Error.t NonEmptyList.t) result
+
+val see_end_marker_sig :
+  signature_item -> (unit, Location.Error.t NonEmptyList.t) result

@@ -58,6 +58,13 @@ struct
     in
     loop [] l
 
+  let see_end_marker item =
+    match Attribute.Floating.convert_res [ M.end_marker ] item with
+    | Ok None -> Ok ()
+    | Ok (Some ()) -> Ok ()
+    | Error e -> Error e
+    | exception Failure _ -> Ok ()
+
   let remove_loc =
     object
       inherit Ast_traverse.map
@@ -212,3 +219,6 @@ let match_signature_res = Sig.do_match
 let match_signature ~pos ~expected ~mismatch_handler l =
   match_signature_res ~pos ~expected ~mismatch_handler l
   |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err)
+
+let see_end_marker_str = Str.see_end_marker
+let see_end_marker_sig = Sig.see_end_marker

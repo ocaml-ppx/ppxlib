@@ -24,6 +24,7 @@ let pretty = ref false
 let styler = ref None
 let output_metadata_filename = ref None
 let corrected_suffix = ref ".ppx-corrected"
+let no_corrections = ref false
 
 let ghost =
   object
@@ -218,12 +219,13 @@ module Transform = struct
         let last = get_loc (last x l) in
         Some { first with loc_end = last.loc_end }
 
-  let merge_into_generic_mappers t ~embed_errors ~hook ~expect_mismatch_handler
-      ~tool_name ~input_name =
+  let merge_into_generic_mappers t ~no_corrections ~embed_errors ~hook
+      ~expect_mismatch_handler ~tool_name ~input_name =
     let { rules; enclose_impl; enclose_intf; impl; intf; _ } = t in
     let map =
       new Context_free.map_top_down
-        rules ~embed_errors ~generated_code_hook:hook ~expect_mismatch_handler
+        rules ~no_corrections ~embed_errors ~generated_code_hook:hook
+        ~expect_mismatch_handler
     in
     let gen_header_and_footer context whole_loc f =
       let header, footer = f whole_loc in
@@ -455,8 +457,8 @@ let debug_dropped_attribute name ~old_dropped ~new_dropped =
   print_diff "disappeared" new_dropped old_dropped;
   print_diff "reappeared" old_dropped new_dropped
 
-let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
-    ~input_name =
+let get_whole_ast_passes ~no_corrections ~embed_errors ~hook
+    ~expect_mismatch_handler ~tool_name ~input_name =
   let cts =
     match !apply_list with
     | None -> List.rev !Transform.all
@@ -485,8 +487,8 @@ let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
     if !no_merge then
       List.map transforms
         ~f:
-          (Transform.merge_into_generic_mappers ~embed_errors ~hook ~tool_name
-             ~expect_mismatch_handler ~input_name)
+          (Transform.merge_into_generic_mappers ~no_corrections ~embed_errors
+             ~hook ~tool_name ~expect_mismatch_handler ~input_name)
     else
       (let get_enclosers ~f =
          List.filter_map transforms ~f:(fun (ct : Transform.t) ->
@@ -516,8 +518,8 @@ let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
                      let footers = List.concat (List.rev footers) in
                      (headers, footers))
            in
-           Transform.builtin_of_context_free_rewriters ~rules ~embed_errors
-             ~hook ~expect_mismatch_handler
+           Transform.builtin_of_context_free_rewriters ~rules ~no_corrections
+             ~embed_errors ~hook ~expect_mismatch_handler
              ~enclose_impl:(merge_encloser impl_enclosers)
              ~enclose_intf:(merge_encloser intf_enclosers)
              ~tool_name ~input_name
@@ -528,10 +530,11 @@ let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
   linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 
 let apply_transforms ~tool_name ~file_path ~field ~lint_field ~dropped_so_far
-    ~hook ~expect_mismatch_handler ~input_name ~embed_errors ast =
+    ~hook ~expect_mismatch_handler ~input_name ~no_corrections ~embed_errors ast
+    =
   let cts =
-    get_whole_ast_passes ~tool_name ~embed_errors ~hook ~expect_mismatch_handler
-      ~input_name
+    get_whole_ast_passes ~tool_name ~no_corrections ~embed_errors ~hook
+      ~expect_mismatch_handler ~input_name
   in
   let finish (ast, _dropped, lint_errors, errors) =
     ( ast,
@@ -611,11 +614,12 @@ let exn_to_extension exn ~(kind : Kind.t) =
 let print_passes () =
   let tool_name = "ppxlib_driver" in
   let embed_errors = false in
+  let no_corrections = false in
   let hook = Context_free.Generated_code_hook.nop in
   let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
   let cts =
-    get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
-      ~input_name:None
+    get_whole_ast_passes ~no_corrections ~embed_errors ~hook
+      ~expect_mismatch_handler ~tool_name ~input_name:None
   in
   if !perform_checks then
     Printf.printf "<builtin:freshen-and-collect-attributes>\n";
@@ -634,7 +638,7 @@ let sort_errors_by_loc errors =
 (*$*)
 
 let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
-    ~embed_errors =
+    ~embed_errors ~no_corrections =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
@@ -693,7 +697,7 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~field:(fun (ct : Transform.t) -> ct.impl)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_impl)
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
-      ~expect_mismatch_handler ~input_name ~embed_errors
+      ~expect_mismatch_handler ~input_name ~embed_errors ~no_corrections
   in
   st |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
 
@@ -703,14 +707,14 @@ let map_structure st =
       ~tool_name:(Astlib.Ast_metadata.tool_name ())
       ~hook:Context_free.Generated_code_hook.nop
       ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-      ~input_name:None ~embed_errors:false
+      ~input_name:None ~embed_errors:false ~no_corrections:false
   with
   | ast -> ast
 
 (*$ str_to_sig _last_text_block *)
 
 let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
-    ~embed_errors =
+    ~embed_errors ~no_corrections =
   Cookies.acknowledge_cookies T;
   if !perform_checks then (
     Attribute.reset_checks ();
@@ -769,7 +773,7 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~field:(fun (ct : Transform.t) -> ct.intf)
       ~lint_field:(fun (ct : Transform.t) -> ct.lint_intf)
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
-      ~expect_mismatch_handler ~input_name ~embed_errors
+      ~expect_mismatch_handler ~input_name ~embed_errors ~no_corrections
   in
   sg |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
 
@@ -779,7 +783,7 @@ let map_signature sg =
       ~tool_name:(Astlib.Ast_metadata.tool_name ())
       ~hook:Context_free.Generated_code_hook.nop
       ~expect_mismatch_handler:Context_free.Expect_mismatch_handler.nop
-      ~input_name:None ~embed_errors:false
+      ~input_name:None ~embed_errors:false ~no_corrections:false
   with
   | ast -> ast
 
@@ -1037,13 +1041,13 @@ struct
 end
 
 let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
-    ~expect_mismatch_handler ~embed_errors =
+    ~expect_mismatch_handler ~embed_errors ~no_corrections =
   match ast with
   | Intf x ->
       let ast =
         match
           map_signature_gen x ~tool_name ~hook ~expect_mismatch_handler
-            ~input_name:(Some input_name) ~embed_errors
+            ~input_name:(Some input_name) ~embed_errors ~no_corrections
         with
         | ast -> ast
       in
@@ -1052,14 +1056,14 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
       let ast =
         match
           map_structure_gen x ~tool_name ~hook ~expect_mismatch_handler
-            ~input_name:(Some input_name) ~embed_errors
+            ~input_name:(Some input_name) ~embed_errors ~no_corrections
         with
         | ast -> ast
       in
       Intf_or_impl.Impl ast
 
 let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
-    ~embed_errors ~output =
+    ~embed_errors ~no_corrections ~output =
   File_property.reset_all ();
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
   corrections := [];
@@ -1097,7 +1101,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
           let ast =
             extract_cookies ast
             |> process_ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
-                 ~embed_errors
+                 ~embed_errors ~no_corrections
           in
           (input_fname, input_version, ast)
         with exn when embed_errors ->
@@ -1409,6 +1413,9 @@ let standalone_args =
     ( "-corrected-suffix",
       Arg.Set_string corrected_suffix,
       "SUFFIX Suffix to append to corrected files" );
+    ( "-no-corrections",
+      Arg.Set no_corrections,
+      "Skip correction generations such as [@@deriving_inline]" );
   ]
 
 let get_args ?(standalone_args = standalone_args) () =
@@ -1447,6 +1454,7 @@ let standalone_main () =
       in
       process_file kind fn ~input_name ~relocate ~output_mode:!output_mode
         ~output:!output ~embed_errors:!embed_errors
+        ~no_corrections:!no_corrections
 
 let rewrite_binary_ast_file input_fn output_fn =
   let input_name, input_version, ast = load_input_run_as_ppx input_fn in
@@ -1457,7 +1465,7 @@ let rewrite_binary_ast_file input_fn output_fn =
       let hook = Context_free.Generated_code_hook.nop in
       let expect_mismatch_handler = Context_free.Expect_mismatch_handler.nop in
       process_ast ast ~input_name ~tool_name ~hook ~expect_mismatch_handler
-        ~embed_errors:true
+        ~embed_errors:true ~no_corrections:false
     with exn -> exn_to_extension exn ~kind:(Intf_or_impl.kind ast)
   in
   with_output (Some output_fn) ~binary:true ~f:(fun oc ->
