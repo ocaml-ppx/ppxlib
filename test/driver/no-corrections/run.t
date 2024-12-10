@@ -79,9 +79,7 @@ has no knowledge of it but we consider this to be an okay limitation, especially
 since the unused attributes check is disabled by default.
 
   $ ./driver_deriving_x.exe -impl test.ml -check -no-corrections -diff-cmd diff
-  [%%ocaml.error "Attribute `deriving.end' was not used"]
   [%%ocaml.error "Attribute `gen_stuff' was not used"]
-  [%%ocaml.error "Attribute `deriving.end' was not used"]
   type t[@@deriving x]
   include struct let _ = fun (_ : t) -> ()
                  let x = 2
@@ -117,8 +115,6 @@ no attribute warnings since this time, it knows about the [@@gen_stuff] attribut
 and explicitly skips it.
 
   $ ./driver_all.exe -impl test.ml -check -no-corrections -diff-cmd diff
-  [%%ocaml.error "Attribute `deriving.end' was not used"]
-  [%%ocaml.error "Attribute `deriving.end' was not used"]
   type t[@@deriving x]
   include struct let _ = fun (_ : t) -> ()
                  let x = 2

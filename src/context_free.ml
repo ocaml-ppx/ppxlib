@@ -581,6 +581,9 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   let handle_attr_inline_expect =
     handle_attr_inline_expect ~no_corrections ~embed_errors
   in
+  let see_end_marker f item =
+    (if no_corrections then f item else Ok ()) |> of_result ~default:()
+  in
 
   object (self)
     inherit Ast_traverse.map_with_expansion_context_and_errors as super
@@ -783,6 +786,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | [] -> return []
         | item :: rest -> (
             let loc = item.pstr_loc in
+            see_end_marker Code_matcher.see_end_marker_str item >>= fun () ->
             match item.pstr_desc with
             | Pstr_extension (ext, attrs) -> (
                 let extension_point_loc = item.pstr_loc in
@@ -893,6 +897,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         | [] -> return []
         | item :: rest -> (
             let loc = item.psig_loc in
+            see_end_marker Code_matcher.see_end_marker_sig item >>= fun () ->
             match item.psig_desc with
             | Psig_extension (ext, attrs) -> (
                 let extension_point_loc = item.psig_loc in
