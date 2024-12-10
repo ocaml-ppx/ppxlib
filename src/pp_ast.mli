@@ -40,6 +40,7 @@ module Config : sig
   val make :
     ?show_attrs:bool ->
     ?show_locs:bool ->
+    ?json:bool ->
     ?loc_mode:[ `Short | `Full ] ->
     unit ->
     t

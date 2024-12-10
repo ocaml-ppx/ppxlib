@@ -2,21 +2,28 @@ open Import
 
 module Config = struct
   type loc_mode = [ `Short | `Full ]
-  type t = { show_attrs : bool; show_locs : bool; loc_mode : loc_mode }
+
+  type t = {
+    show_attrs : bool;
+    show_locs : bool;
+    loc_mode : loc_mode;
+    json : bool;
+  }
 
   module Default = struct
     let show_attrs = false
     let show_locs = false
     let loc_mode = `Short
+    let json = false
   end
 
   let default =
     let open Default in
-    { show_attrs; show_locs; loc_mode }
+    { show_attrs; show_locs; loc_mode; json }
 
   let make ?(show_attrs = Default.show_attrs) ?(show_locs = Default.show_locs)
-      ?(loc_mode = Default.loc_mode) () =
-    { show_attrs; show_locs; loc_mode }
+      ?(json = Default.json) ?(loc_mode = Default.loc_mode) () =
+    { show_attrs; show_locs; loc_mode; json }
 end
 
 let cnum (pos : Lexing.position) = pos.pos_cnum - pos.pos_bol
@@ -38,6 +45,58 @@ type simple_val =
   | List of simple_val list
   | Special of string
 
+let pp_simple_val_to_json fmt simple_val =
+  let rec aux indent fmt simple_val =
+    match simple_val with
+    | Unit -> Format.fprintf fmt {|"null"|}
+    | Int i -> Format.fprintf fmt "%d" i
+    | String s -> Format.fprintf fmt {|"%s"|} s
+    | Special s -> Format.fprintf fmt {|"%s"|} s
+    | Bool b -> Format.fprintf fmt "%b" b
+    | Char c -> Format.fprintf fmt {|"%c"|} c
+    | Float f -> Format.fprintf fmt "%f" f
+    | Int32 i32 -> Format.fprintf fmt "%ld" i32
+    | Int64 i64 -> Format.fprintf fmt "%Ld" i64
+    | Nativeint ni -> Format.fprintf fmt "%nd" ni
+    | Array l | Tuple l | List l ->
+        Format.fprintf fmt "[\n";
+        List.iteri
+          ~f:(fun i sv ->
+            if i > 0 then Format.fprintf fmt ",\n";
+            Format.fprintf fmt "%s" (String.make (indent + 2) ' ');
+            aux (indent + 2) fmt sv)
+          l;
+        Format.fprintf fmt "\n%s]" (String.make indent ' ')
+    | Record fields ->
+        Format.fprintf fmt "{\n";
+        List.iteri
+          ~f:(fun i (k, v) ->
+            if i > 0 then Format.fprintf fmt ",\n";
+            Format.fprintf fmt "%s\"%s\": " (String.make (indent + 2) ' ') k;
+            aux (indent + 2) fmt v)
+          fields;
+        Format.fprintf fmt "\n%s}" (String.make indent ' ')
+    | Constr (cname, []) -> Format.fprintf fmt {|"%s"|} cname
+    | Constr (cname, [ (Constr (_, _ :: _) as x) ]) ->
+        Format.fprintf fmt "{\n%s\"%s\": " (String.make (indent + 2) ' ') cname;
+        aux (indent + 2) fmt x;
+        Format.fprintf fmt "\n%s}" (String.make indent ' ')
+    | Constr (cname, [ x ]) ->
+        Format.fprintf fmt "{\n%s\"%s\": " (String.make (indent + 2) ' ') cname;
+        aux (indent + 2) fmt x;
+        Format.fprintf fmt "\n%s}" (String.make indent ' ')
+    | Constr (cname, l) ->
+        Format.fprintf fmt "{\n%s\"%s\": [\n" (String.make (indent + 2) ' ') cname;
+        List.iteri
+          ~f:(fun i sv ->
+            if i > 0 then Format.fprintf fmt ",\n";
+            Format.fprintf fmt "%s" (String.make (indent + 4) ' ');
+            aux (indent + 4) fmt sv)
+          l;
+        Format.fprintf fmt "\n%s]\n%s}" (String.make (indent + 2) ' ') (String.make indent ' ')
+  in
+  aux 0 fmt simple_val
+      
 let pp_collection ~pp_elm ~open_ ~close ~sep fmt l =
   match l with
   | [] -> Format.fprintf fmt "%s%s" open_ close
@@ -364,7 +423,9 @@ let with_config ~config ~f =
 
 let pp_with_config (type a) (lifter : a -> simple_val)
     ?(config = Config.default) fmt (x : a) =
-  with_config ~config ~f:(fun () -> pp_simple_val fmt (lifter x))
+  with_config ~config ~f:(fun () ->
+      if config.json then pp_simple_val_to_json fmt (lifter x)
+      else pp_simple_val fmt (lifter x))
 
 let structure = pp_with_config lift_simple_val#structure
 let structure_item = pp_with_config lift_simple_val#structure_item
