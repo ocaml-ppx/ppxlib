@@ -1,4 +1,0 @@
-(alias
- (name runtest)
- (deps
-  (alias_rec all)))

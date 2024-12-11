@@ -1,0 +1,7 @@
+(executable
+ (name building_ast)
+ (public_name building-ast-example)
+ (package ppxlib)
+ (libraries ppxlib ppxlib.astlib)
+ (preprocess
+  (pps ppxlib.metaquot)))
