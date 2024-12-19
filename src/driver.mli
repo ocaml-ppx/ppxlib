@@ -218,7 +218,7 @@ end
     In the future we could also use this to directly compute the dependencies
     and pass them here, to avoid calling ocamldep separately. *)
 module Create_file_property
-    (Name : sig
+    (_ : sig
       val name : string
     end)
     (T : Sexpable.S) : sig

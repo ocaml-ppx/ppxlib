@@ -96,7 +96,7 @@ module type S = sig
 end
 
 (** Build Ast helpers with the location argument factorized. *)
-module Make (Loc : Loc) : S
+module Make (_ : Loc) : S
 
 val make : Location.t -> (module S)
 (** Functional version of [Make]. *)

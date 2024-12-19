@@ -10,6 +10,7 @@
   compiler-libs.common))
 
 (cram
+ (package ppxlib)
  (enabled_if
   (>= %{ocaml_version} "5.2"))
  (deps driver.exe))
