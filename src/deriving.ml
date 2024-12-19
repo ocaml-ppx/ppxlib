@@ -285,8 +285,6 @@ module Deriver = struct
       sig_exception : (signature, type_exception) Generator.t option;
       sig_module_type_decl :
         (signature, module_type_declaration) Generator.t option;
-      extension :
-        (loc:Location.t -> path:string -> core_type -> expression) option;
     }
   end
 
@@ -306,18 +304,14 @@ module Deriver = struct
   end
 
   module Field = struct
-    type kind = Str | Sig
-
     type ('a, 'b) t = {
       name : string;
-      kind : kind;
       get : Actual_deriver.t -> ('a, 'b) Generator.t option;
       get_set : Alias.t -> string list;
     }
 
     let str_type_decl =
       {
-        kind = Str;
         name = "type";
         get = (fun t -> t.str_type_decl);
         get_set = (fun t -> t.str_type_decl);
@@ -325,7 +319,6 @@ module Deriver = struct
 
     let str_class_type_decl =
       {
-        kind = Str;
         name = "class type declaration";
         get = (fun t -> t.str_class_type_decl);
         get_set = (fun t -> t.str_class_type_decl);
@@ -333,7 +326,6 @@ module Deriver = struct
 
     let str_type_ext =
       {
-        kind = Str;
         name = "type extension";
         get = (fun t -> t.str_type_ext);
         get_set = (fun t -> t.str_type_ext);
@@ -341,7 +333,6 @@ module Deriver = struct
 
     let str_exception =
       {
-        kind = Str;
         name = "exception";
         get = (fun t -> t.str_exception);
         get_set = (fun t -> t.str_exception);
@@ -349,7 +340,6 @@ module Deriver = struct
 
     let str_module_type_decl =
       {
-        kind = Str;
         name = "module type";
         get = (fun t -> t.str_module_type_decl);
         get_set = (fun t -> t.str_module_type_decl);
@@ -357,7 +347,6 @@ module Deriver = struct
 
     let sig_type_decl =
       {
-        kind = Sig;
         name = "signature type";
         get = (fun t -> t.sig_type_decl);
         get_set = (fun t -> t.sig_type_decl);
@@ -365,7 +354,6 @@ module Deriver = struct
 
     let sig_class_type_decl =
       {
-        kind = Sig;
         name = "signature class type";
         get = (fun t -> t.sig_class_type_decl);
         get_set = (fun t -> t.sig_class_type_decl);
@@ -373,7 +361,6 @@ module Deriver = struct
 
     let sig_type_ext =
       {
-        kind = Sig;
         name = "signature type extension";
         get = (fun t -> t.sig_type_ext);
         get_set = (fun t -> t.sig_type_ext);
@@ -381,7 +368,6 @@ module Deriver = struct
 
     let sig_exception =
       {
-        kind = Sig;
         name = "signature exception";
         get = (fun t -> t.sig_exception);
         get_set = (fun t -> t.sig_exception);
@@ -389,7 +375,6 @@ module Deriver = struct
 
     let sig_module_type_decl =
       {
-        kind = Sig;
         name = "signature module type";
         get = (fun t -> t.sig_module_type_decl);
         get_set = (fun t -> t.sig_module_type_decl);
@@ -531,7 +516,6 @@ module Deriver = struct
         sig_type_ext;
         sig_exception;
         sig_module_type_decl;
-        extension;
       }
     in
     Ppx_derivers.register name (T (Actual_deriver actual_deriver));
