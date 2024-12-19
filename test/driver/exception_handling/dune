@@ -11,6 +11,7 @@
  (libraries ppxlib))
 
 (cram
+ (package ppxlib)
  (deps
   extender.exe
   whole_file_exception.exe

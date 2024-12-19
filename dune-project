@@ -1,4 +1,4 @@
-(lang dune 2.9)
+(lang dune 3.8)
 (name ppxlib)
 (using cinaps 1.0)
 (implicit_transitive_deps false)
@@ -53,10 +53,12 @@ format.")
  (depends
   (ocaml (>= 4.08.0))
   (ppxlib (= :version))
-  (cmdliner (>= 1.3.0))))
+  (cmdliner (>= 1.3.0))
+  (cinaps (and :with-test (>= v0.12.1)))))
 
 (package
  (name ppxlib-bench)
+ (allow_empty)
  (synopsis "Run ppxlib benchmarks")
  (description "Third-party code in benchmarks depends on later versions of the ocaml
 than ppxlib itself. Also the benchmark runner has dependencies that ppxlib doesn't

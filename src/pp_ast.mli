@@ -83,7 +83,7 @@ end
 module type Configured = S with type 'a printer = 'a configured
 module type Configurable = S with type 'a printer = 'a configurable
 
-module Make (Conf : Conf) : Configured
+module Make (_ : Conf) : Configured
 
 val make : Config.t -> (module Configured)
 
