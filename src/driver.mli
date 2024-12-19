@@ -218,12 +218,13 @@ end
     In the future we could also use this to directly compute the dependencies
     and pass them here, to avoid calling ocamldep separately. *)
 module Create_file_property
-    (_ : sig
+    (Name : sig
       val name : string
     end)
     (T : Sexpable.S) : sig
   val set : T.t -> unit
 end
+[@@ocaml.warning "-67"]
 
 val standalone : unit -> unit
 (** Suitable for -pp and also usable as a standalone command line tool.
