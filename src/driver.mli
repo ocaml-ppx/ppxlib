@@ -224,6 +224,7 @@ module Create_file_property
     (T : Sexpable.S) : sig
   val set : T.t -> unit
 end
+[@@ocaml.warning "-67"]
 
 val standalone : unit -> unit
 (** Suitable for -pp and also usable as a standalone command line tool.
