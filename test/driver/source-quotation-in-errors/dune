@@ -9,6 +9,7 @@
  (libraries ppxlib))
 
 (cram
+ (package ppxlib)
  (enabled_if
   (>= %{ocaml_version} "4.08.0"))
  (deps raising_driver.exe identity_driver.exe))
