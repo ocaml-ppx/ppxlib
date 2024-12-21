@@ -97,6 +97,10 @@ let loc_mode =
   in
   named (fun x -> `Loc_mode x) Cmdliner.Arg.(value & vflag `Short [ full_locs ])
 
+let json =
+  let doc = "Show AST as json" in
+  named (fun x -> `Json x) Cmdliner.Arg.(value & flag & info ~doc [ "json" ])
+
 let kind =
   let make_vflag (flag, (kind : Kind.t), doc) =
     (Some kind, Cmdliner.Arg.info ~doc [ flag ])
@@ -126,7 +130,7 @@ let input =
 let errorf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
-    (`Kind kind) (`Input input) =
+    (`Json json) (`Kind kind) (`Input input) =
   let open Stdppx.Result in
   let kind =
     match kind with
@@ -147,13 +151,14 @@ let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
     match input with Stdin -> "<stdin>" | File fn -> fn | Source _ -> "<cli>"
   in
   let ast = load_input ~kind ~input_name input in
-  let config = Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode () in
+  let config = Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode ~json () in
   pp_ast ~config ast;
   Format.printf "%!\n";
   Ok ()
 
 let term =
-  Cmdliner.Term.(const run $ show_attrs $ show_locs $ loc_mode $ kind $ input)
+  Cmdliner.Term.(
+    const run $ show_attrs $ show_locs $ loc_mode $ json $ kind $ input)
 
 let tool_name = "ppxlib-pp-ast"
 
