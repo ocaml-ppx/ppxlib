@@ -291,7 +291,7 @@ As the AST represents the structure of the source code in a tree-like format, it
 I know that it can be a lot, but don't worry; we are going step by step, and you are going to understand it.
 
 {1 Samples} 
-To help you understand a little bit more about the AST, let's show it with some highlighted examples:
+To help you understand a little bit more about the AST, let's show it with some examples with the {{:https://astexplorer.net/} AST Explorer}:
 
 {table
   {tr
