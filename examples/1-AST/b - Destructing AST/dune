@@ -1,0 +1,7 @@
+(executable
+ (name destructuring_ast)
+ (public_name destructuring-ast-example)
+ (package ppxlib)
+ (libraries ppxlib ppxlib.astlib)
+ (preprocess
+  (pps ppxlib.metaquot)))
