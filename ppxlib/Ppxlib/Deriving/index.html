@@ -5,6 +5,11 @@
       <a href="../../Astlib/Ast_500/Asttypes/index.html#type-rec_flag">Astlib.Ast_500.Asttypes.rec_flag</a>
       * <span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-type_declaration">Astlib.Ast_500.Parsetree.type_declaration</a> list</span>)</span>
       <a href="Generator/index.html#type-t">Generator.t</a></span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?str_class_type_decl</span>:
+    <span><span>(<span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-structure_item">Astlib.Ast_500.Parsetree.structure_item</a> list</span>,
+      <span><span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-class_type">Astlib.Ast_500.Parsetree.class_type</a> <a href="../../Astlib/Ast_500/Parsetree/index.html#type-class_infos">Astlib.Ast_500.Parsetree.class_infos</a></span>
+        list</span>)</span>
+      <a href="Generator/index.html#type-t">Generator.t</a></span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?str_type_ext</span>:
     <span><span>(<span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-structure_item">Astlib.Ast_500.Parsetree.structure_item</a> list</span>,
       <a href="../../Astlib/Ast_500/Parsetree/index.html#type-type_extension">Astlib.Ast_500.Parsetree.type_extension</a>)</span>
@@ -21,6 +26,11 @@
     <span><span>(<span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-signature_item">Astlib.Ast_500.Parsetree.signature_item</a> list</span>,
       <a href="../../Astlib/Ast_500/Asttypes/index.html#type-rec_flag">Astlib.Ast_500.Asttypes.rec_flag</a>
       * <span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-type_declaration">Astlib.Ast_500.Parsetree.type_declaration</a> list</span>)</span>
+      <a href="Generator/index.html#type-t">Generator.t</a></span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?sig_class_type_decl</span>:
+    <span><span>(<span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-signature_item">Astlib.Ast_500.Parsetree.signature_item</a> list</span>,
+      <span><span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-class_type">Astlib.Ast_500.Parsetree.class_type</a> <a href="../../Astlib/Ast_500/Parsetree/index.html#type-class_infos">Astlib.Ast_500.Parsetree.class_infos</a></span>
+        list</span>)</span>
       <a href="Generator/index.html#type-t">Generator.t</a></span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?sig_type_ext</span>:
     <span><span>(<span><a href="../../Astlib/Ast_500/Parsetree/index.html#type-signature_item">Astlib.Ast_500.Parsetree.signature_item</a> list</span>,
@@ -43,10 +53,12 @@
   <a href="#type-t">t</a></span></code></div><div class="spec-doc"><p>Register a new deriving generator.</p><p>The various arguments are for the various items on which derivers can be attached in structure and signatures.</p><p>We distinguish <code>exception</code> from <code>type_extension</code> as <code>exception E</code> is not exactly the same as <code>type exn += E</code>. Indeed if the type <code>exn</code> is redefined, then <code>type exn += E</code> will add <code>E</code> to the new <code>exn</code> type while <code>exception E</code> will add <code>E</code> to the predefined <code>exn</code> type.</p><p><code>extension</code> register an expander for extension with the name of the deriver. This is here mostly to support the ppx_deriving backend.</p></div></div><div class="odoc-spec"><div class="spec value anchored" id="val-add_alias"><a href="#val-add_alias" class="anchor"></a><code><span><span class="keyword">val</span> add_alias : 
   <span>string <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?str_type_decl</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?str_class_type_decl</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?str_type_ext</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?str_exception</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?str_module_type_decl</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?sig_type_decl</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
+  <span><span class="optlabel">?sig_class_type_decl</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?sig_type_ext</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?sig_exception</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
   <span><span class="optlabel">?sig_module_type_decl</span>:<span><a href="#type-t">t</a> list</span> <span class="arrow">&#45;&gt;</span></span>
