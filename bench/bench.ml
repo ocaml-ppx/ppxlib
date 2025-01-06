@@ -102,8 +102,6 @@ module Output = struct
           ("results", `List (List.map Result.to_json results));
         ]
   end
-
-  type t = { benchmarks : Benchmark.t list }
 end
 
 module Stats = struct

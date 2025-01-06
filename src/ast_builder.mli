@@ -97,6 +97,7 @@ end
 
 (** Build Ast helpers with the location argument factorized. *)
 module Make (Loc : Loc) : S
+[@@ocaml.warning "-67"]
 
 val make : Location.t -> (module S)
 (** Functional version of [Make]. *)

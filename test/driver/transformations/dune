@@ -1,6 +1,7 @@
 ; The error-reporting format changed in 4.12; thus the expect-tests need to be duplicated
 
 (rule
+ (package ppxlib)
  (alias runtest)
  (enabled_if
   (and
@@ -20,6 +21,7 @@
 ; file to test_412.ml
 
 (rule
+ (package ppxlib)
  (alias runtest)
  (enabled_if
   (>= %{ocaml_version} "4.12.0"))
