@@ -137,14 +137,14 @@ class lift_simple_val =
       | false -> Special "__attrs"
       | true -> super#attributes attrs
 
-    method lift_record_with_desc
-        : 'record 'desc.
-          lift_desc:('desc -> simple_val) ->
-          lift_record:('record -> simple_val) ->
-          desc:'desc ->
-          attrs:attributes ->
-          'record ->
-          simple_val =
+    method lift_record_with_desc :
+        'record 'desc.
+        lift_desc:('desc -> simple_val) ->
+        lift_record:('record -> simple_val) ->
+        desc:'desc ->
+        attrs:attributes ->
+        'record ->
+        simple_val =
       fun ~lift_desc ~lift_record ~desc ~attrs x ->
         match (config.show_locs, config.show_attrs, attrs) with
         | false, false, _ | false, true, [] -> lift_desc desc

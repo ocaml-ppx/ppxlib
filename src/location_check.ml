@@ -152,7 +152,8 @@ let should_ignore loc attrs =
   (* If the filename changed, then there were line directives, and the locations
      are all messed up. *)
   (not (stayed_in_the_same_file loc.loc_start.pos_fname))
-  || (* Ignore things explicitly marked. *)
+  ||
+  (* Ignore things explicitly marked. *)
   List.exists
     ~f:(fun attr ->
       String.equal attr.attr_name.txt

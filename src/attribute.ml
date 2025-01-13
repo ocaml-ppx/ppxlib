@@ -432,8 +432,7 @@ let pattern_res t p =
 let pattern t p =
   pattern_res t p |> Ast_pattern.to_func
   |> (fun f a b c d ->
-       f a b c d
-       |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err))
+  f a b c d |> Result.handle_error ~f:(fun (err, _) -> Location.Error.raise err))
   |> Ast_pattern.of_func
 
 module Floating = struct
