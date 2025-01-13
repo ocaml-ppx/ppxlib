@@ -18,8 +18,7 @@ If we run the driver on the following source file:
 it should successfully roundtrip to 5.2 and print the source code unchanged:
 
   $ ./driver.exe test.ml --use-compiler-pp
-  File "test.ml", line 4, characters 2-23:
-  4 | | effect Random_bits, k -> Effect.Deep.continue k (Random.bits ())
-        ^^^^^^^^^^^^^^^^^^^^^
-  Error: migration error: effect pattern is not supported before OCaml 5.03
-  [1]
+  let handler f =
+    match f () with
+    | x -> x
+    | effect Random_bits,  k -> Effect.Deep.continue k (Random.bits ())
