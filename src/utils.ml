@@ -248,3 +248,13 @@ module System = struct
     if Stdlib.Sys.command command = 0 then Ok ()
     else Error (command, Ast_io.fall_back_input_version)
 end
+
+let print_as_compiler_source ppf ast =
+  let module Ppxlib_to_compiler = Convert (Js) (Compiler_version) in
+  match (ast : Intf_or_impl.t) with
+  | Intf sg ->
+      let sg = Ppxlib_to_compiler.copy_signature sg in
+      Astlib.Compiler_pprintast.signature ppf sg
+  | Impl st ->
+      let st = Ppxlib_to_compiler.copy_structure st in
+      Astlib.Compiler_pprintast.structure ppf st

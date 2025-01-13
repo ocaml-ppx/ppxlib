@@ -60,3 +60,7 @@ module System : sig
     output:string ->
     (unit, string * Ast_io.input_version) result
 end
+
+val print_as_compiler_source : Stdlib.Format.formatter -> Intf_or_impl.t -> unit
+(** Migrates the given AST to the compiler version and print it as source code
+    using Pprintast. *)
