@@ -10,7 +10,8 @@
   ppxlib_traverse_builtins
   stdppx
   stdlib-shims
-  sexplib0)
+  sexplib0
+  compiler-libs.common)
  (flags
   (:standard -safe-string))
  (ppx.driver
