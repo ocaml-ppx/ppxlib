@@ -76,6 +76,15 @@ module Compiler_pprintast = struct
 
   let structure_item fmt t = structure fmt [t]
   let signature_item fmt t = signature fmt [t]
+
+  exception Unavailable
+
+  (*IF_NOT_AT_LEAST 414 let class_field _fmt _t = raise Unavailable *)
+  (*IF_NOT_AT_LEAST 414 let class_type_field _fmt _t = raise Unavailable *)
+  (*IF_NOT_AT_LEAST 414 let class_expr _fmt _t = raise Unavailable *)
+  (*IF_NOT_AT_LEAST 414 let class_type _fmt _t = raise Unavailable *)
+  (*IF_NOT_AT_LEAST 414 let module_type _fmt _t = raise Unavailable *)
+  (*IF_NOT_AT_LEAST 414 let module_expr _fmt _t = raise Unavailable *)
 end
 
 let init_error_reporting_style_using_env_vars () =

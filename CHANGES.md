@@ -3,6 +3,12 @@ unreleased
 
 - Remove support for compilers older than 4.08 (#556, @NathanReb)
 
+- Add a `--use-compiler-pp` flag to the standalone driver. This flag
+ can be set when the driver outputs source code to make it use the compiler's
+ `Pprintast` instead of ppxlib's.
+ (#555, @NathanReb)
+
+>>>>>>> 0d3e8b95 (Add --use-compiler-pp flag to standalone driver)
 0.34.0 (2025-01-06)
 -------------------
 
