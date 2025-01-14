@@ -3,8 +3,8 @@
 
     {1 Link to the tutorial}
 
-    For a detailed explanation on this module, refer to the {{!"ast-traversal"}
-    relevant} part of the manual.
+    For a detailed explanation on this module, refer to the
+    {{!"ast-traversal"} relevant} part of the manual.
 
     {1 API} *)
 

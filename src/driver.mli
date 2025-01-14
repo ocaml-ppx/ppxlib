@@ -1,8 +1,8 @@
 (** Interaction with the driver, such as getting/seeting cookies, adding
     arguments.
 
-    The relevant part in the manual is {{!driver.driver_execution} the section
-    on its execution}. *)
+    The relevant part in the manual is
+    {{!driver.driver_execution} the section on its execution}. *)
 
 open Import
 

@@ -135,7 +135,8 @@ val declare_with_attr_loc :
   (payload, 'b, 'c) Ast_pattern.t ->
   (attr_loc:Location.t -> 'b) ->
   ('a, 'c) t
-(** Same as [declare] but the callback receives the location of the attribute. *)
+(** Same as [declare] but the callback receives the location of the attribute.
+*)
 
 type 'a flag = ('a, unit) t
 (** Types for attributes without payload. *)
@@ -168,7 +169,8 @@ val has_flag_res :
     for the meaning of [mark_as_seen]. *)
 
 val has_flag : 'a flag -> ?mark_as_seen:bool (** default [true] *) -> 'a -> bool
-(** See {!has_flag_res}. Raises a located error if the attribute is duplicated. *)
+(** See {!has_flag_res}. Raises a located error if the attribute is duplicated.
+*)
 
 val consume_res :
   ('a, 'b) t -> 'a -> (('a * 'b) option, Location.Error.t NonEmptyList.t) result
