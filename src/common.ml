@@ -149,7 +149,7 @@ let loc_of_attribute { attr_name; attr_payload; attr_loc = _ } =
      from older asts. *)
   (* "ocaml.doc" attributes are generated with [Location.none], which is not helpful for
      error messages. *)
-  if Poly.( = ) attr_name.loc Location.none then
+  if Location.is_none attr_name.loc then
     loc_of_name_and_payload attr_name attr_payload
   else
     {
@@ -158,7 +158,7 @@ let loc_of_attribute { attr_name; attr_payload; attr_loc = _ } =
     }
 
 let loc_of_extension (name, payload) =
-  if Poly.( = ) name.loc Location.none then loc_of_name_and_payload name payload
+  if Location.is_none name.loc then loc_of_name_and_payload name payload
   else
     { name.loc with loc_end = (loc_of_name_and_payload name payload).loc_end }
 

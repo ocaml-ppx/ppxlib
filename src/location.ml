@@ -8,7 +8,7 @@ type t = location = {
 }
 
 let in_file name =
-  let loc = { pos_fname = name; pos_lnum = 1; pos_bol = 0; pos_cnum = -1 } in
+  let loc = { pos_fname = name; pos_lnum = 0; pos_bol = 0; pos_cnum = -1 } in
   { loc_start = loc; loc_end = loc; loc_ghost = true }
 
 let set_filename loc fn =
@@ -17,6 +17,15 @@ let set_filename loc fn =
   { loc with loc_start; loc_end }
 
 let none = in_file "_none_"
+
+(* Can be removed once ppxlib only supports 4.08.0+ *)
+let none_4_07_and_less =
+  let loc =
+    { pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0; pos_cnum = -1 }
+  in
+  { loc_start = loc; loc_end = loc; loc_ghost = true }
+
+let is_none v = Poly.( = ) v none || Poly.( = ) v none_4_07_and_less
 
 let init lexbuf fname =
   let open Lexing in

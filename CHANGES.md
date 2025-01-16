@@ -33,6 +33,11 @@ unreleased
 - Support class type declarations in derivers with the new, optional arguments
   `{str,sig}_class_type_decl` in `Deriving.add` (#538, @patricoferris)
 
+- Change `Location.none` to match the compiler's `Location.none` as of OCaml
+  4.08. Also provide `Location.is_none` which checks if a location is none for
+  all versions of the compiler we support. This has been used to fix a bug in
+  `loc_of_attribute` (#540, @ncik-roberts, @patricoferris)
+
 0.33.0 (2024-07-22)
 -------------------
 
