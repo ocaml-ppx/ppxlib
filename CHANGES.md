@@ -1,6 +1,7 @@
 unreleased
 ----------
 
+- Add custom printer support to `pp_ast` functions via the `?printer` config parameter.
 - Bump ppxlib's AST to 5.3.0 (#558, @patricoferris)
 
 - Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
