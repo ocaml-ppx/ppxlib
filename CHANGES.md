@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Add custom printer support to `pp_ast` functions via the `?printer` config parameter.
+
 ### 5.4 Support
 
 - Add initial OCaml 5.4 support (#570, @patricoferris, @NathanReb)
