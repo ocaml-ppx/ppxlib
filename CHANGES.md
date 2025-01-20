@@ -1,6 +1,11 @@
 unreleased
 ----------
 
+- Add a `--use-compiler-pp` flag to the standalone driver. This flag
+ can be set when the driver outputs source code to make it use the compiler's
+ `Pprintast` instead of ppxlib's.
+ (#555, @NathanReb)
+
 0.34.0 (2025-01-06)
 -------------------
 
