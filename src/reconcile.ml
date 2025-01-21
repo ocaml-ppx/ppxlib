@@ -291,7 +291,20 @@ let reconcile ?styler (repls : Replacements.t) ~kind ~contents ~input_filename
               copy_input pos ~up_to:repl.start.pos_cnum ~line ~last_is_text
                 ~is_text
             in
-            let s = Replacement.text ~use_compiler_pprint repl in
+            let s =
+              try Replacement.text ~use_compiler_pprint repl
+              with Astlib.Compiler_pprintast.Unavailable ->
+                let loc =
+                  {
+                    (Location.in_file input_filename) with
+                    loc_start = repl.start;
+                    loc_end = repl.stop;
+                  }
+                in
+                Location.raise_errorf ~loc
+                  "Ppxlib.Reconcile: Cannot print this AST fragment using the \
+                   compiler printers with OCaml < 4.14"
+            in
             let line =
               match target with
               | Output Using_line_directives ->
