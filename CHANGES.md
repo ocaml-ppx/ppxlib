@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Add custom printer support to `pp_ast` functions via the `?printer` config parameter.
+
 0.34.0 (2025-01-06)
 -------------------
 

@@ -54,6 +54,7 @@ format.")
   (ocaml (>= 4.08.0))
   (ppxlib (= :version))
   (cmdliner (>= 1.3.0))
+  (yojson (>= 2.2.2))
   (cinaps (and :with-test (>= v0.12.1)))))
 
 (package
