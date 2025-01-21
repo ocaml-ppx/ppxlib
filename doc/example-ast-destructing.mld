@@ -1,0 +1,171 @@
+{0 Destructuring AST}
+
+{1:table-of-contents Table of Contents}
+
+- {{!section-description} Description}
+- {{!section-"ast-structure-pattern-matching"} AST Structure Pattern Matching}
+{ul {- {{!section-"example-matching-integer-payload-manually"} Example: Matching Integer Payload Manually}}}
+
+- {{!section-"using-ast_pattern-high-level-destructors"} Using {!Ppxlib.Ast_pattern} High-Level Destructors}
+{ul {- {{!section-"example-1-matching-integer-payload-with-ast_pattern"} Example 1: Matching Integer Payload with [Ppxlib.Ast_pattern]}}}
+{ul {- {{!section-"example-2-simplifying-matching-with-eint"} Example 2: Simplifying Matching with [eint]}}}
+
+- {{!section-"using-metaquot"} Using Metaquot}
+{ul {- {{!section-"example-1-matching-integer-payload-with-metaquot"} Example 1: Matching Integer Payload with Metaquot}}}
+{ul {- {{!section-"example-2-matching-complex-expressions-with-metaquot-and-anti-quotations"} Example 2: Matching Complex Expressions with Metaquot and Anti-Quotations}}}
+
+- {{!section-"conclusion"} Conclusion}
+
+{1:description Description}
+
+Destructuring an AST (Abstract Syntax Tree) is essential when creating a PPX (preprocessor extension) in OCaml. To generate or transform code, you must first break down the AST to understand and manipulate its structure.
+
+For example, if you want to transform this code:
+
+{[
+let one = [%one]
+]}
+
+into:
+
+{[
+let one = 1
+]}
+
+You’ll need to destructure the AST representing the extension point ([%one]) to replace it with [1].
+There are several ways to destructure an AST. We’ll explore three methods:
+
+- {b AST Structure Pattern Matching}
+- {b Using {!Ppxlib.Ast_pattern} High-Level Destructors}
+- {b Using Metaquot}
+
+{1:ast-structure-pattern-matching AST Structure Pattern Matching}
+
+The most fundamental method for destructuring an AST in PPXLib is by directly matching on the AST’s structure.
+
+{2:example-matching-integer-payload-manually Example: Matching Integer Payload Manually}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/destructuring_ast.ml#L11-L26} 🔗 Sample Code}
+
+Let’s say we want to destructure an AST representing the integer [1]:
+
+{[
+let match_int_payload ~loc payload =
+  match payload with
+  | PStr
+      [
+        {
+          pstr_desc =
+            Pstr_eval
+              ({ pexp_desc = Pexp_constant (Pconst_integer (value, None)); _ }, _);
+          _;
+        };
+      ] -> (
+      try Ok (value |> int_of_string)
+      with Failure _ ->
+        Error (Location.Error.createf ~loc "Value is not a valid integer"))
+  | _ -> Error (Location.Error.createf ~loc "Wrong pattern")
+]}
+
+1. {b Pattern Matching the Payload}:
+    - Begins by matching the [payload] with the expected structure.
+    - The pattern expects a structure ([PStr]) containing a single item.
+2. {b Destructuring the Structure Item}:
+    - Matches the [pstr_desc] field, expecting an evaluated expression ([Pstr_eval]).
+    - The expression should be a constant integer ([Pexp_constant] with [Pconst_integer]).
+    - Captures the integer value as a string in [value].
+3. {b Handling the Matched Value}:
+    - Converts the [value] to an integer and returns [Ok] if successful.
+    - If conversion fails, returns an error message.
+4. {b Handling Mismatched Patterns}:
+    - If the [payload] doesn’t match the expected structure, it returns an error.
+
+While this method is powerful, it can be verbose and difficult to maintain as patterns become more complex.
+
+{1:using-ast_pattern-high-level-destructors Using {!Ppxlib.Ast_pattern} High-Level Destructors}
+
+To make AST destructuring more readable, PPXLib provides the {!Ppxlib.Ast_pattern} module, which offers high-level destructors.
+
+{2:example-1-matching-integer-payload-with-ast_pattern Example 1: Matching Integer Payload with {!Ppxlib.Ast_pattern}}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/b%20-%20Destructing%20AST/destructuring_ast.ml#L37-L40} 🔗 Sample Code}
+
+Let’s destructure the same integer [1] AST using {!Ppxlib.Ast_pattern}:
+
+{[
+open Ppxlib
+
+let match_int_payload =
+  let open Ast_pattern in
+  pstr (pstr_eval (pexp_constant (pconst_integer (string "1") none)) nil ^:: nil)
+]}
+
+This code achieves the same result as the previous example but in a more concise and readable way.
+
+- {b [PStr]} becomes [pstr]
+- {b [Pstr_eval]} becomes [pstr_eval]
+- {b [Pexp_constant]} becomes [pexp_constant]
+- {b [Pconst_integer]} becomes [pconst_integer]
+
+{2:example-2-simplifying-matching-with-eint Example 2: Simplifying Matching with [eint]}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/b%20-%20Destructing%20AST/destructuring_ast.ml#L40-L49} 🔗 Sample Code}
+
+You can further simplify it:
+
+{[
+let match_int_payload =
+  let open Ast_pattern in
+  pstr (pstr_eval (eint (int 1)) nil ^:: nil)
+]}
+
+Using [eint] instead of [pexp_constant] and [pconst_integer] provides better type safety. The [int] wildcard captures the integer value.
+
+{1:using-metaquot Using Metaquot}
+
+Metaquot is a syntax extension that allows you to write and destructure ASTs more intuitively.
+
+{2:example-1-matching-integer-payload-with-metaquot Example 1: Matching Integer Payload with Metaquot}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/b%20-%20Destructing%20AST/destructuring_ast.ml#L51-L60} 🔗 Sample Code}
+
+Let’s destructure the same integer [1] AST with Metaquot:
+
+{[
+let match_int_payload expr =
+  match expr with
+  | [%expr 1] -> Ok 1
+  | _ -> Error (Location.Error.createf ~loc:expr.pexp_loc "Wrong pattern")
+]}
+
+{2:example-2-matching-complex-expressions-with-metaquot-and-anti-quotations Example 2: Matching Complex Expressions with Metaquot and Anti-Quotations}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/b%20-%20Destructing%20AST/destructuring_ast.ml#L79-L90} 🔗 Sample Code}
+
+For example, to match any expression of the form [1 + <int>]:
+
+{[
+let match_int_payload expr =
+  match expr with
+  | [%expr 1 + [%e? e]] -> (
+      match e with
+      | { pexp_desc = Pexp_constant (Pconst_integer (value, None)); _ } ->
+          Ok (1 + int_of_string value)
+      | _ -> Error (Location.Error.createf ~loc:e.pexp_loc "Invalid integer"))
+  | _ -> Error (Location.Error.createf ~loc:expr.pexp_loc "Wrong pattern")
+]}
+
+Metaquot simplifies the process, making the AST patterns more readable, especially for complex structures.
+
+{1:conclusion Conclusion}
+
+In this section, we explored different methods to destructure an AST using PPXLib:
+
+- {b AST Structure Pattern Matching}: Powerful but verbose.
+- {b Using {!Ppxlib.Ast_pattern} High-Level Destructors}: More readable and maintainable.
+- {b Using Metaquot}: Intuitive and effective for both simple and complex patterns.
+
+There’s no right way to destructure an AST, choose the approach that best fits your use case. Understanding all these methods is valuable for creating robust and maintainable PPXs.
+
+{1:next-steps Next Steps}
+On the next section, we will learn how to write a PPX. {{!page-"example-writing-ppxs"} Read more}
