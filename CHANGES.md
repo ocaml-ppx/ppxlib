@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Remove support for compilers older than 4.08 (#556, @NathanReb)
+
 0.34.0 (2025-01-06)
 -------------------
 
