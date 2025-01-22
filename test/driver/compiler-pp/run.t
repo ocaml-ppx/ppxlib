@@ -1,5 +1,5 @@
 The --use-compiler-pp flag can be used when using the driver's source code
-output, either directly are when generating a .corrected file, to force
+output, either directly when generating a .corrected file or to force
 printing the AST as source using the installed compiler's printer.
 
 Our driver has a deriver and an extension that produces a pattern-matching with
