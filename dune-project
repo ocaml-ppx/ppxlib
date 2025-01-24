@@ -64,7 +64,7 @@ format.")
 than ppxlib itself. Also the benchmark runner has dependencies that ppxlib doesn't
 have.")
  (depends
-  (ocaml (>= 4.04.1))
+  (ocaml (>= 4.10.0))
   (ppxlib (= :version))
   base
   yojson))
