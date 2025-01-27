@@ -241,7 +241,7 @@ class map_with_expansion_context_and_errors =
       with_value_description >>= fun ctxt -> super#value_description ctxt vd
 
     method! value_binding ctxt
-        ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc } as vb) =
+        ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc; pvb_constraint } as vb) =
       Attribute.get_res do_not_enter_value_binding vb |> of_result ~default:None
       >>= function
       | Some () -> super#value_binding ctxt vb
@@ -260,6 +260,13 @@ class map_with_expansion_context_and_errors =
             self#attributes in_binding_ctxt pvb_attributes
           in
           let pvb_loc, loc_errors = self#location ctxt pvb_loc in
+          let pvb_constraint, constraint_errors =
+            match pvb_constraint with
+            | Some c ->
+                let v, err = self#value_constraint ctxt c in
+                (Some v, err)
+            | None -> (None, [])
+          in
           let errors =
             self#record ctxt
               [
@@ -267,9 +274,11 @@ class map_with_expansion_context_and_errors =
                 ("pvb_expr", expr_errors);
                 ("pvb_attributes", attributes_errors);
                 ("pvb_loc", loc_errors);
+                ("pvb_constraint", constraint_errors);
               ]
           in
-          ({ pvb_pat; pvb_expr; pvb_attributes; pvb_loc }, errors)
+          ( { pvb_pat; pvb_expr; pvb_attributes; pvb_loc; pvb_constraint },
+            errors )
   end
 
 class sexp_of =

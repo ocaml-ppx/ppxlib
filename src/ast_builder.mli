@@ -35,6 +35,14 @@ module Default : sig
       (label loc list * pattern) option ->
       pattern
 
+    val value_binding :
+      ?constraint_:value_constraint ->
+      loc:location ->
+      pat:pattern ->
+      expr:expression ->
+      unit ->
+      value_binding
+
     val constructor_declaration :
       loc:location ->
       name:label loc ->
@@ -47,6 +55,14 @@ module Default : sig
 
   val ppat_construct :
     loc:location -> longident loc -> pattern option -> pattern
+
+  val coalesce_arity : expression -> expression
+  (** [coalesce_arity e] will produce a maximum arity function from an
+      expression.
+
+      For example, [fun x -> fun y -> x + y] becomes [fun x y -> x + y]. Since
+      OCaml 5.2, these two functions have a different {! Parsetree}
+      representation. *)
 
   val constructor_declaration :
     loc:location ->

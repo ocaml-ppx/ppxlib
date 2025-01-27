@@ -9,16 +9,14 @@ The test is mostly useful for debugging problems in a full round-trip.
   $ ./identity_driver.exe -dparsetree file.ml
   [ Pstr_value
       ( Nonrecursive
-      , [ { pvb_pat =
-              Ppat_constraint
-                ( Ppat_var "x"
-                , Ptyp_poly ( [], Ptyp_constr ( Lident "int", []))
-                )
-          ; pvb_expr =
-              Pexp_constraint
-                ( Pexp_constant (Pconst_integer ( "5", None))
-                , Ptyp_constr ( Lident "int", [])
-                )
+      , [ { pvb_pat = Ppat_var "x"
+          ; pvb_expr = Pexp_constant (Pconst_integer ( "5", None))
+          ; pvb_constraint =
+              Some
+                (Pvc_constraint
+                   { locally_abstract_univars = []
+                   ; typ = Ptyp_constr ( Lident "int", [])
+                   })
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }
@@ -30,6 +28,7 @@ The test is mostly useful for debugging problems in a full round-trip.
   > module F () = struct end
   > module M = F ()
   > EOF
+
   $ ./identity_driver.exe -dparsetree file.ml
   [ Pstr_module
       { pmb_name = Some "F"
@@ -39,7 +38,7 @@ The test is mostly useful for debugging problems in a full round-trip.
       }
   ; Pstr_module
       { pmb_name = Some "M"
-      ; pmb_expr = Pmod_apply ( Pmod_ident (Lident "F"), Pmod_structure [])
+      ; pmb_expr = Pmod_apply_unit (Pmod_ident (Lident "F"))
       ; pmb_attributes = __attrs
       ; pmb_loc = __loc
       }

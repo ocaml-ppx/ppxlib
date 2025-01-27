@@ -40,6 +40,22 @@ module type Additional_helpers = sig
   val esequence : (expression list -> expression) with_loc
   val ppat_tuple_opt : (pattern list -> pattern option) with_loc
   val pexp_tuple_opt : (expression list -> expression option) with_loc
+
+  val pexp_fun :
+    (arg_label -> expression option -> pattern -> expression -> expression)
+    with_loc
+
+  val pexp_function :
+    (function_param list ->
+    type_constraint option ->
+    function_body ->
+    expression)
+    with_loc
+
+  val pexp_function_cases : (Import.cases -> expression) with_loc
+  (** [pexp_function_cases] builds an expression in the shape
+      [function C1 -> E1 | ...]. *)
+
   val pconstruct : constructor_declaration -> pattern option -> pattern
   val econstruct : constructor_declaration -> expression option -> expression
 
@@ -58,6 +74,10 @@ module type Additional_helpers = sig
   val plist : (pattern list -> pattern) with_loc
   (** [plist ~loc [pat1; pat2; pat3]] produces the list pattern
       [[pat1; pat2; pat3]]. *)
+
+  val value_binding :
+    (pat:Import.pattern -> expr:Import.expression -> Import.value_binding)
+    with_loc
 
   val pstr_value_list :
     loc:Location.t ->

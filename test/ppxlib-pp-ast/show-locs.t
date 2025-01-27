@@ -17,6 +17,7 @@ This is how it's printed without the flag:
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
           ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }
@@ -26,6 +27,7 @@ This is how it's printed without the flag:
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "y"
           ; pvb_expr = Pexp_construct ( Lident "true", None)
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }
@@ -35,7 +37,15 @@ This is how it's printed without the flag:
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "z"
           ; pvb_expr =
-              Pexp_fun ( Nolabel, None, Ppat_var "x", Pexp_ident (Lident "x"))
+              Pexp_function
+                ( [ { pparam_loc = __loc
+                    ; pparam_desc = Pparam_val ( Nolabel, None, Ppat_var "x")
+                    }
+                  ]
+                , None
+                , Pfunction_body (Pexp_ident (Lident "x"))
+                )
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }
@@ -60,6 +70,7 @@ Now how it's printed with the flag:
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
               }
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = l1c0..9
           }
@@ -81,6 +92,7 @@ Now how it's printed with the flag:
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
               }
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = l2c0..12
           }
@@ -96,25 +108,35 @@ Now how it's printed with the flag:
               }
           ; pvb_expr =
               { pexp_desc =
-                  Pexp_fun
-                    ( Nolabel
+                  Pexp_function
+                    ( [ { pparam_loc = l4c5..6
+                        ; pparam_desc =
+                            Pparam_val
+                              ( Nolabel
+                              , None
+                              , { ppat_desc =
+                                    Ppat_var { txt = "x"; loc = l4c5..6}
+                                ; ppat_loc = l4c5..6
+                                ; ppat_loc_stack = __lstack
+                                ; ppat_attributes = __attrs
+                                }
+                              )
+                        }
+                      ]
                     , None
-                    , { ppat_desc = Ppat_var { txt = "x"; loc = l4c5..6}
-                      ; ppat_loc = l4c5..6
-                      ; ppat_loc_stack = __lstack
-                      ; ppat_attributes = __attrs
-                      }
-                    , { pexp_desc =
-                          Pexp_ident { txt = Lident "x"; loc = l5c1..2}
-                      ; pexp_loc = l5c1..2
-                      ; pexp_loc_stack = __lstack
-                      ; pexp_attributes = __attrs
-                      }
+                    , Pfunction_body
+                        { pexp_desc =
+                            Pexp_ident { txt = Lident "x"; loc = l5c1..2}
+                        ; pexp_loc = l5c1..2
+                        ; pexp_loc_stack = __lstack
+                        ; pexp_attributes = __attrs
+                        }
                     )
               ; pexp_loc = l4c1..l5c2
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
               }
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = l3c0..l5c2
           }
@@ -186,6 +208,7 @@ original form as opposed to the default, condensed one shown above:
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
               }
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc =
               { loc_start =
@@ -285,6 +308,7 @@ original form as opposed to the default, condensed one shown above:
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
               }
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc =
               { loc_start =
@@ -346,83 +370,105 @@ original form as opposed to the default, condensed one shown above:
               }
           ; pvb_expr =
               { pexp_desc =
-                  Pexp_fun
-                    ( Nolabel
+                  Pexp_function
+                    ( [ { pparam_loc =
+                            { loc_start =
+                                { pos_fname = "test.ml"
+                                ; pos_lnum = 4
+                                ; pos_bol = 31
+                                ; pos_cnum = 36
+                                }
+                            ; loc_end =
+                                { pos_fname = "test.ml"
+                                ; pos_lnum = 4
+                                ; pos_bol = 31
+                                ; pos_cnum = 37
+                                }
+                            ; loc_ghost = false
+                            }
+                        ; pparam_desc =
+                            Pparam_val
+                              ( Nolabel
+                              , None
+                              , { ppat_desc =
+                                    Ppat_var
+                                      { txt = "x"
+                                      ; loc =
+                                          { loc_start =
+                                              { pos_fname = "test.ml"
+                                              ; pos_lnum = 4
+                                              ; pos_bol = 31
+                                              ; pos_cnum = 36
+                                              }
+                                          ; loc_end =
+                                              { pos_fname = "test.ml"
+                                              ; pos_lnum = 4
+                                              ; pos_bol = 31
+                                              ; pos_cnum = 37
+                                              }
+                                          ; loc_ghost = false
+                                          }
+                                      }
+                                ; ppat_loc =
+                                    { loc_start =
+                                        { pos_fname = "test.ml"
+                                        ; pos_lnum = 4
+                                        ; pos_bol = 31
+                                        ; pos_cnum = 36
+                                        }
+                                    ; loc_end =
+                                        { pos_fname = "test.ml"
+                                        ; pos_lnum = 4
+                                        ; pos_bol = 31
+                                        ; pos_cnum = 37
+                                        }
+                                    ; loc_ghost = false
+                                    }
+                                ; ppat_loc_stack = __lstack
+                                ; ppat_attributes = __attrs
+                                }
+                              )
+                        }
+                      ]
                     , None
-                    , { ppat_desc =
-                          Ppat_var
-                            { txt = "x"
-                            ; loc =
-                                { loc_start =
-                                    { pos_fname = "test.ml"
-                                    ; pos_lnum = 4
-                                    ; pos_bol = 31
-                                    ; pos_cnum = 36
-                                    }
-                                ; loc_end =
-                                    { pos_fname = "test.ml"
-                                    ; pos_lnum = 4
-                                    ; pos_bol = 31
-                                    ; pos_cnum = 37
-                                    }
-                                ; loc_ghost = false
+                    , Pfunction_body
+                        { pexp_desc =
+                            Pexp_ident
+                              { txt = Lident "x"
+                              ; loc =
+                                  { loc_start =
+                                      { pos_fname = "test.ml"
+                                      ; pos_lnum = 5
+                                      ; pos_bol = 41
+                                      ; pos_cnum = 42
+                                      }
+                                  ; loc_end =
+                                      { pos_fname = "test.ml"
+                                      ; pos_lnum = 5
+                                      ; pos_bol = 41
+                                      ; pos_cnum = 43
+                                      }
+                                  ; loc_ghost = false
+                                  }
+                              }
+                        ; pexp_loc =
+                            { loc_start =
+                                { pos_fname = "test.ml"
+                                ; pos_lnum = 5
+                                ; pos_bol = 41
+                                ; pos_cnum = 42
                                 }
-                            }
-                      ; ppat_loc =
-                          { loc_start =
-                              { pos_fname = "test.ml"
-                              ; pos_lnum = 4
-                              ; pos_bol = 31
-                              ; pos_cnum = 36
-                              }
-                          ; loc_end =
-                              { pos_fname = "test.ml"
-                              ; pos_lnum = 4
-                              ; pos_bol = 31
-                              ; pos_cnum = 37
-                              }
-                          ; loc_ghost = false
-                          }
-                      ; ppat_loc_stack = __lstack
-                      ; ppat_attributes = __attrs
-                      }
-                    , { pexp_desc =
-                          Pexp_ident
-                            { txt = Lident "x"
-                            ; loc =
-                                { loc_start =
-                                    { pos_fname = "test.ml"
-                                    ; pos_lnum = 5
-                                    ; pos_bol = 41
-                                    ; pos_cnum = 42
-                                    }
-                                ; loc_end =
-                                    { pos_fname = "test.ml"
-                                    ; pos_lnum = 5
-                                    ; pos_bol = 41
-                                    ; pos_cnum = 43
-                                    }
-                                ; loc_ghost = false
+                            ; loc_end =
+                                { pos_fname = "test.ml"
+                                ; pos_lnum = 5
+                                ; pos_bol = 41
+                                ; pos_cnum = 43
                                 }
+                            ; loc_ghost = false
                             }
-                      ; pexp_loc =
-                          { loc_start =
-                              { pos_fname = "test.ml"
-                              ; pos_lnum = 5
-                              ; pos_bol = 41
-                              ; pos_cnum = 42
-                              }
-                          ; loc_end =
-                              { pos_fname = "test.ml"
-                              ; pos_lnum = 5
-                              ; pos_bol = 41
-                              ; pos_cnum = 43
-                              }
-                          ; loc_ghost = false
-                          }
-                      ; pexp_loc_stack = __lstack
-                      ; pexp_attributes = __attrs
-                      }
+                        ; pexp_loc_stack = __lstack
+                        ; pexp_attributes = __attrs
+                        }
                     )
               ; pexp_loc =
                   { loc_start =
@@ -442,6 +488,7 @@ original form as opposed to the default, condensed one shown above:
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
               }
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc =
               { loc_start =

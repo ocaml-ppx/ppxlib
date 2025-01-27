@@ -37,7 +37,20 @@ val get_type_param_name : core_type * (variance * injectivity) -> string Loc.t
 (** [(new type_is_recursive rec_flag tds)#go ()] returns whether [rec_flag, tds]
     is really a recursive type. We disregard recursive occurrences appearing in
     arrow types. You can override the search for certain type expressions by
-    inheriting from this class. *)
+    inheriting from this class.
+
+    Note that this is an {b approximation} due to global and/or local openings
+    of modules.
+
+    {[
+      module M = struct
+        type t = Foo
+      end
+
+      type t = M.(t)
+    ]}
+
+    The outer [t] will return [Recursive] even though it is not. *)
 class type_is_recursive : rec_flag -> type_declaration list -> object
   inherit Ast_traverse0.iter
   val type_names : string list
@@ -46,8 +59,8 @@ class type_is_recursive : rec_flag -> type_declaration list -> object
 end
 
 val really_recursive : rec_flag -> type_declaration list -> rec_flag
-(** [really_recursive rec_flag tds = (new type_is_recursive rec_flag tds)#go ()]
-*)
+(** [really_recursive rec_flag tds = (new type_is_recursive rec_flag tds)#go ()].
+    See the documentation for {! type_is_recursive}. *)
 
 val loc_of_payload : attribute -> Location.t
 val loc_of_attribute : attribute -> Location.t

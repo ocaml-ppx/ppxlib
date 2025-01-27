@@ -17,6 +17,7 @@ It can be used on regular .ml files:
                   ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
                   ]
                 )
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }

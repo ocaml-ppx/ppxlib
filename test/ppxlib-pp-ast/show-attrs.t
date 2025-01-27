@@ -20,6 +20,7 @@ And how it's printed without the flag:
                   ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
                   ]
                 )
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }
@@ -58,6 +59,7 @@ And with the flag:
                     )
                   ]
                 )
+          ; pvb_constraint = None
           ; pvb_attributes =
               [ { attr_name = "bar"
                 ; attr_payload =
@@ -105,6 +107,7 @@ When printed without the flag, floating attributes are filtered out:
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
           ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }
@@ -124,11 +127,20 @@ When printed without the flag, floating attributes are filtered out:
                       , Cfk_concrete
                           ( Override
                           , Pexp_poly
-                              ( Pexp_fun
-                                  ( Nolabel
+                              ( Pexp_function
+                                  ( [ { pparam_loc = __loc
+                                      ; pparam_desc =
+                                          Pparam_val
+                                            ( Nolabel
+                                            , None
+                                            , Ppat_construct
+                                                ( Lident "()", None)
+                                            )
+                                      }
+                                    ]
                                   , None
-                                  , Ppat_construct ( Lident "()", None)
-                                  , Pexp_construct ( Lident "()", None)
+                                  , Pfunction_body
+                                      (Pexp_construct ( Lident "()", None))
                                   )
                               , None
                               )
@@ -185,6 +197,7 @@ And now with the flag, we can see our floating attributes:
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
           ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
+          ; pvb_constraint = None
           ; pvb_attributes = []
           ; pvb_loc = __loc
           }
@@ -209,11 +222,20 @@ And now with the flag, we can see our floating attributes:
                       , Cfk_concrete
                           ( Override
                           , Pexp_poly
-                              ( Pexp_fun
-                                  ( Nolabel
+                              ( Pexp_function
+                                  ( [ { pparam_loc = __loc
+                                      ; pparam_desc =
+                                          Pparam_val
+                                            ( Nolabel
+                                            , None
+                                            , Ppat_construct
+                                                ( Lident "()", None)
+                                            )
+                                      }
+                                    ]
                                   , None
-                                  , Ppat_construct ( Lident "()", None)
-                                  , Pexp_construct ( Lident "()", None)
+                                  , Pfunction_body
+                                      (Pexp_construct ( Lident "()", None))
                                   )
                               , None
                               )

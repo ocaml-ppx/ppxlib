@@ -126,7 +126,7 @@ let _ = [%stri let _ = ()]
            pos_cnum = -1};
          loc_ghost = true};
        pexp_loc_stack = []; pexp_attributes = []};
-     pvb_attributes = [];
+     pvb_constraint = None; pvb_attributes = [];
      pvb_loc =
       {Ppxlib_ast.Ast.loc_start =
         {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
@@ -228,7 +228,7 @@ let _ = [%str let _ = ()]
             pos_cnum = -1};
           loc_ghost = true};
         pexp_loc_stack = []; pexp_attributes = []};
-      pvb_attributes = [];
+      pvb_constraint = None; pvb_attributes = [];
       pvb_loc =
        {Ppxlib_ast.Ast.loc_start =
          {Ppxlib_ast.Ast.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0;
@@ -651,4 +651,15 @@ Error: This expression should not be a unit literal, the expected type is
 Line _, characters 36-38:
 Error: This expression should not be a unit literal, the expected type is
        Ppxlib.module_type
+|}]
+
+(* Coalescing arguments from [fun x -> fun y -> fun z -> ...] to
+   [fun x y z -> ...] *)
+let _ =
+  let e = [%expr fun z -> x + y + z] in
+  let f = [%expr fun y -> [%e e]] in
+  let func = [%expr fun x -> [%e f]] in
+  Format.asprintf "%a" Astlib.Pprintast.expression func
+[%%expect{|
+- : string = "fun x y z -> (x + y) + z"
 |}]
