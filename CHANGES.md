@@ -8,7 +8,6 @@ unreleased
  `Pprintast` instead of ppxlib's.
  (#555, @NathanReb)
 
->>>>>>> 0d3e8b95 (Add --use-compiler-pp flag to standalone driver)
 0.34.0 (2025-01-06)
 -------------------
 
