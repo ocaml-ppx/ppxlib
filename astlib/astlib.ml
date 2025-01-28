@@ -22,12 +22,6 @@
   foreach_version (fun suffix _ ->
       printf "module Ast_%s = Ast_%s\n" suffix suffix)
 *)
-module Ast_402 = Ast_402
-module Ast_403 = Ast_403
-module Ast_404 = Ast_404
-module Ast_405 = Ast_405
-module Ast_406 = Ast_406
-module Ast_407 = Ast_407
 module Ast_408 = Ast_408
 module Ast_409 = Ast_409
 module Ast_410 = Ast_410
@@ -47,18 +41,6 @@ module Ast_503 = Ast_503
       printf "module Migrate_%s_%s = Migrate_%s_%s\n" x y x y;
       printf "module Migrate_%s_%s = Migrate_%s_%s\n" y x y x)
 *)
-module Migrate_402_403 = Migrate_402_403
-module Migrate_403_402 = Migrate_403_402
-module Migrate_403_404 = Migrate_403_404
-module Migrate_404_403 = Migrate_404_403
-module Migrate_404_405 = Migrate_404_405
-module Migrate_405_404 = Migrate_405_404
-module Migrate_405_406 = Migrate_405_406
-module Migrate_406_405 = Migrate_406_405
-module Migrate_406_407 = Migrate_406_407
-module Migrate_407_406 = Migrate_407_406
-module Migrate_407_408 = Migrate_407_408
-module Migrate_408_407 = Migrate_408_407
 module Migrate_408_409 = Migrate_408_409
 module Migrate_409_408 = Migrate_409_408
 module Migrate_409_410 = Migrate_409_410
@@ -97,6 +79,5 @@ module Compiler_pprintast = struct
 end
 
 let init_error_reporting_style_using_env_vars () =
-  (*IF_AT_LEAST 408 Ocaml_common.Compmisc.read_clflags_from_env () *)
-  (*IF_NOT_AT_LEAST 408 () *)
+  Ocaml_common.Compmisc.read_clflags_from_env ()
 (** Adjust the reporting style of error messages to the environment variables OCAML_COLOR and OCAML_ERROR_STYLE. *)
