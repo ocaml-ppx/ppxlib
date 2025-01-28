@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Allow use of effect syntax in preprocessed files without causing migration
+  failures. (#552, @hhugo, @NathanReb)
+
 - Remove support for compilers older than 4.08 (#556, @NathanReb)
 
 - Add a `--use-compiler-pp` flag to the standalone driver. This flag
