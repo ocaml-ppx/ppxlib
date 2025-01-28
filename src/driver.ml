@@ -1059,8 +1059,8 @@ let process_ast (ast : Intf_or_impl.t) ~input_name ~tool_name ~hook
       in
       Intf_or_impl.Impl ast
 
-let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
-    ~embed_errors ~output =
+let process_file (kind : Kind.t) fn ~input_name ~relocate ~use_compiler_pprint
+    ~output_mode ~embed_errors ~output =
   File_property.reset_all ();
   List.iter (List.rev !process_file_hooks) ~f:(fun f -> f ());
   corrections := [];
@@ -1129,7 +1129,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
         Reconcile.reconcile corrections
           ~contents:(Lazy.force input_contents)
           ~output:(Some corrected) ~input_filename:fn ~input_name
-          ~target:Corrected ?styler:!styler ~kind;
+          ~target:Corrected ?styler:!styler ~kind ~use_compiler_pprint;
         true
   in
 
@@ -1138,9 +1138,11 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
   | Pretty_print ->
       with_output output ~binary:false ~f:(fun oc ->
           let ppf = Stdlib.Format.formatter_of_out_channel oc in
-          (match ast with
-          | Intf ast -> Pprintast.signature ppf ast
-          | Impl ast -> Pprintast.structure ppf ast);
+          (if use_compiler_pprint then Utils.print_as_compiler_source ppf ast
+           else
+             match ast with
+             | Intf ast -> Pprintast.signature ppf ast
+             | Impl ast -> Pprintast.structure ppf ast);
           let null_ast =
             match ast with Intf [] | Impl [] -> true | _ -> false
           in
@@ -1162,7 +1164,7 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~output_mode
       Reconcile.reconcile !replacements
         ~contents:(Lazy.force input_contents)
         ~output ~input_filename:fn ~input_name ~target:(Output mode)
-        ?styler:!styler ~kind);
+        ?styler:!styler ~kind ~use_compiler_pprint);
 
   if
     mismatches_found && match !diff_command with Some "-" -> false | _ -> true
@@ -1176,6 +1178,7 @@ let output = ref None
 let kind = ref None
 let input = ref None
 let embed_errors = ref false
+let use_compiler_pprint = ref false
 
 let set_input fn =
   match !input with
@@ -1418,6 +1421,10 @@ let standalone_args =
     ( "--keywords",
       Arg.String (fun s -> keywords := Some s),
       "<version+list> Same as -keywords" );
+    ( "--use-compiler-pp",
+      Arg.Set use_compiler_pprint,
+      "Force migrating the AST back to the compiler's version before printing \
+       it as source code using the compiler's Pprintast utilities." );
   ]
 
 let get_args ?(standalone_args = standalone_args) () =
@@ -1457,6 +1464,7 @@ let standalone_main () =
       in
       process_file kind fn ~input_name ~relocate ~output_mode:!output_mode
         ~output:!output ~embed_errors:!embed_errors
+        ~use_compiler_pprint:!use_compiler_pprint
 
 let rewrite_binary_ast_file input_fn output_fn =
   let input_name, input_version, ast = load_input_run_as_ppx input_fn in
