@@ -325,6 +325,10 @@ and copy_pattern_desc :
         (copy_loc (fun x -> Option.map (fun x -> x) x) x0)
   | Ast_502.Parsetree.Ppat_exception x0 ->
       Ast_503.Parsetree.Ppat_exception (copy_pattern x0)
+  | Ast_502.Parsetree.Ppat_extension
+      ( { txt = "ppxlib.migration.ppat_effect"; _ },
+        PPat ({ ppat_desc = Ppat_tuple [ e; c ]; _ }, None) ) ->
+      Ast_503.Parsetree.Ppat_effect (copy_pattern e, copy_pattern c)
   | Ast_502.Parsetree.Ppat_extension x0 ->
       Ast_503.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_502.Parsetree.Ppat_open (x0, x1) ->
