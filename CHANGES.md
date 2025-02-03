@@ -1,5 +1,5 @@
-unreleased
-----------
+0.35.0 (2025-02-03)
+-------------------
 
 - Allow use of effect syntax in preprocessed files without causing migration
   failures. (#552, @hhugo, @NathanReb)
