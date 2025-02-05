@@ -25,11 +25,23 @@ let styler = ref None
 let output_metadata_filename = ref None
 let corrected_suffix = ref ".ppx-corrected"
 let keywords = ref None
+let raise_embedded_errors_flag = ref false
 
 let ghost =
   object
     inherit Ast_traverse.map
     method! location loc = { loc with loc_ghost = true }
+  end
+
+let raise_embedded_errors =
+  object
+    inherit Ast_traverse.map as super
+
+    method! extension extension =
+      if !raise_embedded_errors_flag then
+        extension |> Location.Error.of_extension
+        |> Option.iter ~f:Location.Error.raise;
+      super#extension extension
   end
 
 let chop_prefix ~prefix x =
@@ -696,7 +708,9 @@ let map_structure_gen st ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~dropped_so_far:Attribute.dropped_so_far_structure ~hook
       ~expect_mismatch_handler ~input_name ~embed_errors
   in
-  st |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
+  st |> lint lint_errors |> cookies_and_check
+  |> with_errors (List.rev errors)
+  |> raise_embedded_errors#structure
 
 let map_structure st =
   match
@@ -772,7 +786,9 @@ let map_signature_gen sg ~tool_name ~hook ~expect_mismatch_handler ~input_name
       ~dropped_so_far:Attribute.dropped_so_far_signature ~hook
       ~expect_mismatch_handler ~input_name ~embed_errors
   in
-  sg |> lint lint_errors |> cookies_and_check |> with_errors (List.rev errors)
+  sg |> lint lint_errors |> cookies_and_check
+  |> with_errors (List.rev errors)
+  |> raise_embedded_errors#signature
 
 let map_signature sg =
   match
@@ -1320,6 +1336,9 @@ let shared_args =
        applied before all impl and intf." );
     ("-cookie", Arg.String set_cookie, "NAME=EXPR Set the cookie NAME to EXPR");
     ("--cookie", Arg.String set_cookie, " Same as -cookie");
+    ( "-raise-embedded-errors",
+      Arg.Set raise_embedded_errors_flag,
+      " Raise the first embedded error found in the processed AST" );
   ]
 
 let () =
