@@ -43,6 +43,21 @@ module Rule = struct
       List.partition l ~f:(fun (T t) -> not t.expect)
   end
 
+  module Attr_floating_inline = struct
+    type ('a, 'b) unpacked = {
+      attribute : ('a, 'b) Attribute.Floating.t;
+      expand_items : bool;
+      expand : ctxt:Expansion_context.Deriver.t -> 'b -> 'a list;
+    }
+
+    type 'a t = T : ('a, _) unpacked -> 'a t
+
+    let attr_name (T t) = Attribute.Floating.name t.attribute
+
+    let split_normal_and_expand l =
+      List.partition l ~f:(fun (T t) -> not t.expand_items)
+  end
+
   module Special_function = struct
     type t = {
       name : string;
@@ -84,6 +99,8 @@ module Rule = struct
           (structure_item, class_type_declaration) Attr_group_inline.t t
       | Attr_sig_class_type_decl :
           (signature_item, class_type_declaration) Attr_group_inline.t t
+      | Attr_str_floating : structure_item Attr_floating_inline.t t
+      | Attr_sig_floating : signature_item Attr_floating_inline.t t
 
     type (_, _) equality = Eq : ('a, 'a) equality | Ne : (_, _) equality
 
@@ -103,6 +120,8 @@ module Rule = struct
       | Attr_sig_module_type_decl, Attr_sig_module_type_decl -> Eq
       | Attr_str_class_type_decl, Attr_str_class_type_decl -> Eq
       | Attr_sig_class_type_decl, Attr_sig_class_type_decl -> Eq
+      | Attr_str_floating, Attr_str_floating -> Eq
+      | Attr_sig_floating, Attr_sig_floating -> Eq
       | _ -> Ne
   end
 
@@ -120,6 +139,11 @@ module Rule = struct
   type ('a, 'b, 'c) attr_inline =
     ('b, 'c) Attribute.t ->
     (ctxt:Expansion_context.Deriver.t -> 'b -> 'c -> 'a list) ->
+    t
+
+  type ('item, 'parsed_payload) attr_floating_inline =
+    ('item, 'parsed_payload) Attribute.Floating.t ->
+    (ctxt:Expansion_context.Deriver.t -> 'parsed_payload -> 'item list) ->
     t
 
   let rec filter : type a. a Field.t -> t list -> a list =
@@ -200,6 +224,18 @@ module Rule = struct
 
   let attr_sig_class_type_decl_expect attribute expand =
     T (Attr_sig_class_type_decl, T { attribute; expand; expect = true })
+
+  let attr_str_floating_expect attribute expand =
+    T (Attr_str_floating, T { attribute; expand; expand_items = false })
+
+  let attr_sig_floating_expect attribute expand =
+    T (Attr_sig_floating, T { attribute; expand; expand_items = false })
+
+  let attr_str_floating_expect_and_expand attribute expand =
+    T (Attr_str_floating, T { attribute; expand; expand_items = true })
+
+  let attr_sig_floating_expect_and_expand attribute expand =
+    T (Attr_sig_floating, T { attribute; expand; expand_items = true })
 end
 
 module Generated_code_hook = struct
@@ -402,6 +438,12 @@ let sort_attr_inline l =
         (Rule.Attr_inline.attr_name a)
         (Rule.Attr_inline.attr_name b))
 
+let sort_attr_floating_inline l =
+  List.sort l ~cmp:(fun a b ->
+      String.compare
+        (Rule.Attr_floating_inline.attr_name a)
+        (Rule.Attr_floating_inline.attr_name b))
+
 let context_free_attribute_modification ~loc =
   Error
     ( Location.Error.createf ~loc
@@ -457,6 +499,27 @@ let handle_attr_inline attrs ~convert_exn ~item ~expanded_item ~loc ~base_ctxt
           in
           try
             let expect_items = a.expand ~ctxt expanded_item value in
+            return (expect_items :: acc)
+          with exn when embed_errors ->
+            let error_item = [ convert_exn exn ] in
+            return (error_item :: acc)))
+
+let handle_attr_floating_inline attrs ~item ~loc ~base_ctxt ~embed_errors
+    ~convert_exn =
+  List.fold_left attrs ~init:(return [])
+    ~f:(fun acc (Rule.Attr_floating_inline.T a) ->
+      acc >>= fun acc ->
+      Attribute.Floating.convert_attr_res a.attribute item
+      |> of_result ~default:None
+      >>= function
+      | None -> return acc
+      | Some value -> (
+          let ctxt =
+            Expansion_context.Deriver.make ~derived_item_loc:loc ~inline:true
+              ~base:base_ctxt ()
+          in
+          try
+            let expect_items = a.expand ~ctxt value in
             return (expect_items :: acc)
           with exn when embed_errors ->
             let error_item = [ convert_exn exn ] in
@@ -542,10 +605,22 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     |> sort_attr_group_inline |> Rule.Attr_group_inline.split_normal_and_expect
   in
 
+  let attr_str_floating_expect, attr_str_floating_expect_and_expand =
+    Rule.filter Attr_str_floating rules
+    |> sort_attr_floating_inline
+    |> Rule.Attr_floating_inline.split_normal_and_expand
+  in
+  let attr_sig_floating_expect, attr_sig_floating_expect_and_expand =
+    Rule.filter Attr_sig_floating rules
+    |> sort_attr_floating_inline
+    |> Rule.Attr_floating_inline.split_normal_and_expand
+  in
+
   let map_node = map_node ~hook ~embed_errors in
   let map_nodes = map_nodes ~hook ~embed_errors in
   let handle_attr_group_inline = handle_attr_group_inline ~embed_errors in
   let handle_attr_inline = handle_attr_inline ~embed_errors in
+  let handle_attr_floating_inline = handle_attr_floating_inline ~embed_errors in
 
   object (self)
     inherit Ast_traverse.map_with_expansion_context_and_errors as super
@@ -724,6 +799,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     (* TODO: try to factorize #structure and #signature without meta-programming *)
     (*$*)
     method! structure base_ctxt st =
+      let convert_exn = exn_to_stri in
       let rec with_extra_items item ~extra_items ~expect_items ~rest
           ~in_generated_code =
         loop (rev_concat extra_items) ~in_generated_code:true
@@ -769,9 +845,34 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                       Generated_code_hook.replace hook Structure_item
                         item.pstr_loc (Many items);
                     loop rest ~in_generated_code >>| fun rest -> items @ rest)
+            | Pstr_attribute at ->
+                handle_attr_floating_inline attr_str_floating_expect ~item:at
+                  ~loc ~base_ctxt ~convert_exn
+                >>= fun expect_items ->
+                handle_attr_floating_inline attr_str_floating_expect_and_expand
+                  ~item:at ~loc ~base_ctxt ~convert_exn
+                >>= fun expect_items_unexpanded ->
+                List.map expect_items_unexpanded ~f:(self#structure base_ctxt)
+                |> combine_errors
+                >>= fun expect_items_expanded ->
+                (* Shouldn't matter if we use [rev_concat] or [List.concat] here, there
+                   should be only one (outer) list among [expect_items] and
+                   [expect_items_expanded] unless a single floating attribute is somehow
+                   registered twice. *)
+                (match rev_concat (expect_items @ expect_items_expanded) with
+                | [] -> return ()
+                | expected ->
+                    Code_matcher.match_structure_res rest
+                      ~pos:item.pstr_loc.loc_end ~expected
+                      ~mismatch_handler:
+                        (expect_mismatch_handler.f Structure_item)
+                    |> of_result ~default:())
+                >>= fun () ->
+                super#structure_item base_ctxt item >>= fun expanded_item ->
+                loop rest ~in_generated_code >>| fun expanded_rest ->
+                expanded_item :: expanded_rest
             | _ -> (
                 super#structure_item base_ctxt item >>= fun expanded_item ->
-                let convert_exn = exn_to_stri in
                 match (item.pstr_desc, expanded_item.pstr_desc) with
                 | Pstr_type (rf, tds), Pstr_type (exp_rf, exp_tds) ->
                     (* No context-free rule can rewrite rec flags atm, this
@@ -833,6 +934,7 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
 
     (*$ str_to_sig _last_text_block *)
     method! signature base_ctxt sg =
+      let convert_exn = exn_to_sigi in
       let rec with_extra_items item ~extra_items ~expect_items ~rest
           ~in_generated_code =
         loop (rev_concat extra_items) ~in_generated_code:true
@@ -878,9 +980,34 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                       Generated_code_hook.replace hook Signature_item
                         item.psig_loc (Many items);
                     loop rest ~in_generated_code >>| fun rest -> items @ rest)
+            | Psig_attribute at ->
+                handle_attr_floating_inline attr_sig_floating_expect ~item:at
+                  ~loc ~base_ctxt ~convert_exn
+                >>= fun expect_items ->
+                handle_attr_floating_inline attr_sig_floating_expect_and_expand
+                  ~item:at ~loc ~base_ctxt ~convert_exn
+                >>= fun expect_items_unexpanded ->
+                List.map expect_items_unexpanded ~f:(self#signature base_ctxt)
+                |> combine_errors
+                >>= fun expect_items_expanded ->
+                (* Shouldn't matter if we use [rev_concat] or [List.concat] here, there
+                   should be only one (outer) list among [expect_items] and
+                   [expect_items_expanded] unless a single floating attribute is somehow
+                   registered twice. *)
+                (match rev_concat (expect_items @ expect_items_expanded) with
+                | [] -> return ()
+                | expected ->
+                    Code_matcher.match_signature_res rest
+                      ~pos:item.psig_loc.loc_end ~expected
+                      ~mismatch_handler:
+                        (expect_mismatch_handler.f Signature_item)
+                    |> of_result ~default:())
+                >>= fun () ->
+                super#signature_item base_ctxt item >>= fun expanded_item ->
+                loop rest ~in_generated_code >>| fun expanded_rest ->
+                expanded_item :: expanded_rest
             | _ -> (
                 super#signature_item base_ctxt item >>= fun expanded_item ->
-                let convert_exn = exn_to_sigi in
                 match (item.psig_desc, expanded_item.psig_desc) with
                 | Psig_type (rf, tds), Psig_type (exp_rf, exp_tds) ->
                     (* No context-free rule can rewrite rec flags atm, this

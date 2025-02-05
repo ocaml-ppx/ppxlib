@@ -220,6 +220,11 @@ module Floating : sig
     ('a, 'b) t list -> 'a -> ('b option, Location.Error.t NonEmptyList.t) result
 
   val convert : ('a, 'b) t list -> 'a -> 'b option
+
+  val convert_attr_res :
+    ('a, 'b) t ->
+    attribute ->
+    ('b option, Location.Error.t NonEmptyList.t) result
 end
 
 val explicitly_drop : Ast_traverse0.iter

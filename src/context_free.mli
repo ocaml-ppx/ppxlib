@@ -129,6 +129,20 @@ module Rule : sig
 
   val attr_sig_class_type_decl_expect :
     (signature_item, class_type_declaration, _) attr_group_inline
+
+  type ('item, 'parsed_payload) attr_floating_inline =
+    ('item, 'parsed_payload) Attribute.Floating.t ->
+    (ctxt:Expansion_context.Deriver.t -> 'parsed_payload -> 'item list) ->
+    t
+
+  val attr_str_floating_expect : (structure_item, _) attr_floating_inline
+  val attr_sig_floating_expect : (signature_item, _) attr_floating_inline
+
+  val attr_str_floating_expect_and_expand :
+    (structure_item, _) attr_floating_inline
+
+  val attr_sig_floating_expect_and_expand :
+    (signature_item, _) attr_floating_inline
 end
 
 (**/**)

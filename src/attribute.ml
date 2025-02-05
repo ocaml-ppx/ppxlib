@@ -454,6 +454,12 @@ module Floating = struct
       payload = Payload_parser (pattern, fun ~attr_loc:_ ~name_loc:_ -> k);
     }
 
+  let convert_attr_res t attr =
+    let open Result in
+    if Name.Pattern.matches t.name attr.attr_name.txt then
+      convert t.payload attr >>| fun value -> Some value
+    else Ok None
+
   let convert_res ts x =
     let open Result in
     match ts with
