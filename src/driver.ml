@@ -1581,3 +1581,19 @@ let enable_checks () =
 let enable_location_check () = perform_locations_check := true
 let disable_location_check () = perform_locations_check := false
 let map_structure st = map_structure st
+
+let () =
+  register_transformation "expand_inline"
+    ~rules:
+      [
+        Context_free.Rule.attr_str_floating_expect_and_expand
+          (Attribute.Floating.declare "expand_inline" Structure_item
+             Ast_pattern.(pstr __)
+             Fn.id)
+          (fun ~ctxt:_ items -> items);
+        Context_free.Rule.attr_sig_floating_expect_and_expand
+          (Attribute.Floating.declare "expand_inline" Signature_item
+             Ast_pattern.(psig __)
+             Fn.id)
+          (fun ~ctxt:_ items -> items);
+      ]
