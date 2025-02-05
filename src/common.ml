@@ -276,3 +276,12 @@ module With_errors = struct
 
   let combine_errors list = (List.map list ~f:fst, List.concat_map list ~f:snd)
 end
+
+let valid_string_constant_delimiter string =
+  let rec attempt_string_constant_delimiter n =
+    let delimiter = String.make n 'x' in
+    if String.is_substring string ~substring:("|" ^ delimiter ^ "}") then
+      attempt_string_constant_delimiter (n + 1)
+    else delimiter
+  in
+  attempt_string_constant_delimiter 0

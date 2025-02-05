@@ -1590,10 +1590,10 @@ let () =
           (Attribute.Floating.declare "expand_inline" Structure_item
              Ast_pattern.(pstr __)
              Fn.id)
-          (fun ~ctxt:_ items -> items);
+          (fun ~ctxt:_ items -> Utils.prettify_odoc_attributes#structure items);
         Context_free.Rule.attr_sig_floating_expect_and_expand
           (Attribute.Floating.declare "expand_inline" Signature_item
              Ast_pattern.(psig __)
              Fn.id)
-          (fun ~ctxt:_ items -> items);
+          (fun ~ctxt:_ items -> Utils.prettify_odoc_attributes#signature items);
       ]
