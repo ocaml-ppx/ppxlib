@@ -41,8 +41,6 @@ module Default = struct
       pexp_desc = Pexp_function ([], None, Pfunction_cases (cases, loc, []));
     }
 
-  (* let pexp_function ~loc cases = pexp_function_cases ~loc cases *)
-
   let add_fun_params return_constraint ~loc params body =
     match params with
     | [] -> body
@@ -250,7 +248,6 @@ module Default = struct
            ( [ { pparam_loc = _; pparam_desc = Pparam_val (label, _, subpat) } ],
              _constraint,
              Pfunction_body body );
-       (* Pexp_fun (label, None (* no default expression *), subpat, body); *)
        pexp_attributes = [];
        pexp_loc = _;
        pexp_loc_stack = _;
