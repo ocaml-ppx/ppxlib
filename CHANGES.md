@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Make `Ast_traverse.sexp_of` more concise, and add a test. (#561, @ceastlund)
+
 0.35.0 (2025-02-03)
 -------------------
 
