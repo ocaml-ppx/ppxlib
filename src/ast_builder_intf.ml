@@ -44,6 +44,15 @@ module type Additional_helpers = sig
   val pexp_fun :
     (arg_label -> expression option -> pattern -> expression -> expression)
     with_loc
+  (** [pexp_fun] can be used to create function expressions. It will check if
+      the function's body is itself a function expression and if so it will
+      coalesce the arguments.
+
+      For example, if we have [pexp_fun Nolabel None (var "x") f] and [f] is
+      [fun y -> x + y] then the function expression returned will be
+      [fun x y -> x + y] and not [fun x -> y -> x + y]. However, it will be more
+      efficient to create maximum arity functions directly with
+      {! pexp_function}. *)
 
   val pexp_function :
     (function_param list ->

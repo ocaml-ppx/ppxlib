@@ -57,12 +57,11 @@ module Default : sig
     loc:location -> longident loc -> pattern option -> pattern
 
   val coalesce_arity : expression -> expression
-  (** [coalesce_arity e] will produce a maximum arity function from an
-      expression.
-
-      For example, [fun x -> fun y -> x + y] becomes [fun x y -> x + y]. Since
-      OCaml 5.2, these two functions have a different {! Parsetree}
-      representation. *)
+  (** If an expression [e] is a function of arity [n] with a body that is
+      another function with arity [m], then [coalesce_arity e] will produce a
+      function of arity [n + m]. This will not run recursively, so an expression
+      [fun x -> fun y -> fun z -> x + y + z] will become
+      [fun x y -> fun z -> x + y + z]. *)
 
   val constructor_declaration :
     loc:location ->
