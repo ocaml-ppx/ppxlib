@@ -914,7 +914,6 @@ let load_source_file fn =
 
 type output_mode =
   | Pretty_print
-  | Pp_ast
   | Dump_ast
   | Dparsetree
   | Reconcile of Reconcile.mode
@@ -1153,14 +1152,6 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~use_compiler_pprint
           Ast_io.write oc
             { input_name; input_version; ast }
             ~add_ppx_context:true)
-  | Pp_ast ->
-      with_output output ~binary:false ~f:(fun oc ->
-          let ppf = Stdlib.Format.formatter_of_out_channel oc in
-          let ast = add_cookies ast in
-          (match ast with
-          | Intf ast -> Pp_ast.signature ppf ast
-          | Impl ast -> Pp_ast.structure ppf ast);
-          Stdlib.Format.pp_print_newline ppf ())
   | Dparsetree ->
       with_output output ~binary:false ~f:(fun oc ->
           let ppf = Stdlib.Format.formatter_of_out_channel oc in
@@ -1204,12 +1195,11 @@ let set_output_mode mode =
   match (!output_mode, mode) with
   | Pretty_print, _ -> output_mode := mode
   | _, Pretty_print -> assert false
-  | Dump_ast, Dump_ast | Pp_ast, Pp_ast | Dparsetree, Dparsetree -> ()
+  | Dump_ast, Dump_ast | Dparsetree, Dparsetree -> ()
   | Reconcile a, Reconcile b when Poly.equal a b -> ()
   | x, y ->
       let arg_of_output_mode = function
         | Pretty_print -> assert false
-        | Pp_ast -> "-pp-ast"
         | Dump_ast -> "-dump-ast"
         | Dparsetree -> "-dparsetree"
         | Reconcile Using_line_directives -> "-reconcile"
@@ -1357,14 +1347,6 @@ let standalone_args =
       Arg.Unit (fun () -> set_output_mode Dump_ast),
       " Dump the marshaled ast to the output file instead of pretty-printing it"
     );
-    ( "-pp-ast",
-      Arg.Unit (fun () -> set_output_mode Pp_ast),
-      " Pretty-print a simple version of the AST using the internal Pp_ast \
-       module. This is useful for comparing ASTs. For more configuration see \
-       the ppxlib-tools package." );
-    ( "--pp-ast",
-      Arg.Unit (fun () -> set_output_mode Pp_ast),
-      " Same as -pp-simple" );
     ( "--dump-ast",
       Arg.Unit (fun () -> set_output_mode Dump_ast),
       " Same as -dump-ast" );
