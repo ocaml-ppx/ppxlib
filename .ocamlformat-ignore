@@ -55,3 +55,4 @@ test/ppx_import_support/test.ml
 test/quoter/test.ml
 test/traverse/test.ml
 test/type_is_recursive/test.ml
+test/502_pexpfun/test.ml

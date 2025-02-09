@@ -1,3 +1,13 @@
+(executable
+ (name driver)
+ (libraries ppxlib ppxlib.metaquot))
+
+(cram
+ (deps ./driver.exe)
+ (enabled_if
+  (>= %{ocaml_version} "5.2.0"))
+ (package ppxlib))
+
 (rule
  (package ppxlib)
  (alias runtest)
