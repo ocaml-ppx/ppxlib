@@ -20,5 +20,12 @@ Note that this is just a toy example and we'd actually advise you against this t
 that have side effects or rely heavily on the file system or env variables unless you absolutely know
 what you are doing.
 
-In particular in this case it won't work well with dune since dune won't know about the dependency
-on the env variables specified in the extension's payload.
+In particular in this case it won't work well with dune out-of-the-box since dune won't know about
+he dependency on the env variables specified in the extension's payload. This can be mitigated by
+adding a field:
+
+```ocaml
+  (preprocessor_deps (env_var MY_VAR))
+```
+
+to any library stanza with a module whose source contains `[%get_env "MY_VAR"]`.
