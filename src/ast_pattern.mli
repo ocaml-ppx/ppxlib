@@ -212,4 +212,5 @@ val of_func : (context -> Location.t -> 'a -> 'b -> 'c) -> ('a, 'b, 'c) t
 val to_func : ('a, 'b, 'c) t -> context -> Location.t -> 'a -> 'b -> 'c
 
 val fail : Location.t -> string -> _
-(** Call from [of_func]'s argument when the pattern does not match. *)
+(** Call from [of_func]'s argument when the pattern does not match. The string
+    should describe the expected shape of the AST where the match failed. *)
