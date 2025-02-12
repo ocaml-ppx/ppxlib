@@ -9,13 +9,10 @@ Test `expand_inline` for structures.
   >   end]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 7, characters 0-1:
-   [@@@expand_inline
-     module T : sig
-       val foo : [%str]
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -4,4 +4,5 @@
      end = struct
        let foo = [%suffix "apples"]
      end]
@@ -35,13 +32,10 @@ Test `expand_inline` for signatures.
   >   [@@@end]
   > end 
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 7, characters 0-1:
-   module type S = sig
-     [@@@expand_inline:
-       val foo : [%str]
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -4,5 +4,8 @@
        include module type of struct
          let foo = [%suffix "apples"]
        end]
@@ -70,19 +64,10 @@ Test (** ... *) comments get translated using {| |} syntax.
   > ]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 13, characters 0-1:
-   [@@@expand_inline 
-   module T : sig
-   (**foo*)
-   val foo : [%str]
-   end = struct
-   (**bar*)
-   let foo = [%suffix "apples"]
-   end
-   
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -10,4 +10,7 @@
    (** baz *)
    
    ]
@@ -104,14 +89,10 @@ Test [@@ocaml.doc ...] attributes do not get swapped to using {| |}.
   > ]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 8, characters 0-1:
-   [@@@expand_inline 
-   module T : sig
-   val foo : [%str] [@@ocaml.doc "foo"]
-   end = struct
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -5,4 +5,6 @@
    let foo = [%suffix "apples"] [@@ocaml.doc "foo"]
    end
    ]
@@ -129,11 +110,10 @@ Test the delim finding behaviour when translating (** ... *) comments to {| |} s
   > ]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 5, characters 0-1:
-   [@@@expand_inline 
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -2,4 +2,5 @@
    (**blah blah |} blah blah*)
    let foo = [%suffix "apples"]
    ]
@@ -148,11 +128,10 @@ Test the delim finding behaviour when translating (** ... *) comments to {| |} s
   > ]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 5, characters 0-1:
-   [@@@expand_inline 
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -2,4 +2,5 @@
    (**blxxx |} blaxxxxxxxxxh blxxahx*)
    let foo = [%suffix "apples"]
    ]
