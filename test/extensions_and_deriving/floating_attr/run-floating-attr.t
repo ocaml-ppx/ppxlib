@@ -9,13 +9,10 @@ Test `attr_str_floating_expect` via `@@@identity_inline`.
   >   end]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 7, characters 0-1:
-   [@@@identity_inline
-     module T : sig
-       val foo : [%str]
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -4,4 +4,6 @@
      end = struct
        let foo = [%suffix "apples"]
      end]
@@ -36,13 +33,10 @@ Test `attr_sig_floating_expect` via `@@@identity_inline`.
   >   [@@@end]
   > end 
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 7, characters 0-1:
-   module type S = sig
-     [@@@identity_inline:
-       val foo : [%str]
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -4,5 +4,8 @@
        include module type of struct
          let foo = [%suffix "apples"]
        end]
@@ -65,13 +59,10 @@ Test `attr_str_floating_expect_and_expand` via `@@@identity_inline_expanded`.
   >   end]
   > [@@@end]
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 7, characters 0-1:
-   [@@@identity_inline_expanded
-     module T : sig
-       val foo : [%str]
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -4,4 +4,5 @@
      end = struct
        let foo = [%suffix "apples"]
      end]
@@ -91,13 +82,10 @@ Test `attr_sig_floating_expect_and_expand` via `@@@identity_inline_expanded`.
   >   [@@@end]
   > end 
   > EOF
-  $ ./ppx.exe -no-color -null program.ml
-  -program.ml
-  +program.ml.ppx-corrected
-  File "program.ml", line 7, characters 0-1:
-   module type S = sig
-     [@@@identity_inline_expanded:
-       val foo : [%str]
+  $ ./ppx.exe -no-color -null -diff-cmd 'diff -u --label "" --label ""' program.ml
+  --- 
+  +++ 
+  @@ -4,5 +4,8 @@
        include module type of struct
          let foo = [%suffix "apples"]
        end]
