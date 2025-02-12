@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Add a `-raise-embedded-errors` flag to the driver. Setting this flag raises the first
+  `ocaml.error` embedded in the final AST.
+
 - Export `Ast_pattern.fail`. (#563, @ceastlund)
 
 - Make `Ast_traverse.sexp_of` more concise, and add a test. (#561, @ceastlund)
