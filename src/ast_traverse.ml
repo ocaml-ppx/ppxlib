@@ -274,7 +274,7 @@ class map_with_expansion_context_and_errors =
 
 class sexp_of =
   object
-    inherit [Sexp.t] Ast.lift
+    inherit [Sexp.t] Ast.lift as super
     method int = sexp_of_int
     method string = sexp_of_string
     method bool = sexp_of_bool
@@ -290,14 +290,45 @@ class sexp_of =
     method other : 'a. 'a -> Sexp.t = fun _ -> Sexp.Atom "_"
 
     method record fields =
-      List
-        (List.map fields ~f:(fun (label, sexp) ->
-             Sexp.List [ Atom label; sexp ]))
+      match
+        List.filter fields ~f:(function
+          | _, Sexp.List [] -> false
+          | _, _ -> true)
+      with
+      | [ (label, sexp) ]
+        when String.equal label "txt" || String.is_suffix label ~suffix:"_desc"
+        ->
+          sexp
+      | fields ->
+          List
+            (List.map fields ~f:(fun (label, sexp) ->
+                 Sexp.List [ Atom label; sexp ]))
 
     method constr tag args =
       match args with [] -> Atom tag | _ -> List (Atom tag :: args)
 
     method tuple l = List l
+
+    method! location loc =
+      (* [Poly.equal] because [Location.compare] ignores [loc_ghost]. Users may need to
+         debug differences in [loc_ghost]. *)
+      if Poly.equal Location.none loc then List []
+      else
+        let string =
+          let fmt = Format.str_formatter in
+          Location.print fmt loc;
+          if loc.loc_ghost then Format.pp_print_string fmt "<ghost>";
+          Format.flush_str_formatter ()
+        in
+        Atom string
+
+    method! longident id =
+      let string = Longident.name id in
+      match Longident.parse string with
+      | round_trip ->
+          if Longident.compare id round_trip = 0 then Atom string
+          else super#longident id
+      | exception Invalid_argument _ -> super#longident id
   end
 
 let sexp_of = new sexp_of
