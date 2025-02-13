@@ -63,6 +63,7 @@ The only possible usage is [extra_args] <infile> <outfile>...
     -no-merge                   Do not merge context free transformations (better for debugging rewriters). As a result, the context-free transformations are not all applied before all impl and intf.
     -cookie NAME=EXPR           Set the cookie NAME to EXPR
     --cookie                    Same as -cookie
+    -raise-embedded-errors      Raise the first embedded error found in the processed AST
     -help                       Display this list of options
     --help                      Display this list of options
   [2]
@@ -84,5 +85,6 @@ The only exception is consulting help
     -no-merge                   Do not merge context free transformations (better for debugging rewriters). As a result, the context-free transformations are not all applied before all impl and intf.
     -cookie NAME=EXPR           Set the cookie NAME to EXPR
     --cookie                    Same as -cookie
+    -raise-embedded-errors      Raise the first embedded error found in the processed AST
     -help                       Display this list of options
     --help                      Display this list of options
