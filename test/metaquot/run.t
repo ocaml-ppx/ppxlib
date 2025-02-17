@@ -4,7 +4,7 @@ and a function like [fun x -> fun y -> x + y].
 
 In most cases, the former is preferred and functions like `Ast_builder.pexp_fun`
 and metaquots `[%expr...` build maximum arity functions by inserting calls to
-`coalesce_arity`
+`coalesce_arity`.
 
   $ cat > coalesce.ml << EOF
   > let b = [%expr fun x -> fun y -> x + y]
@@ -93,13 +93,14 @@ subexpression is handled separately.
          pexp_attributes = []
        } : Ppxlib_ast.Ast.expression)
 
-However, when used as a pattern-matching argument, we keep the distinction between the
-two representations.
+In order to be as uniform as possible across different compiler versions, we also
+keep the same behaviour with function expressions when used as patterns. Here, we
+coalesce the first case into a maximum arity function.
 
   $ cat > pat.ml << EOF
   > let f v = match v with
-  >   | [%expr fun x -> fun y -> x + y] -> ()
-  >   | [%expr fun x y -> x + y] -> ()
+  >   | [%expr fun x -> fun y -> fun z -> x + y + z] -> ()
+  >   | [%expr fun x y z -> x + y + z] -> ()
   >   | _ -> ()
   > EOF
 
@@ -113,14 +114,19 @@ two representations.
                 (Nolabel, None,
                  { ppat_desc = Ppat_var { txt = "x"; loc = _ }; ppat_loc = _;
                    ppat_loc_stack = _; ppat_attributes = _ })
-              }::[],
+              }::{ pparam_loc = _;
+                   pparam_desc = Pparam_val
+                     (Nolabel, None,
+                      { ppat_desc = Ppat_var { txt = "y"; loc = _ };
+                        ppat_loc = _; ppat_loc_stack = _; ppat_attributes = _ })
+                   }::[],
             None, Pfunction_body
             {
               pexp_desc = Pexp_function
                 ({ pparam_loc = _;
                    pparam_desc = Pparam_val
                      (Nolabel, None,
-                      { ppat_desc = Ppat_var { txt = "y"; loc = _ };
+                      { ppat_desc = Ppat_var { txt = "z"; loc = _ };
                         ppat_loc = _; ppat_loc_stack = _; ppat_attributes = _ })
                    }::[],
                  None, Pfunction_body
@@ -129,12 +135,32 @@ two representations.
                      ({ pexp_desc = Pexp_ident { txt = Lident "+"; loc = _ };
                         pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ },
                       (Nolabel,
-                       { pexp_desc = Pexp_ident { txt = Lident "x"; loc = _ };
+                       {
+                         pexp_desc = Pexp_apply
+                           ({
+                              pexp_desc = Pexp_ident
+                                { txt = Lident "+"; loc = _ };
+                              pexp_loc = _; pexp_loc_stack = _;
+                              pexp_attributes = _ },
+                            (Nolabel,
+                             {
+                               pexp_desc = Pexp_ident
+                                 { txt = Lident "x"; loc = _ };
+                               pexp_loc = _; pexp_loc_stack = _;
+                               pexp_attributes = _ })::(Nolabel,
+                                                        {
+                                                          pexp_desc =
+                                                            Pexp_ident
+                                                            { txt = Lident "y";
+                                                              loc = _ };
+                                                          pexp_loc = _;
+                                                          pexp_loc_stack = _;
+                                                          pexp_attributes = _ })::[]);
                          pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _
                          })::(Nolabel,
                               {
                                 pexp_desc = Pexp_ident
-                                  { txt = Lident "y"; loc = _ };
+                                  { txt = Lident "z"; loc = _ };
                                 pexp_loc = _; pexp_loc_stack = _;
                                 pexp_attributes = _ })::[]);
                    pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ });
@@ -153,17 +179,36 @@ two representations.
                      (Nolabel, None,
                       { ppat_desc = Ppat_var { txt = "y"; loc = _ };
                         ppat_loc = _; ppat_loc_stack = _; ppat_attributes = _ })
-                   }::[],
+                   }::{ pparam_loc = _;
+                        pparam_desc = Pparam_val
+                          (Nolabel, None,
+                           { ppat_desc = Ppat_var { txt = "z"; loc = _ };
+                             ppat_loc = _; ppat_loc_stack = _;
+                             ppat_attributes = _ })
+                        }::[],
             None, Pfunction_body
             {
               pexp_desc = Pexp_apply
                 ({ pexp_desc = Pexp_ident { txt = Lident "+"; loc = _ };
                    pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ },
                  (Nolabel,
-                  { pexp_desc = Pexp_ident { txt = Lident "x"; loc = _ };
+                  {
+                    pexp_desc = Pexp_apply
+                      ({ pexp_desc = Pexp_ident { txt = Lident "+"; loc = _ };
+                         pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _
+                         },
+                       (Nolabel,
+                        { pexp_desc = Pexp_ident { txt = Lident "x"; loc = _ };
+                          pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _
+                          })::(Nolabel,
+                               {
+                                 pexp_desc = Pexp_ident
+                                   { txt = Lident "y"; loc = _ };
+                                 pexp_loc = _; pexp_loc_stack = _;
+                                 pexp_attributes = _ })::[]);
                     pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ })::
                  (Nolabel,
-                  { pexp_desc = Pexp_ident { txt = Lident "y"; loc = _ };
+                  { pexp_desc = Pexp_ident { txt = Lident "z"; loc = _ };
                     pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ })::[]);
               pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ });
          pexp_loc = _; pexp_loc_stack = _; pexp_attributes = _ }
