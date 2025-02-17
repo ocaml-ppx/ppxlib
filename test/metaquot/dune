@@ -1,5 +1,6 @@
 (executable
  (name driver)
+ (modules driver)
  (libraries ppxlib ppxlib.metaquot))
 
 (cram

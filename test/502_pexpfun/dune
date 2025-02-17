@@ -1,5 +1,6 @@
 (executable
  (name driver)
+ (modules driver)
  (enabled_if
   (>= %{ocaml_version} "5.2"))
  (libraries ppxlib))
