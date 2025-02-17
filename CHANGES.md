@@ -1,5 +1,7 @@
 unreleased
 ----------
+ 
+- Bump ppxlib's AST to 5.2.0 (#514, @patricoferris)
 
 0.35.0 (2025-02-03)
 -------------------
