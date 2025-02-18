@@ -38,7 +38,7 @@ let common_prefix l =
 
 let map_keyword = function
   | ( "open" | "private" | "downto" | "to" | "mutable" | "rec" | "nonrec"
-    | "virtual" | "type" | "mod" | "begin" | "end" ) as s ->
+    | "virtual" | "type" | "mod" | "begin" | "end" | "constraint" ) as s ->
       s ^ "_"
   | s -> s
 
