@@ -89,7 +89,12 @@ let () =
           (Extension.declare "foo" Expression Ast_pattern.__
              (fun ~loc ~path:_ _payload ->
                {
-                 pexp_desc = Pexp_constant (Pconst_string ("foo", loc, None));
+                 pexp_desc =
+                   Pexp_constant
+                     {
+                       pconst_desc = Pconst_string ("foo", loc, None);
+                       pconst_loc = loc;
+                     };
                  pexp_loc = loc;
                  pexp_attributes = [];
                  pexp_loc_stack = [];

@@ -14,7 +14,12 @@ It can be used on regular .ml files:
               Pexp_apply
                 ( Pexp_ident (Lident "+")
                 , [ ( Nolabel, Pexp_ident (Lident "x"))
-                  ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+                  ; ( Nolabel
+                    , Pexp_constant
+                        { pconst_desc = Pconst_integer ( "2", None)
+                        ; pconst_loc = __loc
+                        }
+                    )
                   ]
                 )
           ; pvb_constraint = None
@@ -48,7 +53,10 @@ But it can also be used to pretty a single expression:
   Pexp_apply
     ( Pexp_ident (Lident "+")
     , [ ( Nolabel, Pexp_ident (Lident "x"))
-      ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+      ; ( Nolabel
+        , Pexp_constant
+            { pconst_desc = Pconst_integer ( "2", None); pconst_loc = __loc}
+        )
       ]
     )
 

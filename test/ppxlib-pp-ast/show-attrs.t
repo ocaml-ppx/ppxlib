@@ -16,8 +16,18 @@ And how it's printed without the flag:
           ; pvb_expr =
               Pexp_apply
                 ( Pexp_ident (Lident "+")
-                , [ ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
-                  ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+                , [ ( Nolabel
+                    , Pexp_constant
+                        { pconst_desc = Pconst_integer ( "2", None)
+                        ; pconst_loc = __loc
+                        }
+                    )
+                  ; ( Nolabel
+                    , Pexp_constant
+                        { pconst_desc = Pconst_integer ( "2", None)
+                        ; pconst_loc = __loc
+                        }
+                    )
                   ]
                 )
           ; pvb_constraint = None
@@ -37,9 +47,18 @@ And with the flag:
           ; pvb_expr =
               Pexp_apply
                 ( Pexp_ident (Lident "+")
-                , [ ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+                , [ ( Nolabel
+                    , Pexp_constant
+                        { pconst_desc = Pconst_integer ( "2", None)
+                        ; pconst_loc = __loc
+                        }
+                    )
                   ; ( Nolabel
-                    , { pexp_desc = Pexp_constant (Pconst_integer ( "2", None))
+                    , { pexp_desc =
+                          Pexp_constant
+                            { pconst_desc = Pconst_integer ( "2", None)
+                            ; pconst_loc = __loc
+                            }
                       ; pexp_loc = __loc
                       ; pexp_loc_stack = __lstack
                       ; pexp_attributes =
@@ -48,7 +67,10 @@ And with the flag:
                                 PStr
                                   [ Pstr_eval
                                       ( Pexp_constant
-                                          (Pconst_integer ( "1", None))
+                                          { pconst_desc =
+                                              Pconst_integer ( "1", None)
+                                          ; pconst_loc = __loc
+                                          }
                                       , []
                                       )
                                   ]
@@ -106,7 +128,11 @@ When printed without the flag, floating attributes are filtered out:
   [ Pstr_value
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
-          ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
+          ; pvb_expr =
+              Pexp_constant
+                { pconst_desc = Pconst_integer ( "2", None)
+                ; pconst_loc = __loc
+                }
           ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
@@ -196,7 +222,11 @@ And now with the flag, we can see our floating attributes:
   ; Pstr_value
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
-          ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
+          ; pvb_expr =
+              Pexp_constant
+                { pconst_desc = Pconst_integer ( "2", None)
+                ; pconst_loc = __loc
+                }
           ; pvb_constraint = None
           ; pvb_attributes = []
           ; pvb_loc = __loc
