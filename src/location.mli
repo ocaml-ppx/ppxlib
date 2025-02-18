@@ -24,6 +24,9 @@ val set_filename : t -> string -> t
 val none : t
 (** An arbitrary value of type [t]; describes an empty ghost range. *)
 
+val is_none : t -> bool
+(** Checks whether a given location is equal to [none] *)
+
 val init : Lexing.lexbuf -> string -> unit
 (** Set the file name and line number of the [lexbuf] to be the start of the
     named file. *)

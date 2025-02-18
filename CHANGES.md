@@ -1,6 +1,9 @@
 unreleased
 ----------
  
+- Change `Location.none` to match the compiler's `Location.none` as of OCaml
+  4.08. This fixes a bug in `loc_of_attribute` (#540, @ncik-roberts, @patricoferris)
+
 - Bump ppxlib's AST to 5.2.0 (#514, @patricoferris)
 
 - Add a `-raise-embedded-errors` flag to the driver. Setting this flag raises the first

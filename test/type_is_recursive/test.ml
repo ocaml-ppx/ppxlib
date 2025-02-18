@@ -14,9 +14,9 @@ let loc = Location.none
 [%%expect{|
 val loc : location =
   {Ppxlib.Location.loc_start =
-    {Lexing.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0; pos_cnum = -1};
+    {Lexing.pos_fname = "_none_"; pos_lnum = 0; pos_bol = 0; pos_cnum = -1};
    loc_end =
-    {Lexing.pos_fname = "_none_"; pos_lnum = 1; pos_bol = 0; pos_cnum = -1};
+    {Lexing.pos_fname = "_none_"; pos_lnum = 0; pos_bol = 0; pos_cnum = -1};
    loc_ghost = true}
 |}]
 
