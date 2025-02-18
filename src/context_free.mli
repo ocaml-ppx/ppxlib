@@ -135,9 +135,6 @@ module Rule : sig
     (ctxt:Expansion_context.Deriver.t -> 'parsed_payload -> 'item list) ->
     t
 
-  val attr_str_floating_expect : (structure_item, _) attr_floating_inline
-  val attr_sig_floating_expect : (signature_item, _) attr_floating_inline
-
   val attr_str_floating_expect_and_expand :
     (structure_item, _) attr_floating_inline
 

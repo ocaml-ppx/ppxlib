@@ -21,8 +21,6 @@ let () =
   let make_sig name rule = rule (make_sig_attr name) expand_sig in
   let rules =
     [
-      make_str "identity_inline" attr_str_floating_expect;
-      make_sig "identity_inline" attr_sig_floating_expect;
       make_str "identity_inline_expanded" attr_str_floating_expect_and_expand;
       make_sig "identity_inline_expanded" attr_sig_floating_expect_and_expand;
     ]
