@@ -116,3 +116,7 @@ module With_errors : sig
 
   val combine_errors : 'a t list -> 'a list t
 end
+
+val valid_string_constant_delimiter : string -> string
+(** [valid_string_constant_delimiter x] finds a delimiter [y] such that
+    [Pconst_string (x, loc, Some y)] is valid. *)

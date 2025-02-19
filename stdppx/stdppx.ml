@@ -386,6 +386,25 @@ module String = struct
   let uncapitalize_ascii = Stdlib.String.uncapitalize_ascii
   let split_on_char t ~sep = Stdlib.String.split_on_char sep t
 
+  let is_substring t ~substring =
+    let len_t = String.length t in
+    let len_sub = String.length substring in
+    if len_sub = 0 then true
+    else if len_sub > len_t then false
+    else
+      let rec matches_at pos sub_pos =
+        if sub_pos = len_sub then true
+        else if Char.equal (get t pos) (get substring sub_pos) then
+          matches_at (pos + 1) (sub_pos + 1)
+        else false
+      in
+      let rec is_substring_at pos =
+        if pos + len_sub > len_t then false
+        else if matches_at pos 0 then true
+        else is_substring_at (pos + 1)
+      in
+      is_substring_at 0
+
   include (Poly : Comparisons with type t := string)
 
   module Map = struct

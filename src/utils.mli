@@ -1,5 +1,10 @@
 open Import
 
+val prettify_odoc_attributes : Ast_traverse.map
+(** Converts [@@ocaml.doc " My doc comment "] to
+    [@@ocaml.doc {| My doc comment |}] if the origin of the attribute is a doc
+    comment (i.e. (** *)). *)
+
 val with_output : label option -> binary:bool -> f:(out_channel -> 'a) -> 'a
 
 module Kind : sig

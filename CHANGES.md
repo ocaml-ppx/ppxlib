@@ -6,6 +6,9 @@ unreleased
 
 - Bump ppxlib's AST to 5.2.0 (#514, @patricoferris)
 
+- Add the `[@@@expand_inline]` transformation and support for floating attribute context
+  free transformations. (#560, @jaymody)
+
 - Add a `-raise-embedded-errors` flag to the driver. Setting this flag raises the first
   `ocaml.error` embedded in the final AST.
 
