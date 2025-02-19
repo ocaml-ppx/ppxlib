@@ -29,6 +29,8 @@ unreleased
  `Pprintast` instead of ppxlib's.
  (#555, @NathanReb)
 
+- Add custom printer support to `pp_ast` functions via the `?printer` config parameter.
+
 0.34.0 (2025-01-06)
 -------------------
 
