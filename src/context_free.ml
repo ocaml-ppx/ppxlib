@@ -680,11 +680,11 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
               match expr with
               | None -> super#expression base_ctxt e
               | Some e -> self#expression base_ctxt e))
-      | Pexp_constant (Pconst_integer (s, Some c)) -> (
+      | Pexp_constant { pconst_desc = Pconst_integer (s, Some c); _ } -> (
           try expand_constant Integer c s
           with exn when embed_errors ->
             return (exn_to_error_extension EC.expression e exn))
-      | Pexp_constant (Pconst_float (s, Some c)) -> (
+      | Pexp_constant { pconst_desc = Pconst_float (s, Some c); _ } -> (
           try expand_constant Float c s
           with exn when embed_errors ->
             return (exn_to_error_extension EC.expression e exn))
