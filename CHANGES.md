@@ -1,6 +1,6 @@
-unreleased
-----------
- 
+0.36.0 (2025-03-03)
+-------------------
+
 - Change `Location.none` to match the compiler's `Location.none` as of OCaml
   4.08. This fixes a bug in `loc_of_attribute` (#540, @ncik-roberts, @patricoferris)
 
