@@ -21,7 +21,7 @@
 (* Extensive Rewrite: Hongbo Zhang: University of Pennsylvania *)
 (* TODO more fine-grained precedence pretty-printing *)
 
-open Ast_502
+open Ast_503
 open Asttypes
 open Format
 open Location
@@ -310,7 +310,8 @@ let rec longident f = function
 
 let longident_loc f x = pp f "%a" longident x.txt
 
-let constant f = function
+let constant f c =
+  match c.pconst_desc with
   | Pconst_char i -> pp f "%C" i
   | Pconst_string (i, _, None) -> pp f "%S" i
   | Pconst_string (i, _, Some delim) -> pp f "{%s|%s|%s}" delim i delim

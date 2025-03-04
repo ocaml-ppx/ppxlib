@@ -11,7 +11,12 @@ ppxlib-pp-ast can be used on files but it can also read from stdin:
               Pexp_apply
                 ( Pexp_ident (Lident "+")
                 , [ ( Nolabel, Pexp_ident (Lident "x"))
-                  ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+                  ; ( Nolabel
+                    , Pexp_constant
+                        { pconst_desc = Pconst_integer ( "2", None)
+                        ; pconst_loc = __loc
+                        }
+                    )
                   ]
                 )
           ; pvb_constraint = None
@@ -28,7 +33,10 @@ It can also read the input directly from the command line:
   Pexp_apply
     ( Pexp_ident (Lident "+")
     , [ ( Nolabel, Pexp_ident (Lident "x"))
-      ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+      ; ( Nolabel
+        , Pexp_constant
+            { pconst_desc = Pconst_integer ( "2", None); pconst_loc = __loc}
+        )
       ]
     )
 

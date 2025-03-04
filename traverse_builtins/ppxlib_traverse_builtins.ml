@@ -12,6 +12,9 @@ class map =
   let any x = x in
   object
     method int : int T.map = any
+    method int32 : int32 T.map = any
+    method int64 : int64 T.map = any
+    method nativeint : nativeint T.map = any
     method string : string T.map = any
     method bool : bool T.map = any
     method char : char T.map = any
@@ -27,6 +30,9 @@ class iter =
   let any = ignore in
   object
     method int : int T.iter = any
+    method int32 : int32 T.iter = any
+    method int64 : int64 T.iter = any
+    method nativeint : nativeint T.iter = any
     method string : string T.iter = any
     method bool : bool T.iter = any
     method char : char T.iter = any
@@ -42,6 +48,9 @@ class ['acc] fold =
   let any _ acc = acc in
   object
     method int : (int, 'acc) T.fold = any
+    method int32 : (int32, 'acc) T.fold = any
+    method int64 : (int64, 'acc) T.fold = any
+    method nativeint : (nativeint, 'acc) T.fold = any
     method string : (string, 'acc) T.fold = any
     method bool : (bool, 'acc) T.fold = any
     method char : (char, 'acc) T.fold = any
@@ -68,6 +77,9 @@ class ['acc] fold_map =
   let any x acc = (x, acc) in
   object
     method int : (int, 'acc) T.fold_map = any
+    method int32 : (int32, 'acc) T.fold_map = any
+    method int64 : (int64, 'acc) T.fold_map = any
+    method nativeint : (nativeint, 'acc) T.fold_map = any
     method string : (string, 'acc) T.fold_map = any
     method bool : (bool, 'acc) T.fold_map = any
     method char : (char, 'acc) T.fold_map = any
@@ -111,6 +123,9 @@ class ['ctx] map_with_context =
   let any _ x = x in
   object
     method int : ('ctx, int) T.map_with_context = any
+    method int32 : ('ctx, int32) T.map_with_context = any
+    method int64 : ('ctx, int64) T.map_with_context = any
+    method nativeint : ('ctx, nativeint) T.map_with_context = any
     method string : ('ctx, string) T.map_with_context = any
     method bool : ('ctx, bool) T.map_with_context = any
     method char : ('ctx, char) T.map_with_context = any
