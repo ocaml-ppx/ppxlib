@@ -20,7 +20,9 @@ let get_odoc_contents_if_comment = function
               pstr_desc =
                 Pstr_eval
                   ( {
-                      pexp_desc = Pexp_constant (Pconst_string (text, loc, _));
+                      pexp_desc =
+                        Pexp_constant
+                          { pconst_desc = Pconst_string (text, loc, _); _ };
                       _;
                     },
                     _ );
@@ -43,7 +45,13 @@ let prettify_odoc_attributes =
           let open Ast_builder.Default in
           let loc = Location.none in
           let delim = Some (Common.valid_string_constant_delimiter txt) in
-          let expr = pexp_constant ~loc (Pconst_string (txt, loc, delim)) in
+          let expr =
+            pexp_constant ~loc
+              {
+                pconst_desc = Pconst_string (txt, loc, delim);
+                pconst_loc = loc;
+              }
+          in
           { attr with attr_payload = PStr [ pstr_eval ~loc expr [] ] }
       | None -> attr
   end

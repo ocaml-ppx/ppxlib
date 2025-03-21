@@ -16,7 +16,11 @@ This is how it's printed without the flag:
   [ Pstr_value
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
-          ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
+          ; pvb_expr =
+              Pexp_constant
+                { pconst_desc = Pconst_integer ( "2", None)
+                ; pconst_loc = __loc
+                }
           ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
@@ -65,7 +69,11 @@ Now how it's printed with the flag:
               ; ppat_attributes = __attrs
               }
           ; pvb_expr =
-              { pexp_desc = Pexp_constant (Pconst_integer ( "2", None))
+              { pexp_desc =
+                  Pexp_constant
+                    { pconst_desc = Pconst_integer ( "2", None)
+                    ; pconst_loc = l1c8..9
+                    }
               ; pexp_loc = l1c8..9
               ; pexp_loc_stack = __lstack
               ; pexp_attributes = __attrs
@@ -189,7 +197,25 @@ original form as opposed to the default, condensed one shown above:
               ; ppat_attributes = __attrs
               }
           ; pvb_expr =
-              { pexp_desc = Pexp_constant (Pconst_integer ( "2", None))
+              { pexp_desc =
+                  Pexp_constant
+                    { pconst_desc = Pconst_integer ( "2", None)
+                    ; pconst_loc =
+                        { loc_start =
+                            { pos_fname = "test.ml"
+                            ; pos_lnum = 1
+                            ; pos_bol = 0
+                            ; pos_cnum = 8
+                            }
+                        ; loc_end =
+                            { pos_fname = "test.ml"
+                            ; pos_lnum = 1
+                            ; pos_bol = 0
+                            ; pos_cnum = 9
+                            }
+                        ; loc_ghost = false
+                        }
+                    }
               ; pexp_loc =
                   { loc_start =
                       { pos_fname = "test.ml"

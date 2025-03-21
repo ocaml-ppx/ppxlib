@@ -17,7 +17,7 @@
 open Stdlib0
 module Location = Astlib.Location
 module Longident = Astlib.Longident
-open Astlib.Ast_502
+open Astlib.Ast_503
 
 [@@@warning "-9"]
 
@@ -52,16 +52,21 @@ let protect_ref =
 let with_default_loc l f = protect_ref (R (default_loc, l)) f
 
 module Const = struct
-  let integer ?suffix i = Pconst_integer (i, suffix)
-  let int ?suffix i = integer ?suffix (Int.to_string i)
-  let int32 ?(suffix = 'l') i = integer ~suffix (Int32.to_string i)
-  let int64 ?(suffix = 'L') i = integer ~suffix (Int64.to_string i)
-  let nativeint ?(suffix = 'n') i = integer ~suffix (Nativeint.to_string i)
-  let float ?suffix f = Pconst_float (f, suffix)
-  let char c = Pconst_char c
+  let mk ?(loc = !default_loc) pconst_desc = { pconst_desc; pconst_loc = loc }
+  let integer ?loc ?suffix i = mk ?loc (Pconst_integer (i, suffix))
+  let int ?loc ?suffix i = integer ?loc ?suffix (Int.to_string i)
+  let int32 ?loc ?(suffix = 'l') i = integer ?loc ~suffix (Int32.to_string i)
+  let int64 ?loc ?(suffix = 'L') i = integer ?loc ~suffix (Int64.to_string i)
+
+  let nativeint ?loc ?(suffix = 'n') i =
+    integer ?loc ~suffix (Nativeint.to_string i)
+
+  let float ?loc ?suffix f = mk ?loc (Pconst_float (f, suffix))
+  let char ?loc c = mk ?loc (Pconst_char c)
 
   let string ?quotation_delimiter ?(loc = !default_loc) s =
-    Pconst_string (s, loc, quotation_delimiter)
+    (* Should we have a different loc for the constant ? *)
+    mk ~loc (Pconst_string (s, loc, quotation_delimiter))
 end
 
 module Attr = struct
