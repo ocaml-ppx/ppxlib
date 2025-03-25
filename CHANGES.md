@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
+  location which can lead to unhelpful error messages.
+  (#<PR_NUMBER>, @NathanReb)
+
 0.36.0 (2025-03-03)
 -------------------
 

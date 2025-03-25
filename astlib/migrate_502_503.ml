@@ -51,20 +51,30 @@ and copy_expression :
        Ast_502.Parsetree.pexp_loc_stack;
        Ast_502.Parsetree.pexp_attributes;
      } ->
+  let loc = copy_location pexp_loc in
   {
-    Ast_503.Parsetree.pexp_desc = copy_expression_desc pexp_desc;
-    Ast_503.Parsetree.pexp_loc = copy_location pexp_loc;
+    Ast_503.Parsetree.pexp_desc = copy_expression_desc_with_loc ~loc pexp_desc;
+    Ast_503.Parsetree.pexp_loc = loc;
     Ast_503.Parsetree.pexp_loc_stack = copy_location_stack pexp_loc_stack;
     Ast_503.Parsetree.pexp_attributes = copy_attributes pexp_attributes;
   }
 
 and copy_expression_desc :
     Ast_502.Parsetree.expression_desc -> Ast_503.Parsetree.expression_desc =
-  function
+ fun desc -> copy_expression_desc_with_loc ~loc:Location.none desc
+
+and copy_expression_desc_with_loc :
+    loc:Location.t ->
+    Ast_502.Parsetree.expression_desc ->
+    Ast_503.Parsetree.expression_desc =
+ fun ~loc desc ->
+  match desc with
   | Ast_502.Parsetree.Pexp_ident x0 ->
       Ast_503.Parsetree.Pexp_ident (copy_loc copy_Longident_t x0)
   | Ast_502.Parsetree.Pexp_constant x0 ->
-      Ast_503.Parsetree.Pexp_constant (copy_constant x0)
+      let loc = { loc with loc_ghost = true } in
+      let constant = { (copy_constant x0) with pconst_loc = loc } in
+      Ast_503.Parsetree.Pexp_constant constant
   | Ast_502.Parsetree.Pexp_let (x0, x1, x2) ->
       Ast_503.Parsetree.Pexp_let
         (copy_rec_flag x0, List.map copy_value_binding x1, copy_expression x2)
@@ -272,24 +282,38 @@ and copy_pattern : Ast_502.Parsetree.pattern -> Ast_503.Parsetree.pattern =
        Ast_502.Parsetree.ppat_loc_stack;
        Ast_502.Parsetree.ppat_attributes;
      } ->
+  let loc = copy_location ppat_loc in
   {
-    Ast_503.Parsetree.ppat_desc = copy_pattern_desc ppat_desc;
-    Ast_503.Parsetree.ppat_loc = copy_location ppat_loc;
+    Ast_503.Parsetree.ppat_desc = copy_pattern_desc_with_loc ~loc ppat_desc;
+    Ast_503.Parsetree.ppat_loc = loc;
     Ast_503.Parsetree.ppat_loc_stack = copy_location_stack ppat_loc_stack;
     Ast_503.Parsetree.ppat_attributes = copy_attributes ppat_attributes;
   }
 
 and copy_pattern_desc :
-    Ast_502.Parsetree.pattern_desc -> Ast_503.Parsetree.pattern_desc = function
+    Ast_502.Parsetree.pattern_desc -> Ast_503.Parsetree.pattern_desc =
+ fun desc -> copy_pattern_desc_with_loc ~loc:Location.none desc
+
+and copy_pattern_desc_with_loc :
+    loc:Location.t ->
+    Ast_502.Parsetree.pattern_desc ->
+    Ast_503.Parsetree.pattern_desc =
+ fun ~loc desc ->
+  match desc with
   | Ast_502.Parsetree.Ppat_any -> Ast_503.Parsetree.Ppat_any
   | Ast_502.Parsetree.Ppat_var x0 ->
       Ast_503.Parsetree.Ppat_var (copy_loc (fun x -> x) x0)
   | Ast_502.Parsetree.Ppat_alias (x0, x1) ->
       Ast_503.Parsetree.Ppat_alias (copy_pattern x0, copy_loc (fun x -> x) x1)
   | Ast_502.Parsetree.Ppat_constant x0 ->
-      Ast_503.Parsetree.Ppat_constant (copy_constant x0)
+      let loc = { loc with loc_ghost = true } in
+      let constant = { (copy_constant x0) with pconst_loc = loc } in
+      Ast_503.Parsetree.Ppat_constant constant
   | Ast_502.Parsetree.Ppat_interval (x0, x1) ->
-      Ast_503.Parsetree.Ppat_interval (copy_constant x0, copy_constant x1)
+      let loc = { loc with loc_ghost = true } in
+      let constant0 = { (copy_constant x0) with pconst_loc = loc } in
+      let constant1 = { (copy_constant x1) with pconst_loc = loc } in
+      Ast_503.Parsetree.Ppat_interval (constant0, constant1)
   | Ast_502.Parsetree.Ppat_tuple x0 ->
       Ast_503.Parsetree.Ppat_tuple (List.map copy_pattern x0)
   | Ast_502.Parsetree.Ppat_construct (x0, x1) ->
