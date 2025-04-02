@@ -205,6 +205,10 @@ class lift_simple_val =
         ~lift_record:super#module_expr ~desc:mod_.pmod_desc
         ~attrs:mod_.pmod_attributes mod_
 
+    method! constant c =
+      self#lift_record_with_desc ~lift_desc:self#constant_desc
+        ~lift_record:super#constant ~desc:c.pconst_desc ~attrs:[] c
+
     method! structure_item stri = self#structure_item_desc stri.pstr_desc
     method! signature_item sigi = self#signature_item_desc sigi.psig_desc
 

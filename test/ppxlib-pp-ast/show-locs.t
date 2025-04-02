@@ -16,11 +16,7 @@ This is how it's printed without the flag:
   [ Pstr_value
       ( Nonrecursive
       , [ { pvb_pat = Ppat_var "x"
-          ; pvb_expr =
-              Pexp_constant
-                { pconst_desc = Pconst_integer ( "2", None)
-                ; pconst_loc = __loc
-                }
+          ; pvb_expr = Pexp_constant (Pconst_integer ( "2", None))
           ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
