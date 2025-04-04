@@ -65,7 +65,6 @@ module Const = struct
   let char ?loc c = mk ?loc (Pconst_char c)
 
   let string ?quotation_delimiter ?(loc = !default_loc) s =
-    (* Should we have a different loc for the constant ? *)
     mk ~loc (Pconst_string (s, loc, quotation_delimiter))
 end
 
