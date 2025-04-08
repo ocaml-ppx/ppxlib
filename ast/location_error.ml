@@ -47,7 +47,12 @@ let of_extension (extension : Ast.extension) =
     | {
         pstr_desc =
           Pstr_eval
-            ({ pexp_desc = Pexp_constant (Pconst_string (msg, _, _)); _ }, []);
+            ( {
+                pexp_desc =
+                  Pexp_constant { pconst_desc = Pconst_string (msg, _, _); _ };
+                _;
+              },
+              [] );
         _;
       } ->
         msg

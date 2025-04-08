@@ -98,33 +98,57 @@ module Default = struct
     failwith
       "Ppxlib.Ast_builder.nonrec_type_declaration: don't use this function"
 
-  let eint ~loc t = pexp_constant ~loc (Pconst_integer (Int.to_string t, None))
-  let echar ~loc t = pexp_constant ~loc (Pconst_char t)
-  let estring ~loc t = pexp_constant ~loc (Pconst_string (t, loc, None))
-  let efloat ~loc t = pexp_constant ~loc (Pconst_float (t, None))
+  let eint ~loc t =
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int.to_string t, None))
+
+  let echar ~loc t =
+    pexp_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_char t)
+
+  let estring ~loc t =
+    pexp_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_string (t, loc, None))
+
+  let efloat ~loc t =
+    pexp_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_float (t, None))
 
   let eint32 ~loc t =
-    pexp_constant ~loc (Pconst_integer (Int32.to_string t, Some 'l'))
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int32.to_string t, Some 'l'))
 
   let eint64 ~loc t =
-    pexp_constant ~loc (Pconst_integer (Int64.to_string t, Some 'L'))
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int64.to_string t, Some 'L'))
 
   let enativeint ~loc t =
-    pexp_constant ~loc (Pconst_integer (Nativeint.to_string t, Some 'n'))
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc
+      @@ Pconst_integer (Nativeint.to_string t, Some 'n'))
 
-  let pint ~loc t = ppat_constant ~loc (Pconst_integer (Int.to_string t, None))
-  let pchar ~loc t = ppat_constant ~loc (Pconst_char t)
-  let pstring ~loc t = ppat_constant ~loc (Pconst_string (t, loc, None))
-  let pfloat ~loc t = ppat_constant ~loc (Pconst_float (t, None))
+  let pint ~loc t =
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int.to_string t, None))
+
+  let pchar ~loc t =
+    ppat_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_char t)
+
+  let pstring ~loc t =
+    ppat_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_string (t, loc, None))
+
+  let pfloat ~loc t =
+    ppat_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_float (t, None))
 
   let pint32 ~loc t =
-    ppat_constant ~loc (Pconst_integer (Int32.to_string t, Some 'l'))
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int32.to_string t, Some 'l'))
 
   let pint64 ~loc t =
-    ppat_constant ~loc (Pconst_integer (Int64.to_string t, Some 'L'))
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int64.to_string t, Some 'L'))
 
   let pnativeint ~loc t =
-    ppat_constant ~loc (Pconst_integer (Nativeint.to_string t, Some 'n'))
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc
+      @@ Pconst_integer (Nativeint.to_string t, Some 'n'))
 
   let ebool ~loc t =
     pexp_construct ~loc (Located.lident ~loc (Bool.to_string t)) None
