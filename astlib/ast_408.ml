@@ -27,6 +27,7 @@
 
          Actually run all lib-unix tests [4.08]
 *)
+module Longident = Legacy_longident
 
 module Asttypes = struct
 
