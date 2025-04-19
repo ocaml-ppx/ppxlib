@@ -1,6 +1,12 @@
 unreleased
 ----------
 
+### 5.4 Support
+
+- Add initial OCaml 5.4 support (#570, @patricoferris, @NathanReb)
+
+### Other Changes
+
 - Bump ppxlib's AST to 5.3.0 (#558, @patricoferris)
 
 - Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
