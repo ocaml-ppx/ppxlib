@@ -33,6 +33,7 @@ module Ast_500 = Ast_500
 module Ast_501 = Ast_501
 module Ast_502 = Ast_502
 module Ast_503 = Ast_503
+module Ast_504 = Ast_504
 (*$*)
 
 (* Manual migration between versions *)
@@ -61,6 +62,8 @@ module Migrate_501_502 = Migrate_501_502
 module Migrate_502_501 = Migrate_502_501
 module Migrate_502_503 = Migrate_502_503
 module Migrate_503_502 = Migrate_503_502
+module Migrate_503_504 = Migrate_503_504
+module Migrate_504_503 = Migrate_504_503
 (*$*)
 
 (* Compiler modules *)
@@ -68,6 +71,7 @@ module Ast_metadata = Ast_metadata
 module Config = Config
 module Keyword = Keyword
 module Location = Location
+module Legacy_longident = Legacy_longident
 module Longident = Longident
 module Parse = Parse
 module Pprintast = Pprintast

@@ -16,6 +16,7 @@
 (*   special exception on linking described in the file LICENSE.          *)
 (*                                                                        *)
 (**************************************************************************)
+module Longident = Legacy_longident
 
 module Asttypes = struct
 

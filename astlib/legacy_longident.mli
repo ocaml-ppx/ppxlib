@@ -1,11 +1,11 @@
 (** Long identifiers, used in parsetrees. *)
-open Location
 
 (** The long identifier type *)
-type t = (*IF_AT_LEAST 504 Ocaml_common.Longident.t = *)
+type t =
+  (*IF_NOT_AT_LEAST 504 Ocaml_common.Longident.t = *)
   | Lident of string
-  | Ldot of t loc * string loc
-  | Lapply of t loc * t loc
+  | Ldot of t * string
+  | Lapply of t * t
 
 val flatten : t -> string list
 (** Flatten a long identifier built upon [Lident] and [Ldot]. Raise when hitting
