@@ -2,6 +2,7 @@ open Astlib
 include Ppxlib_ast
 include Ast
 open Ast_helper
+module Longident = Legacy_longident
 
 let loc =
   (* This is fine, because the location info is thrown away when the generated code

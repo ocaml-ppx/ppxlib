@@ -162,8 +162,10 @@ let main () =
         Oval_variant (name, Some (map_tree param))
     | Oval_string (s, maxlen, kind) ->
         Oval_string (s, (if maxlen < 8 then 8 else maxlen), kind)
-    | Oval_tuple tl -> Oval_tuple (List.map ~f:map_tree tl)
-    | Oval_array tl -> Oval_array (List.map ~f:map_tree tl)
+    (*IF_NOT_AT_LEAST 504 | Oval_tuple tl -> Oval_tuple (List.map ~f:map_tree tl) *)
+    (*IF_AT_LEAST 504 | Oval_tuple tl -> Oval_tuple (List.map ~f:(fun (l, v) -> (l, map_tree v)) tl) *)
+    (*IF_NOT_AT_LEAST 504 | Oval_array tl -> Oval_array (List.map ~f:map_tree tl) *)
+    (*IF_AT_LEAST 504 | Oval_array (tl, v) -> Oval_array ((List.map ~f:map_tree tl), v) *)
     | Oval_list tl -> Oval_list (List.map ~f:map_tree tl)
     | Oval_record fel ->
         Oval_record
