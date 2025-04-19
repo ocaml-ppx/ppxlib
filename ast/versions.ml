@@ -647,6 +647,13 @@ module OCaml_503 = struct
   let string_version = "5.3"
 end
 let ocaml_503 : OCaml_503.types ocaml_version = (module OCaml_503)
+module OCaml_504 = struct
+  module Ast = Astlib.Ast_504
+  include Make_witness(Astlib.Ast_504)
+  let version = 504
+  let string_version = "5.4"
+end
+let ocaml_504 : OCaml_504.types ocaml_version = (module OCaml_504)
 (*$*)
 
 let all_versions : (module OCaml_version) list = [
@@ -663,6 +670,7 @@ let all_versions : (module OCaml_version) list = [
 (module OCaml_501 : OCaml_version);
 (module OCaml_502 : OCaml_version);
 (module OCaml_503 : OCaml_version);
+(module OCaml_504 : OCaml_version);
 (*$*)
 ]
 
@@ -691,6 +699,8 @@ include Register_migration(OCaml_501)(OCaml_502)
     (Astlib.Migrate_501_502)(Astlib.Migrate_502_501)
 include Register_migration(OCaml_502)(OCaml_503)
     (Astlib.Migrate_502_503)(Astlib.Migrate_503_502)
+include Register_migration(OCaml_503)(OCaml_504)
+    (Astlib.Migrate_503_504)(Astlib.Migrate_504_503)
 (*$*)
 
 module OCaml_current = OCaml_OCAML_VERSION

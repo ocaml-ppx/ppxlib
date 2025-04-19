@@ -25,6 +25,7 @@
 
          change VERSION for 4.07.0+beta2
 *)
+module Longident = Legacy_longident
 
 module Asttypes = struct
   (** Auxiliary AST types used by parsetree and typedtree. *)
