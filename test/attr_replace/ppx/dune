@@ -1,0 +1,4 @@
+(library
+  (name ppxlib_test_attr_replace_ppx)
+  (kind ppx_rewriter)
+  (libraries ppxlib))
