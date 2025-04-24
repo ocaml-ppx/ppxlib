@@ -823,7 +823,7 @@ let collect =
         =
       let loc = Common.loc_of_attribute attr in
       super#payload payload;
-      Attribute_table.add not_seen name loc
+      Attribute_table.replace not_seen name loc
   end
 
 let collect_unseen_errors () =

@@ -1,0 +1,3 @@
+(library
+  (name ppxlib_test_attr_replace)
+  (preprocess (pps ppxlib_test_attr_replace_ppx)))
