@@ -293,10 +293,10 @@ let () =
                let loc = Expansion_context.Extension.extension_point_loc ctxt in
                [%sigi: val foo : unit]));
         Context_free.Rule.extension
-        (Extension.V3.declare "foo__suffix" Extension.Context.structure_item
-          Ast_pattern.(pstr nil)
-          (fun ~ctxt ->
-            let loc = Expansion_context.Extension.extension_point_loc ctxt in
-            let loc = { loc with loc_ghost = true } in
-            [%stri let foo = ()]));
+          (Extension.V3.declare "foo__suffix" Extension.Context.structure_item
+             Ast_pattern.(pstr nil)
+             (fun ~ctxt ->
+               let loc = Expansion_context.Extension.extension_point_loc ctxt in
+               let loc = { loc with loc_ghost = true } in
+               [%stri let foo = ()]));
       ]
