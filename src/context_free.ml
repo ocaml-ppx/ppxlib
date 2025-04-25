@@ -495,15 +495,14 @@ let context_free_attribute_modification ~loc =
 let handle_attr_replace_once context attrs item base_ctxt : 'a option t =
   let result =
     List.find_map attrs ~f:(fun (Rule.Attr_replace.T a) ->
-        let rec get_attr_payloads :
-            type l.
+        let rec get_attr_payloads : type l.
             ('a, l) Rule.Attribute_list.t ->
             (bool * l Rule.Parsed_payload_list.t) t = function
           | [] -> return (false, Rule.Parsed_payload_list.[])
           | x :: xs ->
               (if Attribute.Context.equal context (Attribute.context x) then
-               Attribute.get_res x item |> of_result ~default:None
-              else return None)
+                 Attribute.get_res x item |> of_result ~default:None
+               else return None)
               >>= fun p ->
               get_attr_payloads xs >>| fun (any_attrs, ps) ->
               (Option.is_some p || any_attrs, Rule.Parsed_payload_list.(p :: ps))
