@@ -300,3 +300,5 @@ let () =
                let loc = { loc with loc_ghost = true } in
                [%stri let foo = ()]));
       ]
+
+let () = Driver.standalone ()
