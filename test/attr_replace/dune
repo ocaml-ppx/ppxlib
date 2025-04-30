@@ -1,4 +1,12 @@
-(library
- (name ppxlib_test_attr_replace)
- (preprocess
-  (pps ppxlib_test_attr_replace_ppx)))
+(rule
+ (deps test.ml)
+ (targets test.output.ml)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run ./ppx/ppx_attr_replace.exe %{deps}))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff test.expected.ml test.output.ml)))
