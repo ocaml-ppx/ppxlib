@@ -1,6 +1,0 @@
-(executable
- (name ppx_attr_replace)
- (modules ppx_attr_replace)
- (libraries ppxlib)
- (preprocess
-  (pps ppxlib.metaquot)))
