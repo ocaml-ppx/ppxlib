@@ -75,7 +75,6 @@ module Context : sig
   val psig_extension : signature_item t
   val rtag : row_field t
   val object_type_field : object_field t
-
   val equal : 'a t -> 'b t -> bool
 end
 

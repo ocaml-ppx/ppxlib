@@ -16,6 +16,8 @@
    (run ./ppx_attr_replace.exe test.ml))))
 
 (rule
+ (enabled_if
+  (>= %{ocaml_version} "4.10.0"))
  (alias runtest)
  (action
   (diff test.ml.expected test.ml.actual)))
