@@ -72,7 +72,7 @@ module Rule : sig
     (ctxt:Expansion_context.Base.t -> 'a -> 'b -> 'a) ->
     t
 
-  val attr_multiple_replace:
+  val attr_multiple_replace :
     string ->
     'a Extension.Context.t ->
     ('a, 'list) Attribute_list.t ->
