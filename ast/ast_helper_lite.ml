@@ -16,7 +16,7 @@
 (* TODO: remove this open *)
 open Stdlib0
 module Location = Astlib.Location
-module Longident = Astlib.Legacy_longident
+module Longident = Astlib.Longident
 open Astlib.Ast_503
 
 [@@@warning "-9"]

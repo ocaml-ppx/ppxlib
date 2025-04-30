@@ -21,7 +21,7 @@ open Parsetree
 
 type 'a with_loc = 'a Astlib.Location.loc
 type loc = Astlib.Location.t
-type lid = Astlib.Legacy_longident.t with_loc
+type lid = Astlib.Longident.t with_loc
 type str = string with_loc
 type str_opt = string option with_loc
 type attrs = attribute list

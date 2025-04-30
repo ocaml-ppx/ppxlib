@@ -71,7 +71,6 @@ module Ast_metadata = Ast_metadata
 module Config = Config
 module Keyword = Keyword
 module Location = Location
-module Legacy_longident = Legacy_longident
 module Longident = Longident
 module Parse = Parse
 module Pprintast = Pprintast

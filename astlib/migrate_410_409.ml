@@ -1,4 +1,3 @@
-module Longident = Legacy_longident
 module From = Ast_410
 module To = Ast_409
 

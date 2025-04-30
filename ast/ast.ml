@@ -663,25 +663,30 @@ and type_exception = Parsetree.type_exception = {
 
 and extension_constructor_kind = Parsetree.extension_constructor_kind =
   | Pext_decl of string loc list * constructor_arguments * core_type option
-      (** [Pext_decl(existentials, c_args, t_opt)]
-            describes a new extension constructor. It can be:
-            - [C of T1 * ... * Tn] when:
-                 {ul {- [existentials] is [[]],}
-                     {- [c_args] is [[T1; ...; Tn]],}
-                     {- [t_opt] is [None]}.}
-            - [C: T0] when
-                 {ul {- [existentials] is [[]],}
-                     {- [c_args] is [[]],}
-                     {- [t_opt] is [Some T0].}}
-            - [C: T1 * ... * Tn -> T0] when
-                 {ul {- [existentials] is [[]],}
-                     {- [c_args] is [[T1; ...; Tn]],}
-                     {- [t_opt] is [Some T0].}}
-            - [C: 'a... . T1 * ... * Tn -> T0] when
-                 {ul {- [existentials] is [['a;...]],}
-                     {- [c_args] is [[T1; ... ; Tn]],}
-                     {- [t_opt] is [Some T0].}}
-         *)
+      (** [Pext_decl(existentials, c_args, t_opt)] describes a new extension
+          constructor. It can be:
+          {ul
+           {- [C of T1 * ... * Tn] when:
+              - [existentials] is [[]],
+              - [c_args] is [[T1; ...; Tn]],
+              - [t_opt] is [None]
+           }
+           {- [C: T0] when
+              - [existentials] is [[]],
+              - [c_args] is [[]],
+              - [t_opt] is [Some T0].
+           }
+           {- [C: T1 * ... * Tn -> T0] when
+              - [existentials] is [[]],
+              - [c_args] is [[T1; ...; Tn]],
+              - [t_opt] is [Some T0].
+           }
+           {- [C: 'a... . T1 * ... * Tn -> T0] when
+              - [existentials] is [['a;...]],
+              - [c_args] is [[T1; ... ; Tn]],
+              - [t_opt] is [Some T0].
+           }
+          } *)
   | Pext_rebind of longident_loc
       (** [Pext_rebind(D)] re-export the constructor [D] with the new name [C]
       *)
