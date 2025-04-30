@@ -1,5 +1,4 @@
 open Stdlib0
-module Longident = Legacy_longident
 module From = Ast_503
 module To = Ast_502
 

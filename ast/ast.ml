@@ -658,25 +658,21 @@ and extension_constructor_kind = Parsetree.extension_constructor_kind =
           constructor. It can be:
           {ul
            {- [C of T1 * ... * Tn] when:
-
               - [existentials] is [[]],
               - [c_args] is [[T1; ...; Tn]],
-              - [t_opt] is [None].
+              - [t_opt] is [None]
            }
            {- [C: T0] when
-
               - [existentials] is [[]],
               - [c_args] is [[]],
               - [t_opt] is [Some T0].
            }
            {- [C: T1 * ... * Tn -> T0] when
-
               - [existentials] is [[]],
               - [c_args] is [[T1; ...; Tn]],
               - [t_opt] is [Some T0].
            }
            {- [C: 'a... . T1 * ... * Tn -> T0] when
-
               - [existentials] is [['a;...]],
               - [c_args] is [[T1; ... ; Tn]],
               - [t_opt] is [Some T0].

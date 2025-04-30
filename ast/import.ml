@@ -193,7 +193,7 @@ module Asttypes = Selected_ast.Ast.Asttypes
 
 (* Other Astlib modules *)
 module Location = Astlib.Location
-module Longident = Astlib.Legacy_longident
+module Longident = Astlib.Longident
 
 module Parse = struct
   include Astlib.Parse

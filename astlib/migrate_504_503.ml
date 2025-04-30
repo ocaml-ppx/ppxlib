@@ -1324,12 +1324,12 @@ and copy_constant : Ast_504.Parsetree.constant -> Ast_503.Parsetree.constant =
   in
   { pconst_desc; pconst_loc = copy_location const.pconst_loc }
 
-and copy_Longident_t : Longident.t -> Legacy_longident.t = function
-  | Longident.Lident x0 -> Legacy_longident.Lident x0
-  | Longident.Ldot (x0, x1) ->
-      Legacy_longident.Ldot (copy_Longident_t x0.txt, x1.txt)
-  | Longident.Lapply (x0, x1) ->
-      Legacy_longident.Lapply (copy_Longident_t x0.txt, copy_Longident_t x1.txt)
+and copy_Longident_t : Ast_504.Longident.t -> Longident.t = function
+  | Ast_504.Longident.Lident x0 -> Longident.Lident x0
+  | Ast_504.Longident.Ldot (x0, x1) ->
+      Longident.Ldot (copy_Longident_t x0.txt, x1.txt)
+  | Ast_504.Longident.Lapply (x0, x1) ->
+      Longident.Lapply (copy_Longident_t x0.txt, copy_Longident_t x1.txt)
 
 and copy_loc :
     'f0 'g0.

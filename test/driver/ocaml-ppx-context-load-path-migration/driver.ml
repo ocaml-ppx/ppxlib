@@ -10,11 +10,10 @@ module Before_502_to_ocaml =
     (Ppxlib_ast.Compiler_version)
 
 module OCaml_501 = Ppxlib_ast__.Versions.OCaml_501.Ast
-module Longident = Astlib.Legacy_longident
 
 let rec unfold_list_lit x next =
   let open OCaml_501.Parsetree in
-  let open Longident in
+  let open Astlib.Longident in
   match next.pexp_desc with
   | Pexp_construct ({ txt = Lident "[]"; _ }, None) -> [ x ]
   | Pexp_construct
@@ -26,7 +25,7 @@ let rec unfold_list_lit x next =
 (* Only deals with the basic blocks needed for ocaml.ppx.context *)
 let rec basic_expr_to_string expr =
   let open OCaml_501.Parsetree in
-  let open Longident in
+  let open Astlib.Longident in
   match expr.pexp_desc with
   | Pexp_constant (Pconst_string (s, _, None)) -> Printf.sprintf "%S" s
   | Pexp_ident { txt = Lident name; _ } -> name
@@ -44,7 +43,7 @@ let rec basic_expr_to_string expr =
 
 let print_field (lident_loc, expr) =
   match lident_loc with
-  | { OCaml_501.Asttypes.txt = Longident.Lident name; _ } ->
+  | { OCaml_501.Asttypes.txt = Astlib.Longident.Lident name; _ } ->
       Printf.printf "    %s: %s;\n" name (basic_expr_to_string expr)
   | _ -> ()
 

@@ -1,3 +1,10 @@
+module Longident = struct
+  type t (*IF_CURRENT = Ocaml_common.Longident.t *) =
+    | Lident of string
+    | Ldot of t Location.loc * string Location.loc
+    | Lapply of t Location.loc * t Location.loc
+end
+
 module Asttypes = struct
   type constant (*IF_CURRENT = Asttypes.constant *) =
       Const_int of int
