@@ -22,7 +22,8 @@ type ('a, 'b, 'c) t = ('a, 'b, 'c) Ast_pattern0.t
 
 val parse :
   ('a, 'b, 'c) t -> Location.t -> ?on_error:(unit -> 'c) -> 'a -> 'b -> 'c
-(** Matches a value against a pattern. Raise a located error in case of failure. *)
+(** Matches a value against a pattern. Raise a located error in case of failure.
+*)
 
 val parse_res :
   ('a, 'b, 'c) t ->
@@ -209,3 +210,7 @@ type context
 
 val of_func : (context -> Location.t -> 'a -> 'b -> 'c) -> ('a, 'b, 'c) t
 val to_func : ('a, 'b, 'c) t -> context -> Location.t -> 'a -> 'b -> 'c
+
+val fail : Location.t -> string -> _
+(** Call from [of_func]'s argument when the pattern does not match. The string
+    should describe the expected shape of the AST where the match failed. *)

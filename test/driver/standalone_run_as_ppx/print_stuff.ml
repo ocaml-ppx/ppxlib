@@ -8,7 +8,9 @@ let print_string s ~loc =
     mk_expression ~loc (Pexp_ident { txt = Lident "print_endline"; loc })
   in
   let string_exp =
-    mk_expression ~loc (Pexp_constant (Pconst_string (s, loc, None)))
+    mk_expression ~loc
+      (Pexp_constant
+         { pconst_desc = Pconst_string (s, loc, None); pconst_loc = loc })
   in
   mk_expression ~loc (Pexp_apply (print_exp, [ (Nolabel, string_exp) ]))
 

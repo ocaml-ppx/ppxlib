@@ -1,6 +1,43 @@
 unreleased
 ----------
 
+- Bump ppxlib's AST to 5.3.0 (#558, @patricoferris)
+
+- Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
+  location which can lead to unhelpful error messages.
+  (#569, @NathanReb)
+
+0.36.0 (2025-03-03)
+-------------------
+
+- Change `Location.none` to match the compiler's `Location.none` as of OCaml
+  4.08. This fixes a bug in `loc_of_attribute` (#540, @ncik-roberts, @patricoferris)
+
+- Bump ppxlib's AST to 5.2.0 (#514, @patricoferris)
+
+- Add the `[@@@expand_inline]` transformation and support for floating attribute context
+  free transformations. (#560, @jaymody)
+
+- Add a `-raise-embedded-errors` flag to the driver. Setting this flag raises the first
+  `ocaml.error` embedded in the final AST.
+
+- Export `Ast_pattern.fail`. (#563, @ceastlund)
+
+- Make `Ast_traverse.sexp_of` more concise, and add a test. (#561, @ceastlund)
+
+0.35.0 (2025-02-03)
+-------------------
+
+- Allow use of effect syntax in preprocessed files without causing migration
+  failures. (#552, @hhugo, @NathanReb)
+
+- Remove support for compilers older than 4.08 (#556, @NathanReb)
+
+- Add a `--use-compiler-pp` flag to the standalone driver. This flag
+ can be set when the driver outputs source code to make it use the compiler's
+ `Pprintast` instead of ppxlib's.
+ (#555, @NathanReb)
+
 0.34.0 (2025-01-06)
 -------------------
 

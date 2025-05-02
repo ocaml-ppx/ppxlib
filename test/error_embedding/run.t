@@ -75,3 +75,15 @@ Error nodes are generated when dependent derivers are not applied.
       let _ = "derived_string"
       let _ = "derived_string"
     end[@@ocaml.doc "@inline"][@@merlin.hide ]
+
+Flag `-raise-embedded-errors` raises the first embedded error in the AST.
+
+  $ echo "let () = ()" > embedded_error.ml
+  $ echo "module T = struct [%%ocaml.error \"error 1\"] end" >> embedded_error.ml
+  $ echo "[%%ocaml.error \"error 2\"]" >> embedded_error.ml
+  $ ./extender.exe embedded_error.ml -raise-embedded-errors
+  File "embedded_error.ml", line 2, characters 21-32:
+  2 | module T = struct [%%ocaml.error "error 1"] end
+                           ^^^^^^^^^^^
+  Error: error 1
+  [1]

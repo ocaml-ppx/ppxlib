@@ -14,6 +14,7 @@ ppxlib-pp-ast can be used on files but it can also read from stdin:
                   ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
                   ]
                 )
+          ; pvb_constraint = None
           ; pvb_attributes = __attrs
           ; pvb_loc = __loc
           }

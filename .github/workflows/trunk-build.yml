@@ -26,9 +26,9 @@ jobs:
           cat "$GITHUB_OUTPUT"
 
       - name: Install OCaml compiler
-        uses: ocaml/setup-ocaml@v2
+        uses: ocaml/setup-ocaml@v3
         with:
-          ocaml-compiler: 'ocaml-variants.5.3.0+trunk'
+          ocaml-compiler: 'ocaml-variants.5.3.1+trunk'
           dune-cache: true
           cache-prefix: ${{ steps.setup.outputs.cache_prefix }}
 

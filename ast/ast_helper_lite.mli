@@ -15,7 +15,7 @@
 
 (** Copy of Ast_helper from OCaml 4.14 with docstring related stuff removed *)
 
-open Astlib.Ast_500
+open Astlib.Ast_503
 open Asttypes
 open Parsetree
 
@@ -38,14 +38,15 @@ val with_default_loc : loc -> (unit -> 'a) -> 'a
 (** {1 Constants} *)
 
 module Const : sig
-  val char : char -> constant
+  val mk : ?loc:loc -> constant_desc -> constant
+  val char : ?loc:loc -> char -> constant
   val string : ?quotation_delimiter:string -> ?loc:loc -> string -> constant
-  val integer : ?suffix:char -> string -> constant
-  val int : ?suffix:char -> int -> constant
-  val int32 : ?suffix:char -> int32 -> constant
-  val int64 : ?suffix:char -> int64 -> constant
-  val nativeint : ?suffix:char -> nativeint -> constant
-  val float : ?suffix:char -> string -> constant
+  val integer : ?loc:loc -> ?suffix:char -> string -> constant
+  val int : ?loc:loc -> ?suffix:char -> int -> constant
+  val int32 : ?loc:loc -> ?suffix:char -> int32 -> constant
+  val int64 : ?loc:loc -> ?suffix:char -> int64 -> constant
+  val nativeint : ?loc:loc -> ?suffix:char -> nativeint -> constant
+  val float : ?loc:loc -> ?suffix:char -> string -> constant
 end
 
 (** {1 Attributes} *)
@@ -72,7 +73,7 @@ module Typ : sig
     ?loc:loc -> ?attrs:attrs -> object_field list -> closed_flag -> core_type
 
   val class_ : ?loc:loc -> ?attrs:attrs -> lid -> core_type list -> core_type
-  val alias : ?loc:loc -> ?attrs:attrs -> core_type -> string -> core_type
+  val alias : ?loc:loc -> ?attrs:attrs -> core_type -> str -> core_type
 
   val variant :
     ?loc:loc ->
@@ -151,7 +152,8 @@ module Exp : sig
     expression ->
     expression
 
-  val function_ : ?loc:loc -> ?attrs:attrs -> case list -> expression
+  val function_ :
+    ?loc:loc -> ?attrs:attrs -> ?loc_location:loc -> case list -> expression
 
   val apply :
     ?loc:loc ->
@@ -466,7 +468,13 @@ end
 
 (** Value bindings *)
 module Vb : sig
-  val mk : ?loc:loc -> ?attrs:attrs -> pattern -> expression -> value_binding
+  val mk :
+    ?loc:loc ->
+    ?attrs:attrs ->
+    ?value_constraint:value_constraint ->
+    pattern ->
+    expression ->
+    value_binding
 end
 
 (** {1 Class language} *)

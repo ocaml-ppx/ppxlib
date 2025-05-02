@@ -1,5 +1,61 @@
 open Import
 
+(* We want to make sure we only convert actual odoc comments [(** ... *)] and not
+   actual instances of [@@ocaml.doc "..."]. When parsed, both get translated as
+   an attribute.
+
+   To differentiate them, we can take advantage of the fact that the location
+   attached to the attribute node for (** ... *) comments is equal to the location of
+   the string itself, while for [@@ocaml.doc "..."] they are different.
+
+   The same is true for [@@@ocaml.text]. *)
+let get_odoc_contents_if_comment = function
+  | {
+      attr_loc;
+      attr_name = { txt = "doc" | "ocaml.doc" | "text" | "ocaml.text"; _ };
+      attr_payload =
+        PStr
+          [
+            {
+              pstr_desc =
+                Pstr_eval
+                  ( {
+                      pexp_desc =
+                        Pexp_constant
+                          { pconst_desc = Pconst_string (text, loc, _); _ };
+                      _;
+                    },
+                    _ );
+              _;
+            };
+          ];
+    }
+    when Location.compare attr_loc loc = 0 ->
+      Some text
+  | _ -> None
+
+let prettify_odoc_attributes =
+  object
+    inherit Ast_traverse.map as super
+
+    method! attribute attr =
+      let attr = super#attribute attr in
+      match get_odoc_contents_if_comment attr with
+      | Some txt ->
+          let open Ast_builder.Default in
+          let loc = Location.none in
+          let delim = Some (Common.valid_string_constant_delimiter txt) in
+          let expr =
+            pexp_constant ~loc
+              {
+                pconst_desc = Pconst_string (txt, loc, delim);
+                pconst_loc = loc;
+              }
+          in
+          { attr with attr_payload = PStr [ pstr_eval ~loc expr [] ] }
+      | None -> attr
+  end
+
 let with_output fn ~binary ~f =
   match fn with
   | None | Some "-" ->
@@ -248,3 +304,13 @@ module System = struct
     if Stdlib.Sys.command command = 0 then Ok ()
     else Error (command, Ast_io.fall_back_input_version)
 end
+
+let print_as_compiler_source ppf ast =
+  let module Ppxlib_to_compiler = Convert (Js) (Compiler_version) in
+  match (ast : Intf_or_impl.t) with
+  | Intf sg ->
+      let sg = Ppxlib_to_compiler.copy_signature sg in
+      Astlib.Compiler_pprintast.signature ppf sg
+  | Impl st ->
+      let st = Ppxlib_to_compiler.copy_structure st in
+      Astlib.Compiler_pprintast.structure ppf st

@@ -15,6 +15,10 @@ module Default = struct
 
   module Latest = struct
     let ppat_construct = ppat_construct
+    let pexp_function = pexp_function
+
+    let value_binding ?constraint_ ~loc ~pat ~expr () =
+      value_binding ~constraint_ ~loc ~pat ~expr
 
     let constructor_declaration ~loc ~name ~vars ~args ~res () =
       constructor_declaration ~loc ~name ~vars ~args ~res
@@ -29,6 +33,34 @@ module Default = struct
       ppat_desc = Ppat_construct (lid, Option.map p ~f:(fun p -> ([], p)));
     }
 
+  let pexp_function_cases ~loc cases =
+    {
+      pexp_loc_stack = [];
+      pexp_attributes = [];
+      pexp_loc = loc;
+      pexp_desc = Pexp_function ([], None, Pfunction_cases (cases, loc, []));
+    }
+
+  let add_fun_params return_constraint ~loc params body =
+    match params with
+    | [] -> body
+    | _ -> (
+        match body.pexp_desc with
+        | Pexp_function (more_params, constraint_, func_body) ->
+            pexp_function ~loc (params @ more_params) constraint_ func_body
+        | _ ->
+            assert (match params with [] -> false | _ -> true);
+            pexp_function ~loc params return_constraint (Pfunction_body body))
+
+  let pexp_fun ~loc (label : arg_label) expr p e =
+    let param : function_param =
+      { pparam_desc = Pparam_val (label, expr, p); pparam_loc = loc }
+    in
+    add_fun_params ~loc None [ param ] e
+
+  let value_binding ~loc ~pat ~expr =
+    value_binding ~loc ~pat ~expr ~constraint_:None
+
   let constructor_declaration ~loc ~name ~args ~res =
     {
       pcd_name = name;
@@ -41,6 +73,22 @@ module Default = struct
 
   (*-------------------------------------------------------*)
 
+  let coalesce_arity e =
+    match e.pexp_desc with
+    (* We stop coalescing parameters if there is a constraint on the result of a function
+       (i.e [fun x y : T -> ...] or the body is a function_case. *)
+    | Pexp_function (_, Some _, _) | Pexp_function (_, _, Pfunction_cases _) ->
+        e
+    | Pexp_function
+        (params1, None, Pfunction_body ({ pexp_attributes = []; _ } as body1))
+      -> (
+        match body1.pexp_desc with
+        | Pexp_function (params2, constraint_, body2) ->
+            Latest.pexp_function ~loc:e.pexp_loc (params1 @ params2) constraint_
+              body2
+        | _ -> e)
+    | _ -> e
+
   let pstr_value_list ~loc rec_flag = function
     | [] -> []
     | vbs -> [ pstr_value ~loc rec_flag vbs ]
@@ -50,33 +98,57 @@ module Default = struct
     failwith
       "Ppxlib.Ast_builder.nonrec_type_declaration: don't use this function"
 
-  let eint ~loc t = pexp_constant ~loc (Pconst_integer (Int.to_string t, None))
-  let echar ~loc t = pexp_constant ~loc (Pconst_char t)
-  let estring ~loc t = pexp_constant ~loc (Pconst_string (t, loc, None))
-  let efloat ~loc t = pexp_constant ~loc (Pconst_float (t, None))
+  let eint ~loc t =
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int.to_string t, None))
+
+  let echar ~loc t =
+    pexp_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_char t)
+
+  let estring ~loc t =
+    pexp_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_string (t, loc, None))
+
+  let efloat ~loc t =
+    pexp_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_float (t, None))
 
   let eint32 ~loc t =
-    pexp_constant ~loc (Pconst_integer (Int32.to_string t, Some 'l'))
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int32.to_string t, Some 'l'))
 
   let eint64 ~loc t =
-    pexp_constant ~loc (Pconst_integer (Int64.to_string t, Some 'L'))
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int64.to_string t, Some 'L'))
 
   let enativeint ~loc t =
-    pexp_constant ~loc (Pconst_integer (Nativeint.to_string t, Some 'n'))
+    pexp_constant ~loc
+      (Ast_helper.Const.mk ~loc
+      @@ Pconst_integer (Nativeint.to_string t, Some 'n'))
 
-  let pint ~loc t = ppat_constant ~loc (Pconst_integer (Int.to_string t, None))
-  let pchar ~loc t = ppat_constant ~loc (Pconst_char t)
-  let pstring ~loc t = ppat_constant ~loc (Pconst_string (t, loc, None))
-  let pfloat ~loc t = ppat_constant ~loc (Pconst_float (t, None))
+  let pint ~loc t =
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int.to_string t, None))
+
+  let pchar ~loc t =
+    ppat_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_char t)
+
+  let pstring ~loc t =
+    ppat_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_string (t, loc, None))
+
+  let pfloat ~loc t =
+    ppat_constant ~loc (Ast_helper.Const.mk ~loc @@ Pconst_float (t, None))
 
   let pint32 ~loc t =
-    ppat_constant ~loc (Pconst_integer (Int32.to_string t, Some 'l'))
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int32.to_string t, Some 'l'))
 
   let pint64 ~loc t =
-    ppat_constant ~loc (Pconst_integer (Int64.to_string t, Some 'L'))
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc @@ Pconst_integer (Int64.to_string t, Some 'L'))
 
   let pnativeint ~loc t =
-    ppat_constant ~loc (Pconst_integer (Nativeint.to_string t, Some 'n'))
+    ppat_constant ~loc
+      (Ast_helper.Const.mk ~loc
+      @@ Pconst_integer (Nativeint.to_string t, Some 'n'))
 
   let ebool ~loc t =
     pexp_construct ~loc (Located.lident ~loc (Bool.to_string t)) None
@@ -196,7 +268,10 @@ module Default = struct
       match expr with
       | {
        pexp_desc =
-         Pexp_fun (label, None (* no default expression *), subpat, body);
+         Pexp_function
+           ( [ { pparam_loc = _; pparam_desc = Pparam_val (label, _, subpat) } ],
+             _constraint,
+             Pfunction_body body );
        pexp_attributes = [];
        pexp_loc = _;
        pexp_loc_stack = _;
@@ -373,6 +448,8 @@ end) : S = struct
   let ppat_tuple_opt l = Default.ppat_tuple_opt ~loc l
   let ptyp_poly vars ty = Default.ptyp_poly ~loc vars ty
   let pexp_apply e el = Default.pexp_apply ~loc e el
+  let pexp_fun lbl e1 p e2 = Default.pexp_fun ~loc lbl e1 p e2
+  let pexp_function_cases cases = Default.pexp_function_cases ~loc cases
   let eint t = Default.eint ~loc t
   let echar t = Default.echar ~loc t
   let estring t = Default.estring ~loc t
@@ -402,6 +479,7 @@ end) : S = struct
   let plist_tail l tail = Default.plist_tail ~loc l tail
   let elist l = Default.elist ~loc l
   let plist l = Default.plist ~loc l
+  let value_binding = Default.value_binding ~loc
 
   let type_constr_conv ident ~f args =
     Default.type_constr_conv ~loc ident ~f args

@@ -2,10 +2,6 @@ open Stdlib0
 module From = Ast_503
 module To = Ast_502
 
-let migration_error loc missing_feature =
-  Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 5.03" missing_feature
-
 let rec copy_toplevel_phrase :
     Ast_503.Parsetree.toplevel_phrase -> Ast_502.Parsetree.toplevel_phrase =
   function
@@ -330,7 +326,17 @@ and copy_pattern_desc loc :
         (copy_loc (fun x -> Option.map (fun x -> x) x) x0)
   | Ast_503.Parsetree.Ppat_exception x0 ->
       Ast_502.Parsetree.Ppat_exception (copy_pattern x0)
-  | Ast_503.Parsetree.Ppat_effect _ -> migration_error loc "effect pattern"
+  | Ast_503.Parsetree.Ppat_effect (e, c) ->
+      Ast_502.Parsetree.Ppat_extension
+        ( Location.{ txt = "ppxlib.migration.ppat_effect"; loc },
+          Ast_502.Parsetree.PPat
+            ( {
+                ppat_desc = Ppat_tuple [ copy_pattern e; copy_pattern c ];
+                ppat_attributes = [];
+                ppat_loc_stack = [];
+                ppat_loc = loc;
+              },
+              None ) )
   | Ast_503.Parsetree.Ppat_extension x0 ->
       Ast_502.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_503.Parsetree.Ppat_open (x0, x1) ->
@@ -901,10 +907,10 @@ and copy_extension : Ast_503.Parsetree.extension -> Ast_502.Parsetree.extension
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
 and copy_class_infos :
-      'f0 'g0.
-      ('f0 -> 'g0) ->
-      'f0 Ast_503.Parsetree.class_infos ->
-      'g0 Ast_502.Parsetree.class_infos =
+    'f0 'g0.
+    ('f0 -> 'g0) ->
+    'f0 Ast_503.Parsetree.class_infos ->
+    'g0 Ast_502.Parsetree.class_infos =
  fun f0
      {
        Ast_503.Parsetree.pci_virt;
@@ -941,10 +947,10 @@ and copy_include_description :
  fun x -> copy_include_infos copy_module_type x
 
 and copy_include_infos :
-      'f0 'g0.
-      ('f0 -> 'g0) ->
-      'f0 Ast_503.Parsetree.include_infos ->
-      'g0 Ast_502.Parsetree.include_infos =
+    'f0 'g0.
+    ('f0 -> 'g0) ->
+    'f0 Ast_503.Parsetree.include_infos ->
+    'g0 Ast_502.Parsetree.include_infos =
  fun f0
      {
        Ast_503.Parsetree.pincl_mod;
@@ -962,10 +968,10 @@ and copy_open_description :
  fun x -> copy_open_infos (fun x -> copy_loc copy_Longident_t x) x
 
 and copy_open_infos :
-      'f0 'g0.
-      ('f0 -> 'g0) ->
-      'f0 Ast_503.Parsetree.open_infos ->
-      'g0 Ast_502.Parsetree.open_infos =
+    'f0 'g0.
+    ('f0 -> 'g0) ->
+    'f0 Ast_503.Parsetree.open_infos ->
+    'g0 Ast_502.Parsetree.open_infos =
  fun f0
      {
        Ast_503.Parsetree.popen_expr;
@@ -1275,8 +1281,8 @@ and copy_Longident_t : Longident.t -> Longident.t = function
       Longident.Lapply (copy_Longident_t x0, copy_Longident_t x1)
 
 and copy_loc :
-      'f0 'g0.
-      ('f0 -> 'g0) -> 'f0 Ast_503.Asttypes.loc -> 'g0 Ast_502.Asttypes.loc =
+    'f0 'g0.
+    ('f0 -> 'g0) -> 'f0 Ast_503.Asttypes.loc -> 'g0 Ast_502.Asttypes.loc =
  fun f0 { Ast_503.Asttypes.txt; Ast_503.Asttypes.loc } ->
   { Ast_502.Asttypes.txt = f0 txt; Ast_502.Asttypes.loc = copy_location loc }
 

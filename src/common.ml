@@ -115,8 +115,9 @@ class type_is_recursive rec_flag tds =
       | Pcstr_tuple args -> List.iter args ~f:self#core_type
       | Pcstr_record fields -> List.iter fields ~f:self#label_declaration
 
-    method! attributes _ = (* Don't recurse through attributes *)
-                           ()
+    method! attributes _ =
+      (* Don't recurse through attributes *)
+      ()
 
     method go () =
       match rec_flag with
@@ -148,7 +149,7 @@ let loc_of_attribute { attr_name; attr_payload; attr_loc = _ } =
      from older asts. *)
   (* "ocaml.doc" attributes are generated with [Location.none], which is not helpful for
      error messages. *)
-  if Poly.( = ) attr_name.loc Location.none then
+  if Location.is_none attr_name.loc then
     loc_of_name_and_payload attr_name attr_payload
   else
     {
@@ -157,7 +158,7 @@ let loc_of_attribute { attr_name; attr_payload; attr_loc = _ } =
     }
 
 let loc_of_extension (name, payload) =
-  if Poly.( = ) name.loc Location.none then loc_of_name_and_payload name payload
+  if Location.is_none name.loc then loc_of_name_and_payload name payload
   else
     { name.loc with loc_end = (loc_of_name_and_payload name payload).loc_end }
 
@@ -275,3 +276,12 @@ module With_errors = struct
 
   let combine_errors list = (List.map list ~f:fst, List.concat_map list ~f:snd)
 end
+
+let valid_string_constant_delimiter string =
+  let rec attempt_string_constant_delimiter n =
+    let delimiter = String.make n 'x' in
+    if String.is_substring string ~substring:("|" ^ delimiter ^ "}") then
+      attempt_string_constant_delimiter (n + 1)
+    else delimiter
+  in
+  attempt_string_constant_delimiter 0

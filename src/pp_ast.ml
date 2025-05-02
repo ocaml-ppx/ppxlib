@@ -137,14 +137,14 @@ class lift_simple_val =
       | false -> Special "__attrs"
       | true -> super#attributes attrs
 
-    method lift_record_with_desc
-        : 'record 'desc.
-          lift_desc:('desc -> simple_val) ->
-          lift_record:('record -> simple_val) ->
-          desc:'desc ->
-          attrs:attributes ->
-          'record ->
-          simple_val =
+    method lift_record_with_desc :
+        'record 'desc.
+        lift_desc:('desc -> simple_val) ->
+        lift_record:('record -> simple_val) ->
+        desc:'desc ->
+        attrs:attributes ->
+        'record ->
+        simple_val =
       fun ~lift_desc ~lift_record ~desc ~attrs x ->
         match (config.show_locs, config.show_attrs, attrs) with
         | false, false, _ | false, true, [] -> lift_desc desc
@@ -204,6 +204,10 @@ class lift_simple_val =
       self#lift_record_with_desc ~lift_desc:self#module_expr_desc
         ~lift_record:super#module_expr ~desc:mod_.pmod_desc
         ~attrs:mod_.pmod_attributes mod_
+
+    method! constant c =
+      self#lift_record_with_desc ~lift_desc:self#constant_desc
+        ~lift_record:super#constant ~desc:c.pconst_desc ~attrs:[] c
 
     method! structure_item stri = self#structure_item_desc stri.pstr_desc
     method! signature_item sigi = self#signature_item_desc sigi.psig_desc
