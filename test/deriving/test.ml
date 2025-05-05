@@ -81,3 +81,21 @@ class type x = object end[@@deriving cd]
 class type x = object  end
 val y : int = 42
 |}]
+
+
+let mbmd =
+  Deriving.add "mbmd"
+    ~sig_module_decl:(Deriving.Generator.make_noarg (fun ~loc ~path:_ _ -> [%sig: val y : int]))
+    ~str_module_binding:(Deriving.Generator.make_noarg (fun ~loc ~path:_ _ -> [%str let y = 42]))
+
+[%%expect{|
+val mbmd : Deriving.t = <abstr>
+|}]
+
+module X = struct
+  type t
+end[@@deriving mbmd]
+[%%expect{|
+module X : sig type t end
+val y : int = 42
+|}]

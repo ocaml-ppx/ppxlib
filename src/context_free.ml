@@ -116,6 +116,10 @@ module Rule = struct
           (structure_item, module_type_declaration) Attr_inline.t t
       | Attr_sig_module_type_decl :
           (signature_item, module_type_declaration) Attr_inline.t t
+      | Attr_str_module_binding :
+          (structure_item, module_binding) Attr_inline.t t
+      | Attr_sig_module_declaration :
+          (signature_item, module_declaration) Attr_inline.t t
       | Attr_str_type_ext : (structure_item, type_extension) Attr_inline.t t
       | Attr_sig_type_ext : (signature_item, type_extension) Attr_inline.t t
       | Attr_str_exception : (structure_item, type_exception) Attr_inline.t t
@@ -144,6 +148,8 @@ module Rule = struct
       | Attr_str_exception, Attr_str_exception -> Eq
       | Attr_sig_exception, Attr_sig_exception -> Eq
       | Attr_str_module_type_decl, Attr_str_module_type_decl -> Eq
+      | Attr_str_module_binding, Attr_str_module_binding -> Eq
+      | Attr_sig_module_declaration, Attr_sig_module_declaration -> Eq
       | Attr_sig_module_type_decl, Attr_sig_module_type_decl -> Eq
       | Attr_str_class_type_decl, Attr_str_class_type_decl -> Eq
       | Attr_sig_class_type_decl, Attr_sig_class_type_decl -> Eq
@@ -226,6 +232,12 @@ module Rule = struct
   let attr_sig_module_type_decl attribute expand =
     T (Attr_sig_module_type_decl, T { attribute; expand; expect = false })
 
+  let attr_str_module_binding attribute expand =
+    T (Attr_str_module_binding, T { attribute; expand; expect = false })
+
+  let attr_sig_module_declaration attribute expand =
+    T (Attr_sig_module_declaration, T { attribute; expand; expect = false })
+
   let attr_str_type_ext attribute expand =
     T (Attr_str_type_ext, T { attribute; expand; expect = false })
 
@@ -252,6 +264,12 @@ module Rule = struct
 
   let attr_str_module_type_decl_expect attribute expand =
     T (Attr_str_module_type_decl, T { attribute; expand; expect = true })
+
+  let attr_str_module_binding_expect attribute expand =
+    T (Attr_str_module_binding, T { attribute; expand; expect = true })
+
+  let attr_sig_module_declaration_expect attribute expand =
+    T (Attr_sig_module_declaration, T { attribute; expand; expect = true })
 
   let attr_sig_module_type_decl_expect attribute expand =
     T (Attr_sig_module_type_decl, T { attribute; expand; expect = true })
@@ -753,6 +771,15 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     |> sort_attr_inline |> Rule.Attr_inline.split_normal_and_expect
   in
 
+  let attr_str_module_binding, attr_str_module_binding_expect =
+    Rule.filter Attr_str_module_binding rules
+    |> sort_attr_inline |> Rule.Attr_inline.split_normal_and_expect
+  in
+  let attr_sig_module_declaration, attr_sig_module_declaration_expect =
+    Rule.filter Attr_sig_module_declaration rules
+    |> sort_attr_inline |> Rule.Attr_inline.split_normal_and_expect
+  in
+
   let attr_str_type_exts, attr_str_type_exts_expect =
     Rule.filter Attr_str_type_ext rules
     |> sort_attr_inline |> Rule.Attr_inline.split_normal_and_expect
@@ -1091,6 +1118,15 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
+                | Pstr_module mb, Pstr_module exp_mb ->
+                    handle_attr_inline attr_str_module_binding ~item:mb
+                      ~expanded_item:exp_mb ~loc ~base_ctxt ~convert_exn
+                    >>= fun extra_items ->
+                    handle_attr_inline attr_str_module_binding_expect ~item:mb
+                      ~expanded_item:exp_mb ~loc ~base_ctxt ~convert_exn
+                    >>= fun expect_items ->
+                    with_extra_items expanded_item ~extra_items ~expect_items
+                      ~rest ~in_generated_code
                 | Pstr_class_type cds, Pstr_class_type exp_cds ->
                     handle_attr_group_inline attr_str_class_decls Nonrecursive
                       ~items:cds ~expanded_items:exp_cds ~loc ~base_ctxt
@@ -1108,7 +1144,6 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
       in
       loop st ~in_generated_code:false
 
-    (*$ str_to_sig _last_text_block *)
     method! signature base_ctxt sg =
       let convert_exn = exn_to_sigi in
       let rec with_extra_items item ~extra_items ~expect_items ~rest
@@ -1224,6 +1259,16 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     >>= fun expect_items ->
                     with_extra_items expanded_item ~extra_items ~expect_items
                       ~rest ~in_generated_code
+                | Psig_module md, Psig_module exp_md ->
+                    handle_attr_inline attr_sig_module_declaration ~item:md
+                      ~expanded_item:exp_md ~loc ~base_ctxt ~convert_exn
+                    >>= fun extra_items ->
+                    handle_attr_inline attr_sig_module_declaration_expect
+                      ~item:md ~expanded_item:exp_md ~loc ~base_ctxt
+                      ~convert_exn
+                    >>= fun expect_items ->
+                    with_extra_items expanded_item ~extra_items ~expect_items
+                      ~rest ~in_generated_code
                 | Psig_class_type cds, Psig_class_type exp_cds ->
                     handle_attr_group_inline attr_sig_class_decls Nonrecursive
                       ~items:cds ~expanded_items:exp_cds ~loc ~base_ctxt
@@ -1240,6 +1285,4 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                     expanded_item :: rest))
       in
       loop sg ~in_generated_code:false
-
-    (*$*)
   end
