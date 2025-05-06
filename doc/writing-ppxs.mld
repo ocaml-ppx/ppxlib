@@ -102,7 +102,7 @@ See below for examples on when the above name and context will trigger rewriting
   let _ = match () with [%add_suffix "payload"] -> () (* wrong context *)
 ]}
 
-{3:extender-payload The Payload Extraction}
+{3 The Payload Extraction}
 
 An extension node contains a {{!Ppxlib.Parsetree.payload}[payload]}, which will be passed to the transformation function. However, while this payload contains all information, it is not always structured the best way for the transformation function. For instance, in [[%add_suffix "payload"]], the string ["payload"] is encoded as a structure item consisting of an expression’s evaluation, a constant that is a string.
 
@@ -137,8 +137,7 @@ Building and inspecting AST nodes can be painful due to how
 modules to ease this generation, such as {{!Ppxlib.Ast_builder}[Ast_builder]},
 {!Ppxlib_metaquot}, {{!Ppxlib.Ast_pattern}[Ast_pattern]}, and {{!Ppxlib.Ast_traverse}[Ast_traverse]}, which are
 explained in their own chapters: {{!"generating-code"}Generating AST nodes},
-{{!"matching-code"}Destructing AST nodes} and {{!"ast-traversal"}Traversing AST
-nodes}.
+{{!"matching-code"}Destructing AST nodes} and {{!"ast-traversal"}Traversing AST nodes}.
 
 In the example below, you can ignore the body of the function until reading
 those chapters.
@@ -360,10 +359,16 @@ in both structures and signatures.
 
 {2 Attribute-guided Rewriting}
 
-There are rules that apply to AST nodes that, like derivers, apply based on their
+[ppxlib] provides context-free rules that, like derivers, apply to nodes based on their
 attributes but, like extenders, allow rewriting the entire AST node. These provide
 lighter-weight syntax than extenders but that also means it's less obvious that they're
 rewriting the syntax tree.
+
+Before using this kind of rule, carefully consider using an extender instead. [ppxlib]
+provides an opinionated syntax for preprocessors so that it's easy for users to understand
+what code is being affected by the PPX. In general, these should only be used to slightly
+modify the node the attribute is attached to, rather than rewrite it to something new.
+The syntax of extenders highlights to users where more involved rewriting is taking place.
 
 These are composed of:
 - The name of the rewrite rule
@@ -379,8 +384,8 @@ A given rewrite rule can have multiple attributes that trigger it, if any of the
 attributes are present on a single node then the rule is triggered and provided with the
 AST node along with the payload of all the attributes registered by this rule. To declare
 attributes use the {{!Ppxlib.Attribute.declare}[Attribute.declare]} function (or the other
-similar functions in that module). Note that the [Context.t] must match the type of AST
-nodes that the rule will apply to.
+similar functions in that module). Note that the {{!Ppxlib.Attribute.Context}[Context.t]}
+must match the type of AST nodes that the rule will apply to.
 
 {@ocaml[
   # let prefix_attr = Attribute.declare "example.prefix" Expression
@@ -394,7 +399,7 @@ nodes that the rule will apply to.
 {3 The Expand Function}
 
 The expand function takes the AST node (with this rule's attributes already stripped) and
-the payloads of all the declared attributes (as a list of [payload option]s to allow for
+the payloads of all the declared attributes (as a list of [payload option] to allow for
 attributes that haven't been included).
 
 {@ocaml[
@@ -419,9 +424,10 @@ attributes that haven't been included).
 {3 Creating a rewriting rule}
 
 Finally, we can create the rule using the appropriate
-{{!Ppxlib.Extension.Context}[Ppxlib.Extension.Context]} and register it with the driver.
-There's also a {{!Ppxlib.Context_free.attr_replace}[Context_free.attr_replace]} function
-with a slightly simpler API if you only use a single attribute.
+{{!Ppxlib.Extension.Context}[Ppxlib.Extension.Context]} and register it with the driver using
+{{!Ppxlib.Context_free.Rule.attr_multiple_replace}[Context_free.Rule.attr_multiple_replace]}.
+There's also a {{!Ppxlib.Context_free.Rule.attr_replace}[Context_free.Rule.attr_replace]}
+function with a slightly simpler API if you only use a single attribute.
 
 {@ocaml[
   # let rewrite_rule = Context_free.Rule.attr_multiple_replace "example" Expression
