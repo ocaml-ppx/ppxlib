@@ -1264,7 +1264,7 @@ and copy_variance : Ast_504.Asttypes.variance -> Ast_503.Asttypes.variance =
   | Ast_504.Asttypes.Covariant -> Ast_503.Asttypes.Covariant
   | Ast_504.Asttypes.Contravariant -> Ast_503.Asttypes.Contravariant
   | Ast_504.Asttypes.NoVariance -> Ast_503.Asttypes.NoVariance
-  | Ast_504.Asttypes.Bivariant -> migration_error Location.none "bivarance"
+  | Ast_504.Asttypes.Bivariant -> migration_error Location.none "bivariance"
 
 and copy_value_description :
     Ast_504.Parsetree.value_description -> Ast_503.Parsetree.value_description =

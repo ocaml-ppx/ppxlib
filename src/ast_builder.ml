@@ -375,6 +375,13 @@ module type S = sig
     val ppat_construct :
       longident loc -> (label loc list * pattern) option -> pattern
 
+    val value_binding :
+      ?constraint_:value_constraint ->
+      pat:pattern ->
+      expr:expression ->
+      unit ->
+      value_binding
+
     val constructor_declaration :
       name:label loc ->
       vars:label loc list ->
@@ -385,6 +392,7 @@ module type S = sig
   end
 
   val ppat_construct : longident loc -> pattern option -> pattern
+  val value_binding : pat:pattern -> expr:expression -> value_binding
 
   val constructor_declaration :
     name:label loc ->
@@ -400,6 +408,9 @@ end) : S = struct
 
   module Latest = struct
     let ppat_construct = ppat_construct
+
+    let value_binding ?constraint_ ~pat ~expr () =
+      value_binding ~constraint_ ~pat ~expr
 
     let constructor_declaration ~name ~vars ~args ~res () =
       constructor_declaration ~name ~vars ~args ~res
