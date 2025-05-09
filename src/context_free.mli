@@ -63,8 +63,6 @@ module Rule : sig
     type _ t = [] : unit t | ( :: ) : 'a option * 'b t -> ('a * 'b) t
   end
 
-  (** Rewrite an item when the attribute is present. *)
-
   val attr_replace :
     string ->
     'a Extension.Context.t ->
@@ -78,6 +76,13 @@ module Rule : sig
     ('a, 'list) Attribute_list.t ->
     (ctxt:Expansion_context.Base.t -> 'a -> 'list Parsed_payload_list.t -> 'a) ->
     t
+  (** Rewrite an item when the attribute is present.
+
+      These should be used sparingly and only for driving minor modifications to
+      a syntax node, if you want to do larger rewrites you should prefer to use
+      {!extension}. This is to keep the syntax clear for users of PPXes;
+      attributes should be thought of as adding code or information to an item,
+      and extensions rewriting code to something new. *)
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t ->
