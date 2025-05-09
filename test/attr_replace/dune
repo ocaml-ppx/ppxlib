@@ -1,0 +1,23 @@
+(executable
+ (name ppx_attr_replace)
+ (modules ppx_attr_replace)
+ (libraries ppxlib)
+ (preprocess
+  (pps ppxlib.metaquot)))
+
+(rule
+ (enabled_if
+  (>= %{ocaml_version} "4.10.0"))
+ (deps ppx_attr_replace.exe test.ml)
+ (targets test.ml.actual)
+ (action
+  (with-stdout-to
+   %{targets}
+   (run ./ppx_attr_replace.exe test.ml))))
+
+(rule
+ (enabled_if
+  (>= %{ocaml_version} "4.10.0"))
+ (alias runtest)
+ (action
+  (diff test.ml.expected test.ml.actual)))

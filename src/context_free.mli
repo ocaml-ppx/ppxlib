@@ -51,7 +51,38 @@ module Rule : sig
 
   (** The rest of this API is for rewriting rules that apply when a certain
       attribute is present. The API is not complete and is currently only enough
-      to implement deriving. *)
+      to implement deriving and ppx_template. *)
+
+  module Attribute_list : sig
+    type ('a, _) t =
+      | [] : ('a, unit) t
+      | ( :: ) : ('a, 'b) Attribute.t * ('a, 'c) t -> ('a, 'b * 'c) t
+  end
+
+  module Parsed_payload_list : sig
+    type _ t = [] : unit t | ( :: ) : 'a option * 'b t -> ('a * 'b) t
+  end
+
+  val attr_replace :
+    string ->
+    'a Extension.Context.t ->
+    ('a, 'b) Attribute.t ->
+    (ctxt:Expansion_context.Base.t -> 'a -> 'b -> 'a) ->
+    t
+
+  val attr_multiple_replace :
+    string ->
+    'a Extension.Context.t ->
+    ('a, 'list) Attribute_list.t ->
+    (ctxt:Expansion_context.Base.t -> 'a -> 'list Parsed_payload_list.t -> 'a) ->
+    t
+  (** Rewrite an item when the attribute is present.
+
+      These should be used sparingly and only for driving minor modifications to
+      a syntax node, if you want to do larger rewrites you should prefer to use
+      {!extension}. This is to keep the syntax clear for users of PPXes;
+      attributes should be thought of as adding code or information to an item,
+      and extensions rewriting code to something new. *)
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t ->
