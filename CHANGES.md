@@ -1,6 +1,12 @@
 unreleased
 ----------
 
+### 5.4 Support
+
+- Add initial OCaml 5.4 support (#570, @patricoferris, @NathanReb)
+
+### Other Changes
+
 - Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
   location which can lead to unhelpful error messages.
   (#569, @NathanReb)
