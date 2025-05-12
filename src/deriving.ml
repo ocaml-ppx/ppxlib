@@ -277,6 +277,7 @@ module Deriver = struct
       str_exception : (structure, type_exception) Generator.t option;
       str_module_type_decl :
         (structure, module_type_declaration) Generator.t option;
+      str_module_binding : (structure, module_binding) Generator.t option;
       sig_type_decl :
         (signature, rec_flag * type_declaration list) Generator.t option;
       sig_class_type_decl :
@@ -285,6 +286,7 @@ module Deriver = struct
       sig_exception : (signature, type_exception) Generator.t option;
       sig_module_type_decl :
         (signature, module_type_declaration) Generator.t option;
+      sig_module_decl : (signature, module_declaration) Generator.t option;
     }
   end
 
@@ -295,11 +297,13 @@ module Deriver = struct
       str_type_ext : string list;
       str_exception : string list;
       str_module_type_decl : string list;
+      str_module_binding : string list;
       sig_type_decl : string list;
       sig_class_type_decl : string list;
       sig_type_ext : string list;
       sig_exception : string list;
       sig_module_type_decl : string list;
+      sig_module_decl : string list;
     }
   end
 
@@ -345,6 +349,13 @@ module Deriver = struct
         get_set = (fun t -> t.str_module_type_decl);
       }
 
+    let str_module_binding =
+      {
+        name = "module binding";
+        get = (fun t -> t.str_module_binding);
+        get_set = (fun t -> t.str_module_binding);
+      }
+
     let sig_type_decl =
       {
         name = "signature type";
@@ -378,6 +389,13 @@ module Deriver = struct
         name = "signature module type";
         get = (fun t -> t.sig_module_type_decl);
         get_set = (fun t -> t.sig_module_type_decl);
+      }
+
+    let sig_module_decl =
+      {
+        name = "signature module declaration";
+        get = (fun t -> t.sig_module_decl);
+        get_set = (fun t -> t.sig_module_decl);
       }
   end
 
@@ -501,8 +519,9 @@ module Deriver = struct
     (result, derivers_and_args_errors @ dep_errors)
 
   let add ?str_type_decl ?str_class_type_decl ?str_type_ext ?str_exception
-      ?str_module_type_decl ?sig_type_decl ?sig_class_type_decl ?sig_type_ext
-      ?sig_exception ?sig_module_type_decl ?extension name =
+      ?str_module_type_decl ?str_module_binding ?sig_type_decl
+      ?sig_class_type_decl ?sig_type_ext ?sig_exception ?sig_module_type_decl
+      ?sig_module_decl ?extension name =
     let actual_deriver : Actual_deriver.t =
       {
         name;
@@ -511,11 +530,13 @@ module Deriver = struct
         str_type_ext;
         str_exception;
         str_module_type_decl;
+        str_module_binding;
         sig_type_decl;
         sig_class_type_decl;
         sig_type_ext;
         sig_exception;
         sig_module_type_decl;
+        sig_module_decl;
       }
     in
     Ppx_derivers.register name (T (Actual_deriver actual_deriver));
@@ -531,8 +552,9 @@ module Deriver = struct
     name
 
   let add_alias name ?str_type_decl ?str_class_type_decl ?str_type_ext
-      ?str_exception ?str_module_type_decl ?sig_type_decl ?sig_class_type_decl
-      ?sig_type_ext ?sig_exception ?sig_module_type_decl set =
+      ?str_exception ?str_module_type_decl ?str_module_binding ?sig_type_decl
+      ?sig_class_type_decl ?sig_type_ext ?sig_exception ?sig_module_type_decl
+      ?sig_module_decl set =
     let alias : Alias.t =
       let get = function None -> set | Some set -> set in
       {
@@ -541,11 +563,13 @@ module Deriver = struct
         str_type_ext = get str_type_ext;
         str_exception = get str_exception;
         str_module_type_decl = get str_module_type_decl;
+        str_module_binding = get str_module_binding;
         sig_type_decl = get sig_type_decl;
         sig_class_type_decl = get sig_class_type_decl;
         sig_type_ext = get sig_type_ext;
         sig_exception = get sig_exception;
         sig_module_type_decl = get sig_module_type_decl;
+        sig_module_decl = get sig_module_decl;
       }
     in
     Ppx_derivers.register name (T (Alias alias));
@@ -837,9 +861,51 @@ let expand_str_module_type_decl ~ctxt mtd generators =
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
+let expand_str_module_binding ~ctxt mtd generators =
+  let generators, l_err =
+    Deriver.resolve_all Deriver.Field.str_module_binding generators
+  in
+  let l_err =
+    List.map
+      ~f:(fun err ->
+        Ast_builder.Default.pstr_extension ~loc:Location.none err [])
+      l_err
+  in
+  let generated =
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt mtd generators
+         Ast_builder.Default.pstr_extension
+    |> merge_derived
+  in
+  wrap_str
+    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
+    generated
+
 let expand_sig_module_type_decl ~ctxt mtd generators =
   let generators, l_err =
     Deriver.resolve_all Deriver.Field.sig_module_type_decl generators
+  in
+  let l_err =
+    List.map
+      ~f:(fun err ->
+        Ast_builder.Default.psig_extension ~loc:Location.none err [])
+      l_err
+  in
+  let generated =
+    { items = l_err; unused_code_warnings = false }
+    :: Generator.apply_all ~ctxt mtd generators
+         Ast_builder.Default.psig_extension
+    |> merge_derived
+  in
+  wrap_sig
+    ~loc:(Expansion_context.Deriver.derived_item_loc ctxt)
+    ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
+    generated
+
+let expand_sig_module_decl ~ctxt mtd generators =
+  let generators, l_err =
+    Deriver.resolve_all Deriver.Field.sig_module_decl generators
   in
   let l_err =
     List.map
@@ -984,6 +1050,28 @@ let expand_sig_class_decls ~ctxt _rec_flag cds values =
     ~hide:(not @@ Expansion_context.Deriver.inline ctxt)
     generated
 
+let ppxlib_prefix = "ppxlib."
+
+let rules_str ~typ ~expand_str ~rule_str ~rule_str_expect =
+  let deriving_attr = mk_deriving_attr ~suffix:"" ~prefix:ppxlib_prefix typ in
+  let deriving_attr_expect =
+    mk_deriving_attr ~suffix:"_inline" ~prefix:ppxlib_prefix typ
+  in
+  [
+    rule_str deriving_attr expand_str;
+    rule_str_expect deriving_attr_expect expand_str;
+  ]
+
+let rules_sig ~typ ~expand_sig ~rule_sig ~rule_sig_expect =
+  let deriving_attr = mk_deriving_attr ~suffix:"" ~prefix:ppxlib_prefix typ in
+  let deriving_attr_expect =
+    mk_deriving_attr ~suffix:"_inline" ~prefix:ppxlib_prefix typ
+  in
+  [
+    rule_sig deriving_attr expand_sig;
+    rule_sig_expect deriving_attr_expect expand_sig;
+  ]
+
 let rules ~typ ~expand_sig ~expand_str ~rule_str ~rule_sig ~rule_str_expect
     ~rule_sig_expect =
   let prefix = "ppxlib." in
@@ -1028,6 +1116,16 @@ let rules_module_type_decl =
     ~rule_str_expect:Context_free.Rule.attr_str_module_type_decl_expect
     ~rule_sig_expect:Context_free.Rule.attr_sig_module_type_decl_expect
 
+let rules_module_binding =
+  rules_str ~typ:Module_binding ~expand_str:expand_str_module_binding
+    ~rule_str:Context_free.Rule.attr_str_module_binding
+    ~rule_str_expect:Context_free.Rule.attr_str_module_binding_expect
+
+let rules_module_decl =
+  rules_sig ~typ:Module_declaration ~expand_sig:expand_sig_module_decl
+    ~rule_sig:Context_free.Rule.attr_sig_module_declaration
+    ~rule_sig_expect:Context_free.Rule.attr_sig_module_declaration_expect
+
 let rules_class_type_decl =
   rules ~typ:Class_type_decl ~expand_str:expand_str_class_type_decls
     ~expand_sig:expand_sig_class_decls
@@ -1041,6 +1139,8 @@ let () =
     [
       rules_type_decl;
       rules_type_ext;
+      rules_module_binding;
+      rules_module_decl;
       rules_exception;
       rules_module_type_decl;
       rules_class_type_decl;
