@@ -69,9 +69,4 @@ let enter_value ~loc value_name t =
     }
 
 let to_string_path t = String.concat ~sep:"." (t.file_path :: submodule_path t)
-let with_string_path f ~loc ~path = f ~loc ~path:(to_string_path path);;
-
-let module M = struct
-  let a = "lol"
-end in
-M.a
+let with_string_path f ~loc ~path = f ~loc ~path:(to_string_path path)
