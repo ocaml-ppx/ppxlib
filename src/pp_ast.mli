@@ -16,6 +16,37 @@
      )
     v}
 
+    There is also a way to customise the output format with the optional printer
+    argument. For example, calling the following:
+    {v
+  Pp_ast.expression 
+    Format.std_formatter 
+    ?printer:(fun fmt repr -> Yojson.Basic.pretty_print fmt (repr_to_yojson repr)) 
+    [%expr x + 2]
+    v}
+    Will print:
+    {v
+    [
+      {
+        "Pstr_eval": [
+          {
+            "Pexp_apply": [
+              { "Pexp_ident": { "Lident": "+" } },
+              [
+                [ "Nolabel", { "Pexp_ident": { "Lident": "x" } } ],
+                [
+                  "Nolabel",
+                  { "Pexp_constant": { "Pconst_integer": [ "2", "None" ] } }
+                ]
+              ]
+            ]
+          },
+          "__attrs"
+        ]
+      }
+    ]
+    v}
+
     To keep the output easily readable, records with [_desc] fields such as
     {!Ppxlib.Ast.type-expression} or {!Ppxlib.Ast.type-pattern} are not printed
     as such and only the value of the corresponding [_desc] field is printed
@@ -33,6 +64,25 @@
 
 open! Import
 
+type repr =
+  | Unit
+  | Int of int
+  | String of string
+  | Bool of bool
+  | Char of char
+  | Array of repr list
+  | Float of float
+  | Int32 of int32
+  | Int64 of int64
+  | Nativeint of nativeint
+  | Record of (string * repr) list
+  | Constr of string * repr list
+  | Tuple of repr list
+  | List of repr list
+  | Special of string
+
+type 'a pp = Format.formatter -> 'a -> unit
+
 module Config : sig
   type t
   (** Type for AST pretty-printing config *)
@@ -41,6 +91,7 @@ module Config : sig
     ?show_attrs:bool ->
     ?show_locs:bool ->
     ?loc_mode:[ `Short | `Full ] ->
+    ?printer:repr pp ->
     unit ->
     t
   (** Create a custom pretty-printing config. Default values are the ones that
@@ -60,7 +111,6 @@ module Config : sig
           be. *)
 end
 
-type 'a pp = Format.formatter -> 'a -> unit
 type 'a configurable = ?config:Config.t -> 'a pp
 type 'a configured = 'a pp
 

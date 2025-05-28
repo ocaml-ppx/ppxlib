@@ -1,41 +1,20 @@
 open Import
 
-module Config = struct
-  type loc_mode = [ `Short | `Full ]
-  type t = { show_attrs : bool; show_locs : bool; loc_mode : loc_mode }
-
-  module Default = struct
-    let show_attrs = false
-    let show_locs = false
-    let loc_mode = `Short
-  end
-
-  let default =
-    let open Default in
-    { show_attrs; show_locs; loc_mode }
-
-  let make ?(show_attrs = Default.show_attrs) ?(show_locs = Default.show_locs)
-      ?(loc_mode = Default.loc_mode) () =
-    { show_attrs; show_locs; loc_mode }
-end
-
-let cnum (pos : Lexing.position) = pos.pos_cnum - pos.pos_bol
-
-type simple_val =
+type repr =
   | Unit
   | Int of int
   | String of string
   | Bool of bool
   | Char of char
-  | Array of simple_val list
+  | Array of repr list
   | Float of float
   | Int32 of int32
   | Int64 of int64
   | Nativeint of nativeint
-  | Record of (string * simple_val) list
-  | Constr of string * simple_val list
-  | Tuple of simple_val list
-  | List of simple_val list
+  | Record of (string * repr) list
+  | Constr of string * repr list
+  | Tuple of repr list
+  | List of repr list
   | Special of string
 
 let pp_collection ~pp_elm ~open_ ~close ~sep fmt l =
@@ -46,8 +25,11 @@ let pp_collection ~pp_elm ~open_ ~close ~sep fmt l =
       List.iter tl ~f:(fun sv -> Format.fprintf fmt "%s %a@," sep pp_elm sv);
       Format.fprintf fmt "%s@]" close
 
-let rec pp_simple_val fmt simple_val =
-  match simple_val with
+type 'a pp = Format.formatter -> 'a -> unit
+
+let rec pp_repr : repr pp =
+ fun fmt repr ->
+  match repr with
   | Unit -> Format.fprintf fmt "()"
   | Int i -> Format.fprintf fmt "%i" i
   | String s -> Format.fprintf fmt "%S" s
@@ -59,27 +41,55 @@ let rec pp_simple_val fmt simple_val =
   | Int64 i64 -> Format.fprintf fmt "%Li" i64
   | Nativeint ni -> Format.fprintf fmt "%ni" ni
   | Array l ->
-      pp_collection ~pp_elm:pp_simple_val ~open_:"[|" ~close:"|]" ~sep:";" fmt l
+      pp_collection ~pp_elm:pp_repr ~open_:"[|" ~close:"|]" ~sep:";" fmt l
   | Tuple l ->
-      pp_collection ~pp_elm:pp_simple_val ~open_:"(" ~close:")" ~sep:"," fmt l
-  | List l ->
-      pp_collection ~pp_elm:pp_simple_val ~open_:"[" ~close:"]" ~sep:";" fmt l
+      pp_collection ~pp_elm:pp_repr ~open_:"(" ~close:")" ~sep:"," fmt l
+  | List l -> pp_collection ~pp_elm:pp_repr ~open_:"[" ~close:"]" ~sep:";" fmt l
   | Record fields ->
       pp_collection ~pp_elm:pp_field ~open_:"{" ~close:"}" ~sep:";" fmt fields
   | Constr (cname, []) -> Format.fprintf fmt "%s" cname
   | Constr (cname, [ (Constr (_, _ :: _) as x) ]) ->
-      Format.fprintf fmt "@[<hv 2>%s@ (%a)@]" cname pp_simple_val x
+      Format.fprintf fmt "@[<hv 2>%s@ (%a)@]" cname pp_repr x
   | Constr (cname, [ x ]) ->
-      Format.fprintf fmt "@[<hv 2>%s@ %a@]" cname pp_simple_val x
+      Format.fprintf fmt "@[<hv 2>%s@ %a@]" cname pp_repr x
   | Constr (cname, l) ->
-      Format.fprintf fmt "@[<hv 2>%s@ %a@]" cname pp_simple_val (Tuple l)
+      Format.fprintf fmt "@[<hv 2>%s@ %a@]" cname pp_repr (Tuple l)
 
-and pp_field fmt (fname, simple_val) =
-  Format.fprintf fmt "@[<hv 2>%s =@ %a@]" fname pp_simple_val simple_val
+and pp_field fmt (fname, repr) =
+  Format.fprintf fmt "@[<hv 2>%s =@ %a@]" fname pp_repr repr
 
-class lift_simple_val =
+(* TODO: split into Printer and Lifter config*)
+module Config = struct
+  type loc_mode = [ `Short | `Full ]
+
+  type t = {
+    show_attrs : bool;
+    show_locs : bool;
+    loc_mode : loc_mode;
+    printer : repr pp;
+  }
+
+  module Default = struct
+    let show_attrs = false
+    let show_locs = false
+    let loc_mode = `Short
+    let printer = pp_repr
+  end
+
+  let default =
+    let open Default in
+    { show_attrs; show_locs; loc_mode; printer = pp_repr }
+
+  let make ?(show_attrs = Default.show_attrs) ?(show_locs = Default.show_locs)
+      ?(loc_mode = Default.loc_mode) ?(printer = Default.printer) () =
+    { show_attrs; show_locs; loc_mode; printer }
+end
+
+let cnum (pos : Lexing.position) = pos.pos_cnum - pos.pos_bol
+
+class lift_repr =
   object (self)
-    inherit [simple_val] Ast_traverse.lift as super
+    inherit [repr] Ast_traverse.lift as super
     val mutable config = Config.default
     method set_config new_config = config <- new_config
     method get_config () = config
@@ -139,12 +149,12 @@ class lift_simple_val =
 
     method lift_record_with_desc :
         'record 'desc.
-        lift_desc:('desc -> simple_val) ->
-        lift_record:('record -> simple_val) ->
+        lift_desc:('desc -> repr) ->
+        lift_record:('record -> repr) ->
         desc:'desc ->
         attrs:attributes ->
         'record ->
-        simple_val =
+        repr =
       fun ~lift_desc ~lift_record ~desc ~attrs x ->
         match (config.show_locs, config.show_attrs, attrs) with
         | false, false, _ | false, true, [] -> lift_desc desc
@@ -306,7 +316,6 @@ class lift_simple_val =
       | NoInjectivity -> Constr ("NoInjectivity", [])
   end
 
-type 'a pp = Format.formatter -> 'a -> unit
 type 'a configurable = ?config:Config.t -> 'a pp
 type 'a configured = 'a pp
 
@@ -333,17 +342,17 @@ module Make (Conf : Conf) : Configured = struct
   type 'a printer = 'a configured
 
   let lsv =
-    let lift_simple_val = new lift_simple_val in
-    lift_simple_val#set_config Conf.config;
-    lift_simple_val
+    let lift_repr = new lift_repr in
+    lift_repr#set_config Conf.config;
+    lift_repr
 
-  let structure fmt str = pp_simple_val fmt (lsv#structure str)
-  let structure_item fmt str = pp_simple_val fmt (lsv#structure_item str)
-  let signature fmt str = pp_simple_val fmt (lsv#signature str)
-  let signature_item fmt str = pp_simple_val fmt (lsv#signature_item str)
-  let expression fmt str = pp_simple_val fmt (lsv#expression str)
-  let pattern fmt str = pp_simple_val fmt (lsv#pattern str)
-  let core_type fmt str = pp_simple_val fmt (lsv#core_type str)
+  let structure fmt str = pp_repr fmt (lsv#structure str)
+  let structure_item fmt str = pp_repr fmt (lsv#structure_item str)
+  let signature fmt str = pp_repr fmt (lsv#signature str)
+  let signature_item fmt str = pp_repr fmt (lsv#signature_item str)
+  let expression fmt str = pp_repr fmt (lsv#expression str)
+  let pattern fmt str = pp_repr fmt (lsv#pattern str)
+  let core_type fmt str = pp_repr fmt (lsv#core_type str)
 end
 
 let make config =
@@ -357,23 +366,23 @@ end)
 
 type 'a printer = 'a configurable
 
-let lift_simple_val = new lift_simple_val
+let lift_repr = new lift_repr
 
 let with_config ~config ~f =
-  let old_config = lift_simple_val#get_config () in
-  lift_simple_val#set_config config;
+  let old_config = lift_repr#get_config () in
+  lift_repr#set_config config;
   let res = f () in
-  lift_simple_val#set_config old_config;
+  lift_repr#set_config old_config;
   res
 
-let pp_with_config (type a) (lifter : a -> simple_val)
-    ?(config = Config.default) fmt (x : a) =
-  with_config ~config ~f:(fun () -> pp_simple_val fmt (lifter x))
+let pp_with_config (type a) (lifter : a -> repr) ?(config = Config.default) fmt
+    (x : a) =
+  with_config ~config ~f:(fun () -> config.printer fmt (lifter x))
 
-let structure = pp_with_config lift_simple_val#structure
-let structure_item = pp_with_config lift_simple_val#structure_item
-let signature = pp_with_config lift_simple_val#signature
-let signature_item = pp_with_config lift_simple_val#signature_item
-let expression = pp_with_config lift_simple_val#expression
-let pattern = pp_with_config lift_simple_val#pattern
-let core_type = pp_with_config lift_simple_val#core_type
+let structure = pp_with_config lift_repr#structure
+let structure_item = pp_with_config lift_repr#structure_item
+let signature = pp_with_config lift_repr#signature
+let signature_item = pp_with_config lift_repr#signature_item
+let expression = pp_with_config lift_repr#expression
+let pattern = pp_with_config lift_repr#pattern
+let core_type = pp_with_config lift_repr#core_type
