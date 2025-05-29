@@ -1,0 +1,582 @@
+{0 Abstract Syntax Tree (AST)}
+
+{1 Table of Contents}
+
+- {{!section-description} Description}
+- {{!section-"preprocessing-in-ocaml"} Preprocessing in OCaml}
+- {{!section-"ast-guide"} AST Guide}
+- {{!section-"why-should-i-understand-the-ast"} Why Should I Understand the AST?}
+- {{!section-"first-look"} First Look}
+- {{!section-"structure"} Structure}
+- {{!section-"language-extensions-and-attributes"} Language Extensions and Attributes}
+- {{!section-"samples"} Samples}
+
+{1 Description}
+
+The Abstract Syntax Tree (AST) is a critical component in the OCaml compilation process. It represents the structure of the source code in a tree-like format, allowing for advanced code manipulations and transformations. This guide explores the importance of the AST, how it is used in preprocessing, and the different methods available for working with it through {b PPX} (PreProcessor eXtensions).
+
+{1:preprocessing-in-ocaml Preprocessing in OCaml}
+
+Unlike some programming languages that have built-in preprocessing features—such as C's preprocessor or Rust's macro system, OCaml lacks an integrated macro system. Instead, it relies on standalone preprocessors.
+
+The OCaml Platform officially supports a library for creating these preprocessors, which can operate at two levels:
+
+- {b Source Level}: Preprocessors work directly on the source code.
+- {b AST Level}: Preprocessors manipulate the AST, offering more powerful and flexible transformations. (Covered in this guide)
+
+{%html:
+  <div style="border-left: 4px solid #f39c12; padding: 0.2em 1em;">
+    <strong>⚠️ WARNING</strong>
+    <p style="margin-top: 0.5em; margin-bottom: 0;">One of the key challenges with working with the Parsetree (the AST in OCaml) is that its API is not stable. For instance, in the OCaml 4.13 release, significant changes were made to the Parsetree type, which can impact the compatibility of your preprocessing tools. Read more about it in <a href="https://discuss.ocaml.org/t/the-future-of-ppx/3766">The Future of PPX</a>.</p>
+  </div>
+%}
+
+{1:ast-guide AST Guide}
+
+This guide will concentrate on AST-level preprocessing using {b PPX} (PreProcessor eXtensions), providing a comprehensive overview of the following topics:
+
+1.  {b AST Construction}: Learning how to build and manipulate ASTs.
+2.  {b AST Destructuring}: Breaking down ASTs into manageable components for advanced transformations.
+
+{1:why-should-i-understand-the-ast Why Should I Understand the AST?}
+
+OCaml's Parsetree can be confusing, verbose, and hard to understand, but it's a powerful tool that can help you write better code, understand how the compiler works, and develop your own PPXs.
+
+You don't need to be an expert on it knowing all the tree possibilities, but you should know how to read it. For this, I'm going to use the {{:https://astexplorer.net/} AST Explorer} throughout the repository to help you understand the AST.
+
+A simple example of learning more about the OCaml compiler is that types are recursive by default, while values are non-recursive.
+With the AST, we can see this clearly:
+{[
+type name = string
+let name = "John Doe"
+
+(* AST Tree *)
+(* type name = string *)
+[ Pstr_type
+    ( Recursive
+    , [ { ptype_name =
+            { txt = "name"
+            ; loc = { (* ... *) }
+            }
+        ; ptype_params = []
+        ; ptype_cstrs = []
+        ; ptype_kind = Ptype_abstract
+        ; ptype_private = Public
+        ; ptype_manifest =
+            Some
+              { ptyp_desc =
+                  Ptyp_constr
+                    ( { txt = Lident "string"
+                      ; loc = { (* ... *) }
+                      }
+                    , []
+                    )
+              ; ptyp_loc = { (* ... *) }
+              ; ptyp_loc_stack = __lstack
+              ; ptyp_attributes = []
+              }
+        ; ptype_attributes = []
+        ; ptype_loc = { (* ... *) }
+        }
+      ]
+    )
+; Pstr_value
+    ( Nonrecursive
+    , [ { pvb_pat =
+            { ppat_desc =
+                Ppat_var
+                  { txt = "name"
+                  ; loc = { (* ... *) }
+                  }
+            ; ppat_loc = { (* ... *) }
+            ; ppat_loc_stack = [ ]
+            ; ppat_attributes = []
+            }
+        ; pvb_expr =
+            { pexp_desc =
+                Pexp_constant
+                  (Pconst_string
+                     ( "John Doe"
+                     , (* loc ... *)
+                     , None
+                     ))
+            ; pexp_loc = { (* ... *) }
+            ; pexp_loc_stack = [ (* ... *) ]
+            ; pexp_attributes = []
+            }
+        ; pvb_attributes = []
+        ; pvb_loc = { (* ... *) }
+        }
+      ]
+    )
+]
+]}
+
+{1:first-look First Look}
+
+By comparing code snippets with their AST representations, you'll better understand how OCaml interprets your code, which is essential for working with PPXs or delving into the compiler's internals. The {{:https://astexplorer.net/} AST Explorer} tool will help make these concepts clearer and more accessible.
+
+Let's take a quick look at the JSON AST representation of a simple OCaml expression:
+
+{[
+(* Foo.ml *)
+let name = "john doe"
+
+(* AST Tree *)
+(* let name = "john doe" *)
+[ Pstr_type
+    ( Recursive
+    , [ { ptype_name = "name"
+        ; ptype_params = []
+        ; ptype_cstrs = []
+        ; ptype_kind = Ptype_abstract
+        ; ptype_private = Public
+        ; ptype_manifest = Some (Ptyp_constr ( Lident "string", []))
+        ; ptype_attributes = []
+        ; ptype_loc = { (* ... *) }
+        }
+      ]
+    )
+; Pstr_value
+    ( Nonrecursive
+    , [ { pvb_pat = Ppat_var "name"
+        ; pvb_expr = Pexp_constant (Pconst_string ( "John Doe", (* loc ... *) , None))
+        ; pvb_attributes = []
+        ; pvb_loc = { (* ... *) }
+        }
+      ]
+    )
+]
+]}
+
+As you can see, it's a little bit verbose. Don't be scared; we are going to learn how to read it, which is the most important thing.
+
+{1 Structure}
+
+{[
+(* Foo.ml *)
+let name = "john doe"
+
+(* AST Tree *)
+(* let name = "john doe" *)
+(* This entire list is a structure *)
+[ Pstr_value
+    ( Nonrecursive
+    , [ { pvb_pat = Ppat_var "name"
+        ; pvb_expr = Pexp_constant (Pconst_string ( "john doe", (* loc ... *) , None))
+        ; pvb_attributes = []
+        ; pvb_loc = { (* ... *) }
+        }
+      ]
+    )
+]
+]}
+
+In OCaml, a {b module} serves as a container for grouping related definitions, such as types, values, functions, and even other modules, into a single cohesive unit. This modular approach helps organize your code, making it more manageable, reusable, and easier to understand.
+
+A {b structure} refers to the content within a module. It is composed of various declarations, known as {b structure items}, which include:
+
+- {b Type definitions} (e.g., [type t = ...])
+- {b let bindings} (e.g., [let x = 1])
+- {b Function definitions}
+- {b Exception declarations}
+- {b Other nested modules}
+
+The structure represents the body of the module, where all these items are defined and implemented. Since each {.ml} file is implicitly a module, the entire content of a file can be viewed as the structure of that module.
+
+{%html:
+  <div style="border-left: 4px solid #2ea44f; padding: 0.2em 1em;">
+    <strong>💡 Tip</strong>
+    <p style="margin-top: 0.5em; margin-bottom: 0;">Every module in OCaml creates a new structure, and nested modules create nested structures.</p>
+  </div>
+%}
+
+Consider the following example:
+
+{[
+(* Bar.ml *)
+let name = "john doe"
+
+module GameEnum = struct
+  type t = Rock | Paper | Scissors
+
+  let to_string = function
+    | Rock -> "Rock"
+    | Paper -> "Paper"
+    | Scissors -> "Scissors"
+
+  let from_string = function
+    | "Rock" -> Rock
+    | "Paper" -> Paper
+    | "Scissors" -> Scissors
+    | _ -> failwith "Invalid string"
+end
+]}
+
+{[
+[ 
+  (* This is a structure item *)
+  Pstr_value
+    ( Nonrecursive
+    , [ { pvb_pat = Ppat_var "name"
+        ; pvb_expr = Pexp_constant (Pconst_string ( "john doe", __loc, None))
+        ; pvb_attributes = []
+        ; pvb_loc = __loc
+        }
+      ]
+    )
+
+  (* This is a structure item *)
+  ; Pstr_module
+      { pmb_name = Some "GameEnum"
+      (* This is a structure *)
+      ; pmb_expr =
+          Pmod_structure
+            [ (* ... Structure items ... *) ]
+      ; pmb_attributes = []
+      ; pmb_loc = { (* ... *) }
+      }
+]
+]}
+
+As you can see, [Bar.ml] and [GameEnum] are modules, and their content is a {b structure} that contain a list of {b structure items}.
+
+{%html:
+  <div style="border-left: 4px solid #0366d6; padding: 0.2em 1em;">
+    <strong>✏️ Note</strong>
+    <p style="margin-top: 0.5em; margin-bottom: 0;">A structure item can either represent a top-level expression, a type definition, a let definition, etc.</p>
+  </div>
+%}
+
+I'm not going to be able to cover all structure items, but you can find more about it in the {{:https://ocaml.org/learn/tutorials/modules.html} OCaml documentation}. I strongly advise you to take a look at the {{:./ast_explorer.ml} AST Explorer} file and play with it; it will help you a lot. The [ppxlib-pp-ast] command is an official ppxlib tool that allows you to see the AST of a given OCaml file/string.
+
+{1 Language Extensions and Attributes}
+
+As the AST represents the structure of the source code in a tree-like format, it also represents the Extension nodes and Attributes. It is mostly from the extension and attributes that the PPXs are built, so it's important to understand that they are part of the AST and have their own structure.
+
+- {4 Extension nodes} are generic placeholders in the syntax tree. They are rejected by the type-checker and are intended to be “expanded” by external tools such as -ppx rewriters. On AST, it is represented as [string Ast_414.Asttypes.loc * payload].
+
+  So, as extension nodes are placeholders for a code to be added, adding a new extension node with no extender declared should break the compilation. For example, in the code [let name = [%name "John Doe"]]. See a demo {{:https://sketch.sh/s/6DxhTCXYpOkI0G8k9keD0d/} here}.
+
+  There are 2 forms of extension nodes:
+
+  - {b For “algebraic” categories}: [[%name "John Doe"]]
+  - {b For structures and signatures}: [[%%name "John Doe"]]
+  
+{%html:
+  <div style="border-left: 4px solid #0366d6; padding: 0.2em 1em;">
+    <strong>✏️ Note</strong>
+    <p style="margin-top: 0.5em; margin-bottom: 0;">  In the code <code>let name = [%name "John Doe"]</code>, <code>[%name "John Doe"]</code> is the extension node, where <code>name</code> is the extension name <code>string Ast_414.Asttypes.loc</code> and <code>"John Doe"</code> is the <code>payload</code>. For the entire item like <code>let name = "John Doe"</code>, you must use <code>%%</code>: <code>[%%name "John Doe"]</code>.
+</p>
+  </div>
+%}
+
+  Don't worry much about how to create a new extension node; we'll cover it in the {{:../2%20-%20Writing%20PPXs/README.md} Writing PPXs section}.
+
+- {4 Attributes} are “decorations” of the syntax tree, which are mostly ignored by the type-checker but can be used by external tools. Decorators must be attached to a specific node in the syntax tree, otherwise it will break the compilation. (Check it breaking on this running [ppxlib-pp-ast --exp "[@foo]"]).
+
+  As attributes are just “decorations”, you can add a new attribute without breaking the compilation. For example, in the code, [let name = "John Doe" [@print]]. See a demo {{:https://sketch.sh/s/6DxhTCXYpOkI0G8k9keD0d/} here}.
+
+  There are 3 forms of attributes:
+
+  - {b Attached to on “algebraic” categories}: [[@name]]
+  - {b Attached to “blocks”}: [[@@name]]
+  - {b Stand-alone of signatures or structures modules}: [[@@@name]]
+  
+  {5 Note}
+  In the code [let name = "John Doe" [@print expr]], [@print expr] is the attribute of the {b "John Doe"} node, where {b print} is the attribute name ([string Ast_414.Asttypes.loc]) and {b expr} is the [payload]. To be an attribute of the entire item [let name = "John Doe"], you must use [@@]: [@@print]. If it is an stand-alone attribute of a module, you must use [@@@]: [@@@print].
+
+  Don't worry much about creating a new attributes node; we'll cover it in the {{:../2%20-%20Writing%20PPXs/README.md} Writing PPXs section}.
+
+I know that it can be a lot, but don't worry; we are going step by step, and you are going to understand it.
+
+{1 Samples} 
+To help you understand a little bit more about the AST, let's show it with some examples with the {{:https://astexplorer.net/} AST Explorer}:
+
+{table
+  {tr
+    {th Playground}
+    {th Code}
+    {th AST}}
+  {tr
+    {td {{:https://astexplorer.net/#/gist/d479d32127d6fcb418622ee84b9aa3b2/1d56a1d5b20fc0a55d5ae9d309226dce58f93d2c} Link}}
+    {td 
+      [name] at
+      {@ocaml[ let name = "john doe" ]}}
+    {td 
+      {@json[
+      //...
+      "ppat_desc": {
+        "type": "Ppat_var",
+        "string_loc": {
+          "type": "string Asttypes.loc",
+          "txt": "name",
+          "loc": { /* ... */ }
+        }
+      },
+      //...
+      ]}
+    }}
+  {tr
+    {td {{:https://astexplorer.net/#/gist/d479d32127d6fcb418622ee84b9aa3b2/4002362a8c42e1c4f28790f54682a9cb4fc07a85} Link}}
+    {td 
+      [[%name "John Doe"]] at
+      {@ocaml[ let name = [%name "John Doe"] ]}}
+    {td 
+      {@json[
+      // ...
+      "pexp_desc": {
+      "type": "Pexp_extension",
+      "extension": [
+        {
+          "type": "string Asttypes.loc",
+          "txt": "name",
+          "loc": { /* ... */ }
+        },
+        {
+          "type": "PStr",
+          "structure": [
+            {
+              "type": "structure_item",
+              "pstr_desc": {
+                "type": "Pstr_eval",
+                "expression": {
+                  "type": "expression",
+                  "pexp_desc": {
+                    "type": "Pexp_constant",
+                    "constant": {
+                      "type": "Pconst_string",
+                      "string": "John Doe",
+                      "quotation_delimiter": {
+                        "type": "None"
+                      }
+                    }
+                  },
+                  "pexp_loc": { /* ... */ },
+                  "pexp_attributes": []
+                },
+                "attributes": []
+              },
+              "pstr_loc": { /* ... */ }
+            }
+          ]
+        }
+      ]
+    },
+    // ...]}
+    }
+  }
+  {tr
+    {td {{:https://astexplorer.net/#/gist/d479d32127d6fcb418622ee84b9aa3b2/b4492b3d2d1b34029d367ff278f5bcda0496c0d2} Link}}
+    {td 
+      [[@print expr]] at
+      {@ocaml[ let name = "John Doe" [@print expr] ]}}
+    {td 
+      {@json[
+      // ...
+      "pexp_attributes": [
+        [
+          {
+            "type": "string Asttypes.loc",
+            "txt": "print",
+            "loc": { /* ... */ }
+          },
+          {
+            "type": "PStr",
+            "structure": [
+              {
+                "type": "structure_item",
+                "pstr_desc": {
+                  "type": "Pstr_eval",
+                  "expression": {
+                    "type": "expression",
+                    "pexp_desc": {
+                      "type": "Pexp_ident",
+                      "id_loc": {
+                        "type": "Longident.t Asttypes.loc",
+                        "txt": {
+                          "type": "Lident",
+                          "li": "expr"
+                        },
+                        "loc": { /* ... */ }
+                      }
+                    },
+                    "pexp_loc": { /* ... */ },
+                  "attributes": []
+                },
+                "pstr_loc": { /* ... */ }
+              }
+            ]
+          }
+        ]
+      ]
+      // ...
+      ]}
+    }
+  }
+  {tr
+    {td {{:https://astexplorer.net/#/gist/d479d32127d6fcb418622ee84b9aa3b2/27d0a140f268bae1a32c8882d55c0b26c7e03fe9} Link}}
+    {td 
+      [GameEnum] at
+      {@ocaml[ module GameEnum = struct (* ... *) end ]}}
+    {td 
+      {@json[
+      // ...
+      "module_binding": {
+        "type": "module_binding",
+        "pmb_name": {
+          "type": "string Asttypes.loc",
+          "txt": "GameEnum",
+          "loc": { /* ... */ }
+        },
+        // ...
+      }
+      // ...
+      ]}
+    }
+  }
+  {tr
+    {td {{:https://astexplorer.net/#/gist/d479d32127d6fcb418622ee84b9aa3b2/27d0a140f268bae1a32c8882d55c0b26c7e03fe9} Link}}
+    {td 
+      [struct (* ... *) end] at
+      {@ocaml[ 
+      module GameEnum = struct
+        type t = Rock | Paper | Scissors
+
+        let to_string = function
+          | Rock -> "Rock"
+          | Paper -> "Paper"
+          | Scissors -> "Scissors"
+
+        let from_string = function
+          | "Rock" -> Rock
+          | "Paper" -> Paper
+          | "Scissors" -> Scissors
+          | _ -> failwith "Invalid string"
+      end
+      ]}}
+    {td 
+      {@json[
+      // ...
+      "pmb_expr": {
+        "type": "module_expr",
+        "pmod_desc": {
+          "type": "Pmod_structure",
+          "structure": [ /* 3 elements */ ]
+        },
+        "pmod_loc": { /* ... */ },
+        "pmod_attributes": []
+      },
+      // ...
+      ]}
+    }
+  }
+  {tr
+    {td {{:https://astexplorer.net/#/gist/d479d32127d6fcb418622ee84b9aa3b2/27d0a140f268bae1a32c8882d55c0b26c7e03fe9} Link}}
+    {td 
+      [type t = Rock | Paper | Scissors] at
+      {@ocaml[ 
+      module GameEnum = struct
+        type t = Rock | Paper | Scissors
+
+        let to_string = function
+          | Rock -> "Rock"
+          | Paper -> "Paper"
+          | Scissors -> "Scissors"
+
+        let from_string = function
+          | "Rock" -> Rock
+          | "Paper" -> Paper
+          | "Scissors" -> Scissors
+          | _ -> failwith "Invalid string"
+      end
+      ]}}
+    {td 
+      {@json[
+      // ...
+      "pmb_expr": {
+        "type": "module_expr",
+        "pmod_desc": {
+          "type": "Pmod_structure",
+          "structure": [
+            {
+              "type": "structure_item",
+              "pstr_desc": {
+                "type": "Pstr_type",
+                "rec_flag": {
+                  "type": "Recursive"
+                },
+              },
+              "type_declarations": [
+                {
+                  "type": "type_declaration",
+                  "ptype_name": {
+                    "type": "string Asttypes.loc",
+                    "txt": "t",
+                    "loc": { /* ... */ }
+                  },
+                  "ptype_params": [],
+                  "ptype_cstrs": [],
+                  "ptype_kind": {
+                    "type": "Ptype_variant",
+                    "constructor_declarations": [
+                      {
+                        "type": "constructor_declaration",
+                        "pcd_name": {
+                          "type": "string Asttypes.loc",
+                          "txt": "Rock",
+                          "loc": { /* ... */ }
+                        },
+                        "pcd_args": {
+                          "type": "Pcstr_tuple",
+                          "core_types": []
+                        },
+                        "pcd_res": {
+                          "type": "None"
+                        },
+                        "pcd_loc": { /* ... */ },
+                        "pcd_attributes": []
+                      },
+                      {
+                        "type": "constructor_declaration",
+                        "pcd_name": {
+                          "type": "string Asttypes.loc",
+                          "txt": "Paper",
+                          "loc": { /* ... */ }
+                        },
+                        // ...
+                      },
+                      {
+                        "type": "constructor_declaration",
+                        "pcd_name": {
+                          "type": "string Asttypes.loc",
+                          "txt": "Scissors",
+                          "loc": { /* ... */ }
+                        },
+                        // ...
+                      }
+                    ]
+                  },
+                  "ptype_private": "Public",
+                  "ptype_manifest": {
+                    "type": "None"
+                  },
+                  "ptype_attributes": [],
+                  "ptype_loc": { /* ... */ }
+                }
+              ]
+            },
+            // 2 other elements ...
+          ]
+        },
+        "pmod_loc": { /* ... */ },
+        "pmod_attributes": []
+      },
+      // ...
+      ]}
+  }
+}
+
+
+{1 Next Steps}
+On the next section, we will learn how to build an AST. {{!page-"example-ast-building"} Read more}

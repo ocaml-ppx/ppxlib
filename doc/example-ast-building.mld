@@ -1,0 +1,173 @@
+{0 Building AST}
+
+{1 Table of Contents}
+
+- {{!section-description} Description}
+- {{!section-"building-asts-with-pure-ocaml"} Building ASTs with Pure OCaml}
+{ul {- {{!section-"example-building-a-simple-integer-ast-manually"} Example: Building a Simple Integer AST Manually}}}
+
+- {{!section-"building-asts-with-ast_builder"} Building ASTs with {!Ppxlib.Ast_builder}}
+{ul {- {{!section-"example-1-using-pexp_constant-for-integer-ast"} Example 1: Using [pexp_constant] for Integer AST}}}
+{ul {- {{!section-"example-2-using-eint-for-simplified-integer-ast"} Example 2: Using [eint] for Simplified Integer AST}}}
+
+- {{!section-"using-metaquot-for-ast-construction"} Using Metaquot for AST Construction}
+{ul {- {{!section-"example-building-an-integer-ast-with-metaquot"} Example: Building an Integer AST with Metaquot}}}
+
+- {{!section-"using-anti-quotations-in-metaquot"} Using Anti-Quotations in Metaquot}
+{ul {- {{!section-"example-inserting-dynamic-expressions-with-anti-quotations"} Example: Inserting Dynamic Expressions with Anti-Quotations}}}
+
+- {{!section-"building-complex-expressions"} Building Complex Expressions}
+{ul {- {{!section-"example-1-constructing-a-let-expression-with-ast_builder"} Example 1: Constructing a Let Expression with [Ppxlib.Ast_builder]}}}
+{ul {- {{!section-"example-2-constructing-a-let-expression-with-metaquot"} Example 2: Constructing a Let Expression with Metaquot}}}
+
+- {{!section-conclusion} Conclusion}
+
+{1:description Description}
+
+Building an AST (Abstract Syntax Tree) is a fundamental part of creating a PPX in OCaml. You'll need to construct an AST to represent the code you want to generate or transform.
+
+For example, if you want to generate the following code:
+
+{[
+let zero = [%int 0]
+]}
+
+and replace the extension point [%int 0] with [0] to produce [let zero = 0], you’ll need to build an AST that represents this transformation.
+
+There are several methods to build an AST. We’ll discuss three approaches:
+
+- {b Building ASTs with Pure OCaml}
+- {b Building ASTs with {!Ppxlib.Ast_builder}}
+- {b Using Metaquot for AST Construction}
+
+{1:building-asts-with-pure-ocaml Building ASTs with Low-Level Builders}
+
+The most fundamental way to build an AST is to manually construct it using Low-Level Builders data structures.
+
+{2:example-building-a-simple-integer-ast-manually Example: Building a Simple Integer AST Manually}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L5-L16} 🔗 Sample Code}
+
+{[
+let zero ~loc : Ppxlib_ast.Ast.expression =
+  {
+    pexp_desc = Pexp_constant (Pconst_integer ("0", None));
+    pexp_loc = loc;
+    pexp_loc_stack = [];
+    pexp_attributes = [];
+  }
+]}
+
+While this method provides full control over the AST, it is verbose and less maintainable.
+
+{1:building-asts-with-ast_builder Building ASTs with {!Ppxlib.Ast_builder}}
+
+PPXLib provides the {!Ppxlib.Ast_builder} module, which simplifies the process of building ASTs by providing helper functions.
+
+{2:example-1-using-pexp_constant-for-integer-ast Example 1: Using [pexp_constant] for Integer AST}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L18-L24} 🔗 Sample Code}
+
+{[
+let one ~loc =
+  Ast_builder.Default.pexp_constant ~loc (Parsetree.Pconst_integer ("1", None))
+]}
+
+This method is more readable and concise compared to the pure OCaml approach.
+
+{2:example-2-using-eint-for-simplified-integer-ast Example 2: Using [eint] for Simplified Integer AST}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L26-L31} 🔗 Sample Code}
+
+{[
+let two ~loc = Ast_builder.Default.eint ~loc 2
+]}
+
+{b Tip:} [eint] is an abbreviation for expression ([e]) integer ([int]).
+
+{1:using-metaquot-for-ast-construction Using Metaquot for AST Construction}
+
+Metaquot is a syntax extension that allows you to write ASTs in a more natural and readable way.
+
+{2:example-building-an-integer-ast-with-metaquot Example: Building an Integer AST with Metaquot}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L33-L38} 🔗 Sample Code}
+
+{[
+let three ~loc = [%expr 3]
+]}
+
+{b Tip:} Metaquot is highly readable and intuitive but is static. For dynamic values, use Anti-Quotations.
+
+{2:using-anti-quotations-in-metaquot Using Anti-Quotations in Metaquot}
+
+Anti-Quotations allow you to insert dynamic expressions into your Metaquot ASTs.
+
+{3:example-inserting-dynamic-expressions-with-anti-quotations Example: Inserting Dynamic Expressions with Anti-Quotations}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L72-L77} 🔗 Sample Code}
+
+{[
+let anti_quotation_expr expr = [%expr 1 + [%e expr]]
+]}
+
+For example, to insert the AST for [1]:
+
+{[
+let _ =
+  print_endline
+    ("\nLet expression with metaquot and anti-quotation: "
+    ^ Astlib.Pprintast.string_of_expression (anti_quotation_expr (one ~loc)))
+]}
+
+{1:building-complex-expressions Building Complex Expressions}
+
+Beyond simple expressions, you may need to build more complex ASTs, such as [let] expressions.
+
+{2:example-1-constructing-a-let-expression-with-ast_builder Example 1: Constructing a Let Expression with {!Ppxlib.Ast_builder}}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L40-L60} 🔗 Sample Code}
+
+{[
+let let_expression =
+  let expression =
+    Ast_builder.Default.pexp_constant ~loc:Location.none
+      (Pconst_integer ("3", None))
+  in
+  let pattern =
+    Ast_builder.Default.ppat_var ~loc:Location.none
+      (Ast_builder.Default.Located.mk ~loc:Location.none "foo")
+  in
+  let let_binding =
+    Ast_builder.Default.value_binding ~loc:Location.none ~pat:pattern
+      ~expr:expression
+  in
+  Ast_builder.Default.pexp_let ~loc:Location.none Nonrecursive [ let_binding ]
+    (Ast_builder.Default.eunit ~loc:Location.none)
+]}
+
+{2:example-2-constructing-a-let-expression-with-metaquot Example 2: Constructing a Let Expression with Metaquot}
+
+{{:https://github.com/ocaml-ppx/ppxlib/tree/main/examples/1-AST/a%20-%20Building%20AST/building_ast.ml#L62-L70} 🔗 Sample Code}
+
+{[
+let let_expression =
+  [%expr
+    let foo = 3 in
+    ()]
+]}
+
+This approach is shorter and easier to understand.
+
+{1:conclusion Conclusion}
+
+In this section, we explored three methods for building ASTs:
+
+- {b Pure OCaml}: The most basic but verbose approach.
+- {b Using {!Ppxlib.Ast_builder}}: A more readable and maintainable option.
+- {b Using Metaquot}: The most intuitive method, especially when combined with Anti-Quotations for dynamic values.
+
+Each method has its strengths, so choose the one that best fits your needs. Understanding all three will give you greater flexibility in creating effective and maintainable PPXs.
+
+{2 Next Steps}
+On the next section, we will learn how to destructure an AST. {{!page-"example-ast-destructing"} Read more}
