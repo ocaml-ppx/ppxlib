@@ -251,7 +251,8 @@ let () =
       ]
 
 let attr_multi ~ctxt:_ expression
-    ([ prefix; suffix ] : _ Context_free.Rule.Parsed_payload_list.t) =
+    ([ prefix; suffix ] :
+      _ Context_free.Rule.Attr_multiple_replace.Parsed_payload_list.t) =
   match (prefix, suffix) with
   | None, None -> assert false
   | _ -> (
@@ -270,8 +271,8 @@ let () =
   Driver.register_transformation "test"
     ~rules:
       [
-        Context_free.Rule.attr_multiple_replace "test.multi.exp"
-          Extension.Context.expression
+        Context_free.Rule.Attr_multiple_replace.attr_multiple_replace
+          "test.multi.exp" Extension.Context.expression
           [
             Attribute.declare "test.multi.exp.prefix" Expression string_pattern
               Fun.id;
