@@ -18,6 +18,29 @@ module Ast = struct
     | Typ of core_type
 end
 
+let rec repr_to_yojson : Pp_ast.repr -> Yojson.Basic.t = function
+  | Unit -> `Null
+  | Int i -> `Int i
+  | String s -> `String s
+  | Special s -> `String s
+  | Bool b -> `Bool b
+  | Char c -> `String (String.make 1 c)
+  | Float f -> `Float f
+  | Int32 i32 -> `Int (Int32.to_int i32)
+  | Int64 i64 -> `Int (Int64.to_int i64)
+  | Nativeint ni -> `Int (Nativeint.to_int ni)
+  | Array l -> `List (List.map repr_to_yojson l)
+  | Tuple l -> `List (List.map repr_to_yojson l)
+  | List l -> `List (List.map repr_to_yojson l)
+  | Record fields ->
+      `Assoc (List.map (fun (k, v) -> (k, repr_to_yojson v)) fields)
+  | Constr (cname, []) -> `String cname
+  | Constr (cname, [ x ]) -> `Assoc [ (cname, repr_to_yojson x) ]
+  | Constr (cname, l) -> `Assoc [ (cname, `List (List.map repr_to_yojson l)) ]
+
+let json_printer fmt value =
+  Yojson.Basic.pretty_print fmt (repr_to_yojson value)
+
 module Input = struct
   type t = Stdin | File of string | Source of string
 
@@ -97,6 +120,10 @@ let loc_mode =
   in
   named (fun x -> `Loc_mode x) Cmdliner.Arg.(value & vflag `Short [ full_locs ])
 
+let json =
+  let doc = "Show AST as json" in
+  named (fun x -> `Json x) Cmdliner.Arg.(value & flag & info ~doc [ "json" ])
+
 let kind =
   let make_vflag (flag, (kind : Kind.t), doc) =
     (Some kind, Cmdliner.Arg.info ~doc [ flag ])
@@ -126,7 +153,7 @@ let input =
 let errorf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
-    (`Kind kind) (`Input input) =
+    (`Json json) (`Kind kind) (`Input input) =
   let open Stdppx.Result in
   let kind =
     match kind with
@@ -147,13 +174,18 @@ let run (`Show_attrs show_attrs) (`Show_locs show_locs) (`Loc_mode loc_mode)
     match input with Stdin -> "<stdin>" | File fn -> fn | Source _ -> "<cli>"
   in
   let ast = load_input ~kind ~input_name input in
-  let config = Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode () in
+  let custom_printer = if json then Some json_printer else None in
+  let config =
+    Pp_ast.Config.make ~show_attrs ~show_locs ~loc_mode ?printer:custom_printer
+      ()
+  in
   pp_ast ~config ast;
   Format.printf "%!\n";
   Ok ()
 
 let term =
-  Cmdliner.Term.(const run $ show_attrs $ show_locs $ loc_mode $ kind $ input)
+  Cmdliner.Term.(
+    const run $ show_attrs $ show_locs $ loc_mode $ json $ kind $ input)
 
 let tool_name = "ppxlib-pp-ast"
 
