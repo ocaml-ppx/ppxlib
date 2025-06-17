@@ -51,7 +51,50 @@ module Rule : sig
 
   (** The rest of this API is for rewriting rules that apply when a certain
       attribute is present. The API is not complete and is currently only enough
-      to implement deriving. *)
+      to implement deriving and ppx_template. *)
+
+  val attr_replace :
+    string ->
+    'a Extension.Context.t ->
+    ('a, 'b) Attribute.t ->
+    (ctxt:Expansion_context.Base.t -> 'a -> 'b -> 'a) ->
+    t
+  (** Rewrite an item when the attribute is present.
+
+      These should be used sparingly and only for driving minor modifications to
+      a syntax node, if you want to do larger rewrites you should prefer to use
+      {!extension}. This is to keep the syntax clear for users of PPXes;
+      attributes should be thought of as adding code or information to an item,
+      and extensions rewriting code to something new. *)
+
+  (** An advanced module if you want to replace an item with multiple attributes
+      simultaneously. *)
+  module Attr_multiple_replace : sig
+    module Attribute_list : sig
+      type ('a, _) t =
+        | [] : ('a, unit) t
+        | ( :: ) : ('a, 'b) Attribute.t * ('a, 'c) t -> ('a, 'b * 'c) t
+    end
+
+    module Parsed_payload_list : sig
+      type _ t = [] : unit t | ( :: ) : 'a option * 'b t -> ('a * 'b) t
+    end
+
+    val attr_multiple_replace :
+      string ->
+      'a Extension.Context.t ->
+      ('a, 'list) Attribute_list.t ->
+      (ctxt:Expansion_context.Base.t -> 'a -> 'list Parsed_payload_list.t -> 'a) ->
+      t
+    (** Rewrite an item when any of the provided list of attributes are present.
+        It has the same caveats as {!attr_replace}.
+
+        This function uses GADT lists to provide type safety for the payloads
+        provided: when you call it with [[ attr1; attr2 ]] the replacement
+        function will provide you with a {!Parsed_payload_list.t} containing
+        [[ attr1_payload option; attr2_payload option ]]. These are options
+        because not all the attributes are necessarily present on the item.*)
+  end
 
   type ('a, 'b, 'c) attr_group_inline =
     ('b, 'c) Attribute.t ->

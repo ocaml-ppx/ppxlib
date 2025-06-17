@@ -15,6 +15,9 @@ unreleased
   location which can lead to unhelpful error messages.
   (#569, @NathanReb)
 
+- Add a new context-free rule type that replaces AST nodes that have the registered
+  attributes attached to them. (#574, @Skepfyr)
+
 0.36.0 (2025-03-03)
 -------------------
 
