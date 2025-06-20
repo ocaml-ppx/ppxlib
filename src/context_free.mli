@@ -148,6 +148,17 @@ module Rule : sig
   val attr_sig_module_type_decl_expect :
     (signature_item, module_type_declaration, _) attr_inline
 
+  val attr_str_module_binding : (structure_item, module_binding, _) attr_inline
+
+  val attr_sig_module_declaration :
+    (signature_item, module_declaration, _) attr_inline
+
+  val attr_str_module_binding_expect :
+    (structure_item, module_binding, _) attr_inline
+
+  val attr_sig_module_declaration_expect :
+    (signature_item, module_declaration, _) attr_inline
+
   val attr_str_type_ext : (structure_item, type_extension, _) attr_inline
   val attr_sig_type_ext : (signature_item, type_extension, _) attr_inline
   val attr_str_type_ext_expect : (structure_item, type_extension, _) attr_inline
