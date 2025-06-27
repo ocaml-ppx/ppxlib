@@ -26,7 +26,11 @@
    - Added [open Ast_503] before other global opens
    - Replaced [Lexer.is_keyword] with [Keyword.is_keyword] for compat with
      Ocaml < 5.2.
-   - Added [class_signature] and [type_declaration] entry points at the end. *)
+   - Added [class_signature] and [type_declaration] entry points at the end.
+   - Removed uses of [Format_doc] for compat with pre 5.3 compilers. I kept the
+   [Doc] submodule to keep the patch simple. I removed [nominal_exp] entirely
+   as it's not used internally by pprintast and exposes [Format_doc] types.
+*)
 
 open Ast_503
 open Asttypes
@@ -150,21 +154,21 @@ module Doc = struct
       else if needs_spaces txt then "(@;%s@;)"
       else "(%s)"
     in
-    Format_doc.fprintf ppf format txt
+    Format.fprintf ppf format txt
 
   let protect_longident ~kind ppf print_longident longprefix txt =
     if not (needs_parens ~kind txt) then
-      Format_doc.fprintf ppf "%a.%a" print_longident longprefix
+      Format.fprintf ppf "%a.%a" print_longident longprefix
         (ident_of_name ~kind) txt
     else if needs_spaces txt then
-      Format_doc.fprintf ppf "%a.(@;%s@;)" print_longident longprefix txt
-    else Format_doc.fprintf ppf "%a.(%s)" print_longident longprefix txt
+      Format.fprintf ppf "%a.(@;%s@;)" print_longident longprefix txt
+    else Format.fprintf ppf "%a.(%s)" print_longident longprefix txt
 
   let rec any_longident ~kind f = function
     | Lident s -> ident_of_name ~kind f s
     | Ldot (y, s) -> protect_longident ~kind f (any_longident ~kind:Other) y s
     | Lapply (y, s) ->
-        Format_doc.fprintf f "%a(%a)"
+        Format.fprintf f "%a(%a)"
           (any_longident ~kind:Other)
           y
           (any_longident ~kind:Other)
@@ -174,55 +178,13 @@ module Doc = struct
   let longident = value_longident
   let constr ppf l = any_longident ~kind:Constr ppf l
   let type_longident ppf l = any_longident ~kind:Type ppf l
-  let tyvar ppf s = Format_doc.fprintf ppf "%s" (tyvar_of_name s)
-
-  (* Expressions are considered nominal if they can be used as the subject of a
-     sentence or action. In practice, we consider that an expression is nominal
-     if they satisfy one of:
-     - Similar to an identifier: words separated by '.' or '#'.
-     - Do not contain spaces when printed.
-     - Is a constant that is short enough.
-  *)
-  let nominal_exp t =
-    let open Format_doc.Doc in
-    let longident ?(is_constr = false) l =
-      let kind = if is_constr then Constr else Other in
-      Format_doc.doc_printer (any_longident ~kind) l.Location.txt
-    in
-    let rec nominal_exp doc exp =
-      match exp.pexp_desc with
-      | _ when exp.pexp_attributes <> [] -> None
-      | Pexp_ident l -> Some (longident l doc)
-      | Pexp_variant (lbl, None) -> Some (printf "`%s" lbl doc)
-      | Pexp_construct (l, None) -> Some (longident ~is_constr:true l doc)
-      | Pexp_field (parent, lbl) ->
-          Option.map (printf ".%t" (longident lbl)) (nominal_exp doc parent)
-      | Pexp_send (parent, meth) ->
-          Option.map (printf "#%s" meth.txt) (nominal_exp doc parent)
-      (* String constants are syntactically too complex. For example, the
-         quotes conflict with the 'inline_code' style and they might contain
-         spaces. *)
-      | Pexp_constant { pconst_desc = Pconst_string _; _ } -> None
-      (* Char, integer and float constants are nominal. *)
-      | Pexp_constant { pconst_desc = Pconst_char c; _ } -> Some (msg "%C" c)
-      | Pexp_constant
-          {
-            pconst_desc = Pconst_integer (cst, suf) | Pconst_float (cst, suf);
-            _;
-          } ->
-          Some (msg "%s%t" cst (option char suf))
-      | _ -> None
-    in
-    nominal_exp empty t
+  let tyvar ppf s = Format.fprintf ppf "%s" (tyvar_of_name s)
 end
 
-let value_longident ppf l = Format_doc.compat Doc.value_longident ppf l
-let type_longident ppf l = Format_doc.compat Doc.type_longident ppf l
-
-let ident_of_name ppf i =
-  Format_doc.compat (Doc.ident_of_name ~kind:Other) ppf i
-
-let constr ppf l = Format_doc.compat Doc.constr ppf l
+let value_longident ppf l = Doc.value_longident ppf l
+let type_longident ppf l = Doc.type_longident ppf l
+let ident_of_name ppf i = Doc.ident_of_name ~kind:Other ppf i
+let constr ppf l = Doc.constr ppf l
 let ident_of_name_loc ppf s = ident_of_name ppf s.txt
 
 type space_formatter = (unit, Format.formatter, unit) format
@@ -399,7 +361,7 @@ let direction_flag f = function
 let private_flag f = function Public -> () | Private -> pp f "private@ "
 let iter_loc f ctxt { txt; loc = _ } = f ctxt txt
 let constant_string f s = pp f "%S" s
-let tyvar ppf v = Format_doc.compat Doc.tyvar ppf v
+let tyvar ppf v = Doc.tyvar ppf v
 let tyvar_loc f str = tyvar f str.txt
 let string_quot f x = pp f "`%a" ident_of_name x
 
