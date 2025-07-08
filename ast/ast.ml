@@ -52,6 +52,11 @@ open Import
    [Versions.OCaml_4xx].
 *)
 
+(* Note that when bumping ppxlib's internal AST you will also need to update a
+   few other files:
+   - [astlib/pprintast.ml], details on how to update at the head of the file.
+*)
+
 (* Source code locations (ranges of positions), used in parsetree. *)
 
 type position = Lexing.position = {
