@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Fix ppxlib driver's AST to source printer. Our copy of pprintast was not
+  properly updated which resulted in incorrect printing of value bindings'
+  constraints (#585, @NathanReb)
+
 0.36.0 (2025-03-03)
 -------------------
 
