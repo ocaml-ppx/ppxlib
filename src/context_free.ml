@@ -8,6 +8,34 @@ module A = Attribute
 module AC = Attribute.Context
 
 module Rule = struct
+  module Attr_replace = struct
+    module Attribute_list = struct
+      type ('a, _) t =
+        | [] : ('a, unit) t
+        | ( :: ) : ('a, 'b) Attribute.t * ('a, 'c) t -> ('a, 'b * 'c) t
+
+      let rec to_packed_list : type a l. (a, l) t -> Attribute.packed list =
+        function
+        | [] -> []
+        | x :: xs -> T x :: to_packed_list xs
+    end
+
+    module Parsed_payload_list = struct
+      type _ t = [] : unit t | ( :: ) : 'a option * 'b t -> ('a * 'b) t
+    end
+
+    type ('a, 'list) unpacked = {
+      name : string;
+      attributes : ('a, 'list) Attribute_list.t;
+      expand :
+        ctxt:Expansion_context.Base.t -> 'a -> 'list Parsed_payload_list.t -> 'a;
+    }
+
+    type 'a t = T : ('a, _) unpacked -> 'a t
+
+    let name (T t) = t.name
+  end
+
   module Attr_group_inline = struct
     type ('a, 'b, 'c) unpacked = {
       attribute : ('b, 'c) Attribute.t;
@@ -79,6 +107,7 @@ module Rule = struct
       | Extension : Extension.t t
       | Special_function : Special_function.t t
       | Constant : Constant.t t
+      | Attr_replace : 'a EC.t -> 'a Attr_replace.t t
       | Attr_str_type_decl :
           (structure_item, type_declaration) Attr_group_inline.t t
       | Attr_sig_type_decl :
@@ -106,6 +135,8 @@ module Rule = struct
       | Extension, Extension -> Eq
       | Special_function, Special_function -> Eq
       | Constant, Constant -> Eq
+      | Attr_replace a, Attr_replace b -> (
+          match EC.eq a b with Eq -> Eq | Ne -> Ne)
       | Attr_str_type_decl, Attr_str_type_decl -> Eq
       | Attr_sig_type_decl, Attr_sig_type_decl -> Eq
       | Attr_str_type_ext, Attr_str_type_ext -> Eq
@@ -160,6 +191,28 @@ module Rule = struct
     T (Special_function, { name = Longident.name ident; ident; expand = f })
 
   let constant kind suffix expand = T (Constant, { suffix; kind; expand })
+
+  let attr_replace name kind attribute expand =
+    T
+      ( Attr_replace kind,
+        T
+          {
+            name;
+            attributes = [ attribute ];
+            expand =
+              (fun ~ctxt item payload ->
+                match payload with
+                | [ None ] -> assert false
+                | [ Some payload ] -> expand ~ctxt item payload);
+          } )
+
+  module Attr_multiple_replace = struct
+    module Attribute_list = Attr_replace.Attribute_list
+    module Parsed_payload_list = Attr_replace.Parsed_payload_list
+
+    let attr_multiple_replace name kind attributes expand =
+      T (Attr_replace kind, T { name; attributes; expand })
+  end
 
   let attr_str_type_decl attribute expand =
     T (Attr_str_type_decl, T { attribute; expand; expect = false })
@@ -286,91 +339,183 @@ let exn_to_sigi exn =
   let extension, loc = exn_to_extension exn in
   Ast_builder.Default.psig_extension ~loc extension []
 
-let rec map_node_rec context ts super_call loc base_ctxt x ~embed_errors =
+let handle_attr_replace_once context attrs item base_ctxt : 'a option t =
+  let result =
+    List.find_map attrs ~f:(fun (Rule.Attr_replace.T a) ->
+        let rec get_attr_payloads : type l.
+            ('a, l) Rule.Attr_replace.Attribute_list.t ->
+            (bool * l Rule.Attr_replace.Parsed_payload_list.t) t = function
+          | [] -> return (false, Rule.Attr_replace.Parsed_payload_list.[])
+          | x :: xs ->
+              (if Attribute.Context.equal context (Attribute.context x) then
+                 Attribute.get_res x item |> of_result ~default:None
+               else return None)
+              >>= fun p ->
+              get_attr_payloads xs >>| fun (any_attrs, ps) ->
+              ( Option.is_some p || any_attrs,
+                Rule.Attr_replace.Parsed_payload_list.(p :: ps) )
+        in
+        let (any_attrs, payloads), errors = get_attr_payloads a.attributes in
+        if any_attrs then
+          Some
+            ( (payloads, errors) >>= fun payloads ->
+              Attribute.remove_seen_res context
+                (Rule.Attr_replace.Attribute_list.to_packed_list a.attributes)
+                item
+              |> of_result ~default:item
+              >>| fun item -> a.expand ~ctxt:base_ctxt item payloads )
+        else None)
+  in
+  match result with
+  | Some (item, errors) -> (Some item, errors)
+  | None -> (None, [])
+
+let rec handle_attr_replace_str attrs item base_ctxt =
+  (match item.pstr_desc with
+  | Pstr_extension _ ->
+      handle_attr_replace_once AC.Pstr_extension attrs item base_ctxt
+  | Pstr_eval _ -> handle_attr_replace_once AC.Pstr_eval attrs item base_ctxt
+  | _ -> return None)
+  >>= function
+  | Some item -> handle_attr_replace_str attrs item base_ctxt
+  | None -> return item
+
+let rec handle_attr_replace_sig attrs item base_ctxt =
+  (match item.psig_desc with
+  | Psig_extension _ ->
+      handle_attr_replace_once AC.Psig_extension attrs item base_ctxt
+  | _ -> return None)
+  >>= function
+  | Some item -> handle_attr_replace_sig attrs item base_ctxt
+  | None -> return item
+
+let rec map_node_rec attr_context attr_rules ext_context ts super_call loc
+    base_ctxt x ~embed_errors =
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
-  match EC.get_extension context x with
-  | None -> super_call base_ctxt x
-  | Some (ext, attrs) -> (
-      (try
-         E.For_context.convert_res ts ~ctxt ext
-         |> With_errors.of_result ~default:None
-       with exn when embed_errors ->
-         With_errors.return (Some (exn_to_error_extension context x exn)))
-      >>= fun converted ->
-      match converted with
+  handle_attr_replace_once attr_context attr_rules x base_ctxt >>= function
+  | Some x ->
+      map_node_rec attr_context attr_rules ext_context ts super_call loc
+        base_ctxt x ~embed_errors
+  | None -> (
+      match EC.get_extension ext_context x with
       | None -> super_call base_ctxt x
-      | Some x ->
-          EC.merge_attributes_res context x attrs
-          |> With_errors.of_result ~default:x
-          >>= fun x ->
-          map_node_rec context ts super_call loc base_ctxt x ~embed_errors)
+      | Some (ext, attrs) -> (
+          (try
+             E.For_context.convert_res ts ~ctxt ext
+             |> With_errors.of_result ~default:None
+           with exn when embed_errors ->
+             With_errors.return
+               (Some (exn_to_error_extension ext_context x exn)))
+          >>= fun converted ->
+          match converted with
+          | None -> super_call base_ctxt x
+          | Some x ->
+              EC.merge_attributes_res ext_context x attrs
+              |> With_errors.of_result ~default:x
+              >>= fun x ->
+              map_node_rec attr_context attr_rules ext_context ts super_call loc
+                base_ctxt x ~embed_errors))
 
-let map_node context ts super_call loc base_ctxt x ~hook ~embed_errors =
+let map_context : type a. a EC.t -> a AC.t = function
+  | EC.Class_expr -> AC.Class_expr
+  | EC.Class_field -> AC.Class_field
+  | EC.Class_type -> AC.Class_type
+  | EC.Class_type_field -> AC.Class_type_field
+  | EC.Core_type -> AC.Core_type
+  | EC.Expression -> AC.Expression
+  | EC.Module_expr -> AC.Module_expr
+  | EC.Module_type -> AC.Module_type
+  | EC.Pattern -> AC.Pattern
+  | EC.Signature_item | EC.Structure_item ->
+      assert false
+      (* These can't happen because all the items get handled together in structure and
+         signature processing *)
+  | EC.Ppx_import -> AC.Type_declaration
+
+let map_node attr_rules ext_context ts super_call loc base_ctxt x ~hook
+    ~embed_errors =
+  let attr_context = map_context ext_context in
   let ctxt =
     Expansion_context.Extension.make ~extension_point_loc:loc ~base:base_ctxt ()
   in
-  match EC.get_extension context x with
-  | None -> super_call base_ctxt x
-  | Some (ext, attrs) -> (
-      (try
-         E.For_context.convert_res ts ~ctxt ext
-         |> With_errors.of_result ~default:None
-       with exn when embed_errors ->
-         With_errors.return (Some (exn_to_error_extension context x exn)))
-      >>= fun converted ->
-      match converted with
+  handle_attr_replace_once attr_context attr_rules x base_ctxt >>= function
+  | Some x ->
+      map_node_rec attr_context attr_rules ext_context ts super_call loc
+        base_ctxt x ~embed_errors
+  | None -> (
+      match EC.get_extension ext_context x with
       | None -> super_call base_ctxt x
-      | Some x ->
-          map_node_rec context ts super_call loc base_ctxt
-            (EC.merge_attributes context x attrs)
-            ~embed_errors
-          >>| fun generated_code ->
-          Generated_code_hook.replace hook context loc (Single generated_code);
-          generated_code)
+      | Some (ext, attrs) -> (
+          (try
+             E.For_context.convert_res ts ~ctxt ext
+             |> With_errors.of_result ~default:None
+           with exn when embed_errors ->
+             With_errors.return
+               (Some (exn_to_error_extension ext_context x exn)))
+          >>= fun converted ->
+          match converted with
+          | None -> super_call base_ctxt x
+          | Some x ->
+              map_node_rec attr_context attr_rules ext_context ts super_call loc
+                base_ctxt
+                (EC.merge_attributes ext_context x attrs)
+                ~embed_errors
+              >>| fun generated_code ->
+              Generated_code_hook.replace hook ext_context loc
+                (Single generated_code);
+              generated_code))
 
-let rec map_nodes context ts super_call get_loc base_ctxt l ~hook ~embed_errors
-    ~in_generated_code =
+let rec map_nodes attr_rules ext_context ts super_call get_loc base_ctxt l ~hook
+    ~embed_errors ~in_generated_code =
+  let attr_context = map_context ext_context in
   match l with
   | [] -> return []
   | x :: l -> (
-      match EC.get_extension context x with
-      | None ->
-          (* These two lets force the evaluation order, so that errors are reported in the
-             same order as they appear in the source file. *)
-          super_call base_ctxt x >>= fun x ->
-          map_nodes context ts super_call get_loc base_ctxt l ~hook
-            ~embed_errors ~in_generated_code
-          >>| fun l -> x :: l
-      | Some (ext, attrs) -> (
-          let extension_point_loc = get_loc x in
-          let ctxt =
-            Expansion_context.Extension.make ~extension_point_loc
-              ~base:base_ctxt ()
-          in
-          (try
-             E.For_context.convert_inline_res ts ~ctxt ext
-             |> With_errors.of_result ~default:None
-           with exn when embed_errors ->
-             With_errors.return (Some [ exn_to_error_extension context x exn ]))
-          >>= function
+      handle_attr_replace_once attr_context attr_rules x base_ctxt >>= function
+      | Some x ->
+          map_nodes attr_rules ext_context ts super_call get_loc base_ctxt
+            (x :: l) ~hook ~embed_errors ~in_generated_code
+      | None -> (
+          match EC.get_extension ext_context x with
           | None ->
+              (* These two lets force the evaluation order, so that errors are reported in
+             the same order as they appear in the source file. *)
               super_call base_ctxt x >>= fun x ->
-              map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~embed_errors ~in_generated_code
+              map_nodes attr_rules ext_context ts super_call get_loc base_ctxt l
+                ~hook ~embed_errors ~in_generated_code
               >>| fun l -> x :: l
-          | Some converted ->
-              ((), attributes_errors attrs) >>= fun () ->
-              map_nodes context ts super_call get_loc base_ctxt converted ~hook
-                ~embed_errors ~in_generated_code:true
-              >>= fun generated_code ->
-              if not in_generated_code then
-                Generated_code_hook.replace hook context extension_point_loc
-                  (Many generated_code);
-              map_nodes context ts super_call get_loc base_ctxt l ~hook
-                ~embed_errors ~in_generated_code
-              >>| fun code -> generated_code @ code))
+          | Some (ext, attrs) -> (
+              let extension_point_loc = get_loc x in
+              let ctxt =
+                Expansion_context.Extension.make ~extension_point_loc
+                  ~base:base_ctxt ()
+              in
+              (try
+                 E.For_context.convert_inline_res ts ~ctxt ext
+                 |> With_errors.of_result ~default:None
+               with exn when embed_errors ->
+                 With_errors.return
+                   (Some [ exn_to_error_extension ext_context x exn ]))
+              >>= function
+              | None ->
+                  super_call base_ctxt x >>= fun x ->
+                  map_nodes attr_rules ext_context ts super_call get_loc
+                    base_ctxt l ~hook ~embed_errors ~in_generated_code
+                  >>| fun l -> x :: l
+              | Some converted ->
+                  ((), attributes_errors attrs) >>= fun () ->
+                  map_nodes attr_rules ext_context ts super_call get_loc
+                    base_ctxt converted ~hook ~embed_errors
+                    ~in_generated_code:true
+                  >>= fun generated_code ->
+                  if not in_generated_code then
+                    Generated_code_hook.replace hook ext_context
+                      extension_point_loc (Many generated_code);
+                  map_nodes attr_rules ext_context ts super_call get_loc
+                    base_ctxt l ~hook ~embed_errors ~in_generated_code
+                  >>| fun code -> generated_code @ code)))
 
 let map_nodes = map_nodes ~in_generated_code:false
 
@@ -415,6 +560,10 @@ let rev_concat = function
   | [ x ] -> x
   | [ x; y ] -> y @ x
   | l -> List.concat (List.rev l)
+
+let sort_attr_replace l =
+  List.sort l ~cmp:(fun a b ->
+      String.compare (Rule.Attr_replace.name a) (Rule.Attr_replace.name b))
 
 let sort_attr_group_inline l =
   List.sort l ~cmp:(fun a b ->
@@ -523,6 +672,17 @@ module Expect_mismatch_handler = struct
   let nop = { f = (fun _ _ _ -> ()) }
 end
 
+(** Apply any code-path attributes to the context. *)
+let with_context base_ctxt e =
+  Attribute.get_res Ast_traverse.enter_value e |> of_result ~default:None
+  >>= fun option ->
+  match option with
+  | None -> return (base_ctxt, e)
+  | Some { loc; txt } ->
+      Attribute.remove_seen_res Expression [ T Ast_traverse.enter_value ] e
+      |> of_result ~default:e
+      >>| fun e -> (Expansion_context.Base.enter_value ~loc txt base_ctxt, e)
+
 class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   ?(generated_code_hook = Generated_code_hook.nop) ?(embed_errors = false) rules
   =
@@ -549,6 +709,31 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
   and signature_item = E.filter_by_context EC.signature_item extensions
   and structure_item = E.filter_by_context EC.structure_item extensions
   and ppx_import = E.filter_by_context EC.Ppx_import extensions in
+
+  let attr_replace_class_expr =
+    Rule.filter (Attr_replace EC.class_expr) rules |> sort_attr_replace
+  and attr_replace_class_field =
+    Rule.filter (Attr_replace EC.class_field) rules |> sort_attr_replace
+  and attr_replace_class_type =
+    Rule.filter (Attr_replace EC.class_type) rules |> sort_attr_replace
+  and attr_replace_class_type_field =
+    Rule.filter (Attr_replace EC.class_type_field) rules |> sort_attr_replace
+  and attr_replace_core_type =
+    Rule.filter (Attr_replace EC.core_type) rules |> sort_attr_replace
+  and attr_replace_expression =
+    Rule.filter (Attr_replace EC.expression) rules |> sort_attr_replace
+  and attr_replace_module_expr =
+    Rule.filter (Attr_replace EC.module_expr) rules |> sort_attr_replace
+  and attr_replace_module_type =
+    Rule.filter (Attr_replace EC.module_type) rules |> sort_attr_replace
+  and attr_replace_pattern =
+    Rule.filter (Attr_replace EC.pattern) rules |> sort_attr_replace
+  and attr_replace_signature_item =
+    Rule.filter (Attr_replace EC.signature_item) rules |> sort_attr_replace
+  and attr_replace_structure_item =
+    Rule.filter (Attr_replace EC.structure_item) rules |> sort_attr_replace
+    (* Intentionally ignoring [EC.Ppx_import] *)
+  in
 
   let attr_str_type_decls, attr_str_type_decls_expect =
     Rule.filter Attr_str_type_decl rules
@@ -615,34 +800,19 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
     method! location _ x = return x
 
     method! core_type base_ctxt x =
-      map_node EC.core_type core_type super#core_type x.ptyp_loc base_ctxt x
+      map_node attr_replace_core_type EC.core_type core_type super#core_type
+        x.ptyp_loc base_ctxt x
 
     method! pattern base_ctxt x =
-      map_node EC.pattern pattern super#pattern x.ppat_loc base_ctxt x
+      map_node attr_replace_pattern EC.pattern pattern super#pattern x.ppat_loc
+        base_ctxt x
 
     method! expression base_ctxt e =
-      let with_context =
-        (* Make sure code-path attribute is applied before expanding. *)
-        Attribute.get_res Ast_traverse.enter_value e |> of_result ~default:None
-        >>= fun option ->
-        match option with
-        | None -> return (base_ctxt, e)
-        | Some { loc; txt } ->
-            Attribute.remove_seen_res Expression
-              [ T Ast_traverse.enter_value ]
-              e
-            |> of_result ~default:e
-            >>| fun e ->
-            (Expansion_context.Base.enter_value ~loc txt base_ctxt, e)
-      in
-      with_context >>= fun (base_ctxt, e) ->
+      with_context base_ctxt e >>= fun (base_ctxt, e) ->
       let expanded =
-        match e.pexp_desc with
-        | Pexp_extension _ ->
-            map_node EC.expression expression
-              (fun _ e -> return e)
-              e.pexp_loc base_ctxt e
-        | _ -> return e
+        map_node attr_replace_expression EC.expression expression
+          (fun _ e -> return e)
+          e.pexp_loc base_ctxt e
       in
       expanded >>= fun e ->
       let expand_constant kind char text =
@@ -698,14 +868,32 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         =
       let { pexp_desc = _; pexp_loc; pexp_attributes; pexp_loc_stack } = e in
       let func =
-        let { pexp_desc; pexp_loc; pexp_attributes; pexp_loc_stack } = func in
-        self#attributes base_ctxt pexp_attributes >>| fun pexp_attributes ->
-        {
-          pexp_desc;
-          pexp_loc (* location doesn't need to be traversed *);
-          pexp_attributes;
-          pexp_loc_stack;
-        }
+        with_context base_ctxt func >>= fun (base_ctxt, func) ->
+        let rec handle_attr_replace_fix replaced item =
+          handle_attr_replace_once AC.expression attr_replace_expression item
+            base_ctxt
+          >>= function
+          | Some item -> handle_attr_replace_fix true item
+          | None -> return (replaced, item)
+        in
+        handle_attr_replace_fix false func >>= fun (replaced, func) ->
+        match replaced with
+        (* If the attribute replacement changed the func then we should traverse it after
+           all. This might cause some weirdness if the attribute replacement doesn't
+           actually change the name of the function, because the special_function handling
+           code will get called again on the ident, but that feels mostly unavoidable. *)
+        | true -> super#expression base_ctxt func
+        | false ->
+            let { pexp_desc; pexp_loc; pexp_attributes; pexp_loc_stack } =
+              func
+            in
+            self#attributes base_ctxt pexp_attributes >>| fun pexp_attributes ->
+            {
+              pexp_desc;
+              pexp_loc (* location doesn't need to be traversed *);
+              pexp_attributes;
+              pexp_loc_stack;
+            }
       in
       func >>= fun func ->
       let args =
@@ -723,22 +911,24 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
       }
 
     method! class_type base_ctxt x =
-      map_node EC.class_type class_type super#class_type x.pcty_loc base_ctxt x
+      map_node attr_replace_class_type EC.class_type class_type super#class_type
+        x.pcty_loc base_ctxt x
 
     method! class_type_field base_ctxt x =
-      map_node EC.class_type_field class_type_field super#class_type_field
-        x.pctf_loc base_ctxt x
+      map_node attr_replace_class_type_field EC.class_type_field
+        class_type_field super#class_type_field x.pctf_loc base_ctxt x
 
     method! class_expr base_ctxt x =
-      map_node EC.class_expr class_expr super#class_expr x.pcl_loc base_ctxt x
+      map_node attr_replace_class_expr EC.class_expr class_expr super#class_expr
+        x.pcl_loc base_ctxt x
 
     method! class_field base_ctxt x =
-      map_node EC.class_field class_field super#class_field x.pcf_loc base_ctxt
-        x
+      map_node attr_replace_class_field EC.class_field class_field
+        super#class_field x.pcf_loc base_ctxt x
 
     method! module_type base_ctxt x =
-      map_node EC.module_type module_type super#module_type x.pmty_loc base_ctxt
-        x
+      map_node attr_replace_module_type EC.module_type module_type
+        super#module_type x.pmty_loc base_ctxt x
 
     method! module_expr base_ctxt x =
       ( (* Make sure code-path attribute is applied before expanding. *)
@@ -753,31 +943,33 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
             >>| fun x ->
             (Expansion_context.Base.enter_module ~loc txt base_ctxt, x) )
       >>= fun (base_ctxt, x) ->
-      map_node EC.module_expr module_expr super#module_expr x.pmod_loc base_ctxt
-        x
+      map_node attr_replace_module_expr EC.module_expr module_expr
+        super#module_expr x.pmod_loc base_ctxt x
 
     method! structure_item base_ctxt x =
-      map_node EC.structure_item structure_item super#structure_item x.pstr_loc
-        base_ctxt x
+      map_node attr_replace_structure_item EC.structure_item structure_item
+        super#structure_item x.pstr_loc base_ctxt x
 
     method! signature_item base_ctxt x =
-      map_node EC.signature_item signature_item super#signature_item x.psig_loc
-        base_ctxt x
+      map_node attr_replace_signature_item EC.signature_item signature_item
+        super#signature_item x.psig_loc base_ctxt x
 
     method! class_structure base_ctxt { pcstr_self; pcstr_fields } =
       self#pattern base_ctxt pcstr_self >>= fun pcstr_self ->
-      map_nodes EC.class_field class_field super#class_field
+      map_nodes attr_replace_class_field EC.class_field class_field
+        super#class_field
         (fun x -> x.pcf_loc)
         base_ctxt pcstr_fields
       >>| fun pcstr_fields -> { pcstr_self; pcstr_fields }
 
     method! type_declaration base_ctxt x =
-      map_node EC.Ppx_import ppx_import super#type_declaration x.ptype_loc
+      map_node [] EC.Ppx_import ppx_import super#type_declaration x.ptype_loc
         base_ctxt x
 
     method! class_signature base_ctxt { pcsig_self; pcsig_fields } =
       self#core_type base_ctxt pcsig_self >>= fun pcsig_self ->
-      map_nodes EC.class_type_field class_type_field super#class_type_field
+      map_nodes attr_replace_class_type_field EC.class_type_field
+        class_type_field super#class_type_field
         (fun x -> x.pctf_loc)
         base_ctxt pcsig_fields
       >>| fun pcsig_fields -> { pcsig_self; pcsig_fields }
@@ -809,6 +1001,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         match st with
         | [] -> return []
         | item :: rest -> (
+            handle_attr_replace_str attr_replace_structure_item item base_ctxt
+            >>= fun item ->
             let loc = item.pstr_loc in
             match item.pstr_desc with
             | Pstr_extension (ext, attrs) -> (
@@ -940,6 +1134,8 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         match sg with
         | [] -> return []
         | item :: rest -> (
+            handle_attr_replace_sig attr_replace_signature_item item base_ctxt
+            >>= fun item ->
             let loc = item.psig_loc in
             match item.psig_desc with
             | Psig_extension (ext, attrs) -> (
