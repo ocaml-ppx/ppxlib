@@ -18,6 +18,9 @@ unreleased
 - Add a new context-free rule type that replaces AST nodes that have the registered
   attributes attached to them. (#574, @Skepfyr)
 
+- Allow users to derive code from module bindings and module declarations
+  (#576, @patricoferris)
+
 0.36.1 (2025-07-10)
 -------------------
 
