@@ -70,8 +70,9 @@ module Copy = struct
 
   let fun_type ~context decl =
     (* For [type ('a, 'b) x] we generate the type:
-       ['f0 'g0 'f1 'g1. ('f0 -> 'g0) -> ('f1 -> 'g1) -> Ast_From.Submodule.x ->
-        Ast_to.Submodule.x] *)
+       ['f0 'g0 'f1 'g1. ('f0 -> 'g0) -> ('f1 -> 'g1) ->
+         ('f0, 'f1) Ast_From.Submodule.x ->
+         ('g0, 'g1) Ast_to.Submodule.x] *)
     let extra_params =
       List.mapi (fun i _ -> arg_type_from_param i) decl.ptype_params
     in
