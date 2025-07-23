@@ -314,6 +314,10 @@ let type_decls str =
     str
   |> List.flatten
 
+let default_copy_location =
+  let loc = Location.none in
+  [%stri let copy_location = fun x -> x]
+
 let gen_copy ~from ~to_ ast =
   let modules =
     List.filter_map
@@ -336,7 +340,11 @@ let gen_copy ~from ~to_ ast =
         List.map (Copy.from_ty_decl ~context) tds)
       modules
   in
-  [ open_stdlib0; Ast_builder.pstr_value Recursive (List.flatten vbs) ]
+  [
+    open_stdlib0;
+    default_copy_location;
+    Ast_builder.pstr_value Recursive (List.flatten vbs);
+  ]
 
 let mod_name filename =
   let fn = Filename.basename filename in
