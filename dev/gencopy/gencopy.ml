@@ -107,21 +107,27 @@ module Copy = struct
     let vars = List.mapi (fun i _ -> ptuple_var i) typs in
     Ast_builder.ppat_tuple vars
 
-  let copy_var ~decl var_name =
+  let param_index ~decl var_name =
+    let rec find_index i p l =
+      match l with
+      | [] ->
+          failwith
+            (Printf.sprintf "Could not find var '%s in %s" var_name
+               decl.ptype_name.txt)
+      | hd :: _ when p hd -> i
+      | _ :: tl -> find_index (i + 1) p tl
+    in
     let is_var (typ, _) =
       match typ.ptyp_desc with
       | Ptyp_var name -> String.equal name var_name
       | _ -> false
     in
-    let index = List.find_index is_var decl.ptype_params in
-    match index with
-    | None ->
-        failwith
-          (Printf.sprintf "Could not find var '%s in %s" var_name
-             decl.ptype_name.txt)
-    | Some i ->
-        let name = from_var_name i in
-        Ast_builder.pexp_ident (loc (Lident name))
+    find_index 0 is_var decl.ptype_params
+
+  let copy_var ~decl var_name =
+    let index = param_index ~decl var_name in
+    let name = from_var_name index in
+    Ast_builder.pexp_ident (loc (Lident name))
 
   let copy_t modname =
     Printf.sprintf "copy_%s" (String.uncapitalize_ascii modname)
