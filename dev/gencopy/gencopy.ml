@@ -49,15 +49,7 @@ module Copy = struct
     Printf.sprintf "copy_%s" name
 
   let arrow_type args ret =
-    let rev_args = List.rev args in
-    let rec aux acc args =
-      match args with
-      | [] -> acc
-      | hd :: tl ->
-          let acc = Ast_builder.ptyp_arrow Nolabel hd acc in
-          aux acc tl
-    in
-    aux ret rev_args
+    List.fold_right (Ast_builder.ptyp_arrow Nolabel) args ret
 
   let arg_type_from_param i =
     let arg = from_var i in
