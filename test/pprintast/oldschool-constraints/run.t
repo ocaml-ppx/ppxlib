@@ -9,21 +9,20 @@ pprint_ppat_constraint encodes it in the pvb_pat field, i.e. the legacy way.
   let f : 'a . 'a -> unit = ()
 
   $ ./pprint_ppat_constraint.exe
-  let (f : 'a . 'a -> unit) = ()
+  let f : 'a . 'a -> unit = ()
 
-The legacy gets printed with wrapping parens around the whole pattern but a
-polymorphic type cannot be written in there and the latter doesn't parse.
-These should instead be printed as the former instead and the output should be correctly
-parsed by the compiler:
+The legacy gets printed the same way as the pvb_constraint version to allow both
+representation to coexist. The compiler's pprintast doesn't support it and prints
+an incorrect syntax that does not parse. The compiler itself still seems to accept
+such ASTs though, hence why we modified our pprintast to allow those.
+
+The output should be accepted by the parser:
 
   $ ./pprint_ppat_constraint.exe > test.ml
   $ ocamlc test.ml
-  File "test.ml", line 1, characters 12-13:
-  1 | let (f : 'a . 'a -> unit) = ()
-                  ^
-  Error: Syntax error: ) expected
-  File "test.ml", line 1, characters 4-5:
-  1 | let (f : 'a . 'a -> unit) = ()
-          ^
-    This ( might be unmatched
+  File "test.ml", line 1, characters 26-28:
+  1 | let f : 'a . 'a -> unit = ()
+                                ^^
+  Error: This expression should not be a unit literal, the expected type is
+         'a -> unit
   [2]
