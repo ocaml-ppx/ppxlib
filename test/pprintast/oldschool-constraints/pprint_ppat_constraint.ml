@@ -11,7 +11,7 @@ let ast =
            [ Loc.make ~loc "a" ]
            [%type: 'a -> unit])
     in
-    let expr = [%expr ()] in
+    let expr = [%expr fun _ -> ()] in
     [ Ast_builder.Default.Latest.value_binding ~loc ~pat ~expr () ]
   in
   Ast_builder.Default.pstr_value ~loc Nonrecursive vbs

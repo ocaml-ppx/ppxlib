@@ -6,10 +6,10 @@ pprint_ppat_constraint encodes it in the pvb_pat field, i.e. the legacy way.
 
 
   $ ./pprint_pvb_constraint.exe
-  let f : 'a . 'a -> unit = ()
+  let f : 'a . 'a -> unit = fun _ -> ()
 
   $ ./pprint_ppat_constraint.exe
-  let f : 'a . 'a -> unit = ()
+  let f : 'a . 'a -> unit = fun _ -> ()
 
 The legacy gets printed the same way as the pvb_constraint version to allow both
 representation to coexist. The compiler's pprintast doesn't support it and prints
@@ -20,9 +20,3 @@ The output should be accepted by the parser:
 
   $ ./pprint_ppat_constraint.exe > test.ml
   $ ocamlc test.ml
-  File "test.ml", line 1, characters 26-28:
-  1 | let f : 'a . 'a -> unit = ()
-                                ^^
-  Error: This expression should not be a unit literal, the expected type is
-         'a -> unit
-  [2]

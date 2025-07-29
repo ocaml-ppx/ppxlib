@@ -5,7 +5,7 @@ let loc = Location.none
 let ast =
   let vbs =
     let pat = [%pat? f] in
-    let expr = [%expr ()] in
+    let expr = [%expr fun _ -> ()] in
     let constraint_ =
       Pvc_constraint
         {
