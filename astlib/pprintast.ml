@@ -27,6 +27,10 @@
    - Replaced [Lexer.is_keyword] with [Keyword.is_keyword] for compat with
      Ocaml < 5.2.
    - Added [class_signature] and [type_declaration] entry points at the end.
+   - Added a custom case to `binding` to print specific instances of
+     [Ppat_constraint (p, typ)] in [value_binding] patterns as if they were encoded
+     using the new [pvb_constraint] field instead of producing incorrect syntax as
+     the compiler version does.
 *)
 
 open Ast_502
@@ -1337,26 +1341,31 @@ and binding ctxt f { pvb_pat = p; pvb_expr = x; pvb_constraint = ct; _ } =
           pp f "(type@ %a)@ %a" ident_of_name str.txt pp_print_pexp_function e
       | _ -> pp f "=@;%a" (expression ctxt) x
   in
-  match ct with
-  | Some (Pvc_constraint { locally_abstract_univars = []; typ }) ->
+  match (ct, p) with
+  | ( None,
+      {
+        ppat_attributes = [];
+        ppat_desc =
+          Ppat_constraint
+            (({ ppat_desc = Ppat_var _; ppat_attributes = [] } as p), typ);
+      } )
+  | Some (Pvc_constraint { locally_abstract_univars = []; typ }), p ->
       pp f "%a@;:@;%a@;=@;%a" (simple_pattern ctxt) p (core_type ctxt) typ
         (expression ctxt) x
-  | Some (Pvc_constraint { locally_abstract_univars = vars; typ }) ->
+  | Some (Pvc_constraint { locally_abstract_univars = vars; typ }), _ ->
       pp f "%a@;: type@;%a.@;%a@;=@;%a" (simple_pattern ctxt) p
         (list pp_print_string ~sep:"@;")
         (List.map (fun x -> x.txt) vars)
         (core_type ctxt) typ (expression ctxt) x
-  | Some (Pvc_coercion { ground = None; coercion }) ->
+  | Some (Pvc_coercion { ground = None; coercion }), _ ->
       pp f "%a@;:>@;%a@;=@;%a" (simple_pattern ctxt) p (core_type ctxt) coercion
         (expression ctxt) x
-  | Some (Pvc_coercion { ground = Some ground; coercion }) ->
+  | Some (Pvc_coercion { ground = Some ground; coercion }), _ ->
       pp f "%a@;:%a@;:>@;%a@;=@;%a" (simple_pattern ctxt) p (core_type ctxt)
         ground (core_type ctxt) coercion (expression ctxt) x
-  | None -> (
-      match p with
-      | { ppat_desc = Ppat_var _; ppat_attributes = [] } ->
-          pp f "%a@ %a" (simple_pattern ctxt) p pp_print_pexp_function x
-      | _ -> pp f "%a@;=@;%a" (pattern ctxt) p (expression ctxt) x)
+  | None, { ppat_desc = Ppat_var _; ppat_attributes = [] } ->
+      pp f "%a@ %a" (simple_pattern ctxt) p pp_print_pexp_function x
+  | _, _ -> pp f "%a@;=@;%a" (pattern ctxt) p (expression ctxt) x
 
 (* [in] is not printed *)
 and bindings ctxt f (rf, l) =

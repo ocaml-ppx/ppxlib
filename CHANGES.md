@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Fix pprintast to output correct syntax from `Ppat_constraint (pat, Ptyp_poly ...)`
+  nodes until they are completely dropped. (#588, @NathanReb)
+
 0.36.1 (2025-07-10)
 -------------------
 
