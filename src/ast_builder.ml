@@ -1,5 +1,126 @@
 open! Import
 
+(* Converts a pair of [pattern] and [expression] for value_binding to
+   the proper triple [pattern], [expression] and [pvb_constraint]. *)
+let to_pvb_constraint ~pvb_pat ~pvb_expr =
+  (* Copied and adapted from OCaml 5.0 Ast_helper *)
+  let varify_constructors var_names t =
+    let var_names = List.map ~f:(fun v -> v.Location.txt) var_names in
+    let rec loop t =
+      let desc =
+        match t.ptyp_desc with
+        | Ptyp_any -> Ptyp_any
+        | Ptyp_var x -> Ptyp_var x
+        | Ptyp_arrow (label, core_type, core_type') ->
+            Ptyp_arrow (label, loop core_type, loop core_type')
+        | Ptyp_tuple lst -> Ptyp_tuple (List.map ~f:loop lst)
+        | Ptyp_constr ({ txt = Longident.Lident s; _ }, [])
+          when List.mem s ~set:var_names ->
+            Ptyp_var s
+        | Ptyp_constr (longident, lst) ->
+            Ptyp_constr (longident, List.map ~f:loop lst)
+        | Ptyp_object (lst, o) ->
+            Ptyp_object (List.map ~f:loop_object_field lst, o)
+        | Ptyp_class (longident, lst) ->
+            Ptyp_class (longident, List.map ~f:loop lst)
+        | Ptyp_alias (core_type, string) -> Ptyp_alias (loop core_type, string)
+        | Ptyp_variant (row_field_list, flag, lbl_lst_option) ->
+            Ptyp_variant
+              (List.map ~f:loop_row_field row_field_list, flag, lbl_lst_option)
+        | Ptyp_poly (string_lst, core_type) ->
+            Ptyp_poly (string_lst, loop core_type)
+        | Ptyp_package (longident, lst) ->
+            Ptyp_package
+              (longident, List.map ~f:(fun (n, typ) -> (n, loop typ)) lst)
+        | Ptyp_open (longident, typ) -> Ptyp_open (longident, loop typ)
+        | Ptyp_extension (s, arg) -> Ptyp_extension (s, arg)
+      in
+      { t with ptyp_desc = desc }
+    and loop_row_field field =
+      let prf_desc =
+        match field.prf_desc with
+        | Rtag (label, flag, lst) -> Rtag (label, flag, List.map ~f:loop lst)
+        | Rinherit t -> Rinherit (loop t)
+      in
+      { field with prf_desc }
+    and loop_object_field field =
+      let pof_desc =
+        match field.pof_desc with
+        | Otag (label, t) -> Otag (label, loop t)
+        | Oinherit t -> Oinherit (loop t)
+      in
+      { field with pof_desc }
+    in
+    loop t
+  in
+  (* Match the form of the expr and pattern to decide the value of
+     [pvb_constraint]. Adapted from OCaml 5.0 PPrinter. *)
+  let tyvars_str tyvars = List.map ~f:(fun v -> v.Location.txt) tyvars in
+  let resugarable_value_binding p e =
+    let value_pattern =
+      match p with
+      | {
+       ppat_desc =
+         Ppat_constraint
+           ( ({ ppat_desc = Ppat_var _; _ } as pat),
+             ({ ptyp_desc = Ptyp_poly (args_tyvars, rt); _ } as ty_ext) );
+       ppat_attributes = [];
+       _;
+      } ->
+          assert (match rt.ptyp_desc with Ptyp_poly _ -> false | _ -> true);
+          let ty = match args_tyvars with [] -> rt | _ -> ty_ext in
+          `Var (pat, args_tyvars, rt, ty)
+      | { ppat_desc = Ppat_constraint (pat, rt); ppat_attributes = []; _ } ->
+          `NonVar (pat, rt)
+      | _ -> `None
+    in
+    let rec value_exp tyvars e =
+      match e with
+      | { pexp_desc = Pexp_newtype (tyvar, e); pexp_attributes = []; _ } ->
+          value_exp (tyvar :: tyvars) e
+      | { pexp_desc = Pexp_constraint (e, ct); pexp_attributes = []; _ } ->
+          Some (List.rev tyvars, e, ct)
+      | _ -> None
+    in
+    let value_exp = value_exp [] e in
+    match (value_pattern, value_exp) with
+    | `Var (p, pt_tyvars, pt_ct, extern_ct), Some (e_tyvars, inner_e, e_ct)
+      when List.equal ~eq:String.equal (tyvars_str pt_tyvars)
+             (tyvars_str e_tyvars) ->
+        let ety = varify_constructors e_tyvars e_ct in
+        if Poly.(ety = pt_ct) then
+          `Desugared_locally_abstract (p, pt_tyvars, e_ct, inner_e)
+        else
+          (* the expression constraint and the pattern constraint,
+           don't match, but we still have a Ptyp_poly pattern constraint that
+           should be resugared to a value binding *)
+          `Univars (p, pt_tyvars, extern_ct, e)
+    | `Var (p, pt_tyvars, _pt_ct, extern_ct), _ ->
+        `Univars (p, pt_tyvars, extern_ct, e)
+    | `NonVar (pat, ct), _ -> `NonVar (pat, ct, e)
+    | _ -> `None
+  in
+  let with_constraint ty_vars typ =
+    Some (Pvc_constraint { locally_abstract_univars = ty_vars; typ })
+  in
+  match resugarable_value_binding pvb_pat pvb_expr with
+  | `Desugared_locally_abstract (p, ty_vars, typ, e) ->
+      (p, e, with_constraint ty_vars typ)
+  | `Univars (pat, [], ct, expr) -> (
+      (* check if we are in the [let x : ty? :> coer = expr ] case *)
+      match expr with
+      | {
+       pexp_desc = Pexp_coerce (expr, ground, coercion);
+       pexp_attributes = [];
+       _;
+      } ->
+          let pvb_constraint = Some (Pvc_coercion { ground; coercion }) in
+          (pat, expr, pvb_constraint)
+      | _ -> (pat, expr, with_constraint [] ct))
+  | `Univars (pat, _, ct, expr) -> (pat, expr, with_constraint [] ct)
+  | `NonVar (p, typ, e) -> (p, e, with_constraint [] typ)
+  | `None -> (pvb_pat, pvb_expr, None)
+
 module Default = struct
   module Located = struct
     type 'a t = 'a Loc.t
@@ -59,7 +180,10 @@ module Default = struct
     add_fun_params ~loc None [ param ] e
 
   let value_binding ~loc ~pat ~expr =
-    value_binding ~loc ~pat ~expr ~constraint_:None
+    let pat, expr, constraint_ =
+      to_pvb_constraint ~pvb_pat:pat ~pvb_expr:expr
+    in
+    value_binding ~loc ~pat ~expr ~constraint_
 
   let constructor_declaration ~loc ~name ~args ~res =
     {

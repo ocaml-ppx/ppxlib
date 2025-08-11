@@ -20,4 +20,16 @@ let ast =
   in
   Ast_builder.Default.pstr_value ~loc Nonrecursive vbs
 
-let () = Format.printf "%a\n" Pprintast.structure_item ast
+let print_source () = Format.printf "%a\n" Pprintast.structure_item ast
+let print_ast () = Format.printf "%a\n" Pp_ast.Default.structure_item ast
+
+let () =
+  match Sys.argv with
+  | [| _exec |] -> print_source ()
+  | [| _exec; _flag |] ->
+      print_ast ();
+      Format.printf "------- PRINTED AS -------\n";
+      print_source ()
+  | _ ->
+      Printf.eprintf "Invalid usage!";
+      exit 1
