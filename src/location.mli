@@ -59,7 +59,7 @@ module Error : sig
   (** For a detailed explanation on error reporting, refer to the
       {{!"good-practices".handling_errors} relevant} part of the tutorial.*)
 
-  type t
+  type t = Astlib.Location.Error.t
 
   val make : loc:location -> string -> sub:(location * string) list -> t
 
