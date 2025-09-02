@@ -21,6 +21,8 @@ unreleased
 - Allow users to derive code from module bindings and module declarations
   (#576, @patricoferris)
 
+- Add `@@@ppxlib.inline.end`, deprecate `@@@deriving.end`. (#594, @ceastlund)
+
 0.36.1 (2025-07-10)
 -------------------
 

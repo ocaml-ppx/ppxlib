@@ -64,6 +64,7 @@ The only possible usage is [extra_args] <infile> <outfile>...
     -cookie NAME=EXPR           Set the cookie NAME to EXPR
     --cookie                    Same as -cookie
     -raise-embedded-errors      Raise the first embedded error found in the processed AST
+    -allow-deriving-end         Allow the use of [@@@deriving.end] (which is deprecated).
     -help                       Display this list of options
     --help                      Display this list of options
   [2]
@@ -86,5 +87,6 @@ The only exception is consulting help
     -cookie NAME=EXPR           Set the cookie NAME to EXPR
     --cookie                    Same as -cookie
     -raise-embedded-errors      Raise the first embedded error found in the processed AST
+    -allow-deriving-end         Allow the use of [@@@deriving.end] (which is deprecated).
     -help                       Display this list of options
     --help                      Display this list of options
