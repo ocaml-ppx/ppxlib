@@ -21,6 +21,8 @@ unreleased
 - Allow users to derive code from module bindings and module declarations
   (#576, @patricoferris)
 
+- Expose `Ppxlib.Location.Error.t = Astlib.Location.Error.t` (#593, @ceastlund)
+
 0.36.1 (2025-07-10)
 -------------------
 
