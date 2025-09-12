@@ -1339,6 +1339,9 @@ let shared_args =
     ( "-raise-embedded-errors",
       Arg.Set raise_embedded_errors_flag,
       " Raise the first embedded error found in the processed AST" );
+    ( "-allow-deriving-end",
+      Arg.Bool (( := ) Code_matcher.allow_deriving_end),
+      " Whether to allow [@@@deriving.end], which will soon be deprecated." );
   ]
 
 let () =

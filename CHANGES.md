@@ -23,6 +23,8 @@ unreleased
 
 - Expose `Ppxlib.Location.Error.t = Astlib.Location.Error.t` (#593, @ceastlund)
 
+- Add `@@@ppxlib.inline.end`, deprecate `@@@deriving.end`. (#594, @ceastlund)
+
 0.36.1 (2025-07-10)
 -------------------
 
