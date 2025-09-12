@@ -3,7 +3,7 @@ open! Import
 module Format = Stdlib.Format
 module Filename = Stdlib.Filename
 
-let allow_deriving_end = ref false
+let allow_deriving_end = ref true
 
 (* TODO: make the "deriving." or other prefix depend on the matching attribute name. *)
 let end_marker_sig =

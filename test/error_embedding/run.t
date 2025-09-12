@@ -87,3 +87,27 @@ Flag `-raise-embedded-errors` raises the first embedded error in the AST.
                            ^^^^^^^^^^^
   Error: error 1
   [1]
+
+Undeprecated `[@@@deriving.end]` runs just fine.
+
+  $ echo "type t [@@deriving_inline a_string] [@@@deriving.end]" > embedded_error.ml
+  $ ./deriver.exe embedded_error.ml
+  type t[@@deriving_inline a_string]
+  [@@@deriving.end ]
+  -embedded_error.ml
+  +embedded_error.ml.ppx-corrected
+  File "embedded_error.ml", line 1, characters 0-1:
+  !type t [@@deriving_inline a_string] 
+  !let _ = fun (_ : t) -> ()
+  !let _ = "derived_string"
+  ![@@@deriving.end]
+  [1]
+
+Deprecated `[@@@deriving.end]` produces an error.
+
+  $ echo "type t [@@deriving_inline a_string] [@@@deriving.end]" > embedded_error.ml
+  $ ./deriver.exe embedded_error.ml -allow-deriving-end false
+  [%%ocaml.error
+    "ppxlib: [@@@deriving.end] is deprecated, please use [@@@ppxlib.inline.end]. If you need the deprecated attribute temporarily, pass [-allow-deriving-end] to the ppx driver)."]
+  type t[@@deriving_inline a_string]
+  [@@@deriving.end ]
