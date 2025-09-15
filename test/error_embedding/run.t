@@ -91,16 +91,17 @@ Flag `-raise-embedded-errors` raises the first embedded error in the AST.
 Undeprecated `[@@@deriving.end]` runs just fine.
 
   $ echo "type t [@@deriving_inline a_string] [@@@deriving.end]" > embedded_error.ml
-  $ ./deriver.exe embedded_error.ml
+  $ ./deriver.exe embedded_error.ml -diff-cmd "diff -u --label source --label derived"
   type t[@@deriving_inline a_string]
   [@@@deriving.end ]
-  -embedded_error.ml
-  +embedded_error.ml.ppx-corrected
-  File "embedded_error.ml", line 1, characters 0-1:
-  !type t [@@deriving_inline a_string] 
-  !let _ = fun (_ : t) -> ()
-  !let _ = "derived_string"
-  ![@@@deriving.end]
+  --- source
+  +++ derived
+  @@ -1 +1,4 @@
+  -type t [@@deriving_inline a_string] [@@@deriving.end]
+  +type t [@@deriving_inline a_string] 
+  +let _ = fun (_ : t) -> ()
+  +let _ = "derived_string"
+  +[@@@deriving.end]
   [1]
 
 Deprecated `[@@@deriving.end]` produces an error.
