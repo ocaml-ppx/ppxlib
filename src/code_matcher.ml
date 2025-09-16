@@ -3,13 +3,25 @@ open! Import
 module Format = Stdlib.Format
 module Filename = Stdlib.Filename
 
-(* TODO: make the "deriving." depend on the matching attribute name. *)
+let allow_deriving_end = ref true
+
+(* TODO: make the "deriving." or other prefix depend on the matching attribute name. *)
 let end_marker_sig =
-  Attribute.Floating.declare "deriving.end" Signature_item
+  Attribute.Floating.declare "ppxlib.inline.end" Signature_item
     Ast_pattern.(pstr nil)
     ()
 
 let end_marker_str =
+  Attribute.Floating.declare "ppxlib.inline.end" Structure_item
+    Ast_pattern.(pstr nil)
+    ()
+
+let deprecated_end_marker_sig =
+  Attribute.Floating.declare "deriving.end" Signature_item
+    Ast_pattern.(pstr nil)
+    ()
+
+let deprecated_end_marker_str =
   Attribute.Floating.declare "deriving.end" Structure_item
     Ast_pattern.(pstr nil)
     ()
@@ -24,6 +36,7 @@ module Make (M : sig
 
   val get_loc : t -> Location.t
   val end_marker : (t, unit) Attribute.Floating.t
+  val deprecated_end_marker : (t, unit) Attribute.Floating.t
 
   module Transform (T : T1) : sig
     val apply :
@@ -51,10 +64,27 @@ struct
               [] )
       | x :: l -> (
           match Attribute.Floating.convert_res [ M.end_marker ] x with
-          | Ok None -> loop (x :: acc) l
           | Ok (Some ()) -> Ok (List.rev acc, (M.get_loc x).loc_start)
           | Error e -> Error e
-          | exception Failure _ -> loop (x :: acc) l)
+          | (exception Failure _) | Ok None -> (
+              match
+                Attribute.Floating.convert_res [ M.deprecated_end_marker ] x
+              with
+              | Ok (Some ()) ->
+                  if !allow_deriving_end then
+                    Ok (List.rev acc, (M.get_loc x).loc_start)
+                  else
+                    Error
+                      ( Location.Error.createf ~loc:(M.get_loc x)
+                          "ppxlib: [@@@@@@%s] is deprecated, please use \
+                           [@@@@@@%s]. If you need the deprecated attribute \
+                           temporarily, pass [-allow-deriving-end] to the ppx \
+                           driver)."
+                          (Attribute.Floating.name M.deprecated_end_marker)
+                          (Attribute.Floating.name M.end_marker),
+                        [] )
+              | Error e -> Error e
+              | (exception Failure _) | Ok None -> loop (x :: acc) l))
     in
     loop [] l
 
@@ -170,6 +200,7 @@ module Str = Make (struct
 
   let get_loc x = x.pstr_loc
   let end_marker = end_marker_str
+  let deprecated_end_marker = deprecated_end_marker_str
 
   module Transform (T : T1) = struct
     let apply o = o#structure_item
@@ -188,6 +219,7 @@ module Sig = Make (struct
 
   let get_loc x = x.psig_loc
   let end_marker = end_marker_sig
+  let deprecated_end_marker = deprecated_end_marker_sig
 
   module Transform (T : T1) = struct
     let apply o = o#signature_item
