@@ -3,7 +3,7 @@ unreleased
 
 - Make Ast_builder's default `value_binding` constructor generate the proper
   `pvb_constraint` from the pattern and expression arguments.
-  (#<PR_NUMBER>, @NathanReb)
+  (#589, @NathanReb)
 - Fix pprintast to output correct syntax from `Ppat_constraint (pat, Ptyp_poly ...)`
   nodes until they are completely dropped. (#588, @NathanReb)
 
