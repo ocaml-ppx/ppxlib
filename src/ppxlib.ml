@@ -48,6 +48,7 @@ module Ast_io = Utils.Ast_io.Read_bin
 
 module Attribute = Attribute
 module Reserved_namespaces = Name.Reserved_namespaces
+module Clean = Clean
 
 (** {2 Common helper functions} *)
 
