@@ -1157,8 +1157,12 @@ let process_file (kind : Kind.t) fn ~input_name ~relocate ~use_compiler_pprint
           (if use_compiler_pprint then Utils.print_as_compiler_source ppf ast
            else
              match ast with
-             | Intf ast -> Pprintast.signature ppf ast
-             | Impl ast -> Pprintast.structure ppf ast);
+             | Intf ast ->
+                 Pprintast.signature ppf
+                   (Clean.remove_migration_attributes#signature ast)
+             | Impl ast ->
+                 Pprintast.structure ppf
+                   (Clean.remove_migration_attributes#structure ast));
           let null_ast =
             match ast with Intf [] | Impl [] -> true | _ -> false
           in
