@@ -90,6 +90,8 @@ module Compiler_pprintast = struct
   (*IF_NOT_AT_LEAST 414 let module_expr _fmt _t = raise Unavailable *)
 end
 
+module Clean = Clean
+
 let init_error_reporting_style_using_env_vars () =
   Ocaml_common.Compmisc.read_clflags_from_env ()
 (** Adjust the reporting style of error messages to the environment variables OCAML_COLOR and OCAML_ERROR_STYLE. *)

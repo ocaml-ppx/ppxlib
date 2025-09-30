@@ -25,6 +25,9 @@ unreleased
 
 - Add `@@@ppxlib.inline.end`, deprecate `@@@deriving.end`. (#594, @ceastlund)
 
+- Clean the AST of any ppxlib migration attributes whenever printing using
+  Pretty_print mode and the use_compiler_pp flag. (#598, @patricoferris)
+
 0.36.1 (2025-07-10)
 -------------------
 

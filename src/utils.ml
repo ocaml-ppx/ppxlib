@@ -310,7 +310,9 @@ let print_as_compiler_source ppf ast =
   match (ast : Intf_or_impl.t) with
   | Intf sg ->
       let sg = Ppxlib_to_compiler.copy_signature sg in
-      Astlib.Compiler_pprintast.signature ppf sg
+      Astlib.Compiler_pprintast.signature ppf
+        (Astlib.Clean.remove_migration_attributes_from_sig sg)
   | Impl st ->
       let st = Ppxlib_to_compiler.copy_structure st in
-      Astlib.Compiler_pprintast.structure ppf st
+      Astlib.Compiler_pprintast.structure ppf
+        (Astlib.Clean.remove_migration_attributes_from_str st)
