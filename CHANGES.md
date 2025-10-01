@@ -1,8 +1,6 @@
 unreleased
 ----------
 
-- Add custom printer support to `pp_ast` functions via the `?printer` config parameter.
-
 ### 5.4 Support
 
 - Add initial OCaml 5.4 support (#570, @patricoferris, @NathanReb)
@@ -27,6 +25,9 @@ unreleased
 
 - Clean the AST of any ppxlib migration attributes whenever printing using
   Pretty_print mode and the use_compiler_pp flag. (#598, @patricoferris)
+
+- Add custom printer support to `pp_ast` functions via the `?printer` config
+  parameter. (#526, @pedrobslisboa)
 
 0.36.1 (2025-07-10)
 -------------------
