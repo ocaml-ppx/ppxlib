@@ -1,5 +1,5 @@
-unreleased
-----------
+0.36.2
+------
 
 - Make Ast_builder's default `value_binding` constructor generate the proper
   `pvb_constraint` from the pattern and expression arguments.
