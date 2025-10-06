@@ -114,12 +114,7 @@ and injectivity = Asttypes.injectivity = Injective | NoInjectivity
 
 (** Abstract syntax tree produced by parsing *)
 
-and constant = Parsetree.constant = {
-  pconst_desc : constant_desc;
-  pconst_loc : location;
-}
-
-and constant_desc = Parsetree.constant_desc =
+and constant = Parsetree.constant =
   | Pconst_integer of string * char option
       (** Integer constants such as [3] [3l] [3L] [3n].
 
@@ -179,11 +174,11 @@ and core_type_desc = Parsetree.core_type_desc =
   | Ptyp_var of string  (** A type variable such as ['a] *)
   | Ptyp_arrow of arg_label * core_type * core_type
       (** [Ptyp_arrow(lbl, T1, T2)] represents:
-          - [T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Nolabel}[Nolabel]},
+          - [T1 -> T2] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]},
           - [~l:T1 -> T2] when [lbl] is
-            {{!Asttypes.arg_label.Labelled}[Labelled]},
+            {{!Asttypes.arg_label.Labelled} [Labelled]},
           - [?l:T1 -> T2] when [lbl] is
-            {{!Asttypes.arg_label.Optional}[Optional]}. *)
+            {{!Asttypes.arg_label.Optional} [Optional]}. *)
   | Ptyp_tuple of core_type list
       (** [Ptyp_tuple([T1 ; ... ; Tn])] represents a product type
           [T1 * ... * Tn].
@@ -197,9 +192,9 @@ and core_type_desc = Parsetree.core_type_desc =
   | Ptyp_object of object_field list * closed_flag
       (** [Ptyp_object([ l1:T1; ...; ln:Tn ], flag)] represents:
           - [< l1:T1; ...; ln:Tn >] when [flag] is
-            {{!Asttypes.closed_flag.Closed}[Closed]},
+            {{!Asttypes.closed_flag.Closed} [Closed]},
           - [< l1:T1; ...; ln:Tn; .. >] when [flag] is
-            {{!Asttypes.closed_flag.Open}[Open]}. *)
+            {{!Asttypes.closed_flag.Open} [Open]}. *)
   | Ptyp_class of longident_loc * core_type list
       (** [Ptyp_class(tconstr, l)] represents:
           - [#tconstr] when [l=[]],
@@ -208,46 +203,44 @@ and core_type_desc = Parsetree.core_type_desc =
   | Ptyp_alias of core_type * string loc  (** [T as 'a]. *)
   | Ptyp_variant of row_field list * closed_flag * label list option
       (** [Ptyp_variant([`A;`B], flag, labels)] represents:
-          - [[ `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Closed}[Closed]},
-            and [labels] is [None],
-          - [[> `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Open}[Open]},
+          - [[ `A|`B ]] when [flag] is
+            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is [None],
+          - [[> `A|`B ]] when [flag] is {{!Asttypes.closed_flag.Open} [Open]},
             and [labels] is [None],
           - [[< `A|`B ]] when [flag] is
-            {{!Asttypes.closed_flag.Closed}[Closed]}, and [labels] is [Some []],
+            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is
+            [Some []],
           - [[< `A|`B > `X `Y ]] when [flag] is
-            {{!Asttypes.closed_flag.Closed}[Closed]}, and [labels] is
+            {{!Asttypes.closed_flag.Closed} [Closed]}, and [labels] is
             [Some ["X";"Y"]]. *)
   | Ptyp_poly of string loc list * core_type
       (** ['a1 ... 'an. T]
 
           Can only appear in the following context:
 
-          {ul
-           {- As the {!core_type} of a
-              {{!pattern_desc.Ppat_constraint}[Ppat_constraint]} node
-              corresponding to a constraint on a let-binding:
-              {[
-                let x : 'a1 ... 'an. T = e ...
-              ]}
-           }
-          }
+          - As the {!core_type} of a
+            {{!pattern_desc.Ppat_constraint} [Ppat_constraint]} node
+            corresponding to a constraint on a let-binding:
 
-          - Under {{!class_field_kind.Cfk_virtual}[Cfk_virtual]} for methods
+          {[
+            let x : 'a1 ... 'an. T = e ...
+          ]}
+          - Under {{!class_field_kind.Cfk_virtual} [Cfk_virtual]} for methods
             (not values).
 
           - As the {!core_type} of a
-            {{!class_type_field_desc.Pctf_method}[Pctf_method]} node.
+            {{!class_type_field_desc.Pctf_method} [Pctf_method]} node.
 
-          - As the {!core_type} of a {{!expression_desc.Pexp_poly}[Pexp_poly]}
+          - As the {!core_type} of a {{!expression_desc.Pexp_poly} [Pexp_poly]}
             node.
 
-          - As the {{!label_declaration.pld_type}[pld_type]} field of a
+          - As the {{!label_declaration.pld_type} [pld_type]} field of a
             {!label_declaration}.
 
-          - As a {!core_type} of a {{!core_type_desc.Ptyp_object}[Ptyp_object]}
+          - As a {!core_type} of a {{!core_type_desc.Ptyp_object} [Ptyp_object]}
             node.
 
-          - As the {{!value_description.pval_type}[pval_type]} field of a
+          - As the {{!value_description.pval_type} [pval_type]} field of a
             {!value_description}. *)
   | Ptyp_package of package_type  (** [(module S)]. *)
   | Ptyp_open of longident_loc * core_type  (** [M.(T)] *)
@@ -328,9 +321,9 @@ and pattern_desc = Parsetree.pattern_desc =
   | Ppat_record of (longident_loc * pattern) list * closed_flag
       (** [Ppat_record([(l1, P1) ; ... ; (ln, Pn)], flag)] represents:
           - [{ l1=P1; ...; ln=Pn }] when [flag] is
-            {{!Asttypes.closed_flag.Closed}[Closed]}
+            {{!Asttypes.closed_flag.Closed} [Closed]}
           - [{ l1=P1; ...; ln=Pn; _}] when [flag] is
-            {{!Asttypes.closed_flag.Open}[Open]}
+            {{!Asttypes.closed_flag.Open} [Open]}
 
           Invariant: [n > 0] *)
   | Ppat_array of pattern list  (** Pattern [[| P1; ...; Pn |]] *)
@@ -346,7 +339,6 @@ and pattern_desc = Parsetree.pattern_desc =
           Note: [(module P : S)] is represented as
           [Ppat_constraint(Ppat_unpack(Some "P"), Ptyp_package S)] *)
   | Ppat_exception of pattern  (** Pattern [exception P] *)
-  | Ppat_effect of pattern * pattern (* Pattern [effect P P] *)
   | Ppat_extension of extension  (** Pattern [[%id]] *)
   | Ppat_open of longident_loc * pattern  (** Pattern [M.(P)] *)
 
@@ -367,30 +359,27 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_let of rec_flag * value_binding list * expression
       (** [Pexp_let(flag, [(P1,E1) ; ... ; (Pn,En)], E)] represents:
           - [let P1 = E1 and ... and Pn = EN in E] when [flag] is
-            {{!Asttypes.rec_flag.Nonrecursive}[Nonrecursive]},
+            {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN in E] when [flag] is
-            {{!Asttypes.rec_flag.Recursive}[Recursive]}. *)
+            {{!Asttypes.rec_flag.Recursive} [Recursive]}. *)
   | Pexp_function of
       function_param list * type_constraint option * function_body
       (** [Pexp_function ([P1; ...; Pn], C, body)] represents any construct
           involving [fun] or [function], including:
           - [fun P1 ... Pn -> E] when [body = Pfunction_body E]
           - [fun P1 ... Pn -> function p1 -> e1 | ... | pm -> em] when
-            [body = Pfunction_cases [ p1 -> e1; ...; pm -> em ]]
-
-          [C] represents a type constraint or coercion placed immediately before
-          the arrow, e.g. [fun P1 ... Pn : ty -> ...] when
-          [C = Some (Pconstraint ty)].
-
-          A function must have parameters. [Pexp_function (params, _, body)]
-          must have non-empty [params] or a [Pfunction_cases _] body. *)
+            [body = Pfunction_cases [ p1 -> e1; ...; pm -> em ]] [C] represents
+            a type constraint or coercion placed immediately before the arrow,
+            e.g. [fun P1 ... Pn : ty -> ...] when [C = Some (Pconstraint ty)]. A
+            function must have parameters. [Pexp_function (params, _, body)]
+            must have non-empty [params] or a [Pfunction_cases _] body. *)
   | Pexp_apply of expression * (arg_label * expression) list
       (** [Pexp_apply(E0, [(l1, E1) ; ... ; (ln, En)])] represents
           [E0 ~l1:E1 ... ~ln:En]
 
-          [li] can be {{!Asttypes.arg_label.Nolabel}[Nolabel]} (non labeled
-          argument), {{!Asttypes.arg_label.Labelled}[Labelled]} (labelled
-          arguments) or {{!Asttypes.arg_label.Optional}[Optional]} (optional
+          [li] can be {{!Asttypes.arg_label.Nolabel} [Nolabel]} (non labeled
+          argument), {{!Asttypes.arg_label.Labelled} [Labelled]} (labelled
+          arguments) or {{!Asttypes.arg_label.Optional} [Optional]} (optional
           argument).
 
           Invariant: [n > 0] *)
@@ -428,9 +417,9 @@ and expression_desc = Parsetree.expression_desc =
   | Pexp_for of pattern * expression * expression * direction_flag * expression
       (** [Pexp_for(i, E1, E2, direction, E3)] represents:
           - [for i = E1 to E2 do E3 done] when [direction] is
-            {{!Asttypes.direction_flag.Upto}[Upto]}
+            {{!Asttypes.direction_flag.Upto} [Upto]}
           - [for i = E1 downto E2 do E3 done] when [direction] is
-            {{!Asttypes.direction_flag.Downto}[Downto]} *)
+            {{!Asttypes.direction_flag.Downto} [Downto]} *)
   | Pexp_constraint of expression * core_type  (** [(E : T)] *)
   | Pexp_coerce of expression * core_type option * core_type
       (** [Pexp_coerce(E, from, T)] represents
@@ -455,7 +444,7 @@ and expression_desc = Parsetree.expression_desc =
       (** Used for method bodies.
 
           Can only be used as the expression under
-          {{!class_field_kind.Cfk_concrete}[Cfk_concrete]} for methods (not
+          {{!class_field_kind.Cfk_concrete} [Cfk_concrete]} for methods (not
           values). *)
   | Pexp_object of class_structure  (** [object ... end] *)
   | Pexp_newtype of string loc * expression  (** [fun (type t) -> E] *)
@@ -497,17 +486,18 @@ and binding_op = Parsetree.binding_op = {
 and function_param_desc = Parsetree.function_param_desc =
   | Pparam_val of arg_label * expression option * pattern
       (** [Pparam_val (lbl, exp0, P)] represents the parameter:
-          - [P] when [lbl] is {{!Asttypes.arg_label.Nolabel}[Nolabel]} and
+          - [P] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]} and
             [exp0] is [None]
-          - [~l:P] when [lbl] is {{!Asttypes.arg_label.Labelled}[Labelled l]}
+          - [~l:P] when [lbl] is {{!Asttypes.arg_label.Labelled} [Labelled l]}
             and [exp0] is [None]
-          - [?l:P] when [lbl] is {{!Asttypes.arg_label.Optional}[Optional l]}
+          - [?l:P] when [lbl] is {{!Asttypes.arg_label.Optional} [Optional l]}
             and [exp0] is [None]
           - [?l:(P = E0)] when [lbl] is
-            {{!Asttypes.arg_label.Optional}[Optional l]} and [exp0] is [Some E0]
+            {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is
+            [Some E0]
 
           Note: If [E0] is provided, only
-          {{!Asttypes.arg_label.Optional}[Optional]} is allowed. *)
+          {{!Asttypes.arg_label.Optional} [Optional]} is allowed. *)
   | Pparam_newtype of string loc
       (** [Pparam_newtype x] represents the parameter [(type x)]. [x] carries
           the location of the identifier, whereas the [pparam_loc] on the
@@ -535,7 +525,7 @@ and function_param = Parsetree.function_param = {
   pparam_desc : function_param_desc;
 }
 
-(** See the comment on {{!expression_desc.Pexp_function}[Pexp_function]}. *)
+(** See the comment on {{!expression_desc.Pexp_function} [Pexp_function]}. *)
 and function_body = Parsetree.function_body =
   | Pfunction_body of expression
   | Pfunction_cases of cases * location * attributes
@@ -547,7 +537,7 @@ and function_body = Parsetree.function_body =
 and type_constraint = Parsetree.type_constraint =
   | Pconstraint of core_type
   | Pcoerce of core_type option * core_type
-      (** See the comment on {{!expression_desc.Pexp_function}[Pexp_function]}.
+      (** See the comment on {{!expression_desc.Pexp_function} [Pexp_function]}.
       *)
 
 (** {2 Value descriptions} *)
@@ -560,9 +550,9 @@ and value_description = Parsetree.value_description = {
   pval_loc : location;
 }
 (** Values of type {!value_description} represents:
-    - [val x: T], when {{!value_description.pval_prim}[pval_prim]} is [[]]
+    - [val x: T], when {{!value_description.pval_prim} [pval_prim]} is [[]]
     - [external x: T = "s1" ... "sn"] when
-      {{!value_description.pval_prim}[pval_prim]} is [["s1";..."sn"]] *)
+      {{!value_description.pval_prim} [pval_prim]} is [["s1";..."sn"]] *)
 
 (** {2 Type declarations} *)
 
@@ -579,22 +569,23 @@ and type_declaration = Parsetree.type_declaration = {
   ptype_loc : location;
 }
 (** Here are type declarations and their representation, for various
-    {{!type_declaration.ptype_kind}[ptype_kind]} and
-    {{!type_declaration.ptype_manifest}[ptype_manifest]} values:
+    {{!type_declaration.ptype_kind} [ptype_kind]} and
+    {{!type_declaration.ptype_manifest} [ptype_manifest]} values:
+
     - [type t] when [type_kind] is
-      {{!type_kind.Ptype_abstract}[Ptype_abstract]}, and [manifest] is [None],
+      {{!type_kind.Ptype_abstract} [Ptype_abstract]}, and [manifest] is [None],
     - [type t = T0] when [type_kind] is
-      {{!type_kind.Ptype_abstract}[Ptype_abstract]}, and [manifest] is
+      {{!type_kind.Ptype_abstract} [Ptype_abstract]}, and [manifest] is
       [Some T0],
     - [type t = C of T | ...] when [type_kind] is
-      {{!type_kind.Ptype_variant}[Ptype_variant]}, and [manifest] is [None],
+      {{!type_kind.Ptype_variant} [Ptype_variant]}, and [manifest] is [None],
     - [type t = T0 = C of T | ...] when [type_kind] is
-      {{!type_kind.Ptype_variant}[Ptype_variant]}, and [manifest] is [Some T0],
+      {{!type_kind.Ptype_variant} [Ptype_variant]}, and [manifest] is [Some T0],
     - [type t = {l: T; ...}] when [type_kind] is
-      {{!type_kind.Ptype_record}[Ptype_record]}, and [manifest] is [None],
+      {{!type_kind.Ptype_record} [Ptype_record]}, and [manifest] is [None],
     - [type t = T0 = {l : T; ...}] when [type_kind] is
-      {{!type_kind.Ptype_record}[Ptype_record]}, and [manifest] is [Some T0],
-    - [type t = ..] when [type_kind] is {{!type_kind.Ptype_open}[Ptype_open]},
+      {{!type_kind.Ptype_record} [Ptype_record]}, and [manifest] is [Some T0],
+    - [type t = ..] when [type_kind] is {{!type_kind.Ptype_open} [Ptype_open]},
       and [manifest] is [None]. *)
 
 and type_kind = Parsetree.type_kind =
@@ -610,13 +601,13 @@ and label_declaration = Parsetree.label_declaration = {
   pld_loc : location;
   pld_attributes : attributes;  (** [l : T [\@id1] [\@id2]] *)
 }
-(** - [{ ...; l: T; ... }] when {{!label_declaration.pld_mutable}[pld_mutable]}
-      is {{!Asttypes.mutable_flag.Immutable}[Immutable]},
+(** - [{ ...; l: T; ... }] when {{!label_declaration.pld_mutable} [pld_mutable]}
+      is {{!Asttypes.mutable_flag.Immutable} [Immutable]},
     - [{ ...; mutable l: T; ... }] when
-      {{!label_declaration.pld_mutable}[pld_mutable]} is
-      {{!Asttypes.mutable_flag.Mutable}[Mutable]}.
+      {{!label_declaration.pld_mutable} [pld_mutable]} is
+      {{!Asttypes.mutable_flag.Mutable} [Mutable]}.
 
-    Note: [T] can be a {{!core_type_desc.Ptyp_poly}[Ptyp_poly]}. *)
+    Note: [T] can be a {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}. *)
 
 and constructor_declaration = Parsetree.constructor_declaration = {
   pcd_name : string loc;
@@ -712,11 +703,11 @@ and class_type_desc = Parsetree.class_type_desc =
   | Pcty_signature of class_signature  (** [object ... end] *)
   | Pcty_arrow of arg_label * core_type * class_type
       (** [Pcty_arrow(lbl, T, CT)] represents:
-          - [T -> CT] when [lbl] is {{!Asttypes.arg_label.Nolabel}[Nolabel]},
+          - [T -> CT] when [lbl] is {{!Asttypes.arg_label.Nolabel} [Nolabel]},
           - [~l:T -> CT] when [lbl] is
-            {{!Asttypes.arg_label.Labelled}[Labelled l]},
+            {{!Asttypes.arg_label.Labelled} [Labelled l]},
           - [?l:T -> CT] when [lbl] is
-            {{!Asttypes.arg_label.Optional}[Optional l]}. *)
+            {{!Asttypes.arg_label.Optional} [Optional l]}. *)
   | Pcty_extension of extension  (** [%id] *)
   | Pcty_open of open_description * class_type  (** [let open M in CT] *)
 
@@ -726,8 +717,8 @@ and class_signature = Parsetree.class_signature = {
 }
 (** Values of type [class_signature] represents:
     - [object('selfpat) ... end]
-    - [object ... end] when {{!class_signature.pcsig_self}[pcsig_self]} is
-      {{!core_type_desc.Ptyp_any}[Ptyp_any]} *)
+    - [object ... end] when {{!class_signature.pcsig_self} [pcsig_self]} is
+      {{!core_type_desc.Ptyp_any} [Ptyp_any]} *)
 
 and class_type_field = Parsetree.class_type_field = {
   pctf_desc : class_type_field_desc;
@@ -742,7 +733,7 @@ and class_type_field_desc = Parsetree.class_type_field_desc =
   | Pctf_method of (label loc * private_flag * virtual_flag * core_type)
       (** [method x: T]
 
-          Note: [T] can be a {{!core_type_desc.Ptyp_poly}[Ptyp_poly]}. *)
+          Note: [T] can be a {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}. *)
   | Pctf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
   | Pctf_attribute of attribute  (** [[\@\@\@id]] *)
   | Pctf_extension of extension  (** [[%%id]] *)
@@ -779,14 +770,14 @@ and class_expr_desc = Parsetree.class_expr_desc =
   | Pcl_structure of class_structure  (** [object ... end] *)
   | Pcl_fun of arg_label * expression option * pattern * class_expr
       (** [Pcl_fun(lbl, exp0, P, CE)] represents:
-          - [fun P -> CE] when [lbl] is {{!Asttypes.arg_label.Nolabel}[Nolabel]}
-            and [exp0] is [None],
+          - [fun P -> CE] when [lbl] is
+            {{!Asttypes.arg_label.Nolabel} [Nolabel]} and [exp0] is [None],
           - [fun ~l:P -> CE] when [lbl] is
-            {{!Asttypes.arg_label.Labelled}[Labelled l]} and [exp0] is [None],
+            {{!Asttypes.arg_label.Labelled} [Labelled l]} and [exp0] is [None],
           - [fun ?l:P -> CE] when [lbl] is
-            {{!Asttypes.arg_label.Optional}[Optional l]} and [exp0] is [None],
+            {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is [None],
           - [fun ?l:(P = E0) -> CE] when [lbl] is
-            {{!Asttypes.arg_label.Optional}[Optional l]} and [exp0] is
+            {{!Asttypes.arg_label.Optional} [Optional l]} and [exp0] is
             [Some E0]. *)
   | Pcl_apply of class_expr * (arg_label * expression) list
       (** [Pcl_apply(CE, [(l1,E1) ; ... ; (ln,En)])] represents
@@ -797,9 +788,9 @@ and class_expr_desc = Parsetree.class_expr_desc =
   | Pcl_let of rec_flag * value_binding list * class_expr
       (** [Pcl_let(rec, [(P1, E1); ... ; (Pn, En)], CE)] represents:
           - [let P1 = E1 and ... and Pn = EN in CE] when [rec] is
-            {{!Asttypes.rec_flag.Nonrecursive}[Nonrecursive]},
+            {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN in CE] when [rec] is
-            {{!Asttypes.rec_flag.Recursive}[Recursive]}. *)
+            {{!Asttypes.rec_flag.Recursive} [Recursive]}. *)
   | Pcl_constraint of class_expr * class_type  (** [(CE : CT)] *)
   | Pcl_extension of extension  (** [[%id]] *)
   | Pcl_open of open_description * class_expr  (** [let open M in CE] *)
@@ -810,8 +801,8 @@ and class_structure = Parsetree.class_structure = {
 }
 (** Values of type {!class_structure} represents:
     - [object(selfpat) ... end]
-    - [object ... end] when {{!class_structure.pcstr_self}[pcstr_self]} is
-      {{!pattern_desc.Ppat_any}[Ppat_any]} *)
+    - [object ... end] when {{!class_structure.pcstr_self} [pcstr_self]} is
+      {{!pattern_desc.Ppat_any} [Ppat_any]} *)
 
 and class_field = Parsetree.class_field = {
   pcf_desc : class_field_desc;
@@ -822,34 +813,36 @@ and class_field = Parsetree.class_field = {
 and class_field_desc = Parsetree.class_field_desc =
   | Pcf_inherit of override_flag * class_expr * string loc option
       (** [Pcf_inherit(flag, CE, s)] represents:
-          - [inherit CE] when [flag] is {{!Asttypes.override_flag.Fresh}[Fresh]}
-            and [s] is [None],
+
+          - [inherit CE] when [flag] is
+            {{!Asttypes.override_flag.Fresh} [Fresh]} and [s] is [None],
           - [inherit CE as x] when [flag] is
-            {{!Asttypes.override_flag.Fresh}[Fresh]} and [s] is [Some x],
+            {{!Asttypes.override_flag.Fresh} [Fresh]} and [s] is [Some x],
           - [inherit! CE] when [flag] is
-            {{!Asttypes.override_flag.Override}[Override]} and [s] is [None],
+            {{!Asttypes.override_flag.Override} [Override]} and [s] is [None],
           - [inherit! CE as x] when [flag] is
-            {{!Asttypes.override_flag.Override}[Override]} and [s] is [Some x]
+            {{!Asttypes.override_flag.Override} [Override]} and [s] is [Some x]
       *)
   | Pcf_val of (label loc * mutable_flag * class_field_kind)
       (** [Pcf_val(x,flag, kind)] represents:
+
           - [val x = E] when [flag] is
-            {{!Asttypes.mutable_flag.Immutable}[Immutable]} and [kind] is
-            {{!class_field_kind.Cfk_concrete}[Cfk_concrete(Fresh, E)]}
+            {{!Asttypes.mutable_flag.Immutable} [Immutable]} and [kind] is
+            {{!class_field_kind.Cfk_concrete} [Cfk_concrete(Fresh, E)]}
           - [val virtual x: T] when [flag] is
-            {{!Asttypes.mutable_flag.Immutable}[Immutable]} and [kind] is
-            {{!class_field_kind.Cfk_virtual}[Cfk_virtual(T)]}
+            {{!Asttypes.mutable_flag.Immutable} [Immutable]} and [kind] is
+            {{!class_field_kind.Cfk_virtual} [Cfk_virtual(T)]}
           - [val mutable x = E] when [flag] is
-            {{!Asttypes.mutable_flag.Mutable}[Mutable]} and [kind] is
-            {{!class_field_kind.Cfk_concrete}[Cfk_concrete(Fresh, E)]}
+            {{!Asttypes.mutable_flag.Mutable} [Mutable]} and [kind] is
+            {{!class_field_kind.Cfk_concrete} [Cfk_concrete(Fresh, E)]}
           - [val mutable virtual x: T] when [flag] is
-            {{!Asttypes.mutable_flag.Mutable}[Mutable]} and [kind] is
-            {{!class_field_kind.Cfk_virtual}[Cfk_virtual(T)]} *)
+            {{!Asttypes.mutable_flag.Mutable} [Mutable]} and [kind] is
+            {{!class_field_kind.Cfk_virtual} [Cfk_virtual(T)]} *)
   | Pcf_method of (label loc * private_flag * class_field_kind)
       (** - [method x = E] ([E] can be a
-            {{!expression_desc.Pexp_poly}[Pexp_poly]})
+            {{!expression_desc.Pexp_poly} [Pexp_poly]})
           - [method virtual x: T] ([T] can be a
-            {{!core_type_desc.Ptyp_poly}[Ptyp_poly]}) *)
+            {{!core_type_desc.Ptyp_poly} [Ptyp_poly]}) *)
   | Pcf_constraint of (core_type * core_type)  (** [constraint T1 = T2] *)
   | Pcf_initializer of expression  (** [initializer E] *)
   | Pcf_attribute of attribute  (** [[\@\@\@id]] *)
@@ -945,7 +938,7 @@ and module_type_declaration = Parsetree.module_type_declaration = {
 (** Values of type [module_type_declaration] represents:
     - [S = MT],
     - [S] for abstract module type declaration, when
-      {{!module_type_declaration.pmtd_type}[pmtd_type]} is [None]. *)
+      {{!module_type_declaration.pmtd_type} [pmtd_type]} is [None]. *)
 
 and 'a open_infos = 'a Parsetree.open_infos = {
   popen_expr : 'a;
@@ -954,11 +947,11 @@ and 'a open_infos = 'a Parsetree.open_infos = {
   popen_attributes : attributes;
 }
 (** Values of type ['a open_infos] represents:
-    - [open! X] when {{!open_infos.popen_override}[popen_override]} is
-      {{!Asttypes.override_flag.Override}[Override]} (silences the "used
+    - [open! X] when {{!open_infos.popen_override} [popen_override]} is
+      {{!Asttypes.override_flag.Override} [Override]} (silences the "used
       identifier shadowing" warning)
-    - [open  X] when {{!open_infos.popen_override}[popen_override]} is
-      {{!Asttypes.override_flag.Fresh}[Fresh]} *)
+    - [open  X] when {{!open_infos.popen_override} [popen_override]} is
+      {{!Asttypes.override_flag.Fresh} [Fresh]} *)
 
 and open_description = longident_loc open_infos
 (** Values of type [open_description] represents:
@@ -1030,9 +1023,9 @@ and structure_item_desc = Parsetree.structure_item_desc =
   | Pstr_value of rec_flag * value_binding list
       (** [Pstr_value(rec, [(P1, E1 ; ... ; (Pn, En))])] represents:
           - [let P1 = E1 and ... and Pn = EN] when [rec] is
-            {{!Asttypes.rec_flag.Nonrecursive}[Nonrecursive]},
+            {{!Asttypes.rec_flag.Nonrecursive} [Nonrecursive]},
           - [let rec P1 = E1 and ... and Pn = EN ] when [rec] is
-            {{!Asttypes.rec_flag.Recursive}[Recursive]}. *)
+            {{!Asttypes.rec_flag.Recursive} [Recursive]}. *)
   | Pstr_primitive of value_description
       (** - [val x: T]
           - [external x: T = "s1" ... "sn" ]*)
@@ -1061,14 +1054,6 @@ and value_constraint = Parsetree.value_constraint =
       typ : core_type;
     }
   | Pvc_coercion of { ground : core_type option; coercion : core_type }
-      (** - [Pvc_constraint { locally_abstract_univars=[]; typ}] is a simple
-            type constraint on a value binding: [ let x : typ]
-          - More generally, in [Pvc_constraint { locally_abstract_univars; typ}]
-            [locally_abstract_univars] is the list of locally abstract type
-            variables in [ let x: type a ... . typ ]
-          - [Pvc_coercion { ground=None; coercion }] represents [let x :> typ]
-          - [Pvc_coercion { ground=Some g; coercion }] represents
-            [let x : g :> typ] *)
 
 and value_binding = Parsetree.value_binding = {
   pvb_pat : pattern;
@@ -1077,7 +1062,6 @@ and value_binding = Parsetree.value_binding = {
   pvb_attributes : attributes;
   pvb_loc : location;
 }
-(** [let pat : type_constraint = exp] *)
 
 and module_binding = Parsetree.module_binding = {
   pmb_name : string option loc;
@@ -1188,12 +1172,6 @@ class virtual map =
     method injectivity : injectivity -> injectivity = fun x -> x
 
     method constant : constant -> constant =
-      fun { pconst_desc; pconst_loc } ->
-        let pconst_desc = self#constant_desc pconst_desc in
-        let pconst_loc = self#location pconst_loc in
-        { pconst_desc; pconst_loc }
-
-    method constant_desc : constant_desc -> constant_desc =
       fun x ->
         match x with
         | Pconst_integer (a, b) ->
@@ -1432,10 +1410,6 @@ class virtual map =
         | Ppat_exception a ->
             let a = self#pattern a in
             Ppat_exception a
-        | Ppat_effect (a, b) ->
-            let a = self#pattern a in
-            let b = self#pattern b in
-            Ppat_effect (a, b)
         | Ppat_extension a ->
             let a = self#extension a in
             Ppat_extension a
@@ -2516,11 +2490,6 @@ class virtual iter =
     method injectivity : injectivity -> unit = fun _ -> ()
 
     method constant : constant -> unit =
-      fun { pconst_desc; pconst_loc } ->
-        self#constant_desc pconst_desc;
-        self#location pconst_loc
-
-    method constant_desc : constant_desc -> unit =
       fun x ->
         match x with
         | Pconst_integer (a, b) ->
@@ -2686,9 +2655,6 @@ class virtual iter =
         | Ppat_lazy a -> self#pattern a
         | Ppat_unpack a -> self#loc (self#option self#string) a
         | Ppat_exception a -> self#pattern a
-        | Ppat_effect (a, b) ->
-            self#pattern a;
-            self#pattern b
         | Ppat_extension a -> self#extension a
         | Ppat_open (a, b) ->
             self#longident_loc a;
@@ -3457,12 +3423,6 @@ class virtual ['acc] fold =
     method injectivity : injectivity -> 'acc -> 'acc = fun _ acc -> acc
 
     method constant : constant -> 'acc -> 'acc =
-      fun { pconst_desc; pconst_loc } acc ->
-        let acc = self#constant_desc pconst_desc acc in
-        let acc = self#location pconst_loc acc in
-        acc
-
-    method constant_desc : constant_desc -> 'acc -> 'acc =
       fun x acc ->
         match x with
         | Pconst_integer (a, b) ->
@@ -3665,10 +3625,6 @@ class virtual ['acc] fold =
         | Ppat_lazy a -> self#pattern a acc
         | Ppat_unpack a -> self#loc (self#option self#string) a acc
         | Ppat_exception a -> self#pattern a acc
-        | Ppat_effect (a, b) ->
-            let acc = self#pattern a acc in
-            let acc = self#pattern b acc in
-            acc
         | Ppat_extension a -> self#extension a acc
         | Ppat_open (a, b) ->
             let acc = self#longident_loc a acc in
@@ -4600,12 +4556,6 @@ class virtual ['acc] fold_map =
       fun x acc -> (x, acc)
 
     method constant : constant -> 'acc -> constant * 'acc =
-      fun { pconst_desc; pconst_loc } acc ->
-        let pconst_desc, acc = self#constant_desc pconst_desc acc in
-        let pconst_loc, acc = self#location pconst_loc acc in
-        ({ pconst_desc; pconst_loc }, acc)
-
-    method constant_desc : constant_desc -> 'acc -> constant_desc * 'acc =
       fun x acc ->
         match x with
         | Pconst_integer (a, b) ->
@@ -4846,10 +4796,6 @@ class virtual ['acc] fold_map =
         | Ppat_exception a ->
             let a, acc = self#pattern a acc in
             (Ppat_exception a, acc)
-        | Ppat_effect (a, b) ->
-            let a, acc = self#pattern a acc in
-            let b, acc = self#pattern b acc in
-            (Ppat_effect (a, b), acc)
         | Ppat_extension a ->
             let a, acc = self#extension a acc in
             (Ppat_extension a, acc)
@@ -6004,12 +5950,6 @@ class virtual ['ctx] map_with_context =
     method injectivity : 'ctx -> injectivity -> injectivity = fun _ctx x -> x
 
     method constant : 'ctx -> constant -> constant =
-      fun ctx { pconst_desc; pconst_loc } ->
-        let pconst_desc = self#constant_desc ctx pconst_desc in
-        let pconst_loc = self#location ctx pconst_loc in
-        { pconst_desc; pconst_loc }
-
-    method constant_desc : 'ctx -> constant_desc -> constant_desc =
       fun ctx x ->
         match x with
         | Pconst_integer (a, b) ->
@@ -6249,10 +6189,6 @@ class virtual ['ctx] map_with_context =
         | Ppat_exception a ->
             let a = self#pattern ctx a in
             Ppat_exception a
-        | Ppat_effect (a, b) ->
-            let a = self#pattern ctx a in
-            let b = self#pattern ctx b in
-            Ppat_effect (a, b)
         | Ppat_extension a ->
             let a = self#extension ctx a in
             Ppat_extension a
@@ -7422,12 +7358,6 @@ class virtual ['res] lift =
         | NoInjectivity -> self#constr "NoInjectivity" []
 
     method constant : constant -> 'res =
-      fun { pconst_desc; pconst_loc } ->
-        let pconst_desc = self#constant_desc pconst_desc in
-        let pconst_loc = self#location pconst_loc in
-        self#record [ ("pconst_desc", pconst_desc); ("pconst_loc", pconst_loc) ]
-
-    method constant_desc : constant_desc -> 'res =
       fun x ->
         match x with
         | Pconst_integer (a, b) ->
@@ -7693,10 +7623,6 @@ class virtual ['res] lift =
         | Ppat_exception a ->
             let a = self#pattern a in
             self#constr "Ppat_exception" [ a ]
-        | Ppat_effect (a, b) ->
-            let a = self#pattern a in
-            let b = self#pattern b in
-            self#constr "Ppat_effect" [ a; b ]
         | Ppat_extension a ->
             let a = self#extension a in
             self#constr "Ppat_extension" [ a ]
@@ -8980,20 +8906,6 @@ class virtual ['ctx, 'res] lift_map_with_context =
       fun ctx x -> (x, self#other ctx x)
 
     method constant : 'ctx -> constant -> constant * 'res =
-      fun ctx { pconst_desc; pconst_loc } ->
-        let pconst_desc = self#constant_desc ctx pconst_desc in
-        let pconst_loc = self#location ctx pconst_loc in
-        ( {
-            pconst_desc = Stdlib.fst pconst_desc;
-            pconst_loc = Stdlib.fst pconst_loc;
-          },
-          self#record ctx
-            [
-              ("pconst_desc", Stdlib.snd pconst_desc);
-              ("pconst_loc", Stdlib.snd pconst_loc);
-            ] )
-
-    method constant_desc : 'ctx -> constant_desc -> constant_desc * 'res =
       fun ctx x ->
         match x with
         | Pconst_integer (a, b) ->
@@ -9334,11 +9246,6 @@ class virtual ['ctx, 'res] lift_map_with_context =
             let a = self#pattern ctx a in
             ( Ppat_exception (Stdlib.fst a),
               self#constr ctx "Ppat_exception" [ Stdlib.snd a ] )
-        | Ppat_effect (a, b) ->
-            let a = self#pattern ctx a in
-            let b = self#pattern ctx b in
-            ( Ppat_effect (Stdlib.fst a, Stdlib.fst b),
-              self#constr ctx "Ppat_effect" [ Stdlib.snd a; Stdlib.snd b ] )
         | Ppat_extension a ->
             let a = self#extension ctx a in
             ( Ppat_extension (Stdlib.fst a),

@@ -13,7 +13,7 @@
 (*                                                                        *)
 (**************************************************************************)
 
-open Ast_503
+open Ast_502
 
 type space_formatter = (unit, Format.formatter, unit) format
 

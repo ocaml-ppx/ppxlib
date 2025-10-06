@@ -7,8 +7,6 @@ unreleased
 
 ### Other Changes
 
-- Bump ppxlib's AST to 5.3.0 (#558, @patricoferris)
-
 - Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
   location which can lead to unhelpful error messages.
   (#569, @NathanReb)
@@ -28,6 +26,15 @@ unreleased
 
 - Add custom printer support to `pp_ast` functions via the `?printer` config
   parameter. (#526, @pedrobslisboa)
+
+0.36.2
+------
+
+- Make Ast_builder's default `value_binding` constructor generate the proper
+  `pvb_constraint` from the pattern and expression arguments.
+  (#589, @NathanReb)
+- Fix pprintast to output correct syntax from `Ppat_constraint (pat, Ptyp_poly ...)`
+  nodes until they are completely dropped. (#588, @NathanReb)
 
 0.36.1 (2025-07-10)
 -------------------

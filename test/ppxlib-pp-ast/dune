@@ -1,9 +1,5 @@
 (cram
  (package ppxlib-tools)
- ; Migrations sometimes make subtle differences in the output.
- ; For example, locations that are marked "ghost".
- (enabled_if
-  (>= %{ocaml_version} "5.3.0"))
  (deps
   %{bin:ppxlib-pp-ast}
   (package ppxlib)))

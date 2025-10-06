@@ -20,13 +20,7 @@ let doc_comment_from_attribue (attr : attribute) =
             {
               pstr_desc =
                 Pstr_eval
-                  ( {
-                      pexp_desc =
-                        Pexp_constant
-                          { pconst_desc = Pconst_string (s, _, _); _ };
-                      _;
-                    },
-                    _ );
+                  ({ pexp_desc = Pexp_constant (Pconst_string (s, _, _)); _ }, _);
               _;
             };
           ] ->
@@ -251,12 +245,7 @@ let floating_comment s =
           pstr_desc =
             Pstr_eval
               ( {
-                  pexp_desc =
-                    Pexp_constant
-                      {
-                        pconst_desc = Pconst_string (s, loc, None);
-                        pconst_loc = loc;
-                      };
+                  pexp_desc = Pexp_constant (Pconst_string (s, loc, None));
                   pexp_loc = loc;
                   pexp_loc_stack = [];
                   pexp_attributes = [];

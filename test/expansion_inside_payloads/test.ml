@@ -7,7 +7,7 @@ open Ppxlib
 
 let expr_description ~loc ~error expr =
   match expr.pexp_desc with
-  | Pexp_constant { pconst_desc = Pconst_integer _; _ } ->
+  | Pexp_constant (Pconst_integer _) ->
     Ast_builder.Default.estring ~loc "Payload is an integer"
   | Pexp_extension _ ->
     Ast_builder.Default.estring ~loc "Payload is an extension point"
