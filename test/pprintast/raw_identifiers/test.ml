@@ -38,5 +38,5 @@ let stri =
 
 Format.asprintf "%a" Pprintast.structure_item stri
 [%%expect{|
-- : string = "let f = \\#mod"
+- : string = "let f = (mod)"
 |}]
