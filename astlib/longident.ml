@@ -29,3 +29,11 @@ let parse s =
       (* should not happen, but don't put assert false
                           so as not to crash the toplevel (see Genprintval) *)
   | Some v -> v
+
+let to_compiler lid =
+  (*IF_NOT_AT_LEAST 504 lid *)
+  (*IF_AT_LEAST 504 Migrate_503_504.copy_Longident_t lid *)
+
+let from_compiler lid =
+  (*IF_NOT_AT_LEAST 504 lid *)
+  (*IF_AT_LEAST 504 Migrate_504_503.copy_Longident_t lid *)
