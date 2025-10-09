@@ -275,6 +275,12 @@ module List = struct
 
   (* reorders arguments to improve type inference *)
   let iter list ~f = iter list ~f
+
+  let rec equal ~eq l1 l2 =
+    match (l1, l2) with
+    | [], [] -> true
+    | [], _ :: _ | _ :: _, [] -> false
+    | a1 :: l1, a2 :: l2 -> eq a1 a2 && equal ~eq l1 l2
 end
 
 module Option = struct

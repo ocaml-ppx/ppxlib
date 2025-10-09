@@ -32,6 +32,7 @@ astlib/migrate_500_414.ml
 
 # Currently our expect-test lexer is too strict for our expect tests to
 # work well with ocamlformat
+test/ast_builder_value_binding/test.ml
 test/base/test.ml
 test/base/test_510.ml
 test/code_path/test.ml
