@@ -1,5 +1,5 @@
 module Longident = struct
-  type t (*IF_CURRENT = Ocaml_common.Longident.t *) =
+  type t = Longident_504.t =
     | Lident of string
     | Ldot of t Location.loc * string Location.loc
     | Lapply of t Location.loc * t Location.loc
