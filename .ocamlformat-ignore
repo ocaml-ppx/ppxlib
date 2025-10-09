@@ -53,6 +53,7 @@ test/extensions_and_deriving/test_510.ml
 test/location/exception/test.ml
 test/metaquot/test.ml
 test/metaquot/test_510.ml
+test/pprintast/raw_identifiers/test.ml
 test/ppx_import_support/test.ml
 test/quoter/test.ml
 test/traverse/test.ml

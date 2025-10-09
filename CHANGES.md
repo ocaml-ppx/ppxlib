@@ -7,6 +7,9 @@ unreleased
 
 ### Other Changes
 
+- Fix a bug where some infix operators such as `mod` would be printed as
+  raw identifiers by our `Pprintast`. (#601, @NathanReb)
+
 - Fix 5.2 -> 5.3 migration of constants. Those used to always have a `none`
   location which can lead to unhelpful error messages.
   (#569, @NathanReb)
