@@ -7,6 +7,10 @@ unreleased
 
 ### Other Changes
 
+- Add `Longident.to/of_compiler` to astlib to simplify maintenance
+  of ppx-es that interacts with other parts of the compiler-libs such
+  as the type checker. (#603, @NathanReb)
+
 - Fix a bug where some infix operators such as `mod` would be printed as
   raw identifiers by our `Pprintast`. (#601, @NathanReb)
 
