@@ -294,7 +294,7 @@ end
 module Result = struct
   let bind t ~f = match t with Ok a -> f a | Error e -> Error e
   let map t ~f = match t with Ok a -> Ok (f a) | Error e -> Error e
-  let map_error t ~f = match t with Ok a -> Ok (f a) | Error e -> Error e
+  let map_error t ~f = match t with Ok a -> Ok a | Error e -> Error (f e)
   let ( >>= ) t f = bind t ~f
   let ( >>| ) t f = map t ~f
   let handle_error t ~f = match t with Ok a -> a | Error e -> f e
