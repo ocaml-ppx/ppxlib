@@ -224,3 +224,10 @@ val fail : Location.t -> string -> _
 val ppat_effect :
   (pattern, 'a, 'b) t -> (pattern, 'b, 'c) t -> (pattern, 'a, 'c) t
 (** Match over an encoded OCaml 5.3 effect pattern. *)
+
+val ptyp_labeled_tuple :
+  ((string option * core_type) list, 'a, 'b) t -> (core_type, 'a, 'b) t
+(** Match over an encoded OCaml 5.4 labeled tuple type.
+
+    It will fail on a regular tuple type and as a consequence, if it matches, at
+    least one type in the tuple is guaranteed to be labeled. *)

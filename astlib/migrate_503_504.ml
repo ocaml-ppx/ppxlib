@@ -439,6 +439,11 @@ and copy_core_type_desc :
   | Ast_503.Parsetree.Ptyp_open (x0, ty) ->
       Ast_504.Parsetree.Ptyp_open
         (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_core_type ty)
+  | Ast_503.Parsetree.Ptyp_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_504.Ext_name.ptyp_labeled_tuple ->
+      let xs = Encoding_504.To_503.decode_ptyp_labeled_tuple ~loc payload in
+      Ast_504.Parsetree.Ptyp_tuple
+        (List.map (fun (lbl, typ) -> (lbl, copy_core_type typ)) xs)
   | Ast_503.Parsetree.Ptyp_extension x0 ->
       Ast_504.Parsetree.Ptyp_extension (copy_extension x0)
 

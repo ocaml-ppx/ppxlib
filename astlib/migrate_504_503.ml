@@ -397,9 +397,10 @@ and copy_core_type : Ast_504.Parsetree.core_type -> Ast_503.Parsetree.core_type
        Ast_504.Parsetree.ptyp_loc_stack;
        Ast_504.Parsetree.ptyp_attributes;
      } ->
+  let loc = copy_location ptyp_loc in
   {
-    Ast_503.Parsetree.ptyp_desc = copy_core_type_desc ptyp_desc;
-    Ast_503.Parsetree.ptyp_loc = copy_location ptyp_loc;
+    Ast_503.Parsetree.ptyp_desc = copy_core_type_desc ~loc ptyp_desc;
+    Ast_503.Parsetree.ptyp_loc = loc;
     Ast_503.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
     Ast_503.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
   }
@@ -408,7 +409,7 @@ and copy_location_stack :
     Ast_504.Parsetree.location_stack -> Ast_503.Parsetree.location_stack =
  fun x -> List.map copy_location x
 
-and copy_core_type_desc :
+and copy_core_type_desc ~loc :
     Ast_504.Parsetree.core_type_desc -> Ast_503.Parsetree.core_type_desc =
   function
   | Ast_504.Parsetree.Ptyp_any -> Ast_503.Parsetree.Ptyp_any
@@ -417,15 +418,13 @@ and copy_core_type_desc :
       Ast_503.Parsetree.Ptyp_arrow
         (copy_arg_label x0, copy_core_type x1, copy_core_type x2)
   | Ast_504.Parsetree.Ptyp_tuple x0 ->
-      let args =
-        List.map
-          (function
-            | None, arg -> arg
-            | Some l, (arg : Ast_504.Parsetree.core_type) ->
-                migration_error arg.ptyp_loc "labelled tuples")
-          x0 (* TODO: Proper migration error *)
+      let typs =
+        List.map (fun (label, typ) -> (label, copy_core_type typ)) x0
       in
-      Ast_503.Parsetree.Ptyp_tuple (List.map copy_core_type args)
+      if List.exists (function Some _, _ -> true | _ -> false) typs then
+        (* At least one element of the tuple is labeled *)
+        Encoding_504.To_503.encode_ptyp_labeled_tuple ~loc typs
+      else Ast_503.Parsetree.Ptyp_tuple (List.map snd typs)
   | Ast_504.Parsetree.Ptyp_constr (x0, x1) ->
       Ast_503.Parsetree.Ptyp_constr
         (copy_loc copy_Longident_t x0, List.map copy_core_type x1)

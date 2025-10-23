@@ -169,6 +169,10 @@ module type Additional_helpers = sig
 
   val ppat_effect : (pattern -> pattern -> pattern) with_loc
   (** Returns an encoded effect pattern as introduced in OCaml 5.3 *)
+
+  val ptyp_labeled_tuple :
+    ((string option * core_type) list -> core_type) with_loc
+  (** Returns an encoded labeled tuple type as introduced in OCaml 5.4. *)
 end
 
 module type Located = sig
