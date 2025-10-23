@@ -275,3 +275,20 @@ let esequence (T f) =
 
 let of_func f = T f
 let to_func (T f) = f
+
+let ptyp_labeled_tuple (T f0) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.ptyp_loc in
+      let x = x.ptyp_desc in
+      match x with
+      | Ptyp_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_504.Ext_name.ptyp_labeled_tuple
+        ->
+          let x0 =
+            Astlib__.Encoding_504.To_502.decode_ptyp_labeled_tuple ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = f0 ctx loc x0 k in
+          k
+      | _ -> fail loc "labeled tuple")
