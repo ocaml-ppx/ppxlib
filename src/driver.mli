@@ -1,4 +1,4 @@
-(** Interaction with the driver, such as getting/seeting cookies, adding
+(** Interaction with the driver, such as getting/setting cookies, adding
     arguments.
 
     The relevant part in the manual is
