@@ -309,3 +309,20 @@ let ptyp_labeled_tuple (T f0) =
           let k = f0 ctx loc x0 k in
           k
       | _ -> fail loc "labeled tuple")
+
+let pexp_labeled_tuple (T f0) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.pexp_loc in
+      let x = x.pexp_desc in
+      match x with
+      | Pexp_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_504.Ext_name.pexp_labeled_tuple
+        ->
+          let x0 =
+            Astlib__.Encoding_504.To_502.decode_pexp_labeled_tuple ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = f0 ctx loc x0 k in
+          k
+      | _ -> fail loc "labeled tuple")

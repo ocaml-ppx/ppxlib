@@ -6,6 +6,7 @@ module From_ocaml = Convert (Compiler_version) (Js)
 open Ppxlib
 
 #install_printer Pprintast.core_type;;
+#install_printer Pprintast.expression;;
 
 module Builder = Ast_builder.Make(struct let loc = Location.none end)
 
@@ -38,7 +39,6 @@ let encoded_by_migration = From_ocaml.copy_core_type labeled_tuple_type
 let pattern = Ast_pattern.(ptyp_labeled_tuple __);;
 [%%ignore]
 
-
 (* Destruct both the migration and Ast_builder generated encodings with
    the Ast_pattern function. *)
 let destruct_from_migration =
@@ -56,4 +56,46 @@ let destruct =
 val destruct :
   ((string option * core_type) list, Location.Error.t Stdppx.NonEmptyList.t)
   result = Ok [(Some "a", int); (Some "b", int); (None, string)]
+|}]
+
+(* -------- Same tests with labeled tuples expressions ---------- *)
+
+let encoded_labeled_tuple_expr =
+  Builder.pexp_labeled_tuple
+    [ Some "a", Builder.eint 0
+    ; Some "b", Builder.eint 1
+    ; None, Builder.estring "abc"
+    ]
+
+let labeled_tuple_expr = To_ocaml.copy_expression encoded_labeled_tuple_expr;;
+[%%ignore]
+
+let as_source =
+  Format.asprintf "%a" Astlib.Compiler_pprintast.expression
+    labeled_tuple_expr;;
+[%%expect{|
+val as_source : string = "(~a:0, ~b:1, \"abc\")"
+|}]
+
+let encoded_by_migration = From_ocaml.copy_expression labeled_tuple_expr
+
+let pattern = Ast_pattern.(pexp_labeled_tuple __);;
+[%%ignore]
+
+let destruct_from_migration =
+  Ast_pattern.parse_res pattern Location.none encoded_by_migration
+    (fun x -> x);;
+[%%expect{|
+val destruct_from_migration :
+  ((string option * expression) list, Location.Error.t Stdppx.NonEmptyList.t)
+  result = Ok [(Some "a", 0); (Some "b", 1); (None, "abc")]
+|}]
+
+let destruct_from_migration =
+  Ast_pattern.parse_res pattern Location.none encoded_labeled_tuple_expr
+    (fun x -> x);;
+[%%expect{|
+val destruct_from_migration :
+  ((string option * expression) list, Location.Error.t Stdppx.NonEmptyList.t)
+  result = Ok [(Some "a", 0); (Some "b", 1); (None, "abc")]
 |}]

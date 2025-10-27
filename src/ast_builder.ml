@@ -276,6 +276,12 @@ module Default = struct
     in
     { ptyp_desc; ptyp_loc = loc; ptyp_attributes = []; ptyp_loc_stack = [] }
 
+  let pexp_labeled_tuple ~loc l =
+    let pexp_desc =
+      Astlib__.Encoding_504.To_502.encode_pexp_labeled_tuple ~loc l
+    in
+    { pexp_desc; pexp_loc = loc; pexp_attributes = []; pexp_loc_stack = [] }
+
   let pexp_tuple_opt ~loc l =
     match l with [] -> None | _ :: _ -> Some (pexp_tuple ~loc l)
 
@@ -569,6 +575,7 @@ end) : S = struct
   let ptyp_tuple l = Default.ptyp_tuple ~loc l
   let ppat_effect effect_ k = Default.ppat_effect ~loc effect_ k
   let ptyp_labeled_tuple l = Default.ptyp_labeled_tuple ~loc l
+  let pexp_labeled_tuple l = Default.pexp_labeled_tuple ~loc l
   let pexp_tuple_opt l = Default.pexp_tuple_opt ~loc l
   let ppat_tuple_opt l = Default.ppat_tuple_opt ~loc l
   let ptyp_poly vars ty = Default.ptyp_poly ~loc vars ty

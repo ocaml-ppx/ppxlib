@@ -173,6 +173,10 @@ module type Additional_helpers = sig
   val ptyp_labeled_tuple :
     ((string option * core_type) list -> core_type) with_loc
   (** Returns an encoded labeled tuple type as introduced in OCaml 5.4. *)
+
+  val pexp_labeled_tuple :
+    ((string option * expression) list -> expression) with_loc
+  (** Returns an encoded labeled tuple expression as introduced in OCaml 5.4. *)
 end
 
 module type Located = sig

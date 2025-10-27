@@ -186,6 +186,11 @@ and copy_expression_desc_with_loc :
       Ast_504.Parsetree.Pexp_open (copy_open_declaration x0, copy_expression x1)
   | Ast_503.Parsetree.Pexp_letop x0 ->
       Ast_504.Parsetree.Pexp_letop (copy_letop x0)
+  | Ast_503.Parsetree.Pexp_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_504.Ext_name.pexp_labeled_tuple ->
+      let xs = Encoding_504.To_503.decode_pexp_labeled_tuple ~loc payload in
+      Ast_504.Parsetree.Pexp_tuple
+        (List.map (fun (lbl, exp) -> (lbl, copy_expression exp)) xs)
   | Ast_503.Parsetree.Pexp_extension x0 ->
       Ast_504.Parsetree.Pexp_extension (copy_extension x0)
   | Ast_503.Parsetree.Pexp_unreachable -> Ast_504.Parsetree.Pexp_unreachable
