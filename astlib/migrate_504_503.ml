@@ -55,14 +55,15 @@ and copy_expression :
        Ast_504.Parsetree.pexp_loc_stack;
        Ast_504.Parsetree.pexp_attributes;
      } ->
+  let loc = copy_location pexp_loc in
   {
-    Ast_503.Parsetree.pexp_desc = copy_expression_desc pexp_desc;
-    Ast_503.Parsetree.pexp_loc = copy_location pexp_loc;
+    Ast_503.Parsetree.pexp_desc = copy_expression_desc ~loc pexp_desc;
+    Ast_503.Parsetree.pexp_loc = loc;
     Ast_503.Parsetree.pexp_loc_stack = copy_location_stack pexp_loc_stack;
     Ast_503.Parsetree.pexp_attributes = copy_attributes pexp_attributes;
   }
 
-and copy_expression_desc :
+and copy_expression_desc ~loc :
     Ast_504.Parsetree.expression_desc -> Ast_503.Parsetree.expression_desc =
   function
   | Ast_504.Parsetree.Pexp_ident x0 ->
@@ -90,15 +91,12 @@ and copy_expression_desc :
   | Ast_504.Parsetree.Pexp_try (x0, x1) ->
       Ast_503.Parsetree.Pexp_try (copy_expression x0, List.map copy_case x1)
   | Ast_504.Parsetree.Pexp_tuple x0 ->
-      let args =
-        List.map
-          (function
-            | None, arg -> arg
-            | Some _l, (arg : Ast_504.Parsetree.expression) ->
-                migration_error arg.pexp_loc "labelled tuples")
-          x0
+      let exps =
+        List.map (fun (label, exp) -> (label, copy_expression exp)) x0
       in
-      Ast_503.Parsetree.Pexp_tuple (List.map copy_expression args)
+      if List.exists (function Some _, _ -> true | _ -> false) exps then
+        Encoding_504.To_503.encode_pexp_labeled_tuple ~loc exps
+      else Ast_503.Parsetree.Pexp_tuple (List.map snd exps)
   | Ast_504.Parsetree.Pexp_construct (x0, x1) ->
       Ast_503.Parsetree.Pexp_construct
         (copy_loc copy_Longident_t x0, Option.map copy_expression x1)
