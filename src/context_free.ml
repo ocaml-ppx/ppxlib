@@ -390,19 +390,19 @@ let handle_attr_replace_once context attrs item base_ctxt : 'a option t =
 
 let rec handle_attr_replace_str attrs item base_ctxt =
   (match item.pstr_desc with
-  | Pstr_extension _ ->
-      handle_attr_replace_once AC.Pstr_extension attrs item base_ctxt
-  | Pstr_eval _ -> handle_attr_replace_once AC.Pstr_eval attrs item base_ctxt
-  | _ -> return None)
+    | Pstr_extension _ ->
+        handle_attr_replace_once AC.Pstr_extension attrs item base_ctxt
+    | Pstr_eval _ -> handle_attr_replace_once AC.Pstr_eval attrs item base_ctxt
+    | _ -> return None)
   >>= function
   | Some item -> handle_attr_replace_str attrs item base_ctxt
   | None -> return item
 
 let rec handle_attr_replace_sig attrs item base_ctxt =
   (match item.psig_desc with
-  | Psig_extension _ ->
-      handle_attr_replace_once AC.Psig_extension attrs item base_ctxt
-  | _ -> return None)
+    | Psig_extension _ ->
+        handle_attr_replace_once AC.Psig_extension attrs item base_ctxt
+    | _ -> return None)
   >>= function
   | Some item -> handle_attr_replace_sig attrs item base_ctxt
   | None -> return item
@@ -1015,14 +1015,14 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         let original_rest = rest in
         loop rest ~in_generated_code >>= fun rest ->
         (match expect_items with
-        | [] -> return ()
-        | _ ->
-            let expected = rev_concat expect_items in
-            let pos = item.pstr_loc.loc_end in
-            Code_matcher.match_structure_res original_rest ~pos ~expected
-              ~mismatch_handler:(fun loc repl ->
-                expect_mismatch_handler.f Structure_item loc repl)
-            |> of_result ~default:())
+          | [] -> return ()
+          | _ ->
+              let expected = rev_concat expect_items in
+              let pos = item.pstr_loc.loc_end in
+              Code_matcher.match_structure_res original_rest ~pos ~expected
+                ~mismatch_handler:(fun loc repl ->
+                  expect_mismatch_handler.f Structure_item loc repl)
+              |> of_result ~default:())
         >>| fun () -> item :: (extra_items @ rest)
       and loop st ~in_generated_code =
         match st with
@@ -1063,13 +1063,13 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                    should be only one (outer) list among [expect_items_expanded] unless
                    a single floating attribute is somehow registered twice. *)
                 (match rev_concat expect_items_expanded with
-                | [] -> return ()
-                | expected ->
-                    Code_matcher.match_structure_res rest
-                      ~pos:item.pstr_loc.loc_end ~expected
-                      ~mismatch_handler:
-                        (expect_mismatch_handler.f Structure_item)
-                    |> of_result ~default:())
+                  | [] -> return ()
+                  | expected ->
+                      Code_matcher.match_structure_res rest
+                        ~pos:item.pstr_loc.loc_end ~expected
+                        ~mismatch_handler:
+                          (expect_mismatch_handler.f Structure_item)
+                      |> of_result ~default:())
                 >>= fun () ->
                 super#structure_item base_ctxt item >>= fun expanded_item ->
                 loop rest ~in_generated_code >>| fun expanded_rest ->
@@ -1156,14 +1156,14 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
         let original_rest = rest in
         loop rest ~in_generated_code >>= fun rest ->
         (match expect_items with
-        | [] -> return ()
-        | _ ->
-            let expected = rev_concat expect_items in
-            let pos = item.psig_loc.loc_end in
-            Code_matcher.match_signature_res original_rest ~pos ~expected
-              ~mismatch_handler:(fun loc repl ->
-                expect_mismatch_handler.f Signature_item loc repl)
-            |> of_result ~default:())
+          | [] -> return ()
+          | _ ->
+              let expected = rev_concat expect_items in
+              let pos = item.psig_loc.loc_end in
+              Code_matcher.match_signature_res original_rest ~pos ~expected
+                ~mismatch_handler:(fun loc repl ->
+                  expect_mismatch_handler.f Signature_item loc repl)
+              |> of_result ~default:())
         >>| fun () -> item :: (extra_items @ rest)
       and loop sg ~in_generated_code =
         match sg with
@@ -1204,13 +1204,13 @@ class map_top_down ?(expect_mismatch_handler = Expect_mismatch_handler.nop)
                    should be only one (outer) list among [expect_items_expanded] unless
                    a single floating attribute is somehow registered twice. *)
                 (match rev_concat expect_items_expanded with
-                | [] -> return ()
-                | expected ->
-                    Code_matcher.match_signature_res rest
-                      ~pos:item.psig_loc.loc_end ~expected
-                      ~mismatch_handler:
-                        (expect_mismatch_handler.f Signature_item)
-                    |> of_result ~default:())
+                  | [] -> return ()
+                  | expected ->
+                      Code_matcher.match_signature_res rest
+                        ~pos:item.psig_loc.loc_end ~expected
+                        ~mismatch_handler:
+                          (expect_mismatch_handler.f Signature_item)
+                      |> of_result ~default:())
                 >>= fun () ->
                 super#signature_item base_ctxt item >>= fun expanded_item ->
                 loop rest ~in_generated_code >>| fun expanded_rest ->

@@ -754,11 +754,11 @@ module Domain = struct
       try
         Result.return
         @@ Map.merge x y ~f:(fun ~key:_ -> function
-             | `Left v | `Right v -> Some v
-             | `Both (x, y) -> (
-                 match join x y with
-                 | Error conflict -> raise @@ Join.Conflict conflict
-                 | Ok z -> Some z))
+          | `Left v | `Right v -> Some v
+          | `Both (x, y) -> (
+              match join x y with
+              | Error conflict -> raise @@ Join.Conflict conflict
+              | Ok z -> Some z))
       with Join.Conflict err -> Error err
     in
     let inspect xs =
@@ -767,9 +767,9 @@ module Domain = struct
     let order x y =
       Map.symmetric_diff x y ~data_equal:equal
       |> Sequence.fold ~init:(0, 0, 0) ~f:(fun (l, m, r) -> function
-           | _, `Left _ -> (l + 1, m, r)
-           | _, `Right _ -> (l, m, r + 1)
-           | _, `Unequal _ -> (l, m + 1, r))
+        | _, `Left _ -> (l + 1, m, r)
+        | _, `Right _ -> (l, m, r + 1)
+        | _, `Unequal _ -> (l, m + 1, r))
       |> function
       | 0, 0, 0 -> Order.EQ
       | 0, 0, _ -> LT
@@ -1077,9 +1077,8 @@ module Documentation = struct
   let classes () =
     Hashtbl.to_alist Registry.public
     |> List.map ~f:(fun (cls, slots) ->
-           ( (cls, Registry.(find classes) cls),
-             List.map slots ~f:(fun slot -> (slot, Registry.(find slots) slot))
-           ))
+        ( (cls, Registry.(find classes) cls),
+          List.map slots ~f:(fun slot -> (slot, Registry.(find slots) slot)) ))
 
   let rules () = Hash_set.to_list Registry.rules
 end
@@ -2882,22 +2881,22 @@ module Knowledge = struct
      fun cls ->
       Oid.Tree.to_sequence cls.vals
       |> Knowledge.Seq.fold ~init:cls ~f:(fun cls (obj, (info : Env.info)) ->
-             match info.name with
-             | None -> Knowledge.return cls
-             | Some sym ->
-                 if not (needs_import cls sym obj) then Knowledge.return cls
-                 else
-                   let obj' =
-                     match Map.find cls.objs { package; name = sym.name } with
-                     | None -> Oid.zero
-                     | Some obj' -> obj'
-                   in
-                   if (not strict) || Oid.(obj' = zero || obj' = obj) then
-                     intern_symbol sym obj cls
-                   else
-                     let info = Oid.Tree.find_exn cls.vals obj' in
-                     let sym' = Option.value_exn info.name in
-                     Knowledge.fail (Import (sym, sym')))
+          match info.name with
+          | None -> Knowledge.return cls
+          | Some sym ->
+              if not (needs_import cls sym obj) then Knowledge.return cls
+              else
+                let obj' =
+                  match Map.find cls.objs { package; name = sym.name } with
+                  | None -> Oid.zero
+                  | Some obj' -> obj'
+                in
+                if (not strict) || Oid.(obj' = zero || obj' = obj) then
+                  intern_symbol sym obj cls
+                else
+                  let info = Oid.Tree.find_exn cls.vals obj' in
+                  let sym' = Option.value_exn info.name in
+                  Knowledge.fail (Import (sym, sym')))
 
     let package_exists package =
       Map.exists ~f:(fun { Env.objs } ->
@@ -3021,7 +3020,7 @@ module Knowledge = struct
    fun cls obj ->
     Slot.enum cls
     |> Base.List.filter ~f:(function Slot.Pack { promises } ->
-           not (Hashtbl.is_empty promises))
+        not (Hashtbl.is_empty promises))
     |> List.iter ~f:(fun (Slot.Pack s) -> ignore_m @@ collect s obj)
 
   let get_value cls obj =
@@ -3154,15 +3153,15 @@ module Knowledge = struct
       let payload =
         Map.to_alist classes
         |> List.map ~f:(fun (cid, { Env.vals; last }) ->
-               let data =
-                 Oid.Tree.to_list vals
-                 |> List.filter_map ~f:(fun (oid, { Env.data; name; comp }) ->
-                        let data = serialize_record data in
-                        let comp = Map.keys comp in
-                        if Array.is_empty data && Option.is_none name then None
-                        else Some { key = oid; sym = name; data; comp })
-               in
-               (cid, (last, data)))
+            let data =
+              Oid.Tree.to_list vals
+              |> List.filter_map ~f:(fun (oid, { Env.data; name; comp }) ->
+                  let data = serialize_record data in
+                  let comp = Map.keys comp in
+                  if Array.is_empty data && Option.is_none name then None
+                  else Some { key = oid; sym = name; data; comp })
+            in
+            (cid, (last, data)))
       in
       { version = V2; payload }
 

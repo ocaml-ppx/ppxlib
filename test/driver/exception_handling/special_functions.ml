@@ -8,6 +8,6 @@ let expand2 e =
 let rule = Context_free.Rule.special_function "n_args" expand
 let rule2 = Context_free.Rule.special_function "n_args2" expand2;;
 
-Driver.register_transformation ~rules:[ rule; rule2 ] "special_function_demo"
+Driver.register_transformation ~rules:[ rule; rule2 ] "special_function_demo";;
 
 let () = Driver.standalone ()

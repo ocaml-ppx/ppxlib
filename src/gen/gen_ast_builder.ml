@@ -288,13 +288,12 @@ let generate filename =
     List.filter types_with_wrapped ~f:(fun (path, _, _) ->
         not (List.mem path ~set:wrapped))
     |> List.map ~f:(fun (path, td, wrapped) ->
-           match wrapped with
-           | None -> (path, td, None)
-           | Some (prefix, has_attrs, has_loc_stack, p) ->
-               ( path,
-                 td,
-                 Some (prefix, has_attrs, has_loc_stack, p, List.assoc p types)
-               ))
+        match wrapped with
+        | None -> (path, td, None)
+        | Some (prefix, has_attrs, has_loc_stack, p) ->
+            ( path,
+              td,
+              Some (prefix, has_attrs, has_loc_stack, p, List.assoc p types) ))
   in
   (*  let all_types = List.map fst types in*)
   let types = List.sort types ~cmp:(fun (a, _, _) (b, _, _) -> compare a b) in

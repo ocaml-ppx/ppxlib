@@ -8,6 +8,6 @@ let rewriter loc s =
 
 let rule = Context_free.Rule.constant kind 'g' rewriter;;
 
-Driver.register_transformation ~rules:[ rule ] "constant"
+Driver.register_transformation ~rules:[ rule ] "constant";;
 
 let () = Driver.standalone ()
