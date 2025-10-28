@@ -536,7 +536,7 @@ let get_whole_ast_passes ~embed_errors ~hook ~expect_mismatch_handler ~tool_name
              ~tool_name ~input_name
            :: transforms)
       |> List.filter ~f:(fun (ct : Transform.t) ->
-             match (ct.impl, ct.intf) with None, None -> false | _ -> true)
+          match (ct.impl, ct.intf) with None, None -> false | _ -> true)
   in
   linters @ preprocess @ before_instrs @ make_generic cts @ after_instrs
 

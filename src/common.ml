@@ -24,8 +24,8 @@ let strip_gen_symbol_suffix =
     if
       chop 1 ~or_more:false string pos (Char.equal '_')
       && chop 3 ~or_more:true string pos (function
-           | '0' .. '9' -> true
-           | _ -> false)
+        | '0' .. '9' -> true
+        | _ -> false)
       && chop 2 ~or_more:false string pos (Char.equal '_')
     then String.prefix string !pos
     else string
@@ -46,17 +46,17 @@ let name_type_params_in_td_res (td : type_declaration) :
   in
   let name_param i (tp, variance) =
     (match tp.ptyp_desc with
-    | Ptyp_any -> Ok (Ptyp_var (gen_symbol ~prefix:(prefix_string i) ()))
-    | Ptyp_var _ as v -> Ok v
-    | _ ->
-        Error (Location.Error.createf ~loc:tp.ptyp_loc "not a type parameter"))
+      | Ptyp_any -> Ok (Ptyp_var (gen_symbol ~prefix:(prefix_string i) ()))
+      | Ptyp_var _ as v -> Ok v
+      | _ ->
+          Error (Location.Error.createf ~loc:tp.ptyp_loc "not a type parameter"))
     >>| fun ptyp_desc -> ({ tp with ptyp_desc }, variance)
   in
   let ptype_params, errors =
     td.ptype_params |> List.mapi ~f:name_param
     |> List.partition_map (function
-         | Ok o -> Either.Left o
-         | Error e -> Either.Right e)
+      | Ok o -> Either.Left o
+      | Error e -> Either.Right e)
   in
   match errors with [] -> Ok { td with ptype_params } | t :: q -> Error (t, q)
 
