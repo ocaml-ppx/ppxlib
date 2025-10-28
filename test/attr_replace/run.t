@@ -123,3 +123,13 @@ Test that the "attr_multiple_replace" infrastructure works.
   > EOF
   $ ./driver.exe test.ml
   let _ = ((prefix_foo_suffix)[@alert "-1"][@alert "-2"][@alert "-3"])
+
+Demonstrate error when multiple instances of one attribute are passed.
+  $ cat > test.ml << EOF
+  > let _ =
+  >   foo
+  >   [@prefix "prefix_"]
+  >   [@suffix "_suffix"]
+  >   [@suffix "_again"]
+  > EOF
+  $ ./driver.exe test.ml
