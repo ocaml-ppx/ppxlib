@@ -7,6 +7,7 @@ open Ppxlib
 
 #install_printer Pprintast.core_type;;
 #install_printer Pprintast.expression;;
+#install_printer Pprintast.pattern;;
 
 module Builder = Ast_builder.Make(struct let loc = Location.none end)
 
@@ -91,11 +92,57 @@ val destruct_from_migration :
   result = Ok [(Some "a", 0); (Some "b", 1); (None, "abc")]
 |}]
 
-let destruct_from_migration =
+let destruct =
   Ast_pattern.parse_res pattern Location.none encoded_labeled_tuple_expr
     (fun x -> x);;
 [%%expect{|
-val destruct_from_migration :
+val destruct :
   ((string option * expression) list, Location.Error.t Stdppx.NonEmptyList.t)
   result = Ok [(Some "a", 0); (Some "b", 1); (None, "abc")]
+|}]
+
+(* -------- Same tests with labeled tuples patterns ---------- *)
+
+let encoded_labeled_tuple_pat =
+  Builder.ppat_labeled_tuple
+    [ Some "a", Builder.(ppat_var (Located.mk "a"))
+    ; Some "b", Builder.ppat_any
+    ; None, Builder.(ppat_var (Located.mk "c"))
+    ]
+    Open
+
+let labeled_tuple_pat = To_ocaml.copy_pattern encoded_labeled_tuple_pat;;
+[%%ignore]
+
+let as_source =
+  Format.asprintf "%a" Astlib.Compiler_pprintast.pattern labeled_tuple_pat;;
+[%%expect{|
+val as_source : string = "(~a, ~b:_, c, ..)"
+|}]
+
+let encoded_by_migration = From_ocaml.copy_pattern labeled_tuple_pat
+
+let pattern = Ast_pattern.(ppat_labeled_tuple __);;
+[%%ignore]
+
+let destruct_from_migration =
+  Ast_pattern.parse_res pattern Location.none encoded_by_migration
+    (fun x -> x);;
+[%%expect{|
+val destruct_from_migration :
+  ((string option * pattern) list * closed_flag,
+   Location.Error.t Stdppx.NonEmptyList.t)
+  result =
+  Ok ([(Some "a", a); (Some "b", _); (None, c)], Ppxlib__.Import.Open)
+|}]
+
+let destruct =
+  Ast_pattern.parse_res pattern Location.none encoded_by_migration
+    (fun x -> x);;
+[%%expect{|
+val destruct :
+  ((string option * pattern) list * closed_flag,
+   Location.Error.t Stdppx.NonEmptyList.t)
+  result =
+  Ok ([(Some "a", a); (Some "b", _); (None, c)], Ppxlib__.Import.Open)
 |}]
