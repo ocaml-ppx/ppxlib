@@ -28,3 +28,17 @@ Same for expressions:
 
   $ ./id_driver.exe expression.ml --use-compiler-pp
   let x = (~a:0, ~b:1, "abc")
+
+And same for patterns:
+
+  $ cat > pattern.ml << EOF
+  > let (~a, ~b:_, c, ..) = x
+  > EOF
+
+  $ ./id_driver.exe pattern.ml
+  let [%ppxlib.migration.ppat_labeled_tuple_504 ?
+        (((a, a), (b, _), (_, c)), open_)]
+    = x
+
+  $ ./id_driver.exe pattern.ml --use-compiler-pp
+  let (~a, ~b:_, c, ..) = x

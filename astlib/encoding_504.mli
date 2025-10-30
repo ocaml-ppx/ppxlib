@@ -1,9 +1,11 @@
 module Ext_name : sig
   val ptyp_labeled_tuple : string
   val pexp_labeled_tuple : string
+  val ppat_labeled_tuple : string
 end
 
 module To_503 : sig
+  open Ast_503.Asttypes
   open Ast_503.Parsetree
 
   val encode_ptyp_labeled_tuple :
@@ -17,9 +19,19 @@ module To_503 : sig
 
   val decode_pexp_labeled_tuple :
     loc:Location.t -> payload -> (string option * expression) list
+
+  val encode_ppat_labeled_tuple :
+    loc:Location.t ->
+    (string option * pattern) list ->
+    closed_flag ->
+    pattern_desc
+
+  val decode_ppat_labeled_tuple :
+    loc:Location.t -> payload -> (string option * pattern) list * closed_flag
 end
 
 module To_502 : sig
+  open Ast_502.Asttypes
   open Ast_502.Parsetree
 
   val encode_ptyp_labeled_tuple :
@@ -33,4 +45,13 @@ module To_502 : sig
 
   val decode_pexp_labeled_tuple :
     loc:Location.t -> payload -> (string option * expression) list
+
+  val encode_ppat_labeled_tuple :
+    loc:Location.t ->
+    (string option * pattern) list ->
+    closed_flag ->
+    pattern_desc
+
+  val decode_ppat_labeled_tuple :
+    loc:Location.t -> payload -> (string option * pattern) list * closed_flag
 end

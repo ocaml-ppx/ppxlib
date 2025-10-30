@@ -326,3 +326,20 @@ let pexp_labeled_tuple (T f0) =
           let k = f0 ctx loc x0 k in
           k
       | _ -> fail loc "labeled tuple")
+
+let ppat_labeled_tuple (T f0) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.ppat_loc in
+      let x = x.ppat_desc in
+      match x with
+      | Ppat_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_504.Ext_name.ppat_labeled_tuple
+        ->
+          let x0 =
+            Astlib__.Encoding_504.To_502.decode_ppat_labeled_tuple ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = f0 ctx loc x0 k in
+          k
+      | _ -> fail loc "labeled tuple")

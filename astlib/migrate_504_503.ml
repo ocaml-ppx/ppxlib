@@ -321,15 +321,16 @@ and copy_pattern_desc loc :
       Ast_503.Parsetree.Ppat_constant (copy_constant x0)
   | Ast_504.Parsetree.Ppat_interval (x0, x1) ->
       Ast_503.Parsetree.Ppat_interval (copy_constant x0, copy_constant x1)
-  | Ast_504.Parsetree.Ppat_tuple (x0, _) ->
-      let args =
-        List.map
-          (function
-            | None, arg -> arg
-            | Some l, _ -> migration_error loc "labelled tuples")
-          x0
+  | Ast_504.Parsetree.Ppat_tuple (x0, flag) -> (
+      let flag = copy_closed_flag flag in
+      let args = List.map (fun (lbl, pat) -> (lbl, copy_pattern pat)) x0 in
+      let has_label =
+        List.exists (function Some _, _ -> true | _ -> false) args
       in
-      Ast_503.Parsetree.Ppat_tuple (List.map copy_pattern args)
+      match (has_label, flag) with
+      | true, _ | false, Open ->
+          Encoding_504.To_503.encode_ppat_labeled_tuple ~loc args flag
+      | _, _ -> Ast_503.Parsetree.Ppat_tuple (List.map snd args))
   | Ast_504.Parsetree.Ppat_construct (x0, x1) ->
       Ast_503.Parsetree.Ppat_construct
         ( copy_loc copy_Longident_t x0,

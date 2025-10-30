@@ -365,6 +365,14 @@ and copy_pattern_desc_with_loc :
         (copy_loc (fun x -> Option.map (fun x -> x) x) x0)
   | Ast_503.Parsetree.Ppat_exception x0 ->
       Ast_504.Parsetree.Ppat_exception (copy_pattern x0)
+  | Ast_503.Parsetree.Ppat_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_504.Ext_name.ppat_labeled_tuple ->
+      let pats, flag =
+        Encoding_504.To_503.decode_ppat_labeled_tuple ~loc payload
+      in
+      Ast_504.Parsetree.Ppat_tuple
+        ( List.map (fun (lbl, pat) -> (lbl, copy_pattern pat)) pats,
+          copy_closed_flag flag )
   | Ast_503.Parsetree.Ppat_extension x0 ->
       Ast_504.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_503.Parsetree.Ppat_open (x0, x1) ->

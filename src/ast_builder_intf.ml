@@ -177,6 +177,10 @@ module type Additional_helpers = sig
   val pexp_labeled_tuple :
     ((string option * expression) list -> expression) with_loc
   (** Returns an encoded labeled tuple expression as introduced in OCaml 5.4. *)
+
+  val ppat_labeled_tuple :
+    ((string option * pattern) list -> closed_flag -> pattern) with_loc
+  (** Returns an encoded labeled tuple pattern as introduced in OCaml 5.4. *)
 end
 
 module type Located = sig

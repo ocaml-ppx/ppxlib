@@ -239,3 +239,12 @@ val pexp_labeled_tuple :
     It will fail on a regular tuple expression and as a consequence, if it
     matches, at least one expression in the tuple is guaranteed to be labeled.
 *)
+
+val ppat_labeled_tuple :
+  ((string option * pattern) list * closed_flag, 'a, 'b) t ->
+  (pattern, 'a, 'b) t
+(** Match over an encoded OCaml 5.4 labeled tuple pattern.
+
+    It will fail on a regular tuple expression and as a consequence, if it
+    matches, either at least one pattern in the tuple is guaranteed to be
+    labeled or the flag to be [Open]. *)
