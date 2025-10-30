@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Add support for OCaml 5.4 labeled tuples, they can now be used alongside
+  ppx-es. Also adds Ast_builder and Ast_pattern utilities to manipulate them.
+  (#607, @NathanReb)
+
 0.37.0
 ------
 
