@@ -154,6 +154,7 @@ module OCaml_501 : OCaml_version with module Ast = Astlib.Ast_501
 module OCaml_502 : OCaml_version with module Ast = Astlib.Ast_502
 module OCaml_503 : OCaml_version with module Ast = Astlib.Ast_503
 module OCaml_504 : OCaml_version with module Ast = Astlib.Ast_504
+module OCaml_505 : OCaml_version with module Ast = Astlib.Ast_505
 (*$*)
 
 (* An alias to the current compiler version *)
