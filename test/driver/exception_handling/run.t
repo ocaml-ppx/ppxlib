@@ -121,6 +121,7 @@ when the -embed-errors flag is not passed
   File "impl.ml", line 3, characters 0-47:
   Error: A raised located error
   [1]
+
  when the -embed-errors flag is passed 
   $ ./deriver.exe -embed-errors impl.ml
   let x = 1 + 1.
