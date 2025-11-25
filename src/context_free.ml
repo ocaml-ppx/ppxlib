@@ -366,7 +366,7 @@ let handle_attr_replace_once context attrs item base_ctxt : 'a option t =
           | [] -> return (false, Rule.Attr_replace.Parsed_payload_list.[])
           | x :: xs ->
               (if Attribute.Context.equal context (Attribute.context x) then
-                 Attribute.get_res x item |> of_result ~default:None
+                 return @@ Attribute.get x item
                else return None)
               >>= fun p ->
               get_attr_payloads xs >>| fun (any_attrs, ps) ->
@@ -377,10 +377,10 @@ let handle_attr_replace_once context attrs item base_ctxt : 'a option t =
         if any_attrs then
           Some
             ( (payloads, errors) >>= fun payloads ->
-              Attribute.remove_seen_res context
-                (Rule.Attr_replace.Attribute_list.to_packed_list a.attributes)
-                item
-              |> of_result ~default:item
+              return
+              @@ Attribute.remove_seen context
+                   (Rule.Attr_replace.Attribute_list.to_packed_list a.attributes)
+                   item
               >>| fun item -> a.expand ~ctxt:base_ctxt item payloads )
         else None)
   in

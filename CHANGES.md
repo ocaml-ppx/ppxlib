@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Fix infinite loop when duplicate attributes are present, raising
+  an error instead (#613, @ceastlund, @patricoferris)
+
 0.37.0
 ------
 
