@@ -133,3 +133,23 @@ Demonstrate error when multiple instances of one attribute are passed.
   >   [@suffix "_again"]
   > EOF
   $ ./driver.exe test.ml
+  File "test.ml", line 5, characters 4-10:
+  5 |   [@suffix "_again"]
+          ^^^^^^
+  Error: Duplicated attribute
+  [1]
+
+Demonstrate error when multiple instances of one attribute are passed and
+no other attributes are available.
+  $ cat > test.ml << EOF
+  > let _ =
+  >   foo
+  >   [@suffix "_suffix"]
+  >   [@suffix "_again"]
+  > EOF
+  $ ./driver.exe test.ml
+  File "test.ml", line 4, characters 4-10:
+  4 |   [@suffix "_again"]
+          ^^^^^^
+  Error: Duplicated attribute
+  [1]
