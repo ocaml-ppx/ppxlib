@@ -179,6 +179,11 @@ and copy_expression_desc_with_loc :
       Ast_504.Parsetree.Pexp_open (copy_open_declaration x0, copy_expression x1)
   | Ast_503.Parsetree.Pexp_letop x0 ->
       Ast_504.Parsetree.Pexp_letop (copy_letop x0)
+  | Ast_503.Parsetree.Pexp_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_504.Ext_name.pexp_labeled_tuple ->
+      let xs = Encoding_504.To_503.decode_pexp_labeled_tuple ~loc payload in
+      Ast_504.Parsetree.Pexp_tuple
+        (List.map (fun (lbl, exp) -> (lbl, copy_expression exp)) xs)
   | Ast_503.Parsetree.Pexp_extension x0 ->
       Ast_504.Parsetree.Pexp_extension (copy_extension x0)
   | Ast_503.Parsetree.Pexp_unreachable -> Ast_504.Parsetree.Pexp_unreachable
@@ -351,10 +356,14 @@ and copy_pattern_desc_with_loc :
         (copy_loc (fun x -> Option.map (fun x -> x) x) x0)
   | Ast_503.Parsetree.Ppat_exception x0 ->
       Ast_504.Parsetree.Ppat_exception (copy_pattern x0)
-  | Ast_503.Parsetree.Ppat_extension
-      ( { txt = "ppxlib.migration.ppat_effect"; _ },
-        PPat ({ ppat_desc = Ppat_tuple [ e; c ]; _ }, None) ) ->
-      Ast_504.Parsetree.Ppat_effect (copy_pattern e, copy_pattern c)
+  | Ast_503.Parsetree.Ppat_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_504.Ext_name.ppat_labeled_tuple ->
+      let pats, flag =
+        Encoding_504.To_503.decode_ppat_labeled_tuple ~loc payload
+      in
+      Ast_504.Parsetree.Ppat_tuple
+        ( List.map (fun (lbl, pat) -> (lbl, copy_pattern pat)) pats,
+          copy_closed_flag flag )
   | Ast_503.Parsetree.Ppat_extension x0 ->
       Ast_504.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_503.Parsetree.Ppat_open (x0, x1) ->
@@ -433,6 +442,11 @@ and copy_core_type_desc :
   | Ast_503.Parsetree.Ptyp_open (x0, ty) ->
       Ast_504.Parsetree.Ptyp_open
         (copy_loc copy_Longident_t x0, copy_core_type ty)
+  | Ast_503.Parsetree.Ptyp_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_504.Ext_name.ptyp_labeled_tuple ->
+      let xs = Encoding_504.To_503.decode_ptyp_labeled_tuple ~loc payload in
+      Ast_504.Parsetree.Ptyp_tuple
+        (List.map (fun (lbl, typ) -> (lbl, copy_core_type typ)) xs)
   | Ast_503.Parsetree.Ptyp_extension x0 ->
       Ast_504.Parsetree.Ptyp_extension (copy_extension x0)
 
