@@ -7,6 +7,8 @@ module Option = struct
 end
 
 module String = struct
+  include String
+
   let is_prefix t ~prefix =
     let rec is_prefix_from t ~prefix ~pos ~len =
       pos >= len

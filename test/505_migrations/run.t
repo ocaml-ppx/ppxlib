@@ -28,6 +28,26 @@ it should successfully roundtrip to 5.2 and print the source code unchanged:
   module T = struct let x = 1 end
   let f = let exception E of int  in let module X = T in let open X in x
 
+In addition to these items, the 5.5 AST can now encode pretty much any structure item
+locally, except for a few (e.g. [let let ...]). We have to handle these also during migration.
+
+  $ cat > extra.ml << EOF
+  > type e = ..
+  > 
+  > let f =
+  >   let type e += Hello in
+  >   let external id : 'a -> 'a = "identity" in 
+  >   let type t = int in
+  >   ()
+  > EOF
+
+  $ ./driver.exe extra.ml --use-compiler-pp
+  type e = ..
+  let f =
+    let type e +=  
+          | Hello  in
+      let external id : 'a -> 'a = "identity" in let type t = int in ()
+
 2. Ptyp_extension
 
 A new feature of OCaml 5.5 are external types (e.g. [type t = external "t"]).

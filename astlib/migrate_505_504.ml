@@ -476,9 +476,9 @@ and copy_expression_desc :
               copy_module_expr mexpr,
               copy_expression x1 )
       | _ ->
-          Location.raise_errorf ~loc:x0.pstr_loc
-            "Only structure items [open M], [exception C] and [module B = T] \
-             are supported in [let SI in E].")
+          let item = copy_structure_item x0 in
+          Encoding_505.To_504.encode_pexp_struct_item ~loc:x0.pstr_loc
+            (item, copy_expression x1))
   | Ast_505.Parsetree.Pexp_assert x0 ->
       Ast_504.Parsetree.Pexp_assert (copy_expression x0)
   | Ast_505.Parsetree.Pexp_lazy x0 ->
