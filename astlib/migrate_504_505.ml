@@ -495,6 +495,10 @@ and copy_expression_desc :
       Ast_505.Parsetree.Pexp_struct_item (opendecl, copy_expression x1)
   | Ast_504.Parsetree.Pexp_letop x0 ->
       Ast_505.Parsetree.Pexp_letop (copy_letop x0)
+  | Ast_504.Parsetree.Pexp_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_505.Ext_name.pexp_struct_item ->
+      let si, e = Encoding_505.To_504.decode_pexp_struct_item ~loc payload in
+      Pexp_struct_item (copy_structure_item si, copy_expression e)
   | Ast_504.Parsetree.Pexp_extension x0 ->
       Ast_505.Parsetree.Pexp_extension (copy_extension x0)
   | Ast_504.Parsetree.Pexp_unreachable -> Ast_505.Parsetree.Pexp_unreachable
