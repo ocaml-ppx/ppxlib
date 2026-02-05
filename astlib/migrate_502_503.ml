@@ -349,9 +349,9 @@ and copy_pattern_desc_with_loc :
         (copy_loc (fun x -> Option.map (fun x -> x) x) x0)
   | Ast_502.Parsetree.Ppat_exception x0 ->
       Ast_503.Parsetree.Ppat_exception (copy_pattern x0)
-  | Ast_502.Parsetree.Ppat_extension
-      ( { txt = "ppxlib.migration.ppat_effect"; _ },
-        PPat ({ ppat_desc = Ppat_tuple [ e; c ]; _ }, None) ) ->
+  | Ast_502.Parsetree.Ppat_extension ({ txt; loc }, payload)
+    when String.equal txt Encoding_503.Ext_name.ppat_effect ->
+      let e, c = Encoding_503.To_502.decode_ppat_effect ~loc payload in
       Ast_503.Parsetree.Ppat_effect (copy_pattern e, copy_pattern c)
   | Ast_502.Parsetree.Ppat_extension x0 ->
       Ast_503.Parsetree.Ppat_extension (copy_extension x0)

@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Add Ast_builder and Ast_pattern utilities to manipulate encoded
+  effect patterns (#624, @NathanReb)
+
 - Fix infinite loop when duplicate attributes are present, raising
   an error instead (#613, @ceastlund, @patricoferris)
 

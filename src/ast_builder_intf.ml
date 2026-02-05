@@ -153,6 +153,22 @@ module type Additional_helpers = sig
 
   val eta_reduce_if_possible_and_nonrec :
     expression -> rec_flag:rec_flag -> expression
+
+  (** {2:future-asts Compat functions for future AST nodes}
+
+      The functions in this section provide a safe interface to generate AST
+      nodes that cannot be represented with Ppxlib's own AST but are available
+      with more recent versions of the compiler.
+
+      Note that producing such nodes will make the generated code incompatible
+      with compilers older than the feature you are trying to represent. Those
+      nodes also won't play nicely with the driver's default source output or if
+      printed as source using [Ppxlib.Pprintast]. You can use the
+      --use-compiler-pp flag of the driver to use your current compiler's AST to
+      source printers. *)
+
+  val ppat_effect : (effect_:pattern -> k:pattern -> unit -> pattern) with_loc
+  (** Returns an encoded effect pattern as introduced in OCaml 5.3 *)
 end
 
 module type Located = sig
