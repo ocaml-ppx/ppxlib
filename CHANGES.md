@@ -5,6 +5,7 @@ unreleased
   an error instead (#613, @ceastlund, @patricoferris)
 - Ignore extensions inside attributes for the unused extension check
   (#616, @Skepfyr)
+- Fix Longident locations for 504 and above (#619, @patricoferris)
 
 0.37.0
 ------
