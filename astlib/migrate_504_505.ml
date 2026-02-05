@@ -623,6 +623,22 @@ and copy_type_declaration :
        Ast_504.Parsetree.ptype_attributes;
        Ast_504.Parsetree.ptype_loc;
      } ->
+  let external_name, ptype_attributes =
+    let rec aux so_far = function
+      | [] -> (None, List.rev so_far)
+      | Ast_504.Parsetree.({ attr_name = { txt; _ }; _ } as attr) :: rest
+        when String.equal txt Encoding_505.Ext_name.ptype_kind_external ->
+          ( Encoding_505.To_504.decode_ptype_kind_external attr,
+            List.rev_append so_far rest )
+      | attr :: rest -> aux (attr :: so_far) rest
+    in
+    aux [] ptype_attributes
+  in
+  let ptype_kind =
+    match external_name with
+    | Some name -> Ast_505.Parsetree.Ptype_external name
+    | None -> copy_type_kind ptype_kind
+  in
   {
     Ast_505.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
     Ast_505.Parsetree.ptype_params =
@@ -639,7 +655,7 @@ and copy_type_declaration :
           let x0, x1, x2 = x in
           (copy_core_type x0, copy_core_type x1, copy_location x2))
         ptype_cstrs;
-    Ast_505.Parsetree.ptype_kind = copy_type_kind ptype_kind;
+    Ast_505.Parsetree.ptype_kind;
     Ast_505.Parsetree.ptype_private = copy_private_flag ptype_private;
     Ast_505.Parsetree.ptype_manifest = Option.map copy_core_type ptype_manifest;
     Ast_505.Parsetree.ptype_attributes = copy_attributes ptype_attributes;

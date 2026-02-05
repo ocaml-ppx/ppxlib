@@ -2,6 +2,7 @@ module Ext_name = struct
   let pexp_struct_item = "ppxlib.migration.pexp_struct_item_505"
   let ptyp_functor = "ppxlib.migration.ptyp_functor_505"
   let ppat_unpack = "ppxlib.migration.ppat_unpack_505"
+  let ptype_kind_external = "ppxlib.migration.ptype_kind_external_505"
 end
 
 let invalid_encoding ~loc name =
@@ -57,4 +58,36 @@ module To_504 = struct
         } ->
         (arg, attr.attr_name, pkg, typ)
     | _ -> invalid_encoding ~loc Ext_name.ptyp_functor
+
+  let encode_ptype_kind_external name =
+    let name_attr =
+      {
+        attr_name = { txt = name; loc = Location.none };
+        attr_loc = Location.none;
+        attr_payload = PStr [];
+      }
+    in
+    let si =
+      { pstr_desc = Pstr_attribute name_attr; pstr_loc = Location.none }
+    in
+    {
+      attr_name = { txt = Ext_name.ptype_kind_external; loc = Location.none };
+      attr_loc = Location.none;
+      attr_payload = PStr [ si ];
+    }
+
+  let decode_ptype_kind_external = function
+    | {
+        attr_name = { txt; _ };
+        attr_payload =
+          PStr
+            [
+              {
+                pstr_desc = Pstr_attribute { attr_name = { txt = name; _ }; _ };
+              };
+            ];
+      }
+      when String.equal txt Ext_name.ptype_kind_external ->
+        Some name
+    | _ -> None
 end

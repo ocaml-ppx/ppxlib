@@ -617,6 +617,13 @@ and copy_type_declaration :
        Ast_505.Parsetree.ptype_attributes;
        Ast_505.Parsetree.ptype_loc;
      } ->
+  let ptype_attributes =
+    match ptype_kind with
+    | Ptype_external name ->
+        let attr = Encoding_505.To_504.encode_ptype_kind_external name in
+        attr :: copy_attributes ptype_attributes
+    | _ -> copy_attributes ptype_attributes
+  in
   {
     Ast_504.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
     Ast_504.Parsetree.ptype_params =
@@ -636,7 +643,7 @@ and copy_type_declaration :
     Ast_504.Parsetree.ptype_kind = copy_type_kind ptype_kind;
     Ast_504.Parsetree.ptype_private = copy_private_flag ptype_private;
     Ast_504.Parsetree.ptype_manifest = Option.map copy_core_type ptype_manifest;
-    Ast_504.Parsetree.ptype_attributes = copy_attributes ptype_attributes;
+    Ast_504.Parsetree.ptype_attributes;
     Ast_504.Parsetree.ptype_loc = copy_location ptype_loc;
   }
 
@@ -649,7 +656,9 @@ and copy_type_kind : Ast_505.Parsetree.type_kind -> Ast_504.Parsetree.type_kind
       Ast_504.Parsetree.Ptype_record (List.map copy_label_declaration x0)
   | Ast_505.Parsetree.Ptype_open -> Ast_504.Parsetree.Ptype_open
   | Ast_505.Parsetree.Ptype_external x0 ->
-      Location.raise_errorf "External types are not supported."
+      (* Note that copy_type_declaration should handle this for us and we need
+       only put _something_ here. *)
+      Ast_504.Parsetree.Ptype_open
 
 and copy_label_declaration :
     Ast_505.Parsetree.label_declaration -> Ast_504.Parsetree.label_declaration =
