@@ -61,9 +61,7 @@ to encode this feature into attributes and this test, along with this comment,
 will need updated.
 
   $ ./driver.exe test.ml --use-compiler-pp
-  File "test.ml", line 1:
-  Error: External types are not supported.
-  [1]
+  type t = external "t"
 
 3. Ptyp_functor
 
