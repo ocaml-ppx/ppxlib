@@ -3,6 +3,8 @@ unreleased
 
 - Fix infinite loop when duplicate attributes are present, raising
   an error instead (#613, @ceastlund, @patricoferris)
+- Ignore extensions inside attributes for the unused extension check
+  (#616, @Skepfyr)
 
 0.37.0
 ------
