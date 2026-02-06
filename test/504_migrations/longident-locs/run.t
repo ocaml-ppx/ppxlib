@@ -10,7 +10,7 @@ If we run the driver on the following source file:
 
 then the non-existing module should have a sensible error location.
 
-  $ ocamlc -ppx "./driver.exe --as-ppx" test.ml test.ml.pp
+  $ ocamlc -ppx "./driver.exe --as-ppx -locations-check" test.ml test.ml.pp
   File "test.ml", line 1, characters 9-30:
   1 | let () = NonExistingModule.foo ()
                ^^^^^^^^^^^^^^^^^^^^^
@@ -23,7 +23,7 @@ Another longident usage:
   > let t = { ThisModule.age = 43 }
   > EOF
 
-  $ ocamlc -ppx "./driver.exe --as-ppx" test.ml test.ml.pp
+  $ ocamlc -ppx "./driver.exe --as-ppx -locations-check" test.ml test.ml.pp
   File "test.ml", line 1, characters 10-24:
   1 | let t = { ThisModule.age = 43 }
                 ^^^^^^^^^^^^^^
@@ -43,7 +43,7 @@ Longidents with Lapplys:
   > type t = { v : F(X).G(Int).t }
   > EOF
 
-  $ ocamlc -ppx "./driver.exe --as-ppx" test.ml test.ml.pp
+  $ ocamlc -ppx "./driver.exe --as-ppx -locations-check" test.ml test.ml.pp
   File "test.ml", line 8, characters 15-28:
   8 | type t = { v : F(X).G(Int).t }
                      ^^^^^^^^^^^^^
