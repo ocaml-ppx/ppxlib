@@ -1,5 +1,5 @@
 module Ext_name = struct
-  let ppat_effect = "ppxlib.migration.ppat_effect"
+  let ppat_effect = "ppxlib.migration.ppat_effect_503"
 end
 
 let invalid_encoding ~loc name =

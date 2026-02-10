@@ -264,7 +264,7 @@ module Default = struct
   let ppat_tuple ~loc l = match l with [ x ] -> x | _ -> ppat_tuple ~loc l
   let ptyp_tuple ~loc l = match l with [ x ] -> x | _ -> ptyp_tuple ~loc l
 
-  let ppat_effect ~loc ~effect_ ~k () =
+  let ppat_effect ~loc effect_ k =
     let ppat_desc =
       Astlib__.Encoding_503.To_502.encode_ppat_effect ~loc ~effect_ ~k
     in
@@ -561,7 +561,7 @@ end) : S = struct
   let pexp_tuple l = Default.pexp_tuple ~loc l
   let ppat_tuple l = Default.ppat_tuple ~loc l
   let ptyp_tuple l = Default.ptyp_tuple ~loc l
-  let ppat_effect ~effect_ ~k () = Default.ppat_effect ~loc ~effect_ ~k ()
+  let ppat_effect effect_ k = Default.ppat_effect ~loc effect_ k
   let pexp_tuple_opt l = Default.pexp_tuple_opt ~loc l
   let ppat_tuple_opt l = Default.ppat_tuple_opt ~loc l
   let ptyp_poly vars ty = Default.ptyp_poly ~loc vars ty

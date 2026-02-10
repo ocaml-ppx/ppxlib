@@ -4,6 +4,9 @@ unreleased
 - Add Ast_builder and Ast_pattern utilities to manipulate encoded
   effect patterns (#624, @NathanReb)
 
+- Fix a bug where ppat_effects would be encoded/decoded instead of copied by
+  the 5.4 <-> 5.3 migrations (#624, @NathanReb)
+
 - Fix infinite loop when duplicate attributes are present, raising
   an error instead (#613, @ceastlund, @patricoferris)
 

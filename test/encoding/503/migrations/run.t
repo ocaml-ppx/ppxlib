@@ -8,7 +8,8 @@ migrated down to our 5.2 AST
   $ ./id_driver.exe effect_pattern.ml
   let () =
     try comp ()
-    with | [%ppxlib.migration.ppat_effect ? (Xchg n, k)] -> continue k (n + 1)
+    with
+    | [%ppxlib.migration.ppat_effect_503 ? (Xchg n, k)] -> continue k (n + 1)
 
 And that it is correctly decoded when migrated back up to 5.3+ ASTs:
 

@@ -17,9 +17,8 @@ let effect_construct =
 (* Generate an encoded effect pattern *)
 let encoded_effect_pattern =
   Builder.ppat_effect
-    ~effect_:effect_construct
-    ~k:Builder.(ppat_var (Located.mk "k"))
-    ()
+    effect_construct
+    Builder.(ppat_var (Located.mk "k"))
 
 (* Migrate it to the current compiler (>= 5.3, as per dune rules) *)
 let effect_pattern = To_ocaml.copy_pattern encoded_effect_pattern

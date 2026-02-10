@@ -167,7 +167,7 @@ module type Additional_helpers = sig
       --use-compiler-pp flag of the driver to use your current compiler's AST to
       source printers. *)
 
-  val ppat_effect : (effect_:pattern -> k:pattern -> unit -> pattern) with_loc
+  val ppat_effect : (pattern -> pattern -> pattern) with_loc
   (** Returns an encoded effect pattern as introduced in OCaml 5.3 *)
 end
 
