@@ -275,3 +275,20 @@ let esequence (T f) =
 
 let of_func f = T f
 let to_func (T f) = f
+
+let ppat_effect (T fe) (T fk) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.ppat_loc in
+      let x = x.ppat_desc in
+      match x with
+      | Ppat_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_503.Ext_name.ppat_effect ->
+          let effect_, kpat =
+            Astlib__.Encoding_503.To_502.decode_ppat_effect ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = fe ctx loc effect_ k in
+          let k = fk ctx loc kpat k in
+          k
+      | _ -> fail loc "ppat_effect")

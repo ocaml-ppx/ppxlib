@@ -366,16 +366,7 @@ and copy_pattern_desc loc :
   | Ast_504.Parsetree.Ppat_exception x0 ->
       Ast_503.Parsetree.Ppat_exception (copy_pattern x0)
   | Ast_504.Parsetree.Ppat_effect (e, c) ->
-      Ast_503.Parsetree.Ppat_extension
-        ( Location.{ txt = "ppxlib.migration.ppat_effect"; loc },
-          Ast_503.Parsetree.PPat
-            ( {
-                ppat_desc = Ppat_tuple [ copy_pattern e; copy_pattern c ];
-                ppat_attributes = [];
-                ppat_loc_stack = [];
-                ppat_loc = loc;
-              },
-              None ) )
+      Ast_503.Parsetree.Ppat_effect (copy_pattern e, copy_pattern c)
   | Ast_504.Parsetree.Ppat_extension x0 ->
       Ast_503.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_504.Parsetree.Ppat_open (x0, x1) ->

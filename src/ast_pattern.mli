@@ -214,3 +214,13 @@ val to_func : ('a, 'b, 'c) t -> context -> Location.t -> 'a -> 'b -> 'c
 val fail : Location.t -> string -> _
 (** Call from [of_func]'s argument when the pattern does not match. The string
     should describe the expected shape of the AST where the match failed. *)
+
+(** {2:future-asts Compat functions for future AST nodes}
+
+    The functions in this section provide a safe interface to match over AST
+    nodes that cannot be represented with Ppxlib's own AST but are available
+    with more recent versions of the compiler. *)
+
+val ppat_effect :
+  (pattern, 'a, 'b) t -> (pattern, 'b, 'c) t -> (pattern, 'a, 'c) t
+(** Match over an encoded OCaml 5.3 effect pattern. *)
