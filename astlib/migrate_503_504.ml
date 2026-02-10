@@ -28,19 +28,23 @@ and copy_directive_argument :
     Ast_503.Parsetree.directive_argument -> Ast_504.Parsetree.directive_argument
     =
  fun { Ast_503.Parsetree.pdira_desc; Ast_503.Parsetree.pdira_loc } ->
+  let loc = copy_location pdira_loc in
   {
-    Ast_504.Parsetree.pdira_desc = copy_directive_argument_desc pdira_desc;
-    Ast_504.Parsetree.pdira_loc = copy_location pdira_loc;
+    Ast_504.Parsetree.pdira_desc =
+      copy_directive_argument_desc_with_loc ~loc pdira_desc;
+    Ast_504.Parsetree.pdira_loc = loc;
   }
 
-and copy_directive_argument_desc :
+and copy_directive_argument_desc_with_loc :
+    loc:Location.t ->
     Ast_503.Parsetree.directive_argument_desc ->
-    Ast_504.Parsetree.directive_argument_desc = function
+    Ast_504.Parsetree.directive_argument_desc =
+ fun ~loc -> function
   | Ast_503.Parsetree.Pdir_string x0 -> Ast_504.Parsetree.Pdir_string x0
   | Ast_503.Parsetree.Pdir_int (x0, x1) ->
       Ast_504.Parsetree.Pdir_int (x0, Option.map (fun x -> x) x1)
   | Ast_503.Parsetree.Pdir_ident x0 ->
-      Ast_504.Parsetree.Pdir_ident (copy_Longident_t x0)
+      Ast_504.Parsetree.Pdir_ident (copy_Longident_t ~loc x0)
   | Ast_503.Parsetree.Pdir_bool x0 -> Ast_504.Parsetree.Pdir_bool x0
 
 and copy_expression :
@@ -70,7 +74,7 @@ and copy_expression_desc_with_loc :
  fun ~loc desc ->
   match desc with
   | Ast_503.Parsetree.Pexp_ident x0 ->
-      Ast_504.Parsetree.Pexp_ident (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Pexp_ident (copy_loc (copy_Longident_t ~loc) x0)
   | Ast_503.Parsetree.Pexp_constant x0 ->
       let loc = { loc with loc_ghost = true } in
       let constant = { (copy_constant x0) with pconst_loc = loc } in
@@ -100,7 +104,7 @@ and copy_expression_desc_with_loc :
         (List.map (fun v -> (None, copy_expression v)) x0)
   | Ast_503.Parsetree.Pexp_construct (x0, x1) ->
       Ast_504.Parsetree.Pexp_construct
-        (copy_loc copy_Longident_t x0, Option.map copy_expression x1)
+        (copy_loc (copy_Longident_t ~loc) x0, Option.map copy_expression x1)
   | Ast_503.Parsetree.Pexp_variant (x0, x1) ->
       Ast_504.Parsetree.Pexp_variant
         (copy_label x0, Option.map copy_expression x1)
@@ -109,15 +113,18 @@ and copy_expression_desc_with_loc :
         ( List.map
             (fun x ->
               let x0, x1 = x in
-              (copy_loc copy_Longident_t x0, copy_expression x1))
+              ( copy_loc (copy_Longident_t ~loc:x0.Location.loc) x0,
+                copy_expression x1 ))
             x0,
           Option.map copy_expression x1 )
   | Ast_503.Parsetree.Pexp_field (x0, x1) ->
       Ast_504.Parsetree.Pexp_field
-        (copy_expression x0, copy_loc copy_Longident_t x1)
+        (copy_expression x0, copy_loc (copy_Longident_t ~loc:x1.loc) x1)
   | Ast_503.Parsetree.Pexp_setfield (x0, x1, x2) ->
       Ast_504.Parsetree.Pexp_setfield
-        (copy_expression x0, copy_loc copy_Longident_t x1, copy_expression x2)
+        ( copy_expression x0,
+          copy_loc (copy_Longident_t ~loc:x1.loc) x1,
+          copy_expression x2 )
   | Ast_503.Parsetree.Pexp_array x0 ->
       Ast_504.Parsetree.Pexp_array (List.map copy_expression x0)
   | Ast_503.Parsetree.Pexp_ifthenelse (x0, x1, x2) ->
@@ -142,7 +149,7 @@ and copy_expression_desc_with_loc :
   | Ast_503.Parsetree.Pexp_send (x0, x1) ->
       Ast_504.Parsetree.Pexp_send (copy_expression x0, copy_loc copy_label x1)
   | Ast_503.Parsetree.Pexp_new x0 ->
-      Ast_504.Parsetree.Pexp_new (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Pexp_new (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
   | Ast_503.Parsetree.Pexp_setinstvar (x0, x1) ->
       Ast_504.Parsetree.Pexp_setinstvar
         (copy_loc copy_label x0, copy_expression x1)
@@ -320,7 +327,7 @@ and copy_pattern_desc_with_loc :
         (List.map (fun v -> (None, copy_pattern v)) x0, Closed)
   | Ast_503.Parsetree.Ppat_construct (x0, x1) ->
       Ast_504.Parsetree.Ppat_construct
-        ( copy_loc copy_Longident_t x0,
+        ( copy_loc (copy_Longident_t ~loc:x0.loc) x0,
           Option.map
             (fun x ->
               let x0, x1 = x in
@@ -333,7 +340,8 @@ and copy_pattern_desc_with_loc :
         ( List.map
             (fun x ->
               let x0, x1 = x in
-              (copy_loc copy_Longident_t x0, copy_pattern x1))
+              ( copy_loc (copy_Longident_t ~loc:x0.Location.loc) x0,
+                copy_pattern x1 ))
             x0,
           copy_closed_flag x1 )
   | Ast_503.Parsetree.Ppat_array x0 ->
@@ -343,7 +351,8 @@ and copy_pattern_desc_with_loc :
   | Ast_503.Parsetree.Ppat_constraint (x0, x1) ->
       Ast_504.Parsetree.Ppat_constraint (copy_pattern x0, copy_core_type x1)
   | Ast_503.Parsetree.Ppat_type x0 ->
-      Ast_504.Parsetree.Ppat_type (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Ppat_type
+        (copy_loc (copy_Longident_t ~loc:x0.Location.loc) x0)
   | Ast_503.Parsetree.Ppat_lazy x0 ->
       Ast_504.Parsetree.Ppat_lazy (copy_pattern x0)
   | Ast_503.Parsetree.Ppat_unpack x0 ->
@@ -358,7 +367,8 @@ and copy_pattern_desc_with_loc :
   | Ast_503.Parsetree.Ppat_extension x0 ->
       Ast_504.Parsetree.Ppat_extension (copy_extension x0)
   | Ast_503.Parsetree.Ppat_open (x0, x1) ->
-      Ast_504.Parsetree.Ppat_open (copy_loc copy_Longident_t x0, copy_pattern x1)
+      Ast_504.Parsetree.Ppat_open
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_pattern x1)
   | Ast_503.Parsetree.Ppat_effect (x0, x1) ->
       Ast_504.Parsetree.Ppat_effect (copy_pattern x0, copy_pattern x1)
 
@@ -411,13 +421,13 @@ and copy_core_type_desc :
         (List.map (fun v -> (None, copy_core_type v)) x0)
   | Ast_503.Parsetree.Ptyp_constr (x0, x1) ->
       Ast_504.Parsetree.Ptyp_constr
-        (copy_loc copy_Longident_t x0, List.map copy_core_type x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, List.map copy_core_type x1)
   | Ast_503.Parsetree.Ptyp_object (x0, x1) ->
       Ast_504.Parsetree.Ptyp_object
         (List.map copy_object_field x0, copy_closed_flag x1)
   | Ast_503.Parsetree.Ptyp_class (x0, x1) ->
       Ast_504.Parsetree.Ptyp_class
-        (copy_loc copy_Longident_t x0, List.map copy_core_type x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, List.map copy_core_type x1)
   | Ast_503.Parsetree.Ptyp_alias (x0, x1) ->
       Ast_504.Parsetree.Ptyp_alias (copy_core_type x0, copy_loc (fun x -> x) x1)
   | Ast_503.Parsetree.Ptyp_variant (x0, x1, x2) ->
@@ -432,7 +442,7 @@ and copy_core_type_desc :
       Ast_504.Parsetree.Ptyp_package (copy_package_type x0)
   | Ast_503.Parsetree.Ptyp_open (x0, ty) ->
       Ast_504.Parsetree.Ptyp_open
-        (copy_loc copy_Longident_t x0, copy_core_type ty)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_core_type ty)
   | Ast_503.Parsetree.Ptyp_extension x0 ->
       Ast_504.Parsetree.Ptyp_extension (copy_extension x0)
 
@@ -441,12 +451,13 @@ and copy_package_type :
  fun x ->
   let x0, x1 = x in
   {
-    ppt_path = copy_loc copy_Longident_t x0;
+    ppt_path = copy_loc (copy_Longident_t ~loc:x0.loc) x0;
     ppt_cstrs =
       List.map
         (fun x ->
           let x0, x1 = x in
-          (copy_loc copy_Longident_t x0, copy_core_type x1))
+          ( copy_loc (copy_Longident_t ~loc:x0.Location.loc) x0,
+            copy_core_type x1 ))
         x1;
     ppt_loc = Location.none;
     ppt_attrs = [];
@@ -588,7 +599,7 @@ and copy_class_expr_desc :
   function
   | Ast_503.Parsetree.Pcl_constr (x0, x1) ->
       Ast_504.Parsetree.Pcl_constr
-        (copy_loc copy_Longident_t x0, List.map copy_core_type x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, List.map copy_core_type x1)
   | Ast_503.Parsetree.Pcl_structure x0 ->
       Ast_504.Parsetree.Pcl_structure (copy_class_structure x0)
   | Ast_503.Parsetree.Pcl_fun (x0, x1, x2, x3) ->
@@ -708,7 +719,7 @@ and copy_module_expr_desc :
     Ast_503.Parsetree.module_expr_desc -> Ast_504.Parsetree.module_expr_desc =
   function
   | Ast_503.Parsetree.Pmod_ident x0 ->
-      Ast_504.Parsetree.Pmod_ident (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Pmod_ident (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
   | Ast_503.Parsetree.Pmod_structure x0 ->
       Ast_504.Parsetree.Pmod_structure (copy_structure x0)
   | Ast_503.Parsetree.Pmod_functor (x0, x1) ->
@@ -751,7 +762,7 @@ and copy_module_type_desc :
     Ast_503.Parsetree.module_type_desc -> Ast_504.Parsetree.module_type_desc =
   function
   | Ast_503.Parsetree.Pmty_ident x0 ->
-      Ast_504.Parsetree.Pmty_ident (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Pmty_ident (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
   | Ast_503.Parsetree.Pmty_signature x0 ->
       Ast_504.Parsetree.Pmty_signature (copy_signature x0)
   | Ast_503.Parsetree.Pmty_functor (x0, x1) ->
@@ -765,29 +776,31 @@ and copy_module_type_desc :
   | Ast_503.Parsetree.Pmty_extension x0 ->
       Ast_504.Parsetree.Pmty_extension (copy_extension x0)
   | Ast_503.Parsetree.Pmty_alias x0 ->
-      Ast_504.Parsetree.Pmty_alias (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Pmty_alias (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
 
 and copy_with_constraint :
     Ast_503.Parsetree.with_constraint -> Ast_504.Parsetree.with_constraint =
   function
   | Ast_503.Parsetree.Pwith_type (x0, x1) ->
       Ast_504.Parsetree.Pwith_type
-        (copy_loc copy_Longident_t x0, copy_type_declaration x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_type_declaration x1)
   | Ast_503.Parsetree.Pwith_module (x0, x1) ->
       Ast_504.Parsetree.Pwith_module
-        (copy_loc copy_Longident_t x0, copy_loc copy_Longident_t x1)
+        ( copy_loc (copy_Longident_t ~loc:x0.loc) x0,
+          copy_loc (copy_Longident_t ~loc:x1.loc) x1 )
   | Ast_503.Parsetree.Pwith_modtype (x0, x1) ->
       Ast_504.Parsetree.Pwith_modtype
-        (copy_loc copy_Longident_t x0, copy_module_type x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_module_type x1)
   | Ast_503.Parsetree.Pwith_modtypesubst (x0, x1) ->
       Ast_504.Parsetree.Pwith_modtypesubst
-        (copy_loc copy_Longident_t x0, copy_module_type x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_module_type x1)
   | Ast_503.Parsetree.Pwith_typesubst (x0, x1) ->
       Ast_504.Parsetree.Pwith_typesubst
-        (copy_loc copy_Longident_t x0, copy_type_declaration x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, copy_type_declaration x1)
   | Ast_503.Parsetree.Pwith_modsubst (x0, x1) ->
       Ast_504.Parsetree.Pwith_modsubst
-        (copy_loc copy_Longident_t x0, copy_loc copy_Longident_t x1)
+        ( copy_loc (copy_Longident_t ~loc:x0.loc) x0,
+          copy_loc (copy_Longident_t ~loc:x1.loc) x1 )
 
 and copy_signature : Ast_503.Parsetree.signature -> Ast_504.Parsetree.signature
     =
@@ -866,7 +879,7 @@ and copy_class_type_desc :
   function
   | Ast_503.Parsetree.Pcty_constr (x0, x1) ->
       Ast_504.Parsetree.Pcty_constr
-        (copy_loc copy_Longident_t x0, List.map copy_core_type x1)
+        (copy_loc (copy_Longident_t ~loc:x0.loc) x0, List.map copy_core_type x1)
   | Ast_503.Parsetree.Pcty_signature x0 ->
       Ast_504.Parsetree.Pcty_signature (copy_class_signature x0)
   | Ast_503.Parsetree.Pcty_arrow (x0, x1, x2) ->
@@ -991,7 +1004,8 @@ and copy_include_infos :
 
 and copy_open_description :
     Ast_503.Parsetree.open_description -> Ast_504.Parsetree.open_description =
- fun x -> copy_open_infos (fun x -> copy_loc copy_Longident_t x) x
+ fun x ->
+  copy_open_infos (fun x -> copy_loc (copy_Longident_t ~loc:x.Location.loc) x) x
 
 and copy_open_infos :
     'f0 'g0.
@@ -1044,7 +1058,8 @@ and copy_module_substitution :
      } ->
   {
     Ast_504.Parsetree.pms_name = copy_loc (fun x -> x) pms_name;
-    Ast_504.Parsetree.pms_manifest = copy_loc copy_Longident_t pms_manifest;
+    Ast_504.Parsetree.pms_manifest =
+      copy_loc (copy_Longident_t ~loc:pms_manifest.loc) pms_manifest;
     Ast_504.Parsetree.pms_attributes = copy_attributes pms_attributes;
     Ast_504.Parsetree.pms_loc = copy_location pms_loc;
   }
@@ -1091,7 +1106,8 @@ and copy_type_extension :
        Ast_503.Parsetree.ptyext_attributes;
      } ->
   {
-    Ast_504.Parsetree.ptyext_path = copy_loc copy_Longident_t ptyext_path;
+    Ast_504.Parsetree.ptyext_path =
+      copy_loc (copy_Longident_t ~loc:ptyext_path.loc) ptyext_path;
     Ast_504.Parsetree.ptyext_params =
       List.map
         (fun x ->
@@ -1132,7 +1148,7 @@ and copy_extension_constructor_kind :
           copy_constructor_arguments x1,
           Option.map copy_core_type x2 )
   | Ast_503.Parsetree.Pext_rebind x0 ->
-      Ast_504.Parsetree.Pext_rebind (copy_loc copy_Longident_t x0)
+      Ast_504.Parsetree.Pext_rebind (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
 
 and copy_type_declaration :
     Ast_503.Parsetree.type_declaration -> Ast_504.Parsetree.type_declaration =
@@ -1303,15 +1319,16 @@ and copy_constant : Ast_503.Parsetree.constant -> Ast_504.Parsetree.constant =
   in
   { pconst_desc; pconst_loc = copy_location c.pconst_loc }
 
-and copy_Longident_t : Longident.t -> Ast_504.Longident.t = function
+and copy_Longident_t : loc:Location.t -> Longident.t -> Ast_504.Longident.t =
+ fun ~loc -> function
   | Longident.Lident x0 -> Ast_504.Longident.Lident x0
   | Longident.Ldot (x0, x1) ->
-      Ast_504.Longident.Ldot
-        ( { txt = copy_Longident_t x0; loc = Location.none },
-          { txt = x1; loc = Location.none } )
+      let x0 = Location.{ txt = copy_Longident_t ~loc x0; loc } in
+      let x1 = Location.{ txt = x1; loc } in
+      Ast_504.Longident.Ldot (x0, x1)
   | Longident.Lapply (x0, x1) ->
-      let x0 = Location.{ txt = copy_Longident_t x0; loc = Location.none } in
-      let x1 = Location.{ txt = copy_Longident_t x1; loc = Location.none } in
+      let x0 = Location.{ txt = copy_Longident_t ~loc x0; loc } in
+      let x1 = Location.{ txt = copy_Longident_t ~loc x1; loc } in
       Ast_504.Longident.Lapply (x0, x1)
 
 and copy_loc :
