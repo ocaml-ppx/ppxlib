@@ -292,3 +292,54 @@ let ppat_effect (T fe) (T fk) =
           let k = fk ctx loc kpat k in
           k
       | _ -> fail loc "ppat_effect")
+
+let ptyp_labeled_tuple (T f0) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.ptyp_loc in
+      let x = x.ptyp_desc in
+      match x with
+      | Ptyp_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_504.Ext_name.ptyp_labeled_tuple
+        ->
+          let x0 =
+            Astlib__.Encoding_504.To_502.decode_ptyp_labeled_tuple ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = f0 ctx loc x0 k in
+          k
+      | _ -> fail loc "labeled tuple")
+
+let pexp_labeled_tuple (T f0) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.pexp_loc in
+      let x = x.pexp_desc in
+      match x with
+      | Pexp_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_504.Ext_name.pexp_labeled_tuple
+        ->
+          let x0 =
+            Astlib__.Encoding_504.To_502.decode_pexp_labeled_tuple ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = f0 ctx loc x0 k in
+          k
+      | _ -> fail loc "labeled tuple")
+
+let ppat_labeled_tuple (T f0) =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.ppat_loc in
+      let x = x.ppat_desc in
+      match x with
+      | Ppat_extension ({ txt; _ }, payload)
+        when String.equal txt Astlib__.Encoding_504.Ext_name.ppat_labeled_tuple
+        ->
+          let x0 =
+            Astlib__.Encoding_504.To_502.decode_ppat_labeled_tuple ~loc payload
+          in
+          ctx.matched <- ctx.matched + 1;
+          let k = f0 ctx loc x0 k in
+          k
+      | _ -> fail loc "labeled tuple")
