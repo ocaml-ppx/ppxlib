@@ -455,9 +455,10 @@ and copy_core_type : Ast_501.Parsetree.core_type -> Ast_502.Parsetree.core_type
        Ast_501.Parsetree.ptyp_loc_stack;
        Ast_501.Parsetree.ptyp_attributes;
      } ->
+  let loc = copy_location ptyp_loc in
   {
-    Ast_502.Parsetree.ptyp_desc = copy_core_type_desc ptyp_desc;
-    Ast_502.Parsetree.ptyp_loc = copy_location ptyp_loc;
+    Ast_502.Parsetree.ptyp_desc = copy_core_type_desc ~loc ptyp_desc;
+    Ast_502.Parsetree.ptyp_loc = loc;
     Ast_502.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
     Ast_502.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
   }
@@ -467,8 +468,10 @@ and copy_location_stack :
  fun x -> List.map copy_location x
 
 and copy_core_type_desc :
-    Ast_501.Parsetree.core_type_desc -> Ast_502.Parsetree.core_type_desc =
-  function
+    loc:Location.t ->
+    Ast_501.Parsetree.core_type_desc ->
+    Ast_502.Parsetree.core_type_desc =
+ fun ~loc -> function
   | Ast_501.Parsetree.Ptyp_any -> Ast_502.Parsetree.Ptyp_any
   | Ast_501.Parsetree.Ptyp_var x0 -> Ast_502.Parsetree.Ptyp_var x0
   | Ast_501.Parsetree.Ptyp_arrow (x0, x1, x2) ->
@@ -498,6 +501,11 @@ and copy_core_type_desc :
         (List.map (fun x -> copy_loc (fun x -> x) x) x0, copy_core_type x1)
   | Ast_501.Parsetree.Ptyp_package x0 ->
       Ast_502.Parsetree.Ptyp_package (copy_package_type x0)
+  | Ast_501.Parsetree.Ptyp_extension (x0, payload)
+    when String.equal x0.txt Encoding_502.Ext_name.ptyp_open ->
+      let name, ctyp = Encoding_502.To_501.decode_ptyp_open ~loc payload in
+      Ast_502.Parsetree.Ptyp_open
+        (copy_loc copy_Longident_t name, copy_core_type ctyp)
   | Ast_501.Parsetree.Ptyp_extension x0 ->
       Ast_502.Parsetree.Ptyp_extension (copy_extension x0)
 
