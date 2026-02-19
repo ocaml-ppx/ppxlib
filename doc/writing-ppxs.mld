@@ -1,4 +1,4 @@
-{%html: <div style="display: flex; justify-content:space-between"><div>%}{{!"driver"}< The Driver}{%html: </div><div>%}{{!"generating-code"}Generating AST nodes >}{%html: </div></div>%}
+{%html: <div style="display: flex; justify-content:space-between"><div>%}{{!"compatibility"}< Compatibility With Multiple OCaml Versions}{%html: </div><div>%}{{!"generating-code"}Generating AST nodes >}{%html: </div></div>%}
 
 {0 Writing a Transformation}
 
@@ -26,7 +26,7 @@ In order to register a transformation to the [ppxlib] driver, one should use the
 rewriter types in every different phase, except derivers, which are abstracted
 away in {{!Ppxlib.Deriving}[Deriving]}.
 
-{1 Context-Free Transformation}
+{1:context_free Context-Free Transformation}
 
 In [ppxlib], the type for context-free transformation is
 {{!Ppxlib.Context_free.Rule.t}[Context_free.Rule.t]}. Rules will be applied during the AST's top-down traverse
@@ -625,4 +625,4 @@ We encourage you to read and follow it to produce high quality PPXs:
 - A section on how to {{!page-"good-practices"."testing-your-ppx"}test} your PPX
 - A section on how to collaborate with Merlin effectively by being careful with {{!page-"good-practices"."testing-your-ppx"}locations}
 
-{%html: <div style="display: flex; justify-content:space-between"><div>%}{{!"driver"}< The Driver}{%html: </div><div>%}{{!"generating-code"}Generating AST nodes >}{%html: </div></div>%}
+{%html: <div style="display: flex; justify-content:space-between"><div>%}{{!"compatibility"}< Compatibility With Multiple OCaml Versions}{%html: </div><div>%}{{!"generating-code"}Generating AST nodes >}{%html: </div></div>%}
