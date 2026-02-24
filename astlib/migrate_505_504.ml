@@ -276,13 +276,13 @@ and copy_pattern : Ast_505.Parsetree.pattern -> Ast_504.Parsetree.pattern =
        Ast_505.Parsetree.ppat_attributes;
      } ->
   {
-    Ast_504.Parsetree.ppat_desc = copy_pattern_desc ppat_desc;
+    Ast_504.Parsetree.ppat_desc = copy_pattern_desc ~loc:ppat_loc ppat_desc;
     Ast_504.Parsetree.ppat_loc = copy_location ppat_loc;
     Ast_504.Parsetree.ppat_loc_stack = copy_location_stack ppat_loc_stack;
     Ast_504.Parsetree.ppat_attributes = copy_attributes ppat_attributes;
   }
 
-and copy_pattern_desc :
+and copy_pattern_desc ~loc :
     Ast_505.Parsetree.pattern_desc -> Ast_504.Parsetree.pattern_desc = function
   | Ast_505.Parsetree.Ppat_any -> Ast_504.Parsetree.Ppat_any
   | Ast_505.Parsetree.Ppat_var x0 ->
@@ -323,6 +323,12 @@ and copy_pattern_desc :
       Ast_504.Parsetree.Ppat_array (List.map copy_pattern x0)
   | Ast_505.Parsetree.Ppat_or (x0, x1) ->
       Ast_504.Parsetree.Ppat_or (copy_pattern x0, copy_pattern x1)
+  | Ast_505.Parsetree.Ppat_constraint
+      ( ({ ppat_desc = Ppat_unpack (_, None); _ } as x0),
+        ({ ptyp_desc = Ptyp_package _; _ } as x1) ) ->
+      let x0' = copy_pattern x0 in
+      let x1' = copy_core_type x1 in
+      Encoding_505.To_504.preserve_ppat_constraint x0' x1'
   | Ast_505.Parsetree.Ppat_constraint (x0, x1) ->
       Ast_504.Parsetree.Ppat_constraint (copy_pattern x0, copy_core_type x1)
   | Ast_505.Parsetree.Ppat_type x0 ->
@@ -336,30 +342,19 @@ and copy_pattern_desc :
       match x1 with
       | None -> unpack
       | Some c ->
-          let ghost_loc loc = { loc with Location.loc_ghost = true } in
-          let flag_attr : Ast_504.Parsetree.attribute =
-            {
-              attr_name =
-                {
-                  txt = Encoding_505.Ext_name.ppat_unpack;
-                  loc = ghost_loc Location.none;
-                };
-              attr_loc = ghost_loc Location.none;
-              attr_payload = PStr [];
-            }
-          in
+          let ghost_loc = { loc with Location.loc_ghost = true } in
           let unpack_pattern : Ast_504.Parsetree.pattern =
             {
               ppat_desc = unpack;
-              ppat_loc = ghost_loc Location.none;
-              ppat_attributes = [ flag_attr ];
+              ppat_loc = ghost_loc;
+              ppat_attributes = [];
               ppat_loc_stack = [];
             }
           in
           let package_type : Ast_504.Parsetree.core_type =
             {
               ptyp_desc = Ptyp_package (copy_package_type c);
-              ptyp_loc = ghost_loc Location.none;
+              ptyp_loc = ghost_loc;
               ptyp_attributes = [];
               ptyp_loc_stack = [];
             }

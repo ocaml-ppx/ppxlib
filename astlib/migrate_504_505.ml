@@ -330,13 +330,14 @@ and copy_pattern_desc :
   | Ast_504.Parsetree.Ppat_constraint
       ( ({ ppat_desc = Ppat_unpack p; ppat_attributes; _ } as x0),
         ({ ptyp_desc = Ptyp_package pkg; _ } as x1) ) -> (
-      match ppat_attributes with
-      | [ { attr_name = { txt; _ } } ]
-        when String.equal txt Encoding_505.Ext_name.ppat_unpack ->
-          Ast_505.Parsetree.Ppat_unpack (p, Some (copy_package_type pkg))
-      | _ ->
-          Ast_505.Parsetree.Ppat_constraint (copy_pattern x0, copy_core_type x1)
-      )
+      let preserve =
+        Encoding_505.To_504.must_preserve_ppat_constraint ppat_attributes
+      in
+      match preserve with
+      | None -> Ast_505.Parsetree.Ppat_unpack (p, Some (copy_package_type pkg))
+      | Some ppat_attributes ->
+          Ast_505.Parsetree.Ppat_constraint
+            (copy_pattern { x0 with ppat_attributes }, copy_core_type x1))
   | Ast_504.Parsetree.Ppat_constraint (x0, x1) ->
       Ast_505.Parsetree.Ppat_constraint (copy_pattern x0, copy_core_type x1)
   | Ast_504.Parsetree.Ppat_type x0 ->
