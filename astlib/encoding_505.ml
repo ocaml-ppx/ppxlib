@@ -1,7 +1,7 @@
 module Ext_name = struct
   let pexp_struct_item = "ppxlib.migration.pexp_struct_item_505"
   let ptyp_functor = "ppxlib.migration.ptyp_functor_505"
-  let ppat_unpack = "ppxlib.migration.ppat_unpack_505"
+  let preserve_ppat_constraint = "ppxlib.migration.preserve_ppat_constraint_505"
   let ptype_kind_external = "ppxlib.migration.ptype_kind_external_505"
 end
 
@@ -90,4 +90,27 @@ module To_504 = struct
       when String.equal txt Ext_name.ptype_kind_external ->
         Some name
     | _ -> None
+
+  let must_preserve_ppat_constraint l =
+    let rec aux seen = function
+      | [] -> None
+      | { attr_name = { txt; _ }; _ } :: tl
+        when String.equal txt Ext_name.preserve_ppat_constraint ->
+          Some (List.rev_append seen tl)
+      | hd :: tl -> aux (hd :: seen) tl
+    in
+    aux [] l
+
+  let preserve_ppat_constraint pattern core_type =
+    let loc = pattern.ppat_loc in
+    let flag =
+      {
+        attr_name = { txt = Ext_name.preserve_ppat_constraint; loc };
+        attr_payload = PStr [];
+        attr_loc = loc;
+      }
+    in
+    Ppat_constraint
+      ( { pattern with ppat_attributes = flag :: pattern.ppat_attributes },
+        core_type )
 end
