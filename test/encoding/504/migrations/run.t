@@ -42,3 +42,17 @@ And same for patterns:
 
   $ ./id_driver.exe pattern.ml --use-compiler-pp
   let (~a, ~b:_, c, ..) = x
+
+We also check that bivariant type parameters are correctly encoded and migrated:
+
+  $ cat > bivariant.ml << EOF
+  > type +-'a t = A
+  > EOF
+
+  $ ./id_driver.exe bivariant.ml
+  [%%ppxlib.migration.bivariant_str_item_504 type 'a t =
+                                               | A ]
+
+  $ ./id_driver.exe bivariant.ml --use-compiler-pp
+  type +-'a t =
+    | A 
