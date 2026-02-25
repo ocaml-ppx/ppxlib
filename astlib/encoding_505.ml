@@ -1,3 +1,5 @@
+open Stdlib0
+
 module Ext_name = struct
   let pexp_struct_item = "ppxlib.migration.pexp_struct_item_505"
   let ptyp_functor = "ppxlib.migration.ptyp_functor_505"
@@ -92,14 +94,8 @@ module To_504 = struct
     | _ -> None
 
   let must_preserve_ppat_constraint l =
-    let rec aux seen = function
-      | [] -> None
-      | { attr_name = { txt; _ }; _ } :: tl
-        when String.equal txt Ext_name.preserve_ppat_constraint ->
-          Some (List.rev_append seen tl)
-      | hd :: tl -> aux (hd :: seen) tl
-    in
-    aux [] l
+    List.without_first l ~pred:(fun attr ->
+        String.equal attr.attr_name.txt Ext_name.preserve_ppat_constraint)
 
   let preserve_ppat_constraint pattern core_type =
     let loc = pattern.ppat_loc in
