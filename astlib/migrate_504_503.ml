@@ -2,9 +2,16 @@ open Stdlib0
 module From = Ast_504
 module To = Ast_503
 
-let migration_error loc missing_feature =
-  Location.raise_errorf ~loc
-    "migration error: %s are not supported before OCaml 5.4" missing_feature
+module Bivariant_param = struct
+  type exn +=
+    | T
+    | Type_decl of Ast_503.Parsetree.type_declaration
+    | Type_decl_list of Ast_503.Parsetree.type_declaration list
+
+  (* TODO: register exception printers to display those as location errors
+   pointing to the right AST element and displaying a clear migration error
+   message *)
+end
 
 let rec copy_toplevel_phrase :
     Ast_504.Parsetree.toplevel_phrase -> Ast_503.Parsetree.toplevel_phrase =
@@ -528,12 +535,14 @@ and copy_structure : Ast_504.Parsetree.structure -> Ast_503.Parsetree.structure
 and copy_structure_item :
     Ast_504.Parsetree.structure_item -> Ast_503.Parsetree.structure_item =
  fun { Ast_504.Parsetree.pstr_desc; Ast_504.Parsetree.pstr_loc } ->
+  let loc = copy_location pstr_loc in
   {
-    Ast_503.Parsetree.pstr_desc = copy_structure_item_desc pstr_desc;
-    Ast_503.Parsetree.pstr_loc = copy_location pstr_loc;
+    Ast_503.Parsetree.pstr_desc =
+      copy_structure_item_desc_with_loc ~loc pstr_desc;
+    Ast_503.Parsetree.pstr_loc = loc;
   }
 
-and copy_structure_item_desc :
+and copy_structure_item_desc_with_loc ~loc :
     Ast_504.Parsetree.structure_item_desc ->
     Ast_503.Parsetree.structure_item_desc = function
   | Ast_504.Parsetree.Pstr_eval (x0, x1) ->
@@ -543,9 +552,12 @@ and copy_structure_item_desc :
         (copy_rec_flag x0, List.map copy_value_binding x1)
   | Ast_504.Parsetree.Pstr_primitive x0 ->
       Ast_503.Parsetree.Pstr_primitive (copy_value_description x0)
-  | Ast_504.Parsetree.Pstr_type (x0, x1) ->
-      Ast_503.Parsetree.Pstr_type
-        (copy_rec_flag x0, List.map copy_type_declaration x1)
+  | Ast_504.Parsetree.Pstr_type (x0, x1) -> (
+      let rec_flag = copy_rec_flag x0 in
+      match copy_type_declaration_list x1 with
+      | tds -> Ast_503.Parsetree.Pstr_type (rec_flag, tds)
+      | exception Bivariant_param.Type_decl_list tds ->
+          Encoding_504.To_503.encode_bivariant_pstr_type ~loc rec_flag tds)
   | Ast_504.Parsetree.Pstr_typext x0 ->
       Ast_503.Parsetree.Pstr_typext (copy_type_extension x0)
   | Ast_504.Parsetree.Pstr_exception x0 ->
@@ -569,6 +581,9 @@ and copy_structure_item_desc :
       Ast_503.Parsetree.Pstr_attribute (copy_attribute x0)
   | Ast_504.Parsetree.Pstr_extension (x0, x1) ->
       Ast_503.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
+
+and copy_structure_item_desc stri_d =
+  copy_structure_item_desc_with_loc ~loc:Location.none stri_d
 
 and copy_include_declaration :
     Ast_504.Parsetree.include_declaration ->
@@ -1143,6 +1158,21 @@ and copy_extension_constructor_kind :
   | Ast_504.Parsetree.Pext_rebind x0 ->
       Ast_503.Parsetree.Pext_rebind (copy_loc copy_Longident_t x0)
 
+and copy_type_params params =
+  let contains_bivariant_param = ref false in
+  let params' =
+    List.map
+      (fun (typ, (variance, injectivity)) ->
+        let typ' = copy_core_type typ in
+        let injectivity' = copy_injectivity injectivity in
+        try (typ', (copy_variance variance, injectivity'))
+        with Bivariant_param.T ->
+          contains_bivariant_param := true;
+          Encoding_504.To_503.encode_bivariant_param typ' injectivity')
+      params
+  in
+  (params', !contains_bivariant_param)
+
 and copy_type_declaration :
     Ast_504.Parsetree.type_declaration -> Ast_503.Parsetree.type_declaration =
  fun {
@@ -1155,28 +1185,43 @@ and copy_type_declaration :
        Ast_504.Parsetree.ptype_attributes;
        Ast_504.Parsetree.ptype_loc;
      } ->
-  {
-    Ast_503.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
-    Ast_503.Parsetree.ptype_params =
-      List.map
-        (fun x ->
-          let x0, x1 = x in
-          ( copy_core_type x0,
-            let x0, x1 = x1 in
-            (copy_variance x0, copy_injectivity x1) ))
-        ptype_params;
-    Ast_503.Parsetree.ptype_cstrs =
-      List.map
-        (fun x ->
-          let x0, x1, x2 = x in
-          (copy_core_type x0, copy_core_type x1, copy_location x2))
-        ptype_cstrs;
-    Ast_503.Parsetree.ptype_kind = copy_type_kind ptype_kind;
-    Ast_503.Parsetree.ptype_private = copy_private_flag ptype_private;
-    Ast_503.Parsetree.ptype_manifest = Option.map copy_core_type ptype_manifest;
-    Ast_503.Parsetree.ptype_attributes = copy_attributes ptype_attributes;
-    Ast_503.Parsetree.ptype_loc = copy_location ptype_loc;
-  }
+  let params, contains_bivariant = copy_type_params ptype_params in
+  let td =
+    {
+      Ast_503.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
+      Ast_503.Parsetree.ptype_params = params;
+      Ast_503.Parsetree.ptype_cstrs =
+        List.map
+          (fun x ->
+            let x0, x1, x2 = x in
+            (copy_core_type x0, copy_core_type x1, copy_location x2))
+          ptype_cstrs;
+      Ast_503.Parsetree.ptype_kind = copy_type_kind ptype_kind;
+      Ast_503.Parsetree.ptype_private = copy_private_flag ptype_private;
+      Ast_503.Parsetree.ptype_manifest =
+        Option.map copy_core_type ptype_manifest;
+      Ast_503.Parsetree.ptype_attributes = copy_attributes ptype_attributes;
+      Ast_503.Parsetree.ptype_loc = copy_location ptype_loc;
+    }
+  in
+  if contains_bivariant then raise (Bivariant_param.Type_decl td) else td
+
+and copy_type_declaration_list :
+    Ast_504.Parsetree.type_declaration list ->
+    Ast_503.Parsetree.type_declaration list =
+ fun l ->
+  let contains_bivariant_param = ref false in
+  let tds =
+    List.map
+      (fun td ->
+        try copy_type_declaration td
+        with Bivariant_param.Type_decl td' ->
+          contains_bivariant_param := true;
+          td')
+      l
+  in
+  if !contains_bivariant_param then raise (Bivariant_param.Type_decl_list tds)
+  else tds
 
 and copy_private_flag :
     Ast_504.Asttypes.private_flag -> Ast_503.Asttypes.private_flag = function
@@ -1253,7 +1298,7 @@ and copy_variance : Ast_504.Asttypes.variance -> Ast_503.Asttypes.variance =
   | Ast_504.Asttypes.Covariant -> Ast_503.Asttypes.Covariant
   | Ast_504.Asttypes.Contravariant -> Ast_503.Asttypes.Contravariant
   | Ast_504.Asttypes.NoVariance -> Ast_503.Asttypes.NoVariance
-  | Ast_504.Asttypes.Bivariant -> migration_error Location.none "bivariance"
+  | Ast_504.Asttypes.Bivariant -> raise Bivariant_param.T
 
 and copy_value_description :
     Ast_504.Parsetree.value_description -> Ast_503.Parsetree.value_description =

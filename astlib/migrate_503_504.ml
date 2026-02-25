@@ -544,12 +544,14 @@ and copy_structure : Ast_503.Parsetree.structure -> Ast_504.Parsetree.structure
 and copy_structure_item :
     Ast_503.Parsetree.structure_item -> Ast_504.Parsetree.structure_item =
  fun { Ast_503.Parsetree.pstr_desc; Ast_503.Parsetree.pstr_loc } ->
+  let loc = copy_location pstr_loc in
   {
-    Ast_504.Parsetree.pstr_desc = copy_structure_item_desc pstr_desc;
-    Ast_504.Parsetree.pstr_loc = copy_location pstr_loc;
+    Ast_504.Parsetree.pstr_desc =
+      copy_structure_item_desc_with_loc ~loc pstr_desc;
+    Ast_504.Parsetree.pstr_loc = loc;
   }
 
-and copy_structure_item_desc :
+and copy_structure_item_desc_with_loc ~loc :
     Ast_503.Parsetree.structure_item_desc ->
     Ast_504.Parsetree.structure_item_desc = function
   | Ast_503.Parsetree.Pstr_eval (x0, x1) ->
@@ -583,8 +585,15 @@ and copy_structure_item_desc :
       Ast_504.Parsetree.Pstr_include (copy_include_declaration x0)
   | Ast_503.Parsetree.Pstr_attribute x0 ->
       Ast_504.Parsetree.Pstr_attribute (copy_attribute x0)
+  | Ast_503.Parsetree.Pstr_extension (({ txt; _ }, payload), [])
+    when String.equal txt Encoding_504.Ext_name.bivariant_pstr ->
+      let desc = Encoding_504.To_503.decode_bivariant_pstr ~loc payload in
+      copy_structure_item_desc_with_loc ~loc desc
   | Ast_503.Parsetree.Pstr_extension (x0, x1) ->
       Ast_504.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
+
+and copy_structure_item_desc stri_desc =
+  copy_structure_item_desc_with_loc ~loc:Location.none stri_desc
 
 and copy_include_declaration :
     Ast_503.Parsetree.include_declaration ->
@@ -1164,6 +1173,16 @@ and copy_extension_constructor_kind :
   | Ast_503.Parsetree.Pext_rebind x0 ->
       Ast_504.Parsetree.Pext_rebind (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
 
+and copy_type_params params =
+  List.map
+    (fun ((typ, (var, inj)) as param) ->
+      match Encoding_504.To_503.decode_bivariant_param param with
+      | Some (typ, inj) ->
+          ( copy_core_type typ,
+            (Ast_504.Asttypes.Bivariant, copy_injectivity inj) )
+      | None -> (copy_core_type typ, (copy_variance var, copy_injectivity inj)))
+    params
+
 and copy_type_declaration :
     Ast_503.Parsetree.type_declaration -> Ast_504.Parsetree.type_declaration =
  fun {
@@ -1178,14 +1197,7 @@ and copy_type_declaration :
      } ->
   {
     Ast_504.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
-    Ast_504.Parsetree.ptype_params =
-      List.map
-        (fun x ->
-          let x0, x1 = x in
-          ( copy_core_type x0,
-            let x0, x1 = x1 in
-            (copy_variance x0, copy_injectivity x1) ))
-        ptype_params;
+    Ast_504.Parsetree.ptype_params = copy_type_params ptype_params;
     Ast_504.Parsetree.ptype_cstrs =
       List.map
         (fun x ->
