@@ -30,3 +30,15 @@ module Option = struct
       aux [] l
   end
 end
+
+module List = struct
+  include List
+
+  let without_first list ~pred =
+    let rec aux seen = function
+      | [] -> None
+      | hd :: tl when pred hd -> Some (List.rev_append seen tl)
+      | hd :: tl -> aux (hd :: seen) tl
+    in
+    aux [] list
+end
