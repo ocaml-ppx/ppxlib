@@ -1140,14 +1140,7 @@ and copy_type_extension :
   {
     Ast_504.Parsetree.ptyext_path =
       copy_loc (copy_Longident_t ~loc:ptyext_path.loc) ptyext_path;
-    Ast_504.Parsetree.ptyext_params =
-      List.map
-        (fun x ->
-          let x0, x1 = x in
-          ( copy_core_type x0,
-            let x0, x1 = x1 in
-            (copy_variance x0, copy_injectivity x1) ))
-        ptyext_params;
+    Ast_504.Parsetree.ptyext_params = copy_type_params ptyext_params;
     Ast_504.Parsetree.ptyext_constructors =
       List.map copy_extension_constructor ptyext_constructors;
     Ast_504.Parsetree.ptyext_private = copy_private_flag ptyext_private;

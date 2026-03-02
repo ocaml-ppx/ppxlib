@@ -5,6 +5,7 @@ module To = Ast_503
 module Bivariant_param = struct
   type exn +=
     | T
+    | Type_ext of Ast_503.Parsetree.type_extension
     | Type_decl of Ast_503.Parsetree.type_declaration
     | Type_decl_list of Ast_503.Parsetree.type_declaration list
 
@@ -558,8 +559,11 @@ and copy_structure_item_desc_with_loc ~loc :
       | tds -> Ast_503.Parsetree.Pstr_type (rec_flag, tds)
       | exception Bivariant_param.Type_decl_list tds ->
           Encoding_504.To_503.encode_bivariant_pstr_type ~loc rec_flag tds)
-  | Ast_504.Parsetree.Pstr_typext x0 ->
-      Ast_503.Parsetree.Pstr_typext (copy_type_extension x0)
+  | Ast_504.Parsetree.Pstr_typext x0 -> (
+      match copy_type_extension x0 with
+      | ty_ext -> Ast_503.Parsetree.Pstr_typext ty_ext
+      | exception Bivariant_param.Type_ext ty_ext ->
+          Encoding_504.To_503.encode_bivariant_pstr_typext ~loc ty_ext)
   | Ast_504.Parsetree.Pstr_exception x0 ->
       Ast_503.Parsetree.Pstr_exception (copy_type_exception x0)
   | Ast_504.Parsetree.Pstr_module x0 ->
@@ -843,8 +847,11 @@ and copy_signature_item_desc_with_loc ~loc :
       | tds -> Ast_503.Parsetree.Psig_typesubst tds
       | exception Bivariant_param.Type_decl_list tds ->
           Encoding_504.To_503.encode_bivariant_psig_typesubst ~loc tds)
-  | Ast_504.Parsetree.Psig_typext x0 ->
-      Ast_503.Parsetree.Psig_typext (copy_type_extension x0)
+  | Ast_504.Parsetree.Psig_typext x0 -> (
+      match copy_type_extension x0 with
+      | ty_ext -> Ast_503.Parsetree.Psig_typext ty_ext
+      | exception Bivariant_param.Type_ext ty_ext ->
+          Encoding_504.To_503.encode_bivariant_psig_typext ~loc ty_ext)
   | Ast_504.Parsetree.Psig_exception x0 ->
       Ast_503.Parsetree.Psig_exception (copy_type_exception x0)
   | Ast_504.Parsetree.Psig_module x0 ->
@@ -1125,22 +1132,19 @@ and copy_type_extension :
        Ast_504.Parsetree.ptyext_loc;
        Ast_504.Parsetree.ptyext_attributes;
      } ->
-  {
-    Ast_503.Parsetree.ptyext_path = copy_loc copy_Longident_t ptyext_path;
-    Ast_503.Parsetree.ptyext_params =
-      List.map
-        (fun x ->
-          let x0, x1 = x in
-          ( copy_core_type x0,
-            let x0, x1 = x1 in
-            (copy_variance x0, copy_injectivity x1) ))
-        ptyext_params;
-    Ast_503.Parsetree.ptyext_constructors =
-      List.map copy_extension_constructor ptyext_constructors;
-    Ast_503.Parsetree.ptyext_private = copy_private_flag ptyext_private;
-    Ast_503.Parsetree.ptyext_loc = copy_location ptyext_loc;
-    Ast_503.Parsetree.ptyext_attributes = copy_attributes ptyext_attributes;
-  }
+  let params, contains_bivariant = copy_type_params ptyext_params in
+  let te =
+    {
+      Ast_503.Parsetree.ptyext_path = copy_loc copy_Longident_t ptyext_path;
+      Ast_503.Parsetree.ptyext_params = params;
+      Ast_503.Parsetree.ptyext_constructors =
+        List.map copy_extension_constructor ptyext_constructors;
+      Ast_503.Parsetree.ptyext_private = copy_private_flag ptyext_private;
+      Ast_503.Parsetree.ptyext_loc = copy_location ptyext_loc;
+      Ast_503.Parsetree.ptyext_attributes = copy_attributes ptyext_attributes;
+    }
+  in
+  if contains_bivariant then raise (Bivariant_param.Type_ext te) else te
 
 and copy_extension_constructor :
     Ast_504.Parsetree.extension_constructor ->
