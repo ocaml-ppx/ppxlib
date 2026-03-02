@@ -838,8 +838,11 @@ and copy_signature_item_desc_with_loc ~loc :
       | tds -> Ast_503.Parsetree.Psig_type (rec_flag, tds)
       | exception Bivariant_param.Type_decl_list tds ->
           Encoding_504.To_503.encode_bivariant_psig_type ~loc rec_flag tds)
-  | Ast_504.Parsetree.Psig_typesubst x0 ->
-      Ast_503.Parsetree.Psig_typesubst (List.map copy_type_declaration x0)
+  | Ast_504.Parsetree.Psig_typesubst x0 -> (
+      match copy_type_declaration_list x0 with
+      | tds -> Ast_503.Parsetree.Psig_typesubst tds
+      | exception Bivariant_param.Type_decl_list tds ->
+          Encoding_504.To_503.encode_bivariant_psig_typesubst ~loc tds)
   | Ast_504.Parsetree.Psig_typext x0 ->
       Ast_503.Parsetree.Psig_typext (copy_type_extension x0)
   | Ast_504.Parsetree.Psig_exception x0 ->

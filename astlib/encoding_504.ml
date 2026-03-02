@@ -406,6 +406,14 @@ module To_503 = struct
     in
     Psig_extension (ext, [])
 
+  let encode_bivariant_psig_typesubst ~loc tds =
+    let loc = { loc with Location.loc_ghost = true } in
+    let ext =
+      ( { txt = Ext_name.bivariant_psig; loc },
+        PSig [ { psig_loc = loc; psig_desc = Psig_typesubst tds } ] )
+    in
+    Psig_extension (ext, [])
+
   let decode_bivariant_pstr ~loc payload =
     match payload with
     | PStr [ { pstr_desc = Pstr_type _ as x; _ } ] -> x
@@ -413,8 +421,8 @@ module To_503 = struct
 
   let decode_bivariant_psig ~loc payload =
     match payload with
-    | PSig [ { psig_desc = Psig_type _ as x; _ } ] -> x
-    | _ -> invalid_encoding ~loc "bivariant structure_item"
+    | PSig [ { psig_desc = (Psig_type _ | Psig_typesubst _) as x; _ } ] -> x
+    | _ -> invalid_encoding ~loc "bivariant signature_item"
 end
 
 module To_502 = struct
