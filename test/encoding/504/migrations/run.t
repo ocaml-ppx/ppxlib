@@ -47,26 +47,36 @@ We also check that bivariant type parameters are correctly encoded and migrated:
 
   $ cat > bivariant.ml << EOF
   > type +-'a t = A
+  > type +-'a extensible += B
   > EOF
 
   $ ./id_driver.exe bivariant.ml
   [%%ppxlib.migration.bivariant_str_item_5_4 type 'a t =
                                                | A ]
+  [%%ppxlib.migration.bivariant_str_item_5_4 type 'a extensible +=  
+                                               | B ]
 
   $ ./id_driver.exe bivariant.ml --use-compiler-pp
   type +-'a t =
     | A 
+  type +-'a extensible +=  
+    | B 
 Bivariant are also correctly handled in a signature context:
 
   $ cat > bivariant.mli << EOF
   > type +-'a t
   > type +-'a u := 'a v
+  > type +-'a extensible += B
   > EOF
 
   $ ./id_driver.exe bivariant.mli
   [%%ppxlib.migration.bivariant_sig_item_5_4 : type 'a t]
   [%%ppxlib.migration.bivariant_sig_item_5_4 : type 'a u := 'a v]
+  [%%ppxlib.migration.bivariant_sig_item_5_4 : type 'a extensible +=  
+                                                 | B ]
 
   $ ./id_driver.exe bivariant.mli --use-compiler-pp
   type +-'a t
   type +-'a u := 'a v
+  type +-'a extensible +=  
+    | B 

@@ -40,11 +40,17 @@ module To_503 : sig
   val encode_bivariant_pstr_type :
     loc:Location.t -> rec_flag -> type_declaration list -> structure_item_desc
 
+  val encode_bivariant_pstr_typext :
+    loc:Location.t -> type_extension -> structure_item_desc
+
   val encode_bivariant_psig_type :
     loc:Location.t -> rec_flag -> type_declaration list -> signature_item_desc
 
   val encode_bivariant_psig_typesubst :
     loc:Location.t -> type_declaration list -> signature_item_desc
+
+  val encode_bivariant_psig_typext :
+    loc:Location.t -> type_extension -> signature_item_desc
 
   val decode_bivariant_pstr : loc:Location.t -> payload -> structure_item_desc
   val decode_bivariant_psig : loc:Location.t -> payload -> signature_item_desc

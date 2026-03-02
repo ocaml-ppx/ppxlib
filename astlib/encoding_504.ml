@@ -390,38 +390,52 @@ module To_503 = struct
     | None, _ -> None
     | Some _, _ -> invalid_encoding ~loc:typ.ptyp_loc "bivariant type parameter"
 
-  let encode_bivariant_pstr_type ~loc rec_flag tds =
+  let encode_bivariant_pstr ~loc pstr_desc =
     let loc = { loc with Location.loc_ghost = true } in
     let ext =
       ( { txt = Ext_name.bivariant_pstr; loc },
-        PStr [ { pstr_loc = loc; pstr_desc = Pstr_type (rec_flag, tds) } ] )
+        PStr [ { pstr_loc = loc; pstr_desc } ] )
     in
     Pstr_extension (ext, [])
 
-  let encode_bivariant_psig_type ~loc rec_flag tds =
+  let encode_bivariant_pstr_type ~loc rec_flag tds =
+    encode_bivariant_pstr ~loc (Pstr_type (rec_flag, tds))
+
+  let encode_bivariant_pstr_typext ~loc te =
+    encode_bivariant_pstr ~loc (Pstr_typext te)
+
+  let encode_bivariant_psig ~loc psig_desc =
     let loc = { loc with Location.loc_ghost = true } in
     let ext =
       ( { txt = Ext_name.bivariant_psig; loc },
-        PSig [ { psig_loc = loc; psig_desc = Psig_type (rec_flag, tds) } ] )
+        PSig [ { psig_loc = loc; psig_desc } ] )
     in
     Psig_extension (ext, [])
 
+  let encode_bivariant_psig_type ~loc rec_flag tds =
+    encode_bivariant_psig ~loc (Psig_type (rec_flag, tds))
+
   let encode_bivariant_psig_typesubst ~loc tds =
-    let loc = { loc with Location.loc_ghost = true } in
-    let ext =
-      ( { txt = Ext_name.bivariant_psig; loc },
-        PSig [ { psig_loc = loc; psig_desc = Psig_typesubst tds } ] )
-    in
-    Psig_extension (ext, [])
+    encode_bivariant_psig ~loc (Psig_typesubst tds)
+
+  let encode_bivariant_psig_typext ~loc te =
+    encode_bivariant_psig ~loc (Psig_typext te)
 
   let decode_bivariant_pstr ~loc payload =
     match payload with
-    | PStr [ { pstr_desc = Pstr_type _ as x; _ } ] -> x
+    | PStr [ { pstr_desc = (Pstr_type _ | Pstr_typext _) as x; _ } ] -> x
     | _ -> invalid_encoding ~loc "bivariant structure_item"
 
   let decode_bivariant_psig ~loc payload =
     match payload with
-    | PSig [ { psig_desc = (Psig_type _ | Psig_typesubst _) as x; _ } ] -> x
+    | PSig
+        [
+          {
+            psig_desc = (Psig_type _ | Psig_typesubst _ | Psig_typext _) as x;
+            _;
+          };
+        ] ->
+        x
     | _ -> invalid_encoding ~loc "bivariant signature_item"
 end
 
