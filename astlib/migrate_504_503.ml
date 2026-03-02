@@ -820,19 +820,24 @@ and copy_signature : Ast_504.Parsetree.signature -> Ast_503.Parsetree.signature
 and copy_signature_item :
     Ast_504.Parsetree.signature_item -> Ast_503.Parsetree.signature_item =
  fun { Ast_504.Parsetree.psig_desc; Ast_504.Parsetree.psig_loc } ->
+  let loc = copy_location psig_loc in
   {
-    Ast_503.Parsetree.psig_desc = copy_signature_item_desc psig_desc;
-    Ast_503.Parsetree.psig_loc = copy_location psig_loc;
+    Ast_503.Parsetree.psig_desc =
+      copy_signature_item_desc_with_loc ~loc psig_desc;
+    Ast_503.Parsetree.psig_loc = loc;
   }
 
-and copy_signature_item_desc :
+and copy_signature_item_desc_with_loc ~loc :
     Ast_504.Parsetree.signature_item_desc ->
     Ast_503.Parsetree.signature_item_desc = function
   | Ast_504.Parsetree.Psig_value x0 ->
       Ast_503.Parsetree.Psig_value (copy_value_description x0)
-  | Ast_504.Parsetree.Psig_type (x0, x1) ->
-      Ast_503.Parsetree.Psig_type
-        (copy_rec_flag x0, List.map copy_type_declaration x1)
+  | Ast_504.Parsetree.Psig_type (x0, x1) -> (
+      let rec_flag = copy_rec_flag x0 in
+      match copy_type_declaration_list x1 with
+      | tds -> Ast_503.Parsetree.Psig_type (rec_flag, tds)
+      | exception Bivariant_param.Type_decl_list tds ->
+          Encoding_504.To_503.encode_bivariant_psig_type ~loc rec_flag tds)
   | Ast_504.Parsetree.Psig_typesubst x0 ->
       Ast_503.Parsetree.Psig_typesubst (List.map copy_type_declaration x0)
   | Ast_504.Parsetree.Psig_typext x0 ->
@@ -862,6 +867,9 @@ and copy_signature_item_desc :
       Ast_503.Parsetree.Psig_attribute (copy_attribute x0)
   | Ast_504.Parsetree.Psig_extension (x0, x1) ->
       Ast_503.Parsetree.Psig_extension (copy_extension x0, copy_attributes x1)
+
+and copy_signature_item_desc sigi_desc =
+  copy_signature_item_desc_with_loc ~loc:Location.none sigi_desc
 
 and copy_class_type_declaration :
     Ast_504.Parsetree.class_type_declaration ->

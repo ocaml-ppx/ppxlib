@@ -1,11 +1,12 @@
 open Stdlib0
 
 module Ext_name = struct
-  let ptyp_labeled_tuple = "ppxlib.migration.ptyp_labeled_tuple_504"
-  let pexp_labeled_tuple = "ppxlib.migration.pexp_labeled_tuple_504"
-  let ppat_labeled_tuple = "ppxlib.migration.ppat_labeled_tuple_504"
-  let bivariant_param = "ppxlib.migration.bivariant_param_504"
-  let bivariant_pstr = "ppxlib.migration.bivariant_str_item_504"
+  let ptyp_labeled_tuple = "ppxlib.migration.ptyp_labeled_tuple_5_4"
+  let pexp_labeled_tuple = "ppxlib.migration.pexp_labeled_tuple_5_4"
+  let ppat_labeled_tuple = "ppxlib.migration.ppat_labeled_tuple_5_4"
+  let bivariant_param = "ppxlib.migration.bivariant_param_5_4"
+  let bivariant_pstr = "ppxlib.migration.bivariant_str_item_5_4"
+  let bivariant_psig = "ppxlib.migration.bivariant_sig_item_5_4"
 end
 
 let invalid_encoding ~loc name =
@@ -397,9 +398,22 @@ module To_503 = struct
     in
     Pstr_extension (ext, [])
 
+  let encode_bivariant_psig_type ~loc rec_flag tds =
+    let loc = { loc with Location.loc_ghost = true } in
+    let ext =
+      ( { txt = Ext_name.bivariant_psig; loc },
+        PSig [ { psig_loc = loc; psig_desc = Psig_type (rec_flag, tds) } ] )
+    in
+    Psig_extension (ext, [])
+
   let decode_bivariant_pstr ~loc payload =
     match payload with
     | PStr [ { pstr_desc = Pstr_type _ as x; _ } ] -> x
+    | _ -> invalid_encoding ~loc "bivariant structure_item"
+
+  let decode_bivariant_psig ~loc payload =
+    match payload with
+    | PSig [ { psig_desc = Psig_type _ as x; _ } ] -> x
     | _ -> invalid_encoding ~loc "bivariant structure_item"
 end
 

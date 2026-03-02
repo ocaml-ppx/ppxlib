@@ -7,7 +7,7 @@ when migrated down to our 5.2 AST
 
   $ ./id_driver.exe type.ml
   type t =
-    [%ppxlib.migration.ptyp_labeled_tuple_504 :
+    [%ppxlib.migration.ptyp_labeled_tuple_5_4 :
       (('a * int) * ('b * int) * (_ * string))]
 
 And that it is correctly decoded when migrated back up to 5.4+ ASTS:
@@ -23,7 +23,7 @@ Same for expressions:
 
   $ ./id_driver.exe expression.ml
   let x =
-    [%ppxlib.migration.pexp_labeled_tuple_504
+    [%ppxlib.migration.pexp_labeled_tuple_5_4
       (((`Some `a), 0), ((`Some `b), 1), (`None, "abc"))]
 
   $ ./id_driver.exe expression.ml --use-compiler-pp
@@ -36,7 +36,7 @@ And same for patterns:
   > EOF
 
   $ ./id_driver.exe pattern.ml
-  let [%ppxlib.migration.ppat_labeled_tuple_504 ?
+  let [%ppxlib.migration.ppat_labeled_tuple_5_4 ?
         (((a, a), (b, _), (_, c)), open_)]
     = x
 
@@ -50,9 +50,20 @@ We also check that bivariant type parameters are correctly encoded and migrated:
   > EOF
 
   $ ./id_driver.exe bivariant.ml
-  [%%ppxlib.migration.bivariant_str_item_504 type 'a t =
+  [%%ppxlib.migration.bivariant_str_item_5_4 type 'a t =
                                                | A ]
 
   $ ./id_driver.exe bivariant.ml --use-compiler-pp
   type +-'a t =
     | A 
+Bivariant are also correctly handled in a signature context:
+
+  $ cat > bivariant.mli << EOF
+  > type +-'a t
+  > EOF
+
+  $ ./id_driver.exe bivariant.mli
+  [%%ppxlib.migration.bivariant_sig_item_5_4 : type 'a t]
+
+  $ ./id_driver.exe bivariant.mli --use-compiler-pp
+  type +-'a t
