@@ -75,6 +75,8 @@ Bivariant are also correctly handled in a signature context:
   > type +-'a extensible += B
   > class [+-'a] c : object end
   > class type [+-'a] d = object end
+  > module M : S with type +-'a t = 'a u
+  > module M2 : S with type +-'a t := 'a u
   > EOF
 
   $ ./id_driver.exe bivariant.mli
@@ -84,6 +86,12 @@ Bivariant are also correctly handled in a signature context:
                                                  | B ]
   [%%ppxlib.migration.bivariant_sig_item_5_4 : class ['a] c : object  end]
   [%%ppxlib.migration.bivariant_sig_item_5_4 : class type ['a] d = object  end]
+  module M :
+  [%ppxlib.migration.bivariant_pmty_with_5_4 :
+    module _ : S with type 'a  t =  'a u]
+  module M2 :
+  [%ppxlib.migration.bivariant_pmty_with_5_4 :
+    module _ : S with type 'a  t :=  'a u]
 
   $ ./id_driver.exe bivariant.mli --use-compiler-pp
   type +-'a t
@@ -92,3 +100,5 @@ Bivariant are also correctly handled in a signature context:
     | B 
   class [+-'a] c : object  end
   class type [+-'a] d = object  end
+  module M : S with type +-'a  t =  'a u
+  module M2 : S with type +-'a  t :=  'a u

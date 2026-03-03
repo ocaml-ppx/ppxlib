@@ -7,6 +7,7 @@ module Ext_name = struct
   let bivariant_param = "ppxlib.migration.bivariant_param_5_4"
   let bivariant_pstr = "ppxlib.migration.bivariant_str_item_5_4"
   let bivariant_psig = "ppxlib.migration.bivariant_sig_item_5_4"
+  let bivariant_pmty_with = "ppxlib.migration.bivariant_pmty_with_5_4"
 end
 
 let invalid_encoding ~loc name =
@@ -460,6 +461,50 @@ module To_503 = struct
         ] ->
         x
     | _ -> invalid_encoding ~loc "bivariant signature_item"
+
+  let encode_bivariant_pmty_with ~loc mty constraints =
+    let loc = { loc with Location.loc_ghost = true } in
+    let pmd_type =
+      {
+        pmty_loc = loc;
+        pmty_attributes = [];
+        pmty_desc = Pmty_with (mty, constraints);
+      }
+    in
+    let psig_desc =
+      Psig_module
+        {
+          pmd_name = { txt = None; loc };
+          pmd_type;
+          pmd_attributes = [];
+          pmd_loc = loc;
+        }
+    in
+    let ext =
+      ( { txt = Ext_name.bivariant_pmty_with; loc },
+        PSig [ { psig_loc = loc; psig_desc } ] )
+    in
+    Pmty_extension ext
+
+  let decode_bivariant_pmty_with ~loc payload =
+    match payload with
+    | PSig
+        [
+          {
+            psig_desc =
+              Psig_module
+                {
+                  pmd_name = { txt = None; _ };
+                  pmd_attributes = [];
+                  pmd_type =
+                    { pmty_attributes = []; pmty_desc = Pmty_with _ as x; _ };
+                  _;
+                };
+            _;
+          };
+        ] ->
+        x
+    | _ -> invalid_encoding ~loc "bivariant pmty_with"
 end
 
 module To_502 = struct

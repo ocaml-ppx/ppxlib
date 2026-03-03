@@ -775,13 +775,14 @@ and copy_module_type :
        Ast_503.Parsetree.pmty_loc;
        Ast_503.Parsetree.pmty_attributes;
      } ->
+  let loc = copy_location pmty_loc in
   {
-    Ast_504.Parsetree.pmty_desc = copy_module_type_desc pmty_desc;
-    Ast_504.Parsetree.pmty_loc = copy_location pmty_loc;
+    Ast_504.Parsetree.pmty_desc = copy_module_type_desc_with_loc ~loc pmty_desc;
+    Ast_504.Parsetree.pmty_loc = loc;
     Ast_504.Parsetree.pmty_attributes = copy_attributes pmty_attributes;
   }
 
-and copy_module_type_desc :
+and copy_module_type_desc_with_loc ~loc :
     Ast_503.Parsetree.module_type_desc -> Ast_504.Parsetree.module_type_desc =
   function
   | Ast_503.Parsetree.Pmty_ident x0 ->
@@ -796,10 +797,19 @@ and copy_module_type_desc :
         (copy_module_type x0, List.map copy_with_constraint x1)
   | Ast_503.Parsetree.Pmty_typeof x0 ->
       Ast_504.Parsetree.Pmty_typeof (copy_module_expr x0)
+  | Ast_503.Parsetree.Pmty_extension ({ txt; _ }, payload)
+    when String.equal txt Encoding_504.Ext_name.bivariant_pmty_with ->
+      let pmty_desc =
+        Encoding_504.To_503.decode_bivariant_pmty_with ~loc payload
+      in
+      copy_module_type_desc_with_loc ~loc pmty_desc
   | Ast_503.Parsetree.Pmty_extension x0 ->
       Ast_504.Parsetree.Pmty_extension (copy_extension x0)
   | Ast_503.Parsetree.Pmty_alias x0 ->
       Ast_504.Parsetree.Pmty_alias (copy_loc (copy_Longident_t ~loc:x0.loc) x0)
+
+and copy_module_type_desc pmty =
+  copy_module_type_desc_with_loc ~loc:Location.none pmty
 
 and copy_with_constraint :
     Ast_503.Parsetree.with_constraint -> Ast_504.Parsetree.with_constraint =
