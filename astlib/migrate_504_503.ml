@@ -8,6 +8,9 @@ module Bivariant_param = struct
     | Type_ext of Ast_503.Parsetree.type_extension
     | Type_decl of Ast_503.Parsetree.type_declaration
     | Type_decl_list of Ast_503.Parsetree.type_declaration list
+    | Class_decl of Ast_503.Parsetree.class_declaration
+    | Class_desc of Ast_503.Parsetree.class_description
+    | Class_type_decl of Ast_503.Parsetree.class_type_declaration
 
   (* TODO: register exception printers to display those as location errors
    pointing to the right AST element and displaying a clear migration error
@@ -575,10 +578,25 @@ and copy_structure_item_desc_with_loc ~loc :
   | Ast_504.Parsetree.Pstr_open x0 ->
       Ast_503.Parsetree.Pstr_open (copy_open_declaration x0)
   | Ast_504.Parsetree.Pstr_class x0 ->
-      Ast_503.Parsetree.Pstr_class (List.map copy_class_declaration x0)
+      let contains_bivariant = ref false in
+      let cds =
+        List.map
+          (fun cd ->
+            match copy_class_declaration cd with
+            | cd' -> cd'
+            | exception Bivariant_param.Class_decl cd' ->
+                contains_bivariant := true;
+                cd')
+          x0
+      in
+      if !contains_bivariant then
+        Encoding_504.To_503.encode_bivariant_pstr_class ~loc cds
+      else Ast_503.Parsetree.Pstr_class cds
   | Ast_504.Parsetree.Pstr_class_type x0 ->
-      Ast_503.Parsetree.Pstr_class_type
-        (List.map copy_class_type_declaration x0)
+      let ctds, contains_bivariant = copy_class_type_declaration_list x0 in
+      if contains_bivariant then
+        Encoding_504.To_503.encode_bivariant_pstr_class_type ~loc ctds
+      else Ast_503.Parsetree.Pstr_class_type ctds
   | Ast_504.Parsetree.Pstr_include x0 ->
       Ast_503.Parsetree.Pstr_include (copy_include_declaration x0)
   | Ast_504.Parsetree.Pstr_attribute x0 ->
@@ -596,7 +614,10 @@ and copy_include_declaration :
 
 and copy_class_declaration :
     Ast_504.Parsetree.class_declaration -> Ast_503.Parsetree.class_declaration =
- fun x -> copy_class_infos copy_class_expr x
+ fun x ->
+  copy_class_infos_
+    ~bivariant:(fun ci -> raise (Bivariant_param.Class_decl ci))
+    copy_class_expr x
 
 and copy_class_expr :
     Ast_504.Parsetree.class_expr -> Ast_503.Parsetree.class_expr =
@@ -869,10 +890,25 @@ and copy_signature_item_desc_with_loc ~loc :
   | Ast_504.Parsetree.Psig_include x0 ->
       Ast_503.Parsetree.Psig_include (copy_include_description x0)
   | Ast_504.Parsetree.Psig_class x0 ->
-      Ast_503.Parsetree.Psig_class (List.map copy_class_description x0)
+      let contains_bivariant = ref false in
+      let cds =
+        List.map
+          (fun x ->
+            match copy_class_description x with
+            | cd' -> cd'
+            | exception Bivariant_param.Class_desc cd' ->
+                contains_bivariant := true;
+                cd')
+          x0
+      in
+      if !contains_bivariant then
+        Encoding_504.To_503.encode_bivariant_psig_class ~loc cds
+      else Ast_503.Parsetree.Psig_class cds
   | Ast_504.Parsetree.Psig_class_type x0 ->
-      Ast_503.Parsetree.Psig_class_type
-        (List.map copy_class_type_declaration x0)
+      let ctds, contains_bivariant = copy_class_type_declaration_list x0 in
+      if contains_bivariant then
+        Encoding_504.To_503.encode_bivariant_psig_class_type ~loc ctds
+      else Ast_503.Parsetree.Psig_class_type ctds
   | Ast_504.Parsetree.Psig_attribute x0 ->
       Ast_503.Parsetree.Psig_attribute (copy_attribute x0)
   | Ast_504.Parsetree.Psig_extension (x0, x1) ->
@@ -884,11 +920,31 @@ and copy_signature_item_desc sigi_desc =
 and copy_class_type_declaration :
     Ast_504.Parsetree.class_type_declaration ->
     Ast_503.Parsetree.class_type_declaration =
- fun x -> copy_class_infos copy_class_type x
+ fun x ->
+  copy_class_infos_
+    ~bivariant:(fun ci -> raise (Bivariant_param.Class_type_decl ci))
+    copy_class_type x
+
+and copy_class_type_declaration_list l =
+  let contains_bivariant = ref false in
+  let ctds =
+    List.map
+      (fun x ->
+        match copy_class_type_declaration x with
+        | ctd -> ctd
+        | exception Bivariant_param.Class_type_decl ctd ->
+            contains_bivariant := true;
+            ctd)
+      l
+  in
+  (ctds, !contains_bivariant)
 
 and copy_class_description :
     Ast_504.Parsetree.class_description -> Ast_503.Parsetree.class_description =
- fun x -> copy_class_infos copy_class_type x
+ fun x ->
+  copy_class_infos_
+    ~bivariant:(fun ci -> raise (Bivariant_param.Class_desc ci))
+    copy_class_type x
 
 and copy_class_type :
     Ast_504.Parsetree.class_type -> Ast_503.Parsetree.class_type =
@@ -974,12 +1030,14 @@ and copy_extension : Ast_504.Parsetree.extension -> Ast_503.Parsetree.extension
   let x0, x1 = x in
   (copy_loc (fun x -> x) x0, copy_payload x1)
 
-and copy_class_infos :
+and copy_class_infos_ :
     'f0 'g0.
+    bivariant:
+      ('g0 Ast_503.Parsetree.class_infos -> 'g0 Ast_503.Parsetree.class_infos) ->
     ('f0 -> 'g0) ->
     'f0 Ast_504.Parsetree.class_infos ->
     'g0 Ast_503.Parsetree.class_infos =
- fun f0
+ fun ~bivariant f0
      {
        Ast_504.Parsetree.pci_virt;
        Ast_504.Parsetree.pci_params;
@@ -988,21 +1046,31 @@ and copy_class_infos :
        Ast_504.Parsetree.pci_loc;
        Ast_504.Parsetree.pci_attributes;
      } ->
-  {
-    Ast_503.Parsetree.pci_virt = copy_virtual_flag pci_virt;
-    Ast_503.Parsetree.pci_params =
-      List.map
-        (fun x ->
-          let x0, x1 = x in
-          ( copy_core_type x0,
-            let x0, x1 = x1 in
-            (copy_variance x0, copy_injectivity x1) ))
-        pci_params;
-    Ast_503.Parsetree.pci_name = copy_loc (fun x -> x) pci_name;
-    Ast_503.Parsetree.pci_expr = f0 pci_expr;
-    Ast_503.Parsetree.pci_loc = copy_location pci_loc;
-    Ast_503.Parsetree.pci_attributes = copy_attributes pci_attributes;
-  }
+  let params, contains_bivariant = copy_type_params pci_params in
+  let ci =
+    {
+      Ast_503.Parsetree.pci_virt = copy_virtual_flag pci_virt;
+      Ast_503.Parsetree.pci_params = params;
+      Ast_503.Parsetree.pci_name = copy_loc (fun x -> x) pci_name;
+      Ast_503.Parsetree.pci_expr = f0 pci_expr;
+      Ast_503.Parsetree.pci_loc = copy_location pci_loc;
+      Ast_503.Parsetree.pci_attributes = copy_attributes pci_attributes;
+    }
+  in
+  if contains_bivariant then bivariant ci else ci
+
+and copy_class_infos :
+    'f0 'g0.
+    ('f0 -> 'g0) ->
+    'f0 Ast_504.Parsetree.class_infos ->
+    'g0 Ast_503.Parsetree.class_infos =
+ fun f0 ci ->
+  let bivariant ci =
+    Location.raise_errorf ~loc:ci.Ast_503.Parsetree.pci_loc
+      "Ppxlib migration error: bivariant type parameters cannot be migrated \
+       from OCaml 5.4 to 5.3"
+  in
+  copy_class_infos_ ~bivariant f0 ci
 
 and copy_virtual_flag :
     Ast_504.Asttypes.virtual_flag -> Ast_503.Asttypes.virtual_flag = function

@@ -993,14 +993,7 @@ and copy_class_infos :
      } ->
   {
     Ast_504.Parsetree.pci_virt = copy_virtual_flag pci_virt;
-    Ast_504.Parsetree.pci_params =
-      List.map
-        (fun x ->
-          let x0, x1 = x in
-          ( copy_core_type x0,
-            let x0, x1 = x1 in
-            (copy_variance x0, copy_injectivity x1) ))
-        pci_params;
+    Ast_504.Parsetree.pci_params = copy_type_params pci_params;
     Ast_504.Parsetree.pci_name = copy_loc (fun x -> x) pci_name;
     Ast_504.Parsetree.pci_expr = f0 pci_expr;
     Ast_504.Parsetree.pci_loc = copy_location pci_loc;

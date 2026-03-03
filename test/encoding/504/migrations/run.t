@@ -48,6 +48,8 @@ We also check that bivariant type parameters are correctly encoded and migrated:
   $ cat > bivariant.ml << EOF
   > type +-'a t = A
   > type +-'a extensible += B
+  > class [+-'a] c = object end
+  > class type [+-'a] d = object end
   > EOF
 
   $ ./id_driver.exe bivariant.ml
@@ -55,18 +57,24 @@ We also check that bivariant type parameters are correctly encoded and migrated:
                                                | A ]
   [%%ppxlib.migration.bivariant_str_item_5_4 type 'a extensible +=  
                                                | B ]
+  [%%ppxlib.migration.bivariant_str_item_5_4 class ['a] c = object  end]
+  [%%ppxlib.migration.bivariant_str_item_5_4 class type ['a] d = object  end]
 
   $ ./id_driver.exe bivariant.ml --use-compiler-pp
   type +-'a t =
     | A 
   type +-'a extensible +=  
     | B 
+  class [+-'a] c = object  end
+  class type [+-'a] d = object  end
 Bivariant are also correctly handled in a signature context:
 
   $ cat > bivariant.mli << EOF
   > type +-'a t
   > type +-'a u := 'a v
   > type +-'a extensible += B
+  > class [+-'a] c : object end
+  > class type [+-'a] d = object end
   > EOF
 
   $ ./id_driver.exe bivariant.mli
@@ -74,9 +82,13 @@ Bivariant are also correctly handled in a signature context:
   [%%ppxlib.migration.bivariant_sig_item_5_4 : type 'a u := 'a v]
   [%%ppxlib.migration.bivariant_sig_item_5_4 : type 'a extensible +=  
                                                  | B ]
+  [%%ppxlib.migration.bivariant_sig_item_5_4 : class ['a] c : object  end]
+  [%%ppxlib.migration.bivariant_sig_item_5_4 : class type ['a] d = object  end]
 
   $ ./id_driver.exe bivariant.mli --use-compiler-pp
   type +-'a t
   type +-'a u := 'a v
   type +-'a extensible +=  
     | B 
+  class [+-'a] c : object  end
+  class type [+-'a] d = object  end

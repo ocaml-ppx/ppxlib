@@ -404,6 +404,12 @@ module To_503 = struct
   let encode_bivariant_pstr_typext ~loc te =
     encode_bivariant_pstr ~loc (Pstr_typext te)
 
+  let encode_bivariant_pstr_class ~loc cds =
+    encode_bivariant_pstr ~loc (Pstr_class cds)
+
+  let encode_bivariant_pstr_class_type ~loc ctds =
+    encode_bivariant_pstr ~loc (Pstr_class_type ctds)
+
   let encode_bivariant_psig ~loc psig_desc =
     let loc = { loc with Location.loc_ghost = true } in
     let ext =
@@ -421,9 +427,24 @@ module To_503 = struct
   let encode_bivariant_psig_typext ~loc te =
     encode_bivariant_psig ~loc (Psig_typext te)
 
+  let encode_bivariant_psig_class ~loc cds =
+    encode_bivariant_psig ~loc (Psig_class cds)
+
+  let encode_bivariant_psig_class_type ~loc ctds =
+    encode_bivariant_psig ~loc (Psig_class_type ctds)
+
   let decode_bivariant_pstr ~loc payload =
     match payload with
-    | PStr [ { pstr_desc = (Pstr_type _ | Pstr_typext _) as x; _ } ] -> x
+    | PStr
+        [
+          {
+            pstr_desc =
+              (Pstr_type _ | Pstr_typext _ | Pstr_class _ | Pstr_class_type _)
+              as x;
+            _;
+          };
+        ] ->
+        x
     | _ -> invalid_encoding ~loc "bivariant structure_item"
 
   let decode_bivariant_psig ~loc payload =
@@ -431,7 +452,9 @@ module To_503 = struct
     | PSig
         [
           {
-            psig_desc = (Psig_type _ | Psig_typesubst _ | Psig_typext _) as x;
+            psig_desc =
+              ( Psig_type _ | Psig_typesubst _ | Psig_typext _ | Psig_class _
+              | Psig_class_type _ ) as x;
             _;
           };
         ] ->
