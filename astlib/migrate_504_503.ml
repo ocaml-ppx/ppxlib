@@ -11,6 +11,7 @@ module Bivariant_param = struct
     | Class_decl of Ast_503.Parsetree.class_declaration
     | Class_desc of Ast_503.Parsetree.class_description
     | Class_type_decl of Ast_503.Parsetree.class_type_declaration
+    | With_constraint of Ast_503.Parsetree.with_constraint
 
   (* TODO: register exception printers to display those as location errors
    pointing to the right AST element and displaying a clear migration error
@@ -790,13 +791,14 @@ and copy_module_type :
        Ast_504.Parsetree.pmty_loc;
        Ast_504.Parsetree.pmty_attributes;
      } ->
+  let loc = copy_location pmty_loc in
   {
-    Ast_503.Parsetree.pmty_desc = copy_module_type_desc pmty_desc;
-    Ast_503.Parsetree.pmty_loc = copy_location pmty_loc;
+    Ast_503.Parsetree.pmty_desc = copy_module_type_desc_with_loc ~loc pmty_desc;
+    Ast_503.Parsetree.pmty_loc = loc;
     Ast_503.Parsetree.pmty_attributes = copy_attributes pmty_attributes;
   }
 
-and copy_module_type_desc :
+and copy_module_type_desc_with_loc ~loc :
     Ast_504.Parsetree.module_type_desc -> Ast_503.Parsetree.module_type_desc =
   function
   | Ast_504.Parsetree.Pmty_ident x0 ->
@@ -807,8 +809,23 @@ and copy_module_type_desc :
       Ast_503.Parsetree.Pmty_functor
         (copy_functor_parameter x0, copy_module_type x1)
   | Ast_504.Parsetree.Pmty_with (x0, x1) ->
-      Ast_503.Parsetree.Pmty_with
-        (copy_module_type x0, List.map copy_with_constraint x1)
+      let mty = copy_module_type x0 in
+      let contains_bivariant = ref false in
+      let constraints =
+        List.map
+          (fun c ->
+            match copy_with_constraint c with
+            | c' -> c'
+            | exception Bivariant_param.With_constraint c' ->
+                contains_bivariant := true;
+                c')
+          x1
+      in
+      if !contains_bivariant then
+        Encoding_504.To_503.encode_bivariant_pmty_with ~loc mty constraints
+      else
+        Ast_503.Parsetree.Pmty_with
+          (copy_module_type x0, List.map copy_with_constraint x1)
   | Ast_504.Parsetree.Pmty_typeof x0 ->
       Ast_503.Parsetree.Pmty_typeof (copy_module_expr x0)
   | Ast_504.Parsetree.Pmty_extension x0 ->
@@ -816,12 +833,22 @@ and copy_module_type_desc :
   | Ast_504.Parsetree.Pmty_alias x0 ->
       Ast_503.Parsetree.Pmty_alias (copy_loc copy_Longident_t x0)
 
+and copy_module_type_desc pmty =
+  copy_module_type_desc_with_loc ~loc:Location.none pmty
+
 and copy_with_constraint :
     Ast_504.Parsetree.with_constraint -> Ast_503.Parsetree.with_constraint =
   function
   | Ast_504.Parsetree.Pwith_type (x0, x1) ->
-      Ast_503.Parsetree.Pwith_type
-        (copy_loc copy_Longident_t x0, copy_type_declaration x1)
+      let lident_loc = copy_loc copy_Longident_t x0 in
+      let td, contains_bivariant =
+        match copy_type_declaration x1 with
+        | td -> (td, false)
+        | exception Bivariant_param.Type_decl td -> (td, true)
+      in
+      let res = Ast_503.Parsetree.Pwith_type (lident_loc, td) in
+      if contains_bivariant then raise (Bivariant_param.With_constraint res)
+      else res
   | Ast_504.Parsetree.Pwith_module (x0, x1) ->
       Ast_503.Parsetree.Pwith_module
         (copy_loc copy_Longident_t x0, copy_loc copy_Longident_t x1)
@@ -832,8 +859,15 @@ and copy_with_constraint :
       Ast_503.Parsetree.Pwith_modtypesubst
         (copy_loc copy_Longident_t x0, copy_module_type x1)
   | Ast_504.Parsetree.Pwith_typesubst (x0, x1) ->
-      Ast_503.Parsetree.Pwith_typesubst
-        (copy_loc copy_Longident_t x0, copy_type_declaration x1)
+      let lident_loc = copy_loc copy_Longident_t x0 in
+      let td, contains_bivariant =
+        match copy_type_declaration x1 with
+        | td -> (td, false)
+        | exception Bivariant_param.Type_decl td -> (td, true)
+      in
+      let res = Ast_503.Parsetree.Pwith_typesubst (lident_loc, td) in
+      if contains_bivariant then raise (Bivariant_param.With_constraint res)
+      else res
   | Ast_504.Parsetree.Pwith_modsubst (x0, x1) ->
       Ast_503.Parsetree.Pwith_modsubst
         (copy_loc copy_Longident_t x0, copy_loc copy_Longident_t x1)
