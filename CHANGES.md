@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Add support for OCaml 5.4 bivariant type parameters, they can now be used
+  alongside ppx-es. (#629, @NathanReb)
+
 - Migrate `Ptyp_open` nodes using an extension point (#625, @patricoferris)
 
 - Add Ast_builder and Ast_pattern utilities to manipulate encoded
