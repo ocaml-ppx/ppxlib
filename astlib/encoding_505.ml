@@ -1,10 +1,10 @@
 open Stdlib0
 
 module Ext_name = struct
-  let pexp_struct_item = "ppxlib.migration.pexp_struct_item_505"
-  let ptyp_functor = "ppxlib.migration.ptyp_functor_505"
-  let preserve_ppat_constraint = "ppxlib.migration.preserve_ppat_constraint_505"
-  let ptype_kind_external = "ppxlib.migration.ptype_kind_external_505"
+  let pexp_struct_item = "ppxlib.migration.pexp_struct_item_5_5"
+  let ptyp_functor = "ppxlib.migration.ptyp_functor_5_5"
+  let preserve_ppat_constraint = "ppxlib.migration.preserve_ppat_constraint_5_5"
+  let ptype_kind_external = "ppxlib.migration.ptype_kind_external_5_5"
 end
 
 let invalid_encoding ~loc name =
