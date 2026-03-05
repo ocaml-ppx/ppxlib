@@ -5,6 +5,9 @@ module Ext_name = struct
   let ptyp_functor = "ppxlib.migration.ptyp_functor_5_5"
   let preserve_ppat_constraint = "ppxlib.migration.preserve_ppat_constraint_5_5"
   let ptype_kind_external = "ppxlib.migration.ptype_kind_external_5_5"
+  let external_psig = "ppxlib.migration.external_psig_5_5"
+  let external_pstr_type = "ppxlib.migration.external_pstr_type_5_5"
+  let external_pmty_with = "ppxlib.migration.external_pmty_with_5_5"
 end
 
 let invalid_encoding ~loc name =
@@ -103,6 +106,84 @@ module To_504 = struct
       when String.equal txt Ext_name.ptype_kind_external ->
         Some (name, ptype_attributes)
     | _ -> None
+
+  let encode_external_psig ~loc psig_desc =
+    let loc = { loc with Location.loc_ghost = true } in
+    let ext =
+      ( { txt = Ext_name.external_psig; loc },
+        PSig [ { psig_loc = loc; psig_desc } ] )
+    in
+    Psig_extension (ext, [])
+
+  let encode_external_psig_type ~loc rec_flag tds =
+    encode_external_psig ~loc (Psig_type (rec_flag, tds))
+
+  let encode_external_psig_typesubst ~loc tds =
+    encode_external_psig ~loc (Psig_typesubst tds)
+
+  let decode_external_psig ~loc payload attrs =
+    match (payload, attrs) with
+    | PSig [ { psig_desc = (Psig_type _ | Psig_typesubst _) as res; _ } ], [] ->
+        res
+    | _ -> invalid_encoding ~loc "external type signature_item_desc"
+
+  let encode_external_pstr_type ~loc rec_flag tds =
+    let loc = { loc with Location.loc_ghost = true } in
+    let pstr_desc = Pstr_type (rec_flag, tds) in
+    let ext =
+      ( { txt = Ext_name.external_pstr_type; loc },
+        PStr [ { pstr_loc = loc; pstr_desc } ] )
+    in
+    Pstr_extension (ext, [])
+
+  let decode_external_pstr_type ~loc payload attrs =
+    match (payload, attrs) with
+    | PStr [ { pstr_desc = Pstr_type _ as res; _ } ], [] -> res
+    | _ -> invalid_encoding ~loc "external type pstr_type"
+
+  let encode_external_pmty_with ~loc mty constraints =
+    let loc = { loc with Location.loc_ghost = true } in
+    let pmd_type =
+      {
+        pmty_loc = loc;
+        pmty_attributes = [];
+        pmty_desc = Pmty_with (mty, constraints);
+      }
+    in
+    let psig_desc =
+      Psig_module
+        {
+          pmd_name = { txt = None; loc };
+          pmd_type;
+          pmd_attributes = [];
+          pmd_loc = loc;
+        }
+    in
+    let ext =
+      ( { txt = Ext_name.external_pmty_with; loc },
+        PSig [ { psig_loc = loc; psig_desc } ] )
+    in
+    Pmty_extension ext
+
+  let decode_external_pmty_with ~loc payload =
+    match payload with
+    | PSig
+        [
+          {
+            psig_desc =
+              Psig_module
+                {
+                  pmd_name = { txt = None; _ };
+                  pmd_attributes = [];
+                  pmd_type =
+                    { pmty_attributes = []; pmty_desc = Pmty_with _ as res; _ };
+                  _;
+                };
+            _;
+          };
+        ] ->
+        res
+    | _ -> invalid_encoding ~loc "external type pmty_with"
 
   let must_preserve_ppat_constraint l =
     List.without_first l ~pred:(fun attr ->

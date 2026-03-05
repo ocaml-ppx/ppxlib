@@ -3,6 +3,9 @@ module Ext_name : sig
   val ptyp_functor : string
   val preserve_ppat_constraint : string
   val ptype_kind_external : string
+  val external_psig : string
+  val external_pstr_type : string
+  val external_pmty_with : string
 end
 
 module To_504 : sig
@@ -30,6 +33,26 @@ module To_504 : sig
 
   val decode_ptype_kind_external :
     type_declaration -> (string * attributes) option
+
+  val encode_external_psig_type :
+    loc:Location.t -> rec_flag -> type_declaration list -> signature_item_desc
+
+  val encode_external_psig_typesubst :
+    loc:Location.t -> type_declaration list -> signature_item_desc
+
+  val decode_external_psig :
+    loc:Location.t -> payload -> attributes -> signature_item_desc
+
+  val encode_external_pstr_type :
+    loc:Location.t -> rec_flag -> type_declaration list -> structure_item_desc
+
+  val decode_external_pstr_type :
+    loc:Location.t -> payload -> attributes -> structure_item_desc
+
+  val encode_external_pmty_with :
+    loc:Location.t -> module_type -> with_constraint list -> module_type_desc
+
+  val decode_external_pmty_with : loc:Location.t -> payload -> module_type_desc
 
   val must_preserve_ppat_constraint : attributes -> attributes option
   (** Returns [None] if the list does not contain
