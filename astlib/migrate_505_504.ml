@@ -2,6 +2,10 @@ open Stdlib0
 module From = Ast_505
 module To = Ast_504
 
+module External_type = struct
+  type exn += T of string
+end
+
 let copy_location x = x
 
 let rec copy_longident : Ast_505.Longident.t -> Ast_504.Longident.t = function
@@ -612,12 +616,13 @@ and copy_type_declaration :
        Ast_505.Parsetree.ptype_attributes;
        Ast_505.Parsetree.ptype_loc;
      } ->
-  let ptype_attributes =
-    match ptype_kind with
-    | Ptype_external name ->
-        let attr = Encoding_505.To_504.encode_ptype_kind_external name in
-        attr :: copy_attributes ptype_attributes
-    | _ -> copy_attributes ptype_attributes
+  let loc = copy_location ptype_loc in
+  let ptype_kind, ptype_attributes =
+    let attributes = copy_attributes ptype_attributes in
+    match copy_type_kind ptype_kind with
+    | ptype_kind -> (ptype_kind, attributes)
+    | exception External_type.T name ->
+        Encoding_505.To_504.encode_ptype_kind_external ~loc name attributes
   in
   {
     Ast_504.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
@@ -635,11 +640,11 @@ and copy_type_declaration :
           let x0, x1, x2 = x in
           (copy_core_type x0, copy_core_type x1, copy_location x2))
         ptype_constraints;
-    Ast_504.Parsetree.ptype_kind = copy_type_kind ptype_kind;
+    Ast_504.Parsetree.ptype_kind;
     Ast_504.Parsetree.ptype_private = copy_private_flag ptype_private;
     Ast_504.Parsetree.ptype_manifest = Option.map copy_core_type ptype_manifest;
     Ast_504.Parsetree.ptype_attributes;
-    Ast_504.Parsetree.ptype_loc = copy_location ptype_loc;
+    Ast_504.Parsetree.ptype_loc = loc;
   }
 
 and copy_type_kind : Ast_505.Parsetree.type_kind -> Ast_504.Parsetree.type_kind
@@ -650,10 +655,7 @@ and copy_type_kind : Ast_505.Parsetree.type_kind -> Ast_504.Parsetree.type_kind
   | Ast_505.Parsetree.Ptype_record x0 ->
       Ast_504.Parsetree.Ptype_record (List.map copy_label_declaration x0)
   | Ast_505.Parsetree.Ptype_open -> Ast_504.Parsetree.Ptype_open
-  | Ast_505.Parsetree.Ptype_external x0 ->
-      (* Note that copy_type_declaration should handle this for us and we need
-       only put _something_ here. *)
-      Ast_504.Parsetree.Ptype_open
+  | Ast_505.Parsetree.Ptype_external x0 -> raise (External_type.T x0)
 
 and copy_label_declaration :
     Ast_505.Parsetree.label_declaration -> Ast_504.Parsetree.label_declaration =

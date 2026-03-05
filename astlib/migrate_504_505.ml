@@ -614,31 +614,22 @@ and copy_value_description :
 
 and copy_type_declaration :
     Ast_504.Parsetree.type_declaration -> Ast_505.Parsetree.type_declaration =
- fun {
-       Ast_504.Parsetree.ptype_name;
-       Ast_504.Parsetree.ptype_params;
-       Ast_504.Parsetree.ptype_cstrs;
-       Ast_504.Parsetree.ptype_kind;
-       Ast_504.Parsetree.ptype_private;
-       Ast_504.Parsetree.ptype_manifest;
-       Ast_504.Parsetree.ptype_attributes;
-       Ast_504.Parsetree.ptype_loc;
-     } ->
-  let external_name, ptype_attributes =
-    let rec aux so_far = function
-      | [] -> (None, List.rev so_far)
-      | Ast_504.Parsetree.({ attr_name = { txt; _ }; _ } as attr) :: rest
-        when String.equal txt Encoding_505.Ext_name.ptype_kind_external ->
-          ( Encoding_505.To_504.decode_ptype_kind_external attr,
-            List.rev_append so_far rest )
-      | attr :: rest -> aux (attr :: so_far) rest
-    in
-    aux [] ptype_attributes
-  in
-  let ptype_kind =
-    match external_name with
-    | Some name -> Ast_505.Parsetree.Ptype_external name
-    | None -> copy_type_kind ptype_kind
+ fun ({
+        Ast_504.Parsetree.ptype_name;
+        Ast_504.Parsetree.ptype_params;
+        Ast_504.Parsetree.ptype_cstrs;
+        Ast_504.Parsetree.ptype_kind;
+        Ast_504.Parsetree.ptype_private;
+        Ast_504.Parsetree.ptype_manifest;
+        Ast_504.Parsetree.ptype_attributes;
+        Ast_504.Parsetree.ptype_loc;
+      } as td) ->
+  let ptype_kind, ptype_attributes =
+    match Encoding_505.To_504.decode_ptype_kind_external td with
+    | Some (external_name, attributes) ->
+        ( Ast_505.Parsetree.Ptype_external external_name,
+          copy_attributes attributes )
+    | None -> (copy_type_kind ptype_kind, copy_attributes ptype_attributes)
   in
   {
     Ast_505.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
@@ -659,7 +650,7 @@ and copy_type_declaration :
     Ast_505.Parsetree.ptype_kind;
     Ast_505.Parsetree.ptype_private = copy_private_flag ptype_private;
     Ast_505.Parsetree.ptype_manifest = Option.map copy_core_type ptype_manifest;
-    Ast_505.Parsetree.ptype_attributes = copy_attributes ptype_attributes;
+    Ast_505.Parsetree.ptype_attributes;
     Ast_505.Parsetree.ptype_loc = copy_location ptype_loc;
   }
 
