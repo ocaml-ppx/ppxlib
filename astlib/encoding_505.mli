@@ -25,8 +25,11 @@ module To_504 : sig
     payload ->
     arg_label * string loc * package_type * core_type
 
-  val encode_ptype_kind_external : string -> attribute
-  val decode_ptype_kind_external : attribute -> string option
+  val encode_ptype_kind_external :
+    loc:Location.t -> string -> attributes -> type_kind * attributes
+
+  val decode_ptype_kind_external :
+    type_declaration -> (string * attributes) option
 
   val must_preserve_ppat_constraint : attributes -> attributes option
   (** Returns [None] if the list does not contain

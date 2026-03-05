@@ -61,41 +61,53 @@ module To_504 = struct
         (arg, attr.attr_name, pkg, typ)
     | _ -> invalid_encoding ~loc Ext_name.ptyp_functor
 
-  let encode_ptype_kind_external name =
+  let encode_ptype_kind_external ~loc name attributes =
+    let loc = { loc with Location.loc_ghost = true } in
     let name_attr =
       {
-        attr_name = { txt = name; loc = Location.none };
-        attr_loc = Location.none;
+        attr_name = { txt = name; loc };
+        attr_loc = loc;
         attr_payload = PStr [];
       }
     in
-    let si =
-      { pstr_desc = Pstr_attribute name_attr; pstr_loc = Location.none }
-    in
-    {
-      attr_name = { txt = Ext_name.ptype_kind_external; loc = Location.none };
-      attr_loc = Location.none;
-      attr_payload = PStr [ si ];
-    }
-
-  let decode_ptype_kind_external = function
-    | {
-        attr_name = { txt; _ };
-        attr_payload =
-          PStr
-            [
-              {
-                pstr_desc = Pstr_attribute { attr_name = { txt = name; _ }; _ };
-              };
-            ];
+    let si = { pstr_desc = Pstr_attribute name_attr; pstr_loc = loc } in
+    let flag_attr =
+      {
+        attr_name = { txt = Ext_name.ptype_kind_external; loc };
+        attr_loc = loc;
+        attr_payload = PStr [ si ];
       }
+    in
+    (Ptype_abstract, flag_attr :: attributes)
+
+  let decode_ptype_kind_external type_decl =
+    let attrs =
+      List.without_first type_decl.ptype_attributes ~pred:(fun attr ->
+          String.equal attr.attr_name.txt Ext_name.ptype_kind_external)
+    in
+    match (type_decl.ptype_kind, attrs) with
+    | ( Ptype_abstract,
+        Some
+          ( {
+              attr_name = { txt; _ };
+              attr_payload =
+                PStr
+                  [
+                    {
+                      pstr_desc =
+                        Pstr_attribute { attr_name = { txt = name; _ }; _ };
+                    };
+                  ];
+            },
+            ptype_attributes ) )
       when String.equal txt Ext_name.ptype_kind_external ->
-        Some name
+        Some (name, ptype_attributes)
     | _ -> None
 
   let must_preserve_ppat_constraint l =
     List.without_first l ~pred:(fun attr ->
         String.equal attr.attr_name.txt Ext_name.preserve_ppat_constraint)
+    |> Option.map snd
 
   let preserve_ppat_constraint pattern core_type =
     let loc = pattern.ppat_loc in
