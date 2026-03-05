@@ -1005,13 +1005,14 @@ and copy_module_type :
        Ast_504.Parsetree.pmty_loc;
        Ast_504.Parsetree.pmty_attributes;
      } ->
+  let loc = copy_location pmty_loc in
   {
-    Ast_505.Parsetree.pmty_desc = copy_module_type_desc pmty_desc;
-    Ast_505.Parsetree.pmty_loc = copy_location pmty_loc;
+    Ast_505.Parsetree.pmty_desc = copy_module_type_desc_with_loc ~loc pmty_desc;
+    Ast_505.Parsetree.pmty_loc = loc;
     Ast_505.Parsetree.pmty_attributes = copy_attributes pmty_attributes;
   }
 
-and copy_module_type_desc :
+and copy_module_type_desc_with_loc ~loc :
     Ast_504.Parsetree.module_type_desc -> Ast_505.Parsetree.module_type_desc =
   function
   | Ast_504.Parsetree.Pmty_ident x0 ->
@@ -1031,6 +1032,9 @@ and copy_module_type_desc :
   | Ast_504.Parsetree.Pmty_alias x0 ->
       Ast_505.Parsetree.Pmty_alias (copy_loc copy_longident x0)
 
+and copy_module_type_desc mty_desc =
+  copy_module_type_desc_with_loc ~loc:Location.none mty_desc
+
 and copy_functor_parameter :
     Ast_504.Parsetree.functor_parameter -> Ast_505.Parsetree.functor_parameter =
   function
@@ -1046,12 +1050,14 @@ and copy_signature : Ast_504.Parsetree.signature -> Ast_505.Parsetree.signature
 and copy_signature_item :
     Ast_504.Parsetree.signature_item -> Ast_505.Parsetree.signature_item =
  fun { Ast_504.Parsetree.psig_desc; Ast_504.Parsetree.psig_loc } ->
+  let loc = copy_location psig_loc in
   {
-    Ast_505.Parsetree.psig_desc = copy_signature_item_desc psig_desc;
-    Ast_505.Parsetree.psig_loc = copy_location psig_loc;
+    Ast_505.Parsetree.psig_desc =
+      copy_signature_item_desc_with_loc ~loc psig_desc;
+    Ast_505.Parsetree.psig_loc = loc;
   }
 
-and copy_signature_item_desc :
+and copy_signature_item_desc_with_loc ~loc :
     Ast_504.Parsetree.signature_item_desc ->
     Ast_505.Parsetree.signature_item_desc = function
   | Ast_504.Parsetree.Psig_value x0 ->
@@ -1086,8 +1092,15 @@ and copy_signature_item_desc :
         (List.map copy_class_type_declaration x0)
   | Ast_504.Parsetree.Psig_attribute x0 ->
       Ast_505.Parsetree.Psig_attribute (copy_attribute x0)
+  | Ast_504.Parsetree.Psig_extension (({ txt; _ }, payload), attr)
+    when String.equal txt Encoding_505.Ext_name.external_psig ->
+      let desc = Encoding_505.To_504.decode_external_psig ~loc payload attr in
+      copy_signature_item_desc_with_loc ~loc desc
   | Ast_504.Parsetree.Psig_extension (x0, x1) ->
       Ast_505.Parsetree.Psig_extension (copy_extension x0, copy_attributes x1)
+
+and copy_signature_item_desc sigi_desc =
+  copy_signature_item_desc_with_loc ~loc:Location.none sigi_desc
 
 and copy_module_declaration :
     Ast_504.Parsetree.module_declaration -> Ast_505.Parsetree.module_declaration
@@ -1255,12 +1268,14 @@ and copy_structure : Ast_504.Parsetree.structure -> Ast_505.Parsetree.structure
 and copy_structure_item :
     Ast_504.Parsetree.structure_item -> Ast_505.Parsetree.structure_item =
  fun { Ast_504.Parsetree.pstr_desc; Ast_504.Parsetree.pstr_loc } ->
+  let loc = copy_location pstr_loc in
   {
-    Ast_505.Parsetree.pstr_desc = copy_structure_item_desc pstr_desc;
-    Ast_505.Parsetree.pstr_loc = copy_location pstr_loc;
+    Ast_505.Parsetree.pstr_desc =
+      copy_structure_item_desc_with_loc ~loc pstr_desc;
+    Ast_505.Parsetree.pstr_loc = loc;
   }
 
-and copy_structure_item_desc :
+and copy_structure_item_desc_with_loc ~loc :
     Ast_504.Parsetree.structure_item_desc ->
     Ast_505.Parsetree.structure_item_desc = function
   | Ast_504.Parsetree.Pstr_eval (x0, x1) ->
@@ -1294,8 +1309,17 @@ and copy_structure_item_desc :
       Ast_505.Parsetree.Pstr_include (copy_include_declaration x0)
   | Ast_504.Parsetree.Pstr_attribute x0 ->
       Ast_505.Parsetree.Pstr_attribute (copy_attribute x0)
+  | Ast_504.Parsetree.Pstr_extension (({ txt; _ }, payload), attr)
+    when String.equal txt Encoding_505.Ext_name.external_pstr_type ->
+      let desc =
+        Encoding_505.To_504.decode_external_pstr_type ~loc payload attr
+      in
+      copy_structure_item_desc_with_loc ~loc desc
   | Ast_504.Parsetree.Pstr_extension (x0, x1) ->
       Ast_505.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
+
+and copy_structure_item_desc stri_desc =
+  copy_structure_item_desc_with_loc ~loc:Location.none stri_desc
 
 and copy_value_constraint :
     Ast_504.Parsetree.value_constraint -> Ast_505.Parsetree.value_constraint =
