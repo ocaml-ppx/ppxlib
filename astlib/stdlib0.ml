@@ -34,10 +34,13 @@ end
 module List = struct
   include List
 
+  (** [without_first l ~pred] return [Some (elm, l')] where [elm] is the first
+      element of [l] that satisfies [pred] and [l'] is [l] without [elm] or
+      [None] if no element of [l] satisfies [pred]. *)
   let without_first list ~pred =
     let rec aux seen = function
       | [] -> None
-      | hd :: tl when pred hd -> Some (List.rev_append seen tl)
+      | hd :: tl when pred hd -> Some (hd, List.rev_append seen tl)
       | hd :: tl -> aux (hd :: seen) tl
     in
     aux [] list
