@@ -68,8 +68,12 @@ module To_503 : sig
   val encode_bivariant_pmty_with :
     loc:Location.t -> module_type -> with_constraint list -> module_type_desc
 
-  val decode_bivariant_pstr : loc:Location.t -> payload -> structure_item_desc
-  val decode_bivariant_psig : loc:Location.t -> payload -> signature_item_desc
+  val decode_bivariant_pstr :
+    loc:Location.t -> payload -> attributes -> structure_item_desc
+
+  val decode_bivariant_psig :
+    loc:Location.t -> payload -> attributes -> signature_item_desc
+
   val decode_bivariant_pmty_with : loc:Location.t -> payload -> module_type_desc
 end
 
