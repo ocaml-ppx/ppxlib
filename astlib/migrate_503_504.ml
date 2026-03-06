@@ -585,9 +585,9 @@ and copy_structure_item_desc_with_loc ~loc :
       Ast_504.Parsetree.Pstr_include (copy_include_declaration x0)
   | Ast_503.Parsetree.Pstr_attribute x0 ->
       Ast_504.Parsetree.Pstr_attribute (copy_attribute x0)
-  | Ast_503.Parsetree.Pstr_extension (({ txt; _ }, payload), [])
+  | Ast_503.Parsetree.Pstr_extension (({ txt; _ }, payload), attr)
     when String.equal txt Encoding_504.Ext_name.bivariant_pstr ->
-      let desc = Encoding_504.To_503.decode_bivariant_pstr ~loc payload in
+      let desc = Encoding_504.To_503.decode_bivariant_pstr ~loc payload attr in
       copy_structure_item_desc_with_loc ~loc desc
   | Ast_503.Parsetree.Pstr_extension (x0, x1) ->
       Ast_504.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
@@ -884,9 +884,9 @@ and copy_signature_item_desc_with_loc ~loc :
         (List.map copy_class_type_declaration x0)
   | Ast_503.Parsetree.Psig_attribute x0 ->
       Ast_504.Parsetree.Psig_attribute (copy_attribute x0)
-  | Ast_503.Parsetree.Psig_extension (({ txt; _ }, payload), [])
+  | Ast_503.Parsetree.Psig_extension (({ txt; _ }, payload), attr)
     when String.equal txt Encoding_504.Ext_name.bivariant_psig ->
-      let desc = Encoding_504.To_503.decode_bivariant_psig ~loc payload in
+      let desc = Encoding_504.To_503.decode_bivariant_psig ~loc payload attr in
       copy_signature_item_desc_with_loc ~loc desc
   | Ast_503.Parsetree.Psig_extension (x0, x1) ->
       Ast_504.Parsetree.Psig_extension (copy_extension x0, copy_attributes x1)

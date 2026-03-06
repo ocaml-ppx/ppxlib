@@ -434,31 +434,33 @@ module To_503 = struct
   let encode_bivariant_psig_class_type ~loc ctds =
     encode_bivariant_psig ~loc (Psig_class_type ctds)
 
-  let decode_bivariant_pstr ~loc payload =
-    match payload with
-    | PStr
-        [
-          {
-            pstr_desc =
-              (Pstr_type _ | Pstr_typext _ | Pstr_class _ | Pstr_class_type _)
-              as x;
-            _;
-          };
-        ] ->
+  let decode_bivariant_pstr ~loc payload attributes =
+    match (payload, attributes) with
+    | ( PStr
+          [
+            {
+              pstr_desc =
+                (Pstr_type _ | Pstr_typext _ | Pstr_class _ | Pstr_class_type _)
+                as x;
+              _;
+            };
+          ],
+        [] ) ->
         x
     | _ -> invalid_encoding ~loc "bivariant structure_item"
 
-  let decode_bivariant_psig ~loc payload =
-    match payload with
-    | PSig
-        [
-          {
-            psig_desc =
-              ( Psig_type _ | Psig_typesubst _ | Psig_typext _ | Psig_class _
-              | Psig_class_type _ ) as x;
-            _;
-          };
-        ] ->
+  let decode_bivariant_psig ~loc payload attributes =
+    match (payload, attributes) with
+    | ( PSig
+          [
+            {
+              psig_desc =
+                ( Psig_type _ | Psig_typesubst _ | Psig_typext _ | Psig_class _
+                | Psig_class_type _ ) as x;
+              _;
+            };
+          ],
+        [] ) ->
         x
     | _ -> invalid_encoding ~loc "bivariant signature_item"
 
