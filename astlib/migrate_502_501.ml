@@ -2,10 +2,6 @@ open Stdlib0
 module From = Ast_502
 module To = Ast_501
 
-let migration_error loc missing_feature =
-  Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 5.02" missing_feature
-
 let mk_ghost_attr name =
   {
     Ast_501.Parsetree.attr_name = { Location.txt = name; loc = Location.none };
@@ -525,7 +521,11 @@ and copy_core_type_desc loc :
   | Ast_502.Parsetree.Ptyp_extension x0 ->
       Ast_501.Parsetree.Ptyp_extension (copy_extension x0)
   | Ast_502.Parsetree.Ptyp_open (x0, x1) ->
-      migration_error loc "module open in types"
+      let e =
+        Encoding_502.To_501.encode_ptyp_open ~loc
+          (copy_loc copy_Longident_t x0, copy_core_type x1)
+      in
+      Ast_501.Parsetree.Ptyp_extension e
 
 and copy_package_type :
     Ast_502.Parsetree.package_type -> Ast_501.Parsetree.package_type =
