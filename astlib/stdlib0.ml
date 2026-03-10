@@ -41,4 +41,13 @@ module List = struct
       | hd :: tl -> aux (hd :: seen) tl
     in
     aux [] l
+
+  let fold_left_map ~acc ~f l =
+    let rec aux (acc, mapped) = function
+      | [] -> (acc, List.rev mapped)
+      | hd :: tl ->
+          let acc, hd' = f ~acc hd in
+          aux (acc, hd' :: mapped) tl
+    in
+    aux (acc, []) l
 end
