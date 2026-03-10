@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Migrate `Ptyp_open` nodes using an extension point (#625, @patricoferris)
+
 - Add Ast_builder and Ast_pattern utilities to manipulate encoded
   effect patterns (#624, @NathanReb)
 
