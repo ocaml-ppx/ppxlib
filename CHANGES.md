@@ -1,6 +1,11 @@
 unreleased
 ----------
 
+- Add support for OCaml 5.5 (#622, @patricoferris)
+
+- Add support for OCaml 5.5 external types and modular explicits related
+  features (#622, @patricoferris, @NathanReb)
+
 - Add Ast_builder and Ast_pattern utilities to manipulate encoded
   effect patterns (#624, @NathanReb)
 
