@@ -822,7 +822,7 @@ and copy_module_type_desc_with_loc ~loc :
         Encoding_504.To_503.encode_bivariant_pmty_with ~loc mty constraints
       else
         Ast_503.Parsetree.Pmty_with
-          (copy_module_type x0, List.map copy_with_constraint x1)
+          (copy_module_type x0, constraints)
   | Ast_504.Parsetree.Pmty_typeof x0 ->
       Ast_503.Parsetree.Pmty_typeof (copy_module_expr x0)
   | Ast_504.Parsetree.Pmty_extension x0 ->
