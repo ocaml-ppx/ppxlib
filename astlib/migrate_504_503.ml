@@ -605,9 +605,6 @@ and copy_structure_item_desc_with_loc ~loc :
   | Ast_504.Parsetree.Pstr_extension (x0, x1) ->
       Ast_503.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
 
-and copy_structure_item_desc stri_d =
-  copy_structure_item_desc_with_loc ~loc:Location.none stri_d
-
 and copy_include_declaration :
     Ast_504.Parsetree.include_declaration ->
     Ast_503.Parsetree.include_declaration =
@@ -833,9 +830,6 @@ and copy_module_type_desc_with_loc ~loc :
   | Ast_504.Parsetree.Pmty_alias x0 ->
       Ast_503.Parsetree.Pmty_alias (copy_loc copy_Longident_t x0)
 
-and copy_module_type_desc pmty =
-  copy_module_type_desc_with_loc ~loc:Location.none pmty
-
 and copy_with_constraint :
     Ast_504.Parsetree.with_constraint -> Ast_503.Parsetree.with_constraint =
   function
@@ -947,9 +941,6 @@ and copy_signature_item_desc_with_loc ~loc :
       Ast_503.Parsetree.Psig_attribute (copy_attribute x0)
   | Ast_504.Parsetree.Psig_extension (x0, x1) ->
       Ast_503.Parsetree.Psig_extension (copy_extension x0, copy_attributes x1)
-
-and copy_signature_item_desc sigi_desc =
-  copy_signature_item_desc_with_loc ~loc:Location.none sigi_desc
 
 and copy_class_type_declaration :
     Ast_504.Parsetree.class_type_declaration ->
@@ -1489,3 +1480,12 @@ and copy_loc :
   { Ast_503.Asttypes.txt = f0 txt; Ast_503.Asttypes.loc = copy_location loc }
 
 and copy_location : Location.t -> Location.t = fun x -> x
+
+let copy_structure_item_desc stri_d =
+  copy_structure_item_desc_with_loc ~loc:Location.none stri_d
+
+let copy_module_type_desc pmty =
+  copy_module_type_desc_with_loc ~loc:Location.none pmty
+
+let copy_signature_item_desc sigi_desc =
+  copy_signature_item_desc_with_loc ~loc:Location.none sigi_desc
