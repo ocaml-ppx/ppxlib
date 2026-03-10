@@ -1,3 +1,8 @@
+0.35.1 (TODO)
+-------------------
+
+- Migrate `Ptyp_open` nodes using an extension point (cherry picked) (#625, @patricoferris)
+
 0.35.0 (2025-02-03)
 -------------------
 
