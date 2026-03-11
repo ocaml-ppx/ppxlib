@@ -30,3 +30,24 @@ module Option = struct
       aux [] l
   end
 end
+
+module List = struct
+  include List
+
+  let without_first l ~pred =
+    let rec aux seen = function
+      | [] -> None
+      | hd :: tl when pred hd -> Some (List.rev_append seen tl)
+      | hd :: tl -> aux (hd :: seen) tl
+    in
+    aux [] l
+
+  let fold_left_map ~acc ~f l =
+    let rec aux (acc, mapped) = function
+      | [] -> (acc, List.rev mapped)
+      | hd :: tl ->
+          let acc, hd' = f ~acc hd in
+          aux (acc, hd' :: mapped) tl
+    in
+    aux (acc, []) l
+end
