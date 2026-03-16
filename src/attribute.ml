@@ -455,15 +455,16 @@ module Floating = struct
     }
 
   let declare name context pattern k =
-    declare_with_all_args name context pattern (fun ~attr_loc:_ ~name_loc:_ -> k)
+    declare_with_all_args name context pattern (fun ~attr_loc:_ ~name_loc:_ ->
+        k)
 
   let declare_with_name_loc name context pattern k =
     declare_with_all_args name context pattern (fun ~attr_loc:_ ~name_loc ->
-      k ~name_loc)
+        k ~name_loc)
 
   let declare_with_attr_loc name context pattern k =
     declare_with_all_args name context pattern (fun ~attr_loc ~name_loc:_ ->
-      k ~attr_loc)
+        k ~attr_loc)
 
   let convert_attr_res t attr =
     let open Result in
