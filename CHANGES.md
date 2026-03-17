@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Add `Attribute.Floating.declare_with_attr_loc` and `.declare_with_name_loc`,
+  by analogy to the same functions at top level of `Attribute`. (#631, @ceastlund)
+
 - Migrate `Ptyp_open` nodes using an extension point (#625, @patricoferris)
 
 - Add Ast_builder and Ast_pattern utilities to manipulate encoded

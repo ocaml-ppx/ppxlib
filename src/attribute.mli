@@ -215,6 +215,24 @@ module Floating : sig
     'b ->
     ('a, 'c) t
 
+  val declare_with_name_loc :
+    string ->
+    'a Context.t ->
+    (payload, 'b, 'c) Ast_pattern.t ->
+    (name_loc:Location.t -> 'b) ->
+    ('a, 'c) t
+  (** Same as [declare] but the callback receives the location of the name of
+      the attribute. *)
+
+  val declare_with_attr_loc :
+    string ->
+    'a Context.t ->
+    (payload, 'b, 'c) Ast_pattern.t ->
+    (attr_loc:Location.t -> 'b) ->
+    ('a, 'c) t
+  (** Same as [declare] but the callback receives the location of the attribute.
+  *)
+
   val name : _ t -> string
 
   val convert_res :

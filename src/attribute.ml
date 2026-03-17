@@ -446,13 +446,25 @@ module Floating = struct
 
   let name t = Name.Pattern.name t.name
 
-  let declare name context pattern k =
+  let declare_with_all_args name context pattern k =
     Name.Registrar.register ~kind:`Attribute registrar (Floating context) name;
     {
       name = Name.Pattern.make name;
       context;
-      payload = Payload_parser (pattern, fun ~attr_loc:_ ~name_loc:_ -> k);
+      payload = Payload_parser (pattern, k);
     }
+
+  let declare name context pattern k =
+    declare_with_all_args name context pattern (fun ~attr_loc:_ ~name_loc:_ ->
+        k)
+
+  let declare_with_name_loc name context pattern k =
+    declare_with_all_args name context pattern (fun ~attr_loc:_ ~name_loc ->
+        k ~name_loc)
+
+  let declare_with_attr_loc name context pattern k =
+    declare_with_all_args name context pattern (fun ~attr_loc ~name_loc:_ ->
+        k ~attr_loc)
 
   let convert_attr_res t attr =
     let open Result in
