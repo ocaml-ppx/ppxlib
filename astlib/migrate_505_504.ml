@@ -3,10 +3,39 @@ module From = Ast_505
 module To = Ast_504
 
 module External_type = struct
-  type exn +=
-    | T of string
-    | Type_decl of Ast_504.Parsetree.type_declaration
-    | With_constr of Ast_504.Parsetree.with_constraint
+  type 'a may_contain_external_type = {
+    contains_external_type : bool;
+    value : 'a;
+  }
+
+  let wrap ?(contains_external_type = false) value =
+    { contains_external_type; value }
+
+  let contains_external_type f = f.contains_external_type
+  let value f = f.value
+
+  let map ~f { contains_external_type; value } =
+    { contains_external_type; value = f value }
+
+  let list_map ~f l =
+    let acc = wrap ~contains_external_type:false [] in
+    let v =
+      List.fold_left
+        (fun acc x ->
+          let x' = f x in
+          let vs = x'.value :: acc.value in
+          wrap
+            ~contains_external_type:
+              (acc.contains_external_type || x'.contains_external_type)
+            vs)
+        acc l
+    in
+    { v with value = List.rev v.value }
+
+  let err ~loc =
+    Location.raise_errorf ~loc
+      "Ppxlib migration error: external type cannot be migrated from OCaml 5.5 \
+       to 5.4"
 end
 
 let copy_location x = x
@@ -607,8 +636,9 @@ and copy_value_description :
     Ast_504.Parsetree.pval_loc = copy_location pval_loc;
   }
 
-and copy_type_declaration :
-    Ast_505.Parsetree.type_declaration -> Ast_504.Parsetree.type_declaration =
+and copy_type_declaration_ :
+    Ast_505.Parsetree.type_declaration ->
+    Ast_504.Parsetree.type_declaration External_type.may_contain_external_type =
  fun {
        Ast_505.Parsetree.ptype_name;
        Ast_505.Parsetree.ptype_params;
@@ -620,13 +650,13 @@ and copy_type_declaration :
        Ast_505.Parsetree.ptype_loc;
      } ->
   let loc = copy_location ptype_loc in
-  let is_external, (ptype_kind, ptype_attributes) =
+  let contains_external_type, (ptype_kind, ptype_attributes) =
     let attributes = copy_attributes ptype_attributes in
-    match copy_type_kind ptype_kind with
-    | ptype_kind -> (false, (ptype_kind, attributes))
-    | exception External_type.T name ->
+    match ptype_kind with
+    | Ptype_external name ->
         ( true,
           Encoding_505.To_504.encode_ptype_kind_external ~loc name attributes )
+    | ptype_kind -> (false, (copy_type_kind ptype_kind, attributes))
   in
   let td =
     {
@@ -653,21 +683,10 @@ and copy_type_declaration :
       Ast_504.Parsetree.ptype_loc = loc;
     }
   in
-  if is_external then raise (External_type.Type_decl td) else td
+  External_type.wrap ~contains_external_type td
 
 and copy_type_declaration_list l =
-  let contains_external = ref false in
-  let tds =
-    List.map
-      (fun td ->
-        match copy_type_declaration td with
-        | td' -> td'
-        | exception External_type.Type_decl td' ->
-            contains_external := true;
-            td')
-      l
-  in
-  (tds, !contains_external)
+  External_type.list_map ~f:copy_type_declaration_ l
 
 and copy_type_kind : Ast_505.Parsetree.type_kind -> Ast_504.Parsetree.type_kind
     = function
@@ -677,7 +696,7 @@ and copy_type_kind : Ast_505.Parsetree.type_kind -> Ast_504.Parsetree.type_kind
   | Ast_505.Parsetree.Ptype_record x0 ->
       Ast_504.Parsetree.Ptype_record (List.map copy_label_declaration x0)
   | Ast_505.Parsetree.Ptype_open -> Ast_504.Parsetree.Ptype_open
-  | Ast_505.Parsetree.Ptype_external x0 -> raise (External_type.T x0)
+  | Ast_505.Parsetree.Ptype_external _ -> External_type.err ~loc:Location.none
 
 and copy_label_declaration :
     Ast_505.Parsetree.label_declaration -> Ast_504.Parsetree.label_declaration =
@@ -1040,23 +1059,10 @@ and copy_module_type_desc_with_loc ~loc :
         (copy_functor_parameter x0, copy_module_type x1)
   | Ast_505.Parsetree.Pmty_with (x0, x1) ->
       let mty = copy_module_type x0 in
-      let constraints, contains_external =
-        let contains_external = ref false in
-        let constraints =
-          List.map
-            (fun c ->
-              match copy_with_constraint c with
-              | c' -> c'
-              | exception External_type.With_constr c' ->
-                  contains_external := true;
-                  c')
-            x1
-        in
-        (constraints, !contains_external)
-      in
-      if contains_external then
-        Encoding_505.To_504.encode_external_pmty_with ~loc mty constraints
-      else Ast_504.Parsetree.Pmty_with (mty, constraints)
+      let constraints = External_type.list_map ~f:copy_with_constraint_ x1 in
+      if External_type.contains_external_type constraints then
+        Encoding_505.To_504.encode_external_pmty_with ~loc mty constraints.value
+      else Ast_504.Parsetree.Pmty_with (mty, constraints.value)
   | Ast_505.Parsetree.Pmty_typeof x0 ->
       Ast_504.Parsetree.Pmty_typeof (copy_module_expr x0)
   | Ast_505.Parsetree.Pmty_extension x0 ->
@@ -1096,15 +1102,15 @@ and copy_signature_item_desc_with_loc ~loc :
       Ast_504.Parsetree.Psig_value (copy_value_description x0)
   | Ast_505.Parsetree.Psig_type (x0, x1) ->
       let rec_flag = copy_rec_flag x0 in
-      let tds, contains_external = copy_type_declaration_list x1 in
-      if contains_external then
-        Encoding_505.To_504.encode_external_psig_type ~loc rec_flag tds
-      else Ast_504.Parsetree.Psig_type (rec_flag, tds)
+      let tds = copy_type_declaration_list x1 in
+      if External_type.contains_external_type tds then
+        Encoding_505.To_504.encode_external_psig_type ~loc rec_flag tds.value
+      else Ast_504.Parsetree.Psig_type (rec_flag, tds.value)
   | Ast_505.Parsetree.Psig_typesubst x0 ->
-      let tds, contains_external = copy_type_declaration_list x0 in
-      if contains_external then
-        Encoding_505.To_504.encode_external_psig_typesubst ~loc tds
-      else Ast_504.Parsetree.Psig_typesubst tds
+      let tds = copy_type_declaration_list x0 in
+      if External_type.contains_external_type tds then
+        Encoding_505.To_504.encode_external_psig_typesubst ~loc tds.value
+      else Ast_504.Parsetree.Psig_typesubst tds.value
   | Ast_505.Parsetree.Psig_typext x0 ->
       Ast_504.Parsetree.Psig_typext (copy_type_extension x0)
   | Ast_505.Parsetree.Psig_exception x0 ->
@@ -1238,39 +1244,38 @@ and copy_include_declaration :
     Ast_504.Parsetree.include_declaration =
  fun x -> copy_include_infos copy_module_expr x
 
-and copy_with_constraint :
-    Ast_505.Parsetree.with_constraint -> Ast_504.Parsetree.with_constraint =
+and copy_with_constraint_ :
+    Ast_505.Parsetree.with_constraint ->
+    Ast_504.Parsetree.with_constraint External_type.may_contain_external_type =
   function
   | Ast_505.Parsetree.Pwith_type (x0, x1) ->
       let lident_loc = copy_loc copy_longident x0 in
-      let td, is_external =
-        match copy_type_declaration x1 with
-        | td -> (td, false)
-        | exception External_type.Type_decl td -> (td, true)
-      in
-      let constr = Ast_504.Parsetree.Pwith_type (lident_loc, td) in
-      if is_external then raise (External_type.With_constr constr) else constr
+      let td = copy_type_declaration_ x1 in
+      External_type.map
+        ~f:(fun td -> Ast_504.Parsetree.Pwith_type (lident_loc, td))
+        td
   | Ast_505.Parsetree.Pwith_module (x0, x1) ->
-      Ast_504.Parsetree.Pwith_module
-        (copy_loc copy_longident x0, copy_loc copy_longident x1)
+      External_type.wrap ~contains_external_type:false
+        (Ast_504.Parsetree.Pwith_module
+           (copy_loc copy_longident x0, copy_loc copy_longident x1))
   | Ast_505.Parsetree.Pwith_modtype (x0, x1) ->
-      Ast_504.Parsetree.Pwith_modtype
-        (copy_loc copy_longident x0, copy_module_type x1)
+      External_type.wrap ~contains_external_type:false
+        (Ast_504.Parsetree.Pwith_modtype
+           (copy_loc copy_longident x0, copy_module_type x1))
   | Ast_505.Parsetree.Pwith_modtypesubst (x0, x1) ->
-      Ast_504.Parsetree.Pwith_modtypesubst
-        (copy_loc copy_longident x0, copy_module_type x1)
+      External_type.wrap ~contains_external_type:false
+        (Ast_504.Parsetree.Pwith_modtypesubst
+           (copy_loc copy_longident x0, copy_module_type x1))
   | Ast_505.Parsetree.Pwith_typesubst (x0, x1) ->
       let lident_loc = copy_loc copy_longident x0 in
-      let td, is_external =
-        match copy_type_declaration x1 with
-        | td -> (td, false)
-        | exception External_type.Type_decl td -> (td, true)
-      in
-      let constr = Ast_504.Parsetree.Pwith_typesubst (lident_loc, td) in
-      if is_external then raise (External_type.With_constr constr) else constr
+      let td = copy_type_declaration_ x1 in
+      External_type.map
+        ~f:(fun td -> Ast_504.Parsetree.Pwith_typesubst (lident_loc, td))
+        td
   | Ast_505.Parsetree.Pwith_modsubst (x0, x1) ->
-      Ast_504.Parsetree.Pwith_modsubst
-        (copy_loc copy_longident x0, copy_loc copy_longident x1)
+      External_type.wrap ~contains_external_type:false
+        (Ast_504.Parsetree.Pwith_modsubst
+           (copy_loc copy_longident x0, copy_loc copy_longident x1))
 
 and copy_module_expr :
     Ast_505.Parsetree.module_expr -> Ast_504.Parsetree.module_expr =
@@ -1333,10 +1338,11 @@ and copy_structure_item_desc_with_loc ~loc :
       Ast_504.Parsetree.Pstr_primitive (copy_value_description x0)
   | Ast_505.Parsetree.Pstr_type (x0, x1) ->
       let rec_flag = copy_rec_flag x0 in
-      let tds, contains_external = copy_type_declaration_list x1 in
-      if contains_external then
-        Encoding_505.To_504.encode_external_pstr_type ~loc rec_flag tds
-      else Ast_504.Parsetree.Pstr_type (rec_flag, tds)
+      let tds = copy_type_declaration_list x1 in
+      if External_type.contains_external_type tds then
+        Encoding_505.To_504.encode_external_pstr_type ~loc rec_flag
+          (External_type.value tds)
+      else Ast_504.Parsetree.Pstr_type (rec_flag, External_type.value tds)
   | Ast_505.Parsetree.Pstr_typext x0 ->
       Ast_504.Parsetree.Pstr_typext (copy_type_extension x0)
   | Ast_505.Parsetree.Pstr_exception x0 ->
@@ -1454,3 +1460,13 @@ and copy_directive_argument_desc :
   | Ast_505.Parsetree.Pdir_ident x0 ->
       Ast_504.Parsetree.Pdir_ident (copy_longident x0)
   | Ast_505.Parsetree.Pdir_bool x0 -> Ast_504.Parsetree.Pdir_bool x0
+
+(** The functions below are provided to keep a coherent and stable API with
+    other migrate_X_Y modules while allowing us to locally define variations of
+    those functions used to encode 5.5 features into the 5.4 AST. *)
+
+let copy_type_declaration td =
+  let td' = copy_type_declaration_ td in
+  if External_type.contains_external_type td' then
+    External_type.err ~loc:td.ptype_loc
+  else External_type.value td'
