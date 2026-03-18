@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Add support for OCaml 5.4 bivariant type parameters, they can now be used
+  alongside ppx-es. (#629, @NathanReb)
+
 - Add `Attribute.Floating.declare_with_attr_loc` and `.declare_with_name_loc`,
   by analogy to the same functions at top level of `Attribute`. (#631, @ceastlund)
 

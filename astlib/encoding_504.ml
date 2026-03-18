@@ -1,7 +1,13 @@
+open Stdlib0
+
 module Ext_name = struct
-  let ptyp_labeled_tuple = "ppxlib.migration.ptyp_labeled_tuple_504"
-  let pexp_labeled_tuple = "ppxlib.migration.pexp_labeled_tuple_504"
-  let ppat_labeled_tuple = "ppxlib.migration.ppat_labeled_tuple_504"
+  let ptyp_labeled_tuple = "ppxlib.migration.ptyp_labeled_tuple_5_4"
+  let pexp_labeled_tuple = "ppxlib.migration.pexp_labeled_tuple_5_4"
+  let ppat_labeled_tuple = "ppxlib.migration.ppat_labeled_tuple_5_4"
+  let bivariant_param = "ppxlib.migration.bivariant_param_5_4"
+  let bivariant_pstr = "ppxlib.migration.bivariant_str_item_5_4"
+  let bivariant_psig = "ppxlib.migration.bivariant_sig_item_5_4"
+  let bivariant_pmty_with = "ppxlib.migration.bivariant_pmty_with_5_4"
 end
 
 let invalid_encoding ~loc name =
@@ -197,7 +203,7 @@ module Make (X : AST) = struct
     | None -> invalid_encoding ~loc Ext_name.ppat_labeled_tuple
 end
 
-module Ast_503 = struct
+module Ast_503_arg = struct
   include Ast_503.Asttypes
   include Ast_503.Parsetree
 
@@ -277,7 +283,7 @@ module Ast_503 = struct
   end
 end
 
-module Ast_502 = struct
+module Ast_502_arg = struct
   include Ast_502.Asttypes
   include Ast_502.Parsetree
 
@@ -358,9 +364,151 @@ module Ast_502 = struct
 end
 
 module To_503 = struct
-  include Make (Ast_503)
+  include Make (Ast_503_arg)
+  open Ast_503.Asttypes
+  open Ast_503.Parsetree
+
+  let encode_bivariant_param typ inj =
+    let loc = { typ.ptyp_loc with Location.loc_ghost = true } in
+    let attr =
+      {
+        attr_name = { txt = Ext_name.bivariant_param; loc };
+        attr_payload = PStr [];
+        attr_loc = loc;
+      }
+    in
+    ( { typ with ptyp_attributes = attr :: typ.ptyp_attributes },
+      (NoVariance, inj) )
+
+  let decode_bivariant_param (typ, (var, inj)) =
+    let ptyp_attributes =
+      List.without_first typ.ptyp_attributes ~pred:(fun attr ->
+          String.equal attr.attr_name.txt Ext_name.bivariant_param)
+    in
+    match (ptyp_attributes, var) with
+    | Some ptyp_attributes, NoVariance ->
+        Some ({ typ with ptyp_attributes }, inj)
+    | None, _ -> None
+    | Some _, _ -> invalid_encoding ~loc:typ.ptyp_loc "bivariant type parameter"
+
+  let encode_bivariant_pstr ~loc pstr_desc =
+    let loc = { loc with Location.loc_ghost = true } in
+    let ext =
+      ( { txt = Ext_name.bivariant_pstr; loc },
+        PStr [ { pstr_loc = loc; pstr_desc } ] )
+    in
+    Pstr_extension (ext, [])
+
+  let encode_bivariant_pstr_type ~loc rec_flag tds =
+    encode_bivariant_pstr ~loc (Pstr_type (rec_flag, tds))
+
+  let encode_bivariant_pstr_typext ~loc te =
+    encode_bivariant_pstr ~loc (Pstr_typext te)
+
+  let encode_bivariant_pstr_class ~loc cds =
+    encode_bivariant_pstr ~loc (Pstr_class cds)
+
+  let encode_bivariant_pstr_class_type ~loc ctds =
+    encode_bivariant_pstr ~loc (Pstr_class_type ctds)
+
+  let encode_bivariant_psig ~loc psig_desc =
+    let loc = { loc with Location.loc_ghost = true } in
+    let ext =
+      ( { txt = Ext_name.bivariant_psig; loc },
+        PSig [ { psig_loc = loc; psig_desc } ] )
+    in
+    Psig_extension (ext, [])
+
+  let encode_bivariant_psig_type ~loc rec_flag tds =
+    encode_bivariant_psig ~loc (Psig_type (rec_flag, tds))
+
+  let encode_bivariant_psig_typesubst ~loc tds =
+    encode_bivariant_psig ~loc (Psig_typesubst tds)
+
+  let encode_bivariant_psig_typext ~loc te =
+    encode_bivariant_psig ~loc (Psig_typext te)
+
+  let encode_bivariant_psig_class ~loc cds =
+    encode_bivariant_psig ~loc (Psig_class cds)
+
+  let encode_bivariant_psig_class_type ~loc ctds =
+    encode_bivariant_psig ~loc (Psig_class_type ctds)
+
+  let decode_bivariant_pstr ~loc payload attributes =
+    match (payload, attributes) with
+    | ( PStr
+          [
+            {
+              pstr_desc =
+                (Pstr_type _ | Pstr_typext _ | Pstr_class _ | Pstr_class_type _)
+                as x;
+              _;
+            };
+          ],
+        [] ) ->
+        x
+    | _ -> invalid_encoding ~loc "bivariant structure_item"
+
+  let decode_bivariant_psig ~loc payload attributes =
+    match (payload, attributes) with
+    | ( PSig
+          [
+            {
+              psig_desc =
+                ( Psig_type _ | Psig_typesubst _ | Psig_typext _ | Psig_class _
+                | Psig_class_type _ ) as x;
+              _;
+            };
+          ],
+        [] ) ->
+        x
+    | _ -> invalid_encoding ~loc "bivariant signature_item"
+
+  let encode_bivariant_pmty_with ~loc mty constraints =
+    let loc = { loc with Location.loc_ghost = true } in
+    let pmd_type =
+      {
+        pmty_loc = loc;
+        pmty_attributes = [];
+        pmty_desc = Pmty_with (mty, constraints);
+      }
+    in
+    let psig_desc =
+      Psig_module
+        {
+          pmd_name = { txt = None; loc };
+          pmd_type;
+          pmd_attributes = [];
+          pmd_loc = loc;
+        }
+    in
+    let ext =
+      ( { txt = Ext_name.bivariant_pmty_with; loc },
+        PSig [ { psig_loc = loc; psig_desc } ] )
+    in
+    Pmty_extension ext
+
+  let decode_bivariant_pmty_with ~loc payload =
+    match payload with
+    | PSig
+        [
+          {
+            psig_desc =
+              Psig_module
+                {
+                  pmd_name = { txt = None; _ };
+                  pmd_attributes = [];
+                  pmd_type =
+                    { pmty_attributes = []; pmty_desc = Pmty_with _ as x; _ };
+                  _;
+                };
+            _;
+          };
+        ] ->
+        x
+    | _ -> invalid_encoding ~loc "bivariant pmty_with"
 end
 
 module To_502 = struct
-  include Make (Ast_502)
+  include Make (Ast_502_arg)
 end
