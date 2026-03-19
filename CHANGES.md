@@ -1,5 +1,5 @@
-unreleased
-----------
+0.38.0
+------
 
 - Add support for OCaml 5.5 (#622, @patricoferris, @NathanReb)
 
