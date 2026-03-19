@@ -1,6 +1,8 @@
 unreleased
 ----------
 
+- Add support for OCaml 5.5 (#622, @patricoferris, @NathanReb)
+
 - Add support for OCaml 5.4 bivariant type parameters, they can now be used
   alongside ppx-es. (#629, @NathanReb)
 

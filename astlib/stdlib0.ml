@@ -37,7 +37,7 @@ module List = struct
   let without_first l ~pred =
     let rec aux seen = function
       | [] -> None
-      | hd :: tl when pred hd -> Some (List.rev_append seen tl)
+      | hd :: tl when pred hd -> Some (hd, List.rev_append seen tl)
       | hd :: tl -> aux (hd :: seen) tl
     in
     aux [] l

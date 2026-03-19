@@ -61,6 +61,46 @@ to encode this feature into attributes and this test, along with this comment,
 will need updated.
 
   $ ./driver.exe test.ml --use-compiler-pp
-  File "test.ml", line 1:
-  Error: External types are not supported.
-  [1]
+  type t = external "t"
+
+3. Ptyp_functor
+
+Finally, OCaml 5.5 comes with modular explicits (a.k.a module-dependent
+arrows). Users should be able to migrate code without losing the modular
+explicit.
+
+  $ cat > test.ml << EOF
+  > module type Add = sig
+  >   type t
+  >   val add : t -> t -> t
+  > end
+  > let add : (module A : Add) -> A.t -> A.t -> A.t =
+  >   fun (module A : Add) a b -> A.add a b
+  > EOF
+
+  $ ./driver.exe test.ml --use-compiler-pp
+  module type Add  = sig type t val add : t -> t -> t end
+  let add : (module A : Add) -> A.t -> A.t -> A.t =
+    fun (module A : Add) a b -> A.add a b
+
+This brings up another semantic change to the syntax. In functions, we now have
+either [fun (module X : T) ...] or [fun ((module X) : (module T))...] which are
+two different things w.r.t to modular explicits.
+
+  $ cat > test.ml << EOF
+  > module type T = sig
+  >   type t
+  > end
+  > 
+  > let foo = fun ((module X) : (module T)) () -> ()
+  > let foo = fun ((module _) : (module T)) () -> ()
+  > let foo = fun (module X : T) () -> ()
+  > let foo = fun (module _ : T) () -> ()
+  > EOF
+
+  $ ./driver.exe test.ml --use-compiler-pp
+  module type T  = sig type t end
+  let foo ((module X)  : (module T)) () = ()
+  let foo ((module _)  : (module T)) () = ()
+  let foo (module X : T) () = ()
+  let foo (module _ : T) () = ()

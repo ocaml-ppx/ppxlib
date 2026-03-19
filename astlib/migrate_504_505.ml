@@ -149,16 +149,19 @@ and copy_core_type : Ast_504.Parsetree.core_type -> Ast_505.Parsetree.core_type
        Ast_504.Parsetree.ptyp_loc_stack;
        Ast_504.Parsetree.ptyp_attributes;
      } ->
+  let loc = copy_location ptyp_loc in
   {
-    Ast_505.Parsetree.ptyp_desc = copy_core_type_desc ptyp_desc;
-    Ast_505.Parsetree.ptyp_loc = copy_location ptyp_loc;
+    Ast_505.Parsetree.ptyp_desc = copy_core_type_desc ~loc ptyp_desc;
+    Ast_505.Parsetree.ptyp_loc = loc;
     Ast_505.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
     Ast_505.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
   }
 
 and copy_core_type_desc :
-    Ast_504.Parsetree.core_type_desc -> Ast_505.Parsetree.core_type_desc =
-  function
+    loc:Location.t ->
+    Ast_504.Parsetree.core_type_desc ->
+    Ast_505.Parsetree.core_type_desc =
+ fun ~loc -> function
   | Ast_504.Parsetree.Ptyp_any -> Ast_505.Parsetree.Ptyp_any
   | Ast_504.Parsetree.Ptyp_var x0 -> Ast_505.Parsetree.Ptyp_var x0
   | Ast_504.Parsetree.Ptyp_arrow (x0, x1, x2) ->
@@ -194,6 +197,15 @@ and copy_core_type_desc :
       Ast_505.Parsetree.Ptyp_package (copy_package_type x0)
   | Ast_504.Parsetree.Ptyp_open (x0, x1) ->
       Ast_505.Parsetree.Ptyp_open (copy_loc copy_longident x0, copy_core_type x1)
+  | Ast_504.Parsetree.Ptyp_extension ({ txt; _ }, p)
+    when String.equal txt Encoding_505.Ext_name.ptyp_functor ->
+      let arg, name, pkg, typ =
+        Encoding_505.To_504.decode_ptyp_functor ~loc p
+      in
+      let arg = copy_arg_label arg in
+      let pkg = copy_package_type pkg in
+      let typ = copy_core_type typ in
+      Ast_505.Parsetree.Ptyp_functor (arg, name, pkg, typ)
   | Ast_504.Parsetree.Ptyp_extension x0 ->
       Ast_505.Parsetree.Ptyp_extension (copy_extension x0)
 
@@ -315,6 +327,17 @@ and copy_pattern_desc :
       Ast_505.Parsetree.Ppat_array (List.map copy_pattern x0)
   | Ast_504.Parsetree.Ppat_or (x0, x1) ->
       Ast_505.Parsetree.Ppat_or (copy_pattern x0, copy_pattern x1)
+  | Ast_504.Parsetree.Ppat_constraint
+      ( ({ ppat_desc = Ppat_unpack p; ppat_attributes; _ } as x0),
+        ({ ptyp_desc = Ptyp_package pkg; _ } as x1) ) -> (
+      let preserve =
+        Encoding_505.To_504.must_preserve_ppat_constraint ppat_attributes
+      in
+      match preserve with
+      | None -> Ast_505.Parsetree.Ppat_unpack (p, Some (copy_package_type pkg))
+      | Some ppat_attributes ->
+          Ast_505.Parsetree.Ppat_constraint
+            (copy_pattern { x0 with ppat_attributes }, copy_core_type x1))
   | Ast_504.Parsetree.Ppat_constraint (x0, x1) ->
       Ast_505.Parsetree.Ppat_constraint (copy_pattern x0, copy_core_type x1)
   | Ast_504.Parsetree.Ppat_type x0 ->
@@ -591,16 +614,23 @@ and copy_value_description :
 
 and copy_type_declaration :
     Ast_504.Parsetree.type_declaration -> Ast_505.Parsetree.type_declaration =
- fun {
-       Ast_504.Parsetree.ptype_name;
-       Ast_504.Parsetree.ptype_params;
-       Ast_504.Parsetree.ptype_cstrs;
-       Ast_504.Parsetree.ptype_kind;
-       Ast_504.Parsetree.ptype_private;
-       Ast_504.Parsetree.ptype_manifest;
-       Ast_504.Parsetree.ptype_attributes;
-       Ast_504.Parsetree.ptype_loc;
-     } ->
+ fun ({
+        Ast_504.Parsetree.ptype_name;
+        Ast_504.Parsetree.ptype_params;
+        Ast_504.Parsetree.ptype_cstrs;
+        Ast_504.Parsetree.ptype_kind;
+        Ast_504.Parsetree.ptype_private;
+        Ast_504.Parsetree.ptype_manifest;
+        Ast_504.Parsetree.ptype_attributes;
+        Ast_504.Parsetree.ptype_loc;
+      } as td) ->
+  let ptype_kind, ptype_attributes =
+    match Encoding_505.To_504.decode_ptype_kind_external td with
+    | Some (external_name, attributes) ->
+        ( Ast_505.Parsetree.Ptype_external external_name,
+          copy_attributes attributes )
+    | None -> (copy_type_kind ptype_kind, copy_attributes ptype_attributes)
+  in
   {
     Ast_505.Parsetree.ptype_name = copy_loc (fun x -> x) ptype_name;
     Ast_505.Parsetree.ptype_params =
@@ -617,10 +647,10 @@ and copy_type_declaration :
           let x0, x1, x2 = x in
           (copy_core_type x0, copy_core_type x1, copy_location x2))
         ptype_cstrs;
-    Ast_505.Parsetree.ptype_kind = copy_type_kind ptype_kind;
+    Ast_505.Parsetree.ptype_kind;
     Ast_505.Parsetree.ptype_private = copy_private_flag ptype_private;
     Ast_505.Parsetree.ptype_manifest = Option.map copy_core_type ptype_manifest;
-    Ast_505.Parsetree.ptype_attributes = copy_attributes ptype_attributes;
+    Ast_505.Parsetree.ptype_attributes;
     Ast_505.Parsetree.ptype_loc = copy_location ptype_loc;
   }
 
@@ -975,13 +1005,14 @@ and copy_module_type :
        Ast_504.Parsetree.pmty_loc;
        Ast_504.Parsetree.pmty_attributes;
      } ->
+  let loc = copy_location pmty_loc in
   {
-    Ast_505.Parsetree.pmty_desc = copy_module_type_desc pmty_desc;
-    Ast_505.Parsetree.pmty_loc = copy_location pmty_loc;
+    Ast_505.Parsetree.pmty_desc = copy_module_type_desc_with_loc ~loc pmty_desc;
+    Ast_505.Parsetree.pmty_loc = loc;
     Ast_505.Parsetree.pmty_attributes = copy_attributes pmty_attributes;
   }
 
-and copy_module_type_desc :
+and copy_module_type_desc_with_loc ~loc :
     Ast_504.Parsetree.module_type_desc -> Ast_505.Parsetree.module_type_desc =
   function
   | Ast_504.Parsetree.Pmty_ident x0 ->
@@ -1001,6 +1032,9 @@ and copy_module_type_desc :
   | Ast_504.Parsetree.Pmty_alias x0 ->
       Ast_505.Parsetree.Pmty_alias (copy_loc copy_longident x0)
 
+and copy_module_type_desc mty_desc =
+  copy_module_type_desc_with_loc ~loc:Location.none mty_desc
+
 and copy_functor_parameter :
     Ast_504.Parsetree.functor_parameter -> Ast_505.Parsetree.functor_parameter =
   function
@@ -1016,12 +1050,14 @@ and copy_signature : Ast_504.Parsetree.signature -> Ast_505.Parsetree.signature
 and copy_signature_item :
     Ast_504.Parsetree.signature_item -> Ast_505.Parsetree.signature_item =
  fun { Ast_504.Parsetree.psig_desc; Ast_504.Parsetree.psig_loc } ->
+  let loc = copy_location psig_loc in
   {
-    Ast_505.Parsetree.psig_desc = copy_signature_item_desc psig_desc;
-    Ast_505.Parsetree.psig_loc = copy_location psig_loc;
+    Ast_505.Parsetree.psig_desc =
+      copy_signature_item_desc_with_loc ~loc psig_desc;
+    Ast_505.Parsetree.psig_loc = loc;
   }
 
-and copy_signature_item_desc :
+and copy_signature_item_desc_with_loc ~loc :
     Ast_504.Parsetree.signature_item_desc ->
     Ast_505.Parsetree.signature_item_desc = function
   | Ast_504.Parsetree.Psig_value x0 ->
@@ -1056,8 +1092,15 @@ and copy_signature_item_desc :
         (List.map copy_class_type_declaration x0)
   | Ast_504.Parsetree.Psig_attribute x0 ->
       Ast_505.Parsetree.Psig_attribute (copy_attribute x0)
+  | Ast_504.Parsetree.Psig_extension (({ txt; _ }, payload), attr)
+    when String.equal txt Encoding_505.Ext_name.external_psig ->
+      let desc = Encoding_505.To_504.decode_external_psig ~loc payload attr in
+      copy_signature_item_desc_with_loc ~loc desc
   | Ast_504.Parsetree.Psig_extension (x0, x1) ->
       Ast_505.Parsetree.Psig_extension (copy_extension x0, copy_attributes x1)
+
+and copy_signature_item_desc sigi_desc =
+  copy_signature_item_desc_with_loc ~loc:Location.none sigi_desc
 
 and copy_module_declaration :
     Ast_504.Parsetree.module_declaration -> Ast_505.Parsetree.module_declaration
@@ -1225,12 +1268,14 @@ and copy_structure : Ast_504.Parsetree.structure -> Ast_505.Parsetree.structure
 and copy_structure_item :
     Ast_504.Parsetree.structure_item -> Ast_505.Parsetree.structure_item =
  fun { Ast_504.Parsetree.pstr_desc; Ast_504.Parsetree.pstr_loc } ->
+  let loc = copy_location pstr_loc in
   {
-    Ast_505.Parsetree.pstr_desc = copy_structure_item_desc pstr_desc;
-    Ast_505.Parsetree.pstr_loc = copy_location pstr_loc;
+    Ast_505.Parsetree.pstr_desc =
+      copy_structure_item_desc_with_loc ~loc pstr_desc;
+    Ast_505.Parsetree.pstr_loc = loc;
   }
 
-and copy_structure_item_desc :
+and copy_structure_item_desc_with_loc ~loc :
     Ast_504.Parsetree.structure_item_desc ->
     Ast_505.Parsetree.structure_item_desc = function
   | Ast_504.Parsetree.Pstr_eval (x0, x1) ->
@@ -1264,8 +1309,17 @@ and copy_structure_item_desc :
       Ast_505.Parsetree.Pstr_include (copy_include_declaration x0)
   | Ast_504.Parsetree.Pstr_attribute x0 ->
       Ast_505.Parsetree.Pstr_attribute (copy_attribute x0)
+  | Ast_504.Parsetree.Pstr_extension (({ txt; _ }, payload), attr)
+    when String.equal txt Encoding_505.Ext_name.external_pstr_type ->
+      let desc =
+        Encoding_505.To_504.decode_external_pstr_type ~loc payload attr
+      in
+      copy_structure_item_desc_with_loc ~loc desc
   | Ast_504.Parsetree.Pstr_extension (x0, x1) ->
       Ast_505.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
+
+and copy_structure_item_desc stri_desc =
+  copy_structure_item_desc_with_loc ~loc:Location.none stri_desc
 
 and copy_value_constraint :
     Ast_504.Parsetree.value_constraint -> Ast_505.Parsetree.value_constraint =

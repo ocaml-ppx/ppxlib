@@ -386,7 +386,7 @@ module To_503 = struct
           String.equal attr.attr_name.txt Ext_name.bivariant_param)
     in
     match (ptyp_attributes, var) with
-    | Some ptyp_attributes, NoVariance ->
+    | Some (_, ptyp_attributes), NoVariance ->
         Some ({ typ with ptyp_attributes }, inj)
     | None, _ -> None
     | Some _, _ -> invalid_encoding ~loc:typ.ptyp_loc "bivariant type parameter"
