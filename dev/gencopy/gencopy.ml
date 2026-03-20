@@ -317,7 +317,15 @@ let default_copy_location =
   let loc = Location.none in
   [%stri let copy_location = fun x -> x]
 
+let module_alias name src =
+  let open Ast_builder in
+  let name = Located.mk (Some name) in
+  let expr = pmod_ident (Located.mk (Lident (String.capitalize_ascii src))) in
+  pstr_module (module_binding ~name ~expr)
+
 let gen_copy ~from ~to_ ast =
+  let module_from = module_alias "From" from in
+  let module_to = module_alias "To" to_ in
   let modules =
     List.filter_map
       (fun stri ->
@@ -341,6 +349,8 @@ let gen_copy ~from ~to_ ast =
   in
   [
     open_stdlib0;
+    module_from;
+    module_to;
     default_copy_location;
     Ast_builder.pstr_value Recursive (List.flatten vbs);
   ]
