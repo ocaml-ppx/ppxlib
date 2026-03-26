@@ -8,6 +8,8 @@ We can run it on two empty .ml files:
 
   $ ../../dev/gencopy/gencopy.exe in.ml out.ml
   open Stdlib0
+  module From = In
+  module To = Out
   let copy_location x = x
   
 It then simply generates the headers which are a global open to stdlib0 and a
@@ -31,6 +33,8 @@ way:
 
   $ ../../dev/gencopy/gencopy.exe in.ml out.ml
   open Stdlib0
+  module From = In
+  module To = Out
   let copy_location x = x
   let rec copy_r : In.X.r -> Out.X.r =
     fun { In.X.a = a; In.X.b = b } -> { Out.X.a = a; Out.X.b = b }
@@ -53,6 +57,8 @@ Recursive types should be handled properly:
 
   $ ../../dev/gencopy/gencopy.exe in.ml out.ml
   open Stdlib0
+  module From = In
+  module To = Out
   let copy_location x = x
   let rec copy_a : In.X.a -> Out.X.a = fun x -> List.map copy_b x
   and copy_b : In.X.b -> Out.X.b =
@@ -78,6 +84,8 @@ argument when copying instances of a parametrized type.
  
   $ ../../dev/gencopy/gencopy.exe in.ml out.ml
   open Stdlib0
+  module From = In
+  module To = Out
   let copy_location x = x
   let rec copy_loc : 'f0 'g0 . ('f0 -> 'g0) -> 'f0 In.X.loc -> 'g0 Out.X.loc =
     fun f0 { In.X.loc = loc; In.X.txt = txt } ->
@@ -102,6 +110,8 @@ would trigger a compile error. gencopy should properly handle this:
 
   $ ../../dev/gencopy/gencopy.exe in.ml out.ml
   open Stdlib0
+  module From = In
+  module To = Out
   let copy_location x = x
   let rec copy_x : In.X.x -> Out.X.x =
     function | In.X.A { i; s } -> Out.X.A { i; s }
@@ -118,6 +128,8 @@ For convenience, gencopy the copy function for X.t as copy_x:
 
   $ ../../dev/gencopy/gencopy.exe in.ml out.ml
   open Stdlib0
+  module From = In
+  module To = Out
   let copy_location x = x
   let rec copy_x : In.X.t -> Out.X.t = fun x -> x
 
