@@ -32,6 +32,10 @@ jobs:
           dune-cache: true
           cache-prefix: ${{ steps.setup.outputs.cache_prefix }}
 
+      - name: Pin dune to dev version
+        run: |
+          opam pin dune --dev-repo
+
       - name: Install ppxlib dependencies
         run: |
           opam install ./ppxlib.opam --deps-only
