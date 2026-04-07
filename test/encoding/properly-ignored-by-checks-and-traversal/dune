@@ -1,0 +1,15 @@
+(executable
+ (name id_driver)
+ (modules id_driver)
+ (libraries ppxlib))
+
+(executable
+ (name traversal_driver)
+ (modules traversal_driver)
+ (libraries ppxlib))
+
+(cram
+ (package ppxlib)
+ (enabled_if
+  (>= %{ocaml_version} 5.4))
+ (deps id_driver.exe traversal_driver.exe))
