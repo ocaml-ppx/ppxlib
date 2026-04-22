@@ -55,6 +55,8 @@ open Import
 (* Note that when bumping ppxlib's internal AST you will also need to update a
    few other files:
    - [astlib/pprintast.ml], details on how to update at the head of the file.
+   - [astlib/error.ml], change the error message to taken into account the new internal AST
+     version number.
 *)
 
 (* Source code locations (ranges of positions), used in parsetree. *)

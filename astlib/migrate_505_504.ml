@@ -33,9 +33,7 @@ module External_type = struct
     { v with value = List.rev v.value }
 
   let err ~loc =
-    Location.raise_errorf ~loc
-      "Ppxlib migration error: external type cannot be migrated from OCaml 5.5 \
-       to 5.4"
+    Error.migration_error ~loc ~from:"5.5" ~to_:"5.4" "external types"
 end
 
 let copy_location x = x

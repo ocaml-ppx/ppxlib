@@ -10,8 +10,7 @@ module Ext_name = struct
   let bivariant_pmty_with = "ppxlib.migration.bivariant_pmty_with_5_4"
 end
 
-let invalid_encoding ~loc name =
-  Location.raise_errorf ~loc "Invalid %s encoding" name
+let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.4" name
 
 module type AST = sig
   type payload
