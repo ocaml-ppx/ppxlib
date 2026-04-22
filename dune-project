@@ -17,8 +17,7 @@
   (ocaml (and (and (>= 4.08.0) (< 5.7.0))))
   (ocaml-compiler-libs (>= v0.11.0))
   (ppx_derivers (>= 1.0))
-  (sexplib0 (>= v0.12))
-  (sexplib0 (and :with-test (>= "v0.15"))) ; Printexc.register_printer in sexplib0 changed
+  (sexplib0 (>= "v0.15"))
   stdlib-shims
   (ocamlfind :with-test)
   (re (and :with-test (>= 1.9.0)))
