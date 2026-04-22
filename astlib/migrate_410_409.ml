@@ -2,8 +2,7 @@ module From = Ast_410
 module To = Ast_409
 
 let migration_error loc missing_feature =
-  Location.raise_errorf ~loc
-    "migration error: %s is not supported before OCaml 4.10" missing_feature
+  Error.migration_error ~loc ~from:"4.10" ~to_:"4.09" missing_feature
 
 let map_option f x = match x with None -> None | Some x -> Some (f x)
 

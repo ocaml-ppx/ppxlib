@@ -10,9 +10,7 @@ module Bivariant_param = struct
 end
 
 let bivariant_error ~loc =
-  Location.raise_errorf ~loc
-    "Ppxlib migration error: bivariant type parameters cannot be migrated from \
-     OCaml 5.4 to 5.3"
+  Error.migration_error ~loc ~from:"5.4" ~to_:"5.3" "bivariant type parameters"
 
 let rec copy_toplevel_phrase :
     Ast_504.Parsetree.toplevel_phrase -> Ast_503.Parsetree.toplevel_phrase =

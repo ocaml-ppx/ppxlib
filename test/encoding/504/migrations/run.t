@@ -43,6 +43,24 @@ And same for patterns:
   $ ./id_driver.exe pattern.ml --use-compiler-pp
   let (~a, ~b:_, c, ..) = x
 
+We also check our invalid decoding logic:
+  $ cat > invalid_lbl_tuple_encoding.ml << EOF
+  > let x =
+  >  [%ppxlib.migration.pexp_labeled_tuple_5_4
+  >    (((Some \`a), 0), ((Some \`b), 1), (None, "abc"))]
+  > EOF
+
+  $ ./id_driver.exe invalid_lbl_tuple_encoding.ml --use-compiler-pp
+  File "invalid_lbl_tuple_encoding.ml", line 2, characters 3-42:
+  2 |  [%ppxlib.migration.pexp_labeled_tuple_5_4
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  Error: ppxlib invalid encoding: ppxlib.migration.pexp_labeled_tuple_5_4
+         
+         Ppxlib failed to decode a feature from the OCaml 5.4 AST. If this does
+         not seem right, please do open an issue at
+         https://github.com/ocaml-ppx/ppxlib/issues.
+  [1]
+
 We also check that bivariant type parameters are correctly encoded and migrated:
 
   $ cat > bivariant.ml << EOF

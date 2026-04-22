@@ -10,8 +10,7 @@ module Ext_name = struct
   let external_pmty_with = "ppxlib.migration.external_pmty_with_5_5"
 end
 
-let invalid_encoding ~loc name =
-  Location.raise_errorf ~loc "Invalid %s encoding" name
+let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.5" name
 
 module To_504 = struct
   open Ast_504.Asttypes
