@@ -9,7 +9,6 @@
   ppx_derivers
   ppxlib_traverse_builtins
   stdppx
-  stdlib-shims
   sexplib0
   compiler-libs.common)
  (flags
