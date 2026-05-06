@@ -545,13 +545,18 @@ and copy_value_description :
        Ast_505.Parsetree.pval_attributes;
        Ast_505.Parsetree.pval_loc;
      } ->
-  {
-    Ast_506.Parsetree.pval_name = copy_loc (fun x -> x) pval_name;
-    Ast_506.Parsetree.pval_type = copy_core_type pval_type;
-    Ast_506.Parsetree.pval_prim = List.map (fun x -> x) pval_prim;
-    Ast_506.Parsetree.pval_attributes = copy_attributes pval_attributes;
-    Ast_506.Parsetree.pval_loc = copy_location pval_loc;
-  }
+  match pval_prim with
+  | [] ->
+      {
+        Ast_506.Parsetree.pval_name = copy_loc (fun x -> x) pval_name;
+        Ast_506.Parsetree.pval_type = copy_core_type pval_type;
+        Ast_506.Parsetree.pval_attributes = copy_attributes pval_attributes;
+        Ast_506.Parsetree.pval_loc = copy_location pval_loc;
+      }
+  | _ ->
+      Location.raise_errorf ~loc:pval_loc
+        "Ppxlib migration error: value_description with pval_prim <> [] cannot \
+         be migrated from Ocaml 5.5 to 5.6"
 
 and copy_type_declaration :
     Ast_505.Parsetree.type_declaration -> Ast_506.Parsetree.type_declaration =
@@ -989,8 +994,21 @@ and copy_signature_item :
 and copy_signature_item_desc :
     Ast_505.Parsetree.signature_item_desc ->
     Ast_506.Parsetree.signature_item_desc = function
-  | Ast_505.Parsetree.Psig_value x0 ->
-      Ast_506.Parsetree.Psig_value (copy_value_description x0)
+  | Ast_505.Parsetree.Psig_value x0 -> (
+      match x0.pval_prim with
+      | [] -> Ast_506.Parsetree.Psig_value (copy_value_description x0)
+      | prims ->
+          let pprim_name = copy_loc (fun x -> x) x0.pval_name in
+          let typ = copy_core_type x0.pval_type in
+          let pprim_attributes = copy_attributes x0.pval_attributes in
+          let pprim_loc = copy_location x0.pval_loc in
+          Ast_506.Parsetree.Psig_primitive
+            {
+              pprim_name;
+              pprim_kind = Pprim_decl (typ, prims);
+              pprim_attributes;
+              pprim_loc;
+            })
   | Ast_505.Parsetree.Psig_type (x0, x1) ->
       Ast_506.Parsetree.Psig_type
         (copy_rec_flag x0, List.map copy_type_declaration x1)
@@ -1203,8 +1221,21 @@ and copy_structure_item_desc :
   | Ast_505.Parsetree.Pstr_value (x0, x1) ->
       Ast_506.Parsetree.Pstr_value
         (copy_rec_flag x0, List.map copy_value_binding x1)
-  | Ast_505.Parsetree.Pstr_primitive x0 ->
-      Ast_506.Parsetree.Pstr_primitive (copy_value_description x0)
+  | Ast_505.Parsetree.Pstr_primitive x0 -> (
+      match x0.pval_prim with
+      | [] -> Ast_506.Parsetree.Pstr_val (copy_value_description x0)
+      | prims ->
+          let pprim_name = copy_loc (fun x -> x) x0.pval_name in
+          let typ = copy_core_type x0.pval_type in
+          let pprim_attributes = copy_attributes x0.pval_attributes in
+          let pprim_loc = copy_location x0.pval_loc in
+          Ast_506.Parsetree.Pstr_primitive
+            {
+              pprim_name;
+              pprim_kind = Pprim_decl (typ, prims);
+              pprim_attributes;
+              pprim_loc;
+            })
   | Ast_505.Parsetree.Pstr_type (x0, x1) ->
       Ast_506.Parsetree.Pstr_type
         (copy_rec_flag x0, List.map copy_type_declaration x1)
