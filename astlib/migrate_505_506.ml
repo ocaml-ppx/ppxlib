@@ -986,12 +986,14 @@ and copy_signature : Ast_505.Parsetree.signature -> Ast_506.Parsetree.signature
 and copy_signature_item :
     Ast_505.Parsetree.signature_item -> Ast_506.Parsetree.signature_item =
  fun { Ast_505.Parsetree.psig_desc; Ast_505.Parsetree.psig_loc } ->
+  let loc = copy_location psig_loc in
   {
-    Ast_506.Parsetree.psig_desc = copy_signature_item_desc psig_desc;
-    Ast_506.Parsetree.psig_loc = copy_location psig_loc;
+    Ast_506.Parsetree.psig_desc =
+      copy_signature_item_desc_with_loc ~loc psig_desc;
+    Ast_506.Parsetree.psig_loc = loc;
   }
 
-and copy_signature_item_desc :
+and copy_signature_item_desc_with_loc ~loc :
     Ast_505.Parsetree.signature_item_desc ->
     Ast_506.Parsetree.signature_item_desc = function
   | Ast_505.Parsetree.Psig_value x0 -> (
@@ -1039,8 +1041,23 @@ and copy_signature_item_desc :
         (List.map copy_class_type_declaration x0)
   | Ast_505.Parsetree.Psig_attribute x0 ->
       Ast_506.Parsetree.Psig_attribute (copy_attribute x0)
+  | Ast_505.Parsetree.Psig_extension (({ txt; _ }, payload), attrs)
+    when String.equal txt Encoding_506.Ext_name.psig_primitive_alias ->
+      let name, typ, lident_loc, rem_attrs =
+        Encoding_506.To_505.decode_psig_primitive_alias ~loc payload attrs
+      in
+      let pprim_name = copy_loc (fun x -> x) name in
+      let typ_opt = Option.map copy_core_type typ in
+      let alias = copy_loc copy_longident lident_loc in
+      let pprim_attributes = copy_attributes rem_attrs in
+      let pprim_kind = Ast_506.Parsetree.Pprim_alias (typ_opt, alias) in
+      Ast_506.Parsetree.Psig_primitive
+        { pprim_name; pprim_kind; pprim_loc = loc; pprim_attributes }
   | Ast_505.Parsetree.Psig_extension (x0, x1) ->
       Ast_506.Parsetree.Psig_extension (copy_extension x0, copy_attributes x1)
+
+and copy_signature_item_desc sigid =
+  copy_signature_item_desc_with_loc ~loc:Location.none
 
 and copy_module_declaration :
     Ast_505.Parsetree.module_declaration -> Ast_506.Parsetree.module_declaration
@@ -1208,12 +1225,14 @@ and copy_structure : Ast_505.Parsetree.structure -> Ast_506.Parsetree.structure
 and copy_structure_item :
     Ast_505.Parsetree.structure_item -> Ast_506.Parsetree.structure_item =
  fun { Ast_505.Parsetree.pstr_desc; Ast_505.Parsetree.pstr_loc } ->
+  let loc = copy_location pstr_loc in
   {
-    Ast_506.Parsetree.pstr_desc = copy_structure_item_desc pstr_desc;
-    Ast_506.Parsetree.pstr_loc = copy_location pstr_loc;
+    Ast_506.Parsetree.pstr_desc =
+      copy_structure_item_desc_with_loc ~loc pstr_desc;
+    Ast_506.Parsetree.pstr_loc = loc;
   }
 
-and copy_structure_item_desc :
+and copy_structure_item_desc_with_loc ~loc :
     Ast_505.Parsetree.structure_item_desc ->
     Ast_506.Parsetree.structure_item_desc = function
   | Ast_505.Parsetree.Pstr_eval (x0, x1) ->
@@ -1260,8 +1279,23 @@ and copy_structure_item_desc :
       Ast_506.Parsetree.Pstr_include (copy_include_declaration x0)
   | Ast_505.Parsetree.Pstr_attribute x0 ->
       Ast_506.Parsetree.Pstr_attribute (copy_attribute x0)
+  | Ast_505.Parsetree.Pstr_extension (({ txt; _ }, payload), attrs)
+    when String.equal txt Encoding_506.Ext_name.pstr_primitive_alias ->
+      let name, typ, lident_loc, rem_attrs =
+        Encoding_506.To_505.decode_pstr_primitive_alias ~loc payload attrs
+      in
+      let pprim_name = copy_loc (fun x -> x) name in
+      let typ_opt = Option.map copy_core_type typ in
+      let alias = copy_loc copy_longident lident_loc in
+      let pprim_attributes = copy_attributes rem_attrs in
+      let pprim_kind = Ast_506.Parsetree.Pprim_alias (typ_opt, alias) in
+      Ast_506.Parsetree.Pstr_primitive
+        { pprim_name; pprim_kind; pprim_loc = loc; pprim_attributes }
   | Ast_505.Parsetree.Pstr_extension (x0, x1) ->
       Ast_506.Parsetree.Pstr_extension (copy_extension x0, copy_attributes x1)
+
+and copy_structure_item_desc stri_desc =
+  copy_structure_item_desc_with_loc ~loc:Location.none stri_desc
 
 and copy_value_constraint :
     Ast_505.Parsetree.value_constraint -> Ast_506.Parsetree.value_constraint =

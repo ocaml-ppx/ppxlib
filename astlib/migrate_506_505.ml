@@ -991,17 +991,19 @@ and copy_signature_item_desc :
   | Ast_506.Parsetree.Psig_value x0 ->
       Ast_505.Parsetree.Psig_value (copy_value_description x0)
   | Ast_506.Parsetree.Psig_primitive prim -> (
+      let pval_name = copy_loc (fun x -> x) prim.pprim_name in
+      let pval_attributes = copy_attributes prim.pprim_attributes in
+      let pval_loc = copy_location prim.pprim_loc in
       match prim.pprim_kind with
       | Pprim_decl (typ, pval_prim) ->
           let pval_type = copy_core_type typ in
-          let pval_name = copy_loc (fun x -> x) prim.pprim_name in
-          let pval_attributes = copy_attributes prim.pprim_attributes in
-          let pval_loc = copy_location prim.pprim_loc in
           Ast_505.Parsetree.Psig_value
             { pval_name; pval_type; pval_prim; pval_attributes; pval_loc }
       | Pprim_alias (typ_opt, lident_loc) ->
-          Location.raise_errorf ~loc:prim.pprim_loc
-            "TODO: Encode primitive alias")
+          let typ_opt = Option.map copy_core_type typ_opt in
+          let alias_of = copy_loc copy_longident lident_loc in
+          Encoding_506.To_505.encode_psig_primitive_alias ~loc:pval_loc
+            pval_name typ_opt alias_of pval_attributes)
   | Ast_506.Parsetree.Psig_type (x0, x1) ->
       Ast_505.Parsetree.Psig_type
         (copy_rec_flag x0, List.map copy_type_declaration x1)
@@ -1217,17 +1219,19 @@ and copy_structure_item_desc :
   | Ast_506.Parsetree.Pstr_val x0 ->
       Ast_505.Parsetree.Pstr_primitive (copy_value_description x0)
   | Ast_506.Parsetree.Pstr_primitive prim -> (
+      let pval_name = copy_loc (fun x -> x) prim.pprim_name in
+      let pval_attributes = copy_attributes prim.pprim_attributes in
+      let pval_loc = copy_location prim.pprim_loc in
       match prim.pprim_kind with
       | Pprim_decl (typ, pval_prim) ->
           let pval_type = copy_core_type typ in
-          let pval_name = copy_loc (fun x -> x) prim.pprim_name in
-          let pval_attributes = copy_attributes prim.pprim_attributes in
-          let pval_loc = copy_location prim.pprim_loc in
           Ast_505.Parsetree.Pstr_primitive
             { pval_name; pval_type; pval_prim; pval_attributes; pval_loc }
       | Pprim_alias (typ_opt, lident_loc) ->
-          Location.raise_errorf ~loc:prim.pprim_loc
-            "TODO: Encode primitive alias")
+          let typ_opt = Option.map copy_core_type typ_opt in
+          let alias_of = copy_loc copy_longident lident_loc in
+          Encoding_506.To_505.encode_pstr_primitive_alias ~loc:pval_loc
+            pval_name typ_opt alias_of pval_attributes)
   | Ast_506.Parsetree.Pstr_type (x0, x1) ->
       Ast_505.Parsetree.Pstr_type
         (copy_rec_flag x0, List.map copy_type_declaration x1)
