@@ -300,8 +300,8 @@ module Default = struct
   let pexp_apply ~loc e el =
     match (e, el) with
     | _, [] -> e
-    | { pexp_desc = Pexp_apply (e, args); pexp_attributes = []; _ }, _ ->
-        { e with pexp_desc = Pexp_apply (e, args @ el) }
+    | { pexp_desc = Pexp_apply (func, args); pexp_attributes = []; _ }, _ ->
+        { e with pexp_desc = Pexp_apply (func, args @ el) }
     | _ -> pexp_apply ~loc e el
 
   let eapply ~loc e el =

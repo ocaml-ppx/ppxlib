@@ -12,5 +12,5 @@ let _ =
   Pprintast.string_of_expression expr
 
 [%%expect{|
-- : string = "((((f)[@attr once]) x y)[@attr once])"
+- : string = "((f)[@attr once]) x y"
 |}]
