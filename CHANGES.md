@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Fix a bug in `Ast_builder.Default.pexp_apply` where it would duplicate
+  attributes and mess up the locations. (#643. @Skepfyr)
+
 0.38.0
 ------
 
