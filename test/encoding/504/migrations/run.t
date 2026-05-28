@@ -56,8 +56,11 @@ We also check our invalid decoding logic:
          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   Error: ppxlib invalid encoding: ppxlib.migration.pexp_labeled_tuple_5_4
          
-         Ppxlib failed to decode a feature from the OCaml 5.4 AST. If this does
-         not seem right, please do open an issue at
+         Ppxlib failed to decode a feature from the OCaml 5.4 AST. This is
+         likely caused by the use of a 5.4+ language feature within code
+         directly interpreted by a ppx. If you'd like this feature to be
+         supported by the ppx involved, please reach out to the ppx
+         maintainers. If this does not seem right, please do open an issue at
          https://github.com/ocaml-ppx/ppxlib/issues.
   [1]
 

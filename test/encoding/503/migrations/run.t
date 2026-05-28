@@ -30,7 +30,10 @@ A test for the invalid encoding logic:
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   Error: ppxlib invalid encoding: ppxlib.migration.ppat_effect_503
          
-         Ppxlib failed to decode a feature from the OCaml 5.3 AST. If this does
-         not seem right, please do open an issue at
+         Ppxlib failed to decode a feature from the OCaml 5.3 AST. This is
+         likely caused by the use of a 5.3+ language feature within code
+         directly interpreted by a ppx. If you'd like this feature to be
+         supported by the ppx involved, please reach out to the ppx
+         maintainers. If this does not seem right, please do open an issue at
          https://github.com/ocaml-ppx/ppxlib/issues.
   [1]

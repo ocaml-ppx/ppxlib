@@ -16,9 +16,12 @@ let invalid_encoding ~loc ~version msg =
   let s =
     Format.sprintf
       "ppxlib invalid encoding: %s\n\n\
-       Ppxlib failed to decode a feature from the OCaml %s AST. If this does \
-       not seem right, please do open an issue at \
+       Ppxlib failed to decode a feature from the OCaml %s AST. This is likely \
+       caused by the use of a %s+ language feature within code directly \
+       interpreted by a ppx. If you'd like this feature to be supported by the \
+       ppx involved, please reach out to the ppx maintainers. If this does not \
+       seem right, please do open an issue at \
        https://github.com/ocaml-ppx/ppxlib/issues."
-      msg version
+      msg version version
   in
   raise_error_txt ~loc s
