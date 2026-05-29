@@ -560,16 +560,35 @@ module Parsetree = struct
     {
       pval_name: string loc;
       pval_type: core_type;
-      pval_prim: string list;
       pval_attributes: attributes;  (** [... [\@\@id1] [\@\@id2]] *)
       pval_loc: Location.t;
     }
-  (** Values of type {!value_description} represents:
-      - [val x: T],
-        when {{!value_description.pval_prim}[pval_prim]} is [[]]
-      - [external x: T = "s1" ... "sn"]
-        when {{!value_description.pval_prim}[pval_prim]} is [["s1";..."sn"]]
+  (** Values of type {!value_description} represent [val x: T]. *)
+
+  (** {2 Primitive descriptions} *)
+
+  and primitive_description (*IF_CURRENT = Parsetree.primitive_description *) =
+    {
+      pprim_name: string loc;
+      pprim_kind: primitive_kind;
+      pprim_attributes: attributes;
+      pprim_loc: Location.t
+    }
+  (** Values of type {!primitive_description} represent:
+      - [external x: T = "s1" ... "sn"] when
+        {{!primitive_description.pprim_kind}[pprim_kind]} is
+        [Pprim_decl (T, ["s1";..."sn"])].
+      - [external x: T = M.y] when {{!primitive_description.pprim_kind}[pprim_kind]}
+        is [Pprim_alias (Some T, M.y)]
+      - [external x = M.y] when {{!primitive_description.pprim_kind}[pprim_kind]}
+        is [Pprim_alias (None, M.y)]
   *)
+
+  and primitive_kind (*IF_CURRENT = Parsetree.primitive_kind *) =
+    | Pprim_decl of core_type * string list
+    | Pprim_alias of core_type option * Longident.t loc
+    (** See the comment on {{!primitive_description}[primitive_description]}. *)
+
 
   (** {2 Type declarations} *)
 
@@ -952,9 +971,11 @@ module Parsetree = struct
 
   and signature_item_desc (*IF_CURRENT = Parsetree.signature_item_desc *) =
     | Psig_value of value_description
-    (** - [val x: T]
-        - [external x: T = "s1" ... "sn"]
-    *)
+    (** [val x: T] *)
+    | Psig_primitive of primitive_description
+    (** - [external x: T = "s1" ... "sn" ]
+        - [external x = y]
+        - [external x: T = y] *)
     | Psig_type of rec_flag * type_declaration list
     (** [type t1 = ... and ... and tn  = ...] *)
     | Psig_typesubst of type_declaration list
@@ -1102,9 +1123,12 @@ module Parsetree = struct
         - [let rec P1 = E1 and ... and Pn = EN ]
           when [rec] is {{!Asttypes.rec_flag.Recursive}[Recursive]}.
     *)
-    | Pstr_primitive of value_description
-    (** - [val x: T]
-        - [external x: T = "s1" ... "sn" ]*)
+    | Pstr_val of value_description
+    (** [val x: T] *)
+    | Pstr_primitive of primitive_description
+    (** - [external x: T = "s1" ... "sn" ]
+        - [external x = y]
+        - [external x: T = y] *)
     | Pstr_type of rec_flag * type_declaration list
     (** [type t1 = ... and ... and tn = ...] *)
     | Pstr_typext of type_extension  (** [type t1 += ...] *)
