@@ -239,6 +239,11 @@ val pretty : unit -> bool
 (** If [true], code transformations should avoid generating code that is not
     strictly necessary, such as extra type annotations. *)
 
+type transformation
+
+val transform_name : transformation -> string
+val all_transforms : transformation list ref
+
 (**/**)
 
 val map_structure : structure -> structure
