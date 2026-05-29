@@ -7,8 +7,7 @@ module Ext_name = struct
   let primitive_alias = "ppxlib.migration.primitive_alias_5_6"
 end
 
-let invalid_encoding ~loc name =
-  Location.raise_errorf ~loc "Invalid %s encoding" name
+let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.6" name
 
 module To_505 = struct
   open Ast_505.Asttypes

@@ -554,9 +554,8 @@ and copy_value_description :
         Ast_506.Parsetree.pval_loc = copy_location pval_loc;
       }
   | _ ->
-      Location.raise_errorf ~loc:pval_loc
-        "Ppxlib migration error: value_description with pval_prim <> [] cannot \
-         be migrated from Ocaml 5.5 to 5.6"
+      Error.migration_error ~loc:pval_loc ~from:"5.5" ~to_:"5.6"
+        "value_description with pval_prim <> []"
 
 and copy_type_declaration :
     Ast_505.Parsetree.type_declaration -> Ast_506.Parsetree.type_declaration =
