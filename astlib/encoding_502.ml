@@ -2,8 +2,7 @@ module Ext_name = struct
   let ptyp_open = "ppxlib.migration.ptyp_open_502"
 end
 
-let invalid_encoding ~loc name =
-  Location.raise_errorf ~loc "Invalid %s encoding" name
+let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.2" name
 
 module To_501 = struct
   open Ast_501.Asttypes

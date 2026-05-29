@@ -2,8 +2,7 @@ module Ext_name = struct
   let ppat_effect = "ppxlib.migration.ppat_effect_503"
 end
 
-let invalid_encoding ~loc name =
-  Location.raise_errorf ~loc "Invalid %s encoding" name
+let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.3" name
 
 module To_502 = struct
   let encode_ppat_effect ~loc ~effect_ ~k =

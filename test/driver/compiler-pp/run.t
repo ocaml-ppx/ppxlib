@@ -31,7 +31,13 @@ Now if we run it with `--use-compiler-pp`, we should get the migration error:
   File "test.ml", line 1, characters 0-22:
   1 | [%%named_existentials]
       ^^^^^^^^^^^^^^^^^^^^^^
-  Error: migration error: existentials in pattern-matching is not supported before OCaml 4.13
+  Error: ppxlib migration error (migrating ocaml.4.13 to ocaml.4.12):
+         existentials in pattern-matching
+         
+         Ppxlib was likely trying to migrate from 4.11.2 to 5.2.0 and back
+         again, but encountered an AST node that could not be encoded. Either
+         remove the feature or open an issue at
+         https://github.com/ocaml-ppx/ppxlib/issues.
   [1]
 
 This should also work for correction based code gen:
@@ -61,5 +67,11 @@ and with the flag:
   File "test_inline.ml", lines 1-2, characters 0-38:
   1 | type t = int
   2 | [@@deriving_inline named_existentials]
-  Error: migration error: existentials in pattern-matching is not supported before OCaml 4.13
+  Error: ppxlib migration error (migrating ocaml.4.13 to ocaml.4.12):
+         existentials in pattern-matching
+         
+         Ppxlib was likely trying to migrate from 4.11.2 to 5.2.0 and back
+         again, but encountered an AST node that could not be encoded. Either
+         remove the feature or open an issue at
+         https://github.com/ocaml-ppx/ppxlib/issues.
   [1]
