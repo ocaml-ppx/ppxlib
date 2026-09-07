@@ -194,7 +194,7 @@ and copy_expression_desc ~loc :
           ptyp_desc = package;
           ptyp_loc = Location.none;
           ptyp_loc_stack = [];
-          ptyp_attributes = [];
+          ptyp_attributes = copy_attributes c.Ast_504.Parsetree.ppt_attrs;
         }
       in
       Ast_503.Parsetree.Pexp_constraint (exp, ct)
@@ -403,11 +403,18 @@ and copy_core_type : Ast_504.Parsetree.core_type -> Ast_503.Parsetree.core_type
        Ast_504.Parsetree.ptyp_attributes;
      } ->
   let loc = copy_location ptyp_loc in
+  let package_attrs =
+    match ptyp_desc with
+    | Ast_504.Parsetree.Ptyp_package { Ast_504.Parsetree.ppt_attrs; _ } ->
+        copy_attributes ppt_attrs
+    | _ -> []
+  in
   {
     Ast_503.Parsetree.ptyp_desc = copy_core_type_desc ~loc ptyp_desc;
     Ast_503.Parsetree.ptyp_loc = loc;
     Ast_503.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
-    Ast_503.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
+    Ast_503.Parsetree.ptyp_attributes =
+      copy_attributes ptyp_attributes @ package_attrs;
   }
 
 and copy_location_stack :

@@ -9,6 +9,8 @@ unreleased
 - Remove reduntant module type copy from migrate_504_503, preventing
   exponential blowup with many "with" constraints. (#644, @smuenzel)
 
+- Fix the 5.4/5.3 migration of attributes on package types (#650, @dra27)
+
 0.38.0
 ------
 
