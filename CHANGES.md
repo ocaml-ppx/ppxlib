@@ -11,6 +11,8 @@ unreleased
 
 - Add support for OCaml 5.6 holes (#651, @patricoferris, @NathanReb)
 
+- Fix the 5.4/5.3 migration of attributes on package types (#650, @dra27, @patricoferris, @NathanReb)
+
 0.38.0
 ------
 
