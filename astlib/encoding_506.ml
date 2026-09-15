@@ -5,9 +5,55 @@ module Ext_name = struct
   let psig_primitive_alias = "ppxlib.migration.psig_primitive_alias_5_6"
   let none = "ppxlib.migration.none_5_6"
   let primitive_alias = "ppxlib.migration.primitive_alias_5_6"
+  let pexp_hole = "ppxlib.migration.pexp_hole"
+  let pmod_hole = "ppxlib.migration.pmod_hole"
 end
 
 let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.6" name
+
+module type AST = sig
+  type payload
+  type expression_desc
+  type module_expr_desc
+
+  module Construct : sig
+    val empty_payload : payload
+    val pexp_extension_desc : string Location.loc -> payload -> expression_desc
+    val pmod_extension_desc : string Location.loc -> payload -> module_expr_desc
+  end
+end
+
+module Ast_505_arg = struct
+  include Ast_505.Parsetree
+
+  module Construct = struct
+    let empty_payload = PStr []
+    let pexp_extension_desc ext p = Pexp_extension (ext, p)
+    let pmod_extension_desc ext m = Pmod_extension (ext, m)
+  end
+end
+
+module Ast_502_arg = struct
+  include Ast_502.Parsetree
+
+  module Construct = struct
+    let empty_payload = PStr []
+    let pexp_extension_desc ext p = Pexp_extension (ext, p)
+    let pmod_extension_desc ext m = Pmod_extension (ext, m)
+  end
+end
+
+(** The X module is only for things we wish to expose to users to pattern-match
+    or construct. Anything else can go directly in [To_505]. *)
+module X (Ast : AST) = struct
+  let encode_pexp_hole ~loc =
+    let ext = Asttypes.{ txt = Ext_name.pexp_hole; loc } in
+    Ast.Construct.pexp_extension_desc ext Ast.Construct.empty_payload
+
+  let encode_pmod_hole ~loc =
+    let ext = Asttypes.{ txt = Ext_name.pmod_hole; loc } in
+    Ast.Construct.pmod_extension_desc ext Ast.Construct.empty_payload
+end
 
 module To_505 = struct
   open Ast_505.Asttypes
@@ -96,4 +142,8 @@ module To_505 = struct
     | [] ->
         decode_primitive_alias ~loc ~name:Ext_name.pstr_primitive_alias payload
     | _ -> invalid_encoding ~loc Ext_name.psig_primitive_alias
+
+  include X (Ast_505_arg)
 end
+
+module To_502 = X (Ast_502_arg)

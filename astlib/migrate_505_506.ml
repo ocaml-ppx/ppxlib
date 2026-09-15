@@ -463,6 +463,9 @@ and copy_expression_desc :
         (copy_module_expr x0, Option.map copy_package_type x1)
   | Ast_505.Parsetree.Pexp_letop x0 ->
       Ast_506.Parsetree.Pexp_letop (copy_letop x0)
+  | Ast_505.Parsetree.Pexp_extension (x0, PStr [])
+    when String.equal x0.txt Encoding_506.Ext_name.pexp_hole ->
+      Ast_506.Parsetree.Pexp_hole
   | Ast_505.Parsetree.Pexp_extension x0 ->
       Ast_506.Parsetree.Pexp_extension (copy_extension x0)
   | Ast_505.Parsetree.Pexp_unreachable -> Ast_506.Parsetree.Pexp_unreachable
@@ -1214,6 +1217,9 @@ and copy_module_expr_desc :
         (copy_module_expr x0, copy_module_type x1)
   | Ast_505.Parsetree.Pmod_unpack x0 ->
       Ast_506.Parsetree.Pmod_unpack (copy_expression x0)
+  | Ast_505.Parsetree.Pmod_extension (x0, PStr [])
+    when String.equal x0.txt Encoding_506.Ext_name.pmod_hole ->
+      Ast_506.Parsetree.Pmod_hole
   | Ast_505.Parsetree.Pmod_extension x0 ->
       Ast_506.Parsetree.Pmod_extension (copy_extension x0)
 

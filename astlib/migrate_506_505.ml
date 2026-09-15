@@ -348,15 +348,17 @@ and copy_expression :
        Ast_506.Parsetree.pexp_attributes;
      } ->
   {
-    Ast_505.Parsetree.pexp_desc = copy_expression_desc pexp_desc;
+    Ast_505.Parsetree.pexp_desc = copy_expression_desc ~loc:pexp_loc pexp_desc;
     Ast_505.Parsetree.pexp_loc = copy_location pexp_loc;
     Ast_505.Parsetree.pexp_loc_stack = copy_location_stack pexp_loc_stack;
     Ast_505.Parsetree.pexp_attributes = copy_attributes pexp_attributes;
   }
 
 and copy_expression_desc :
-    Ast_506.Parsetree.expression_desc -> Ast_505.Parsetree.expression_desc =
-  function
+    loc:Location.t ->
+    Ast_506.Parsetree.expression_desc ->
+    Ast_505.Parsetree.expression_desc =
+ fun ~loc -> function
   | Ast_506.Parsetree.Pexp_ident x0 ->
       Ast_505.Parsetree.Pexp_ident (copy_loc copy_longident x0)
   | Ast_506.Parsetree.Pexp_constant x0 ->
@@ -466,6 +468,7 @@ and copy_expression_desc :
   | Ast_506.Parsetree.Pexp_extension x0 ->
       Ast_505.Parsetree.Pexp_extension (copy_extension x0)
   | Ast_506.Parsetree.Pexp_unreachable -> Ast_505.Parsetree.Pexp_unreachable
+  | Ast_506.Parsetree.Pexp_hole -> Encoding_506.To_505.encode_pexp_hole ~loc
 
 and copy_case : Ast_506.Parsetree.case -> Ast_505.Parsetree.case =
  fun {
@@ -1169,14 +1172,16 @@ and copy_module_expr :
        Ast_506.Parsetree.pmod_attributes;
      } ->
   {
-    Ast_505.Parsetree.pmod_desc = copy_module_expr_desc pmod_desc;
+    Ast_505.Parsetree.pmod_desc = copy_module_expr_desc ~loc:pmod_loc pmod_desc;
     Ast_505.Parsetree.pmod_loc = copy_location pmod_loc;
     Ast_505.Parsetree.pmod_attributes = copy_attributes pmod_attributes;
   }
 
 and copy_module_expr_desc :
-    Ast_506.Parsetree.module_expr_desc -> Ast_505.Parsetree.module_expr_desc =
-  function
+    loc:Location.t ->
+    Ast_506.Parsetree.module_expr_desc ->
+    Ast_505.Parsetree.module_expr_desc =
+ fun ~loc -> function
   | Ast_506.Parsetree.Pmod_ident x0 ->
       Ast_505.Parsetree.Pmod_ident (copy_loc copy_longident x0)
   | Ast_506.Parsetree.Pmod_structure x0 ->
@@ -1195,6 +1200,7 @@ and copy_module_expr_desc :
       Ast_505.Parsetree.Pmod_unpack (copy_expression x0)
   | Ast_506.Parsetree.Pmod_extension x0 ->
       Ast_505.Parsetree.Pmod_extension (copy_extension x0)
+  | Ast_506.Parsetree.Pmod_hole -> Encoding_506.To_505.encode_pmod_hole ~loc
 
 and copy_structure : Ast_506.Parsetree.structure -> Ast_505.Parsetree.structure
     =
