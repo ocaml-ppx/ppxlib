@@ -12,6 +12,17 @@ end
 let bivariant_error ~loc =
   Error.migration_error ~loc ~from:"5.4" ~to_:"5.3" "bivariant type parameters"
 
+let split_package_attr =
+  let attr_name =
+    Ast_503.Asttypes.
+      {
+        txt = Encoding_504.Attr_name.split_package_attributes;
+        loc = Location.none;
+      }
+  in
+  Ast_503.Parsetree.
+    { attr_name; attr_loc = Location.none; attr_payload = PStr [] }
+
 let rec copy_toplevel_phrase :
     Ast_504.Parsetree.toplevel_phrase -> Ast_503.Parsetree.toplevel_phrase =
   function
@@ -194,7 +205,8 @@ and copy_expression_desc ~loc :
           ptyp_desc = package;
           ptyp_loc = Location.none;
           ptyp_loc_stack = [];
-          ptyp_attributes = copy_attributes c.Ast_504.Parsetree.ppt_attrs;
+          ptyp_attributes =
+            split_package_attr :: copy_attributes c.Ast_504.Parsetree.ppt_attrs;
         }
       in
       Ast_503.Parsetree.Pexp_constraint (exp, ct)
@@ -406,7 +418,7 @@ and copy_core_type : Ast_504.Parsetree.core_type -> Ast_503.Parsetree.core_type
   let package_attrs =
     match ptyp_desc with
     | Ast_504.Parsetree.Ptyp_package { Ast_504.Parsetree.ppt_attrs; _ } ->
-        copy_attributes ppt_attrs
+        split_package_attr :: copy_attributes ppt_attrs
     | _ -> []
   in
   {
