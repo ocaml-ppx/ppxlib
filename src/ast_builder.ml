@@ -288,11 +288,11 @@ module Default = struct
     in
     { ppat_desc; ppat_loc = loc; ppat_attributes = []; ppat_loc_stack = [] }
 
-  let pexp_hole ~loc =
+  let pexp_hole ~loc () =
     let pexp_desc = Astlib__.Encoding_506.To_502.encode_pexp_hole ~loc in
     { pexp_desc; pexp_loc = loc; pexp_attributes = []; pexp_loc_stack = [] }
 
-  let pmod_hole ~loc =
+  let pmod_hole ~loc () =
     let pmod_desc = Astlib__.Encoding_506.To_502.encode_pmod_hole ~loc in
     { pmod_desc; pmod_loc = loc; pmod_attributes = [] }
 

@@ -16,7 +16,7 @@ end)
 (* Generate an encoded expression hole: [f _] *)
 let encoded_pexp_hole =
   let f = { txt = Lident "f"; loc = Location.none } in
-  Builder.pexp_apply (Builder.pexp_ident f) [ (Nolabel, Builder.pexp_hole) ];;
+  Builder.pexp_apply (Builder.pexp_ident f) [ (Nolabel, Builder.pexp_hole ()) ];;
 
 (* Migrate it to the current compiler (>= 5.6, as per dune rules) *)
 let expr_hole = To_ocaml.copy_expression encoded_pexp_hole;;
@@ -59,7 +59,7 @@ val destruct : longident = Ppxlib__.Import.Lident "f"
 (* Generate an encoded expression hole: [f _] *)
 let encoded_pmod_hole =
   let f = { txt = Lident "F"; loc = Location.none } in
-  Builder.pmod_apply (Builder.pmod_ident f) Builder.pmod_hole;;
+  Builder.pmod_apply (Builder.pmod_ident f) (Builder.pmod_hole ());;
 
 (* Migrate it to the current compiler (>= 5.6, as per dune rules) *)
 let mod_hole = To_ocaml.copy_module_expr encoded_pmod_hole;;
