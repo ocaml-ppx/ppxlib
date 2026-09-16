@@ -288,6 +288,14 @@ module Default = struct
     in
     { ppat_desc; ppat_loc = loc; ppat_attributes = []; ppat_loc_stack = [] }
 
+  let pexp_hole ~loc () =
+    let pexp_desc = Astlib__.Encoding_506.To_502.encode_pexp_hole ~loc in
+    { pexp_desc; pexp_loc = loc; pexp_attributes = []; pexp_loc_stack = [] }
+
+  let pmod_hole ~loc () =
+    let pmod_desc = Astlib__.Encoding_506.To_502.encode_pmod_hole ~loc in
+    { pmod_desc; pmod_loc = loc; pmod_attributes = [] }
+
   let pexp_tuple_opt ~loc l =
     match l with [] -> None | _ :: _ -> Some (pexp_tuple ~loc l)
 
@@ -582,6 +590,8 @@ end) : S = struct
   let ppat_effect effect_ k = Default.ppat_effect ~loc effect_ k
   let ptyp_labeled_tuple l = Default.ptyp_labeled_tuple ~loc l
   let pexp_labeled_tuple l = Default.pexp_labeled_tuple ~loc l
+  let pexp_hole = Default.pexp_hole ~loc
+  let pmod_hole = Default.pmod_hole ~loc
   let ppat_labeled_tuple l flag = Default.ppat_labeled_tuple ~loc l flag
   let pexp_tuple_opt l = Default.pexp_tuple_opt ~loc l
   let ppat_tuple_opt l = Default.ppat_tuple_opt ~loc l

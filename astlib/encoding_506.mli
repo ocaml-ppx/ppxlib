@@ -1,6 +1,8 @@
 module Ext_name : sig
   val pstr_primitive_alias : string
   val psig_primitive_alias : string
+  val pexp_hole : string
+  val pmod_hole : string
 end
 
 module To_505 : sig
@@ -35,4 +37,16 @@ module To_505 : sig
     payload ->
     attributes ->
     string loc * core_type option * Longident.t loc * attributes
+
+  val encode_pexp_hole : loc:Location.t -> expression_desc
+  val encode_pmod_hole : loc:Location.t -> module_expr_desc
+end
+
+module To_502 : sig
+  open Ast_502
+  open Asttypes
+  open Parsetree
+
+  val encode_pexp_hole : loc:Location.t -> expression_desc
+  val encode_pmod_hole : loc:Location.t -> module_expr_desc
 end

@@ -36,3 +36,20 @@ And round-trip to 5.6 correctly:
   $ ./driver.exe test.ml --use-compiler-pp
   val x : int -> int
   external y : int -> int = "some_c_fun"
+
+2. Holes
+
+It is now possible to place "holes" in your program anywhere an expression or a
+module would appear.
+
+  $ cat > test.ml << EOF
+  > let x = 1 + _
+  > module M = _
+  > EOF
+
+  $ ./driver.exe test.ml
+  let x = 1 + ([%ppxlib.migration.pexp_hole ])
+  module M = [%ppxlib.migration.pmod_hole ]
+  $ ./driver.exe --use-compiler-pp test.ml
+  let x = 1 + _
+  module M = _

@@ -343,3 +343,27 @@ let ppat_labeled_tuple (T f0) =
           let k = f0 ctx loc x0 k in
           k
       | _ -> fail loc "labeled tuple")
+
+let pexp_hole =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.pexp_loc in
+      let x = x.pexp_desc in
+      match x with
+      | Pexp_extension ({ txt; _ }, PStr [])
+        when String.equal txt Astlib__.Encoding_506.Ext_name.pexp_hole ->
+          ctx.matched <- ctx.matched + 1;
+          k
+      | _ -> fail loc "expression hole")
+
+let pmod_hole =
+  T
+    (fun ctx _loc x k ->
+      let loc = x.pmod_loc in
+      let x = x.pmod_desc in
+      match x with
+      | Pmod_extension ({ txt; _ }, PStr [])
+        when String.equal txt Astlib__.Encoding_506.Ext_name.pmod_hole ->
+          ctx.matched <- ctx.matched + 1;
+          k
+      | _ -> fail loc "module expression hole")

@@ -65,3 +65,4 @@ test/traverse/test.ml
 test/type_is_recursive/test.ml
 test/502_migrations/test.ml
 test/encoding/503/api/test.ml
+test/encoding/5.6/api/test.ml
