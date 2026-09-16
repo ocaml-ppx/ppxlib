@@ -9,6 +9,8 @@ unreleased
 - Remove reduntant module type copy from migrate_504_503, preventing
   exponential blowup with many "with" constraints. (#644, @smuenzel)
 
+- Add support for OCaml 5.6 holes (#651, @patricoferris, @NathanReb)
+
 0.38.0
 ------
 
