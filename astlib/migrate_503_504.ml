@@ -406,12 +406,43 @@ and copy_core_type : Ast_503.Parsetree.core_type -> Ast_504.Parsetree.core_type
        Ast_503.Parsetree.ptyp_loc_stack;
        Ast_503.Parsetree.ptyp_attributes;
      } ->
-  {
-    Ast_504.Parsetree.ptyp_desc = copy_core_type_desc ptyp_desc;
-    Ast_504.Parsetree.ptyp_loc = copy_location ptyp_loc;
-    Ast_504.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
-    Ast_504.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
-  }
+  match ptyp_desc with
+  | Ptyp_package (name, constraints) ->
+      let rec split_attributes (typ, pkg) = function
+        | [] -> (List.rev typ, List.rev pkg)
+        | attr :: attrs
+          when String.equal attr.Ast_503.Parsetree.attr_name.txt
+                 Encoding_504.Attr_name.split_package_attributes ->
+            (List.rev typ, attrs)
+        | attr :: attrs -> split_attributes (attr :: typ, pkg) attrs
+      in
+      let typ_attrs, pkg_attrs = split_attributes ([], []) ptyp_attributes in
+      let pkg : Ast_504.Parsetree.package_type =
+        {
+          ppt_path = copy_loc (copy_Longident_t ~loc:name.loc) name;
+          ppt_cstrs =
+            List.map
+              (fun (a, b) ->
+                ( copy_loc (copy_Longident_t ~loc:a.Ast_503.Asttypes.loc) a,
+                  copy_core_type b ))
+              constraints;
+          ppt_loc = ptyp_loc;
+          ppt_attrs = copy_attributes pkg_attrs;
+        }
+      in
+      {
+        Ast_504.Parsetree.ptyp_desc = Ast_504.Parsetree.Ptyp_package pkg;
+        Ast_504.Parsetree.ptyp_loc = copy_location ptyp_loc;
+        Ast_504.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
+        Ast_504.Parsetree.ptyp_attributes = copy_attributes typ_attrs;
+      }
+  | _ ->
+      {
+        Ast_504.Parsetree.ptyp_desc = copy_core_type_desc ptyp_desc;
+        Ast_504.Parsetree.ptyp_loc = copy_location ptyp_loc;
+        Ast_504.Parsetree.ptyp_loc_stack = copy_location_stack ptyp_loc_stack;
+        Ast_504.Parsetree.ptyp_attributes = copy_attributes ptyp_attributes;
+      }
 
 and copy_location_stack :
     Ast_503.Parsetree.location_stack -> Ast_504.Parsetree.location_stack =

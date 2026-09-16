@@ -10,6 +10,11 @@ module Ext_name = struct
   let bivariant_pmty_with = "ppxlib.migration.bivariant_pmty_with_5_4"
 end
 
+module Attr_name = struct
+  (* An attribute name used for splitting package type attributes. *)
+  let split_package_attributes = "ppxlib.migration.split_package_attributes_5_4"
+end
+
 let invalid_encoding ~loc name = Error.invalid_encoding ~loc ~version:"5.4" name
 
 module type AST = sig

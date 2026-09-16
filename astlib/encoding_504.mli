@@ -7,6 +7,10 @@ module Ext_name : sig
   val bivariant_pmty_with : string
 end
 
+module Attr_name : sig
+  val split_package_attributes : string
+end
+
 module To_503 : sig
   open Ast_503.Asttypes
   open Ast_503.Parsetree
