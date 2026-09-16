@@ -248,3 +248,9 @@ val ppat_labeled_tuple :
     It will fail on a regular tuple expression and as a consequence, if it
     matches, either at least one pattern in the tuple is guaranteed to be
     labeled or the flag to be [Open]. *)
+
+val pexp_hole : (expression, 'a, 'a) t
+(** Match over an encoded OCaml 5.6 expression hole. *)
+
+val pmod_hole : (module_expr, 'a, 'a) t
+(** Match over an encoded OCaml 5.6 module expression hole. *)

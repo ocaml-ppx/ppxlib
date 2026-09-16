@@ -181,6 +181,12 @@ module type Additional_helpers = sig
   val ppat_labeled_tuple :
     ((string option * pattern) list -> closed_flag -> pattern) with_loc
   (** Returns an encoded labeled tuple pattern as introduced in OCaml 5.4. *)
+
+  val pexp_hole : expression with_loc
+  (** Returns an encoded expression hole as introduced in OCaml 5.6 *)
+
+  val pmod_hole : module_expr with_loc
+  (** Returns an encoded module expression hole as introduced in OCaml 5.6 *)
 end
 
 module type Located = sig
