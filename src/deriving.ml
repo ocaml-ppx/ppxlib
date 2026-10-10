@@ -477,8 +477,33 @@ module Deriver = struct
     in
     (* Set of actual deriver names *)
     let seen = Hashtbl.create 16 in
+    let remove_loc_from_expr e = Code_matcher.remove_loc#expression e in
+    let equal_deriver_and_args (t1, args1) (t2, args2) =
+      match (args1, args2) with
+      | [], [] -> String.equal t1.txt t2.txt
+      | _ ->
+          String.equal t1.txt t2.txt
+          && List.equal
+               ~eq:(fun (t1, (e1 : expression)) (t2, e2) ->
+                 String.equal t1 t2
+                 && Stdlib.( = ) (remove_loc_from_expr e1)
+                      (remove_loc_from_expr e2))
+               args1 args2
+    in
+    (* Only keep the unique deriver names. For saftey, we also check that the
+       arguments are equal too, and if they are not we default to the previous
+       behaviour of keeping all of the derivers and letting the natural order of
+       how they appear in the user's code decide which one "wins" *)
+    let unique_derivers_and_args =
+      List.fold_left
+        ~f:(fun acc t ->
+          if List.exists ~f:(equal_deriver_and_args t) acc then acc
+          else t :: acc)
+        ~init:[] derivers_and_args
+      |> List.rev
+    in
     let result, dep_errors =
-      List.fold_left ~init:([], []) derivers_and_args
+      List.fold_left ~init:([], []) unique_derivers_and_args
         ~f:(fun (result, errors) (name, args) ->
           match resolve field name with
           | Error e -> (result, errors @ [ e ])
