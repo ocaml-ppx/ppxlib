@@ -88,7 +88,7 @@ struct
     in
     loop [] l
 
-  let remove_loc =
+  let remove_loc_map =
     object
       inherit Ast_traverse.map
       method! location _ = Location.none
@@ -99,7 +99,7 @@ struct
     type 'a t = 'a -> 'a
   end)
 
-  let remove_loc x = M_map.apply remove_loc x
+  let remove_loc x = M_map.apply remove_loc_map x
   let rec last prev = function [] -> prev | x :: l -> last x l
 
   let diff_asts ~generated ~round_trip =
@@ -233,6 +233,7 @@ end)
 
 (*$*)
 
+let remove_loc = Str.remove_loc_map
 let match_structure_res = Str.do_match
 
 let match_structure ~pos ~expected ~mismatch_handler l =
