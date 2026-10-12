@@ -2,6 +2,9 @@
 
 open! Import
 
+val remove_loc : Ast_traverse.map
+(** Removes locations, setting them to {! Location.none}. *)
+
 val match_structure_res :
   pos:Lexing.position ->
   expected:structure ->
