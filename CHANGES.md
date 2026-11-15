@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Add a `?sub` argument to `Location.raise_errorf`, to raise an error with
+  located sub-messages, like the compiler's `Location.raise_errorf`.
+  (#656, @Lotion-3)
+
 0.39.0
 ------
 

@@ -24,7 +24,6 @@ let init lexbuf fname =
   lexbuf.lex_curr_p <-
     { pos_fname = fname; pos_lnum = 1; pos_bol = 0; pos_cnum = 0 }
 
-let raise_errorf ?loc fmt = L.raise_errorf ?loc fmt
 let report_exception = L.report_exception
 
 let of_lexbuf (lexbuf : Lexing.lexbuf) =
@@ -68,6 +67,13 @@ module Error = struct
 
   let createf ~loc fmt = Format.kasprintf (fun str -> make ~loc ~sub:[] str) fmt
 end
+
+let raise_errorf ?loc ?sub fmt =
+  match sub with
+  | None -> L.raise_errorf ?loc fmt
+  | Some sub ->
+      let loc = match loc with Some loc -> loc | None -> none in
+      Format.kasprintf (fun str -> Error.raise (Error.make ~loc ~sub str)) fmt
 
 let error_extensionf ~loc fmt =
   Format.kasprintf

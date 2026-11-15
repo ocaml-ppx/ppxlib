@@ -32,10 +32,13 @@ val init : Lexing.lexbuf -> string -> unit
     named file. *)
 
 val raise_errorf :
-  ?loc:t -> ('a, Stdlib.Format.formatter, unit, 'b) format4 -> 'a
-(** Raise a located error. Should be avoided as much as possible, in favor of
-    {!error_extensionf}. See the {{!"good-practices".handling_errors} relevant}
-    part of the tutorial. *)
+  ?loc:t ->
+  ?sub:(t * string) list ->
+  ('a, Stdlib.Format.formatter, unit, 'b) format4 ->
+  'a
+(** Raise a located error, with the located sub-messages [sub] if given. Should
+    be avoided as much as possible, in favor of {!error_extensionf}. See the
+    {{!"good-practices".handling_errors} relevant} part of the tutorial. *)
 
 val of_lexbuf : Lexing.lexbuf -> t
 (** Return the location corresponding to the last matched regular expression *)
