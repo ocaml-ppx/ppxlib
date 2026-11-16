@@ -297,3 +297,11 @@ let _ =
 ([Ptyp_any; Ptyp_any; Ptyp_any],
  [Ptyp_var "a__003_"; Ptyp_var "b__004_"; Ptyp_var "c__005_"])
 |}]
+
+let _ =
+  let loc = Location.none in
+  let f = Ast_helper.Mod.ident ~loc { txt = Lident "F"; loc } in
+  Format.asprintf "%a" Pprintast.module_expr (Ast_helper.Mod.apply_unit ~loc f)
+[%%expect{|
+- : string = "(F)()"
+|}]

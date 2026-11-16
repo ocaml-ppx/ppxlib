@@ -381,6 +381,9 @@ module Mod : sig
   val apply :
     ?loc:loc -> ?attrs:attrs -> module_expr -> module_expr -> module_expr
 
+  val apply_unit : ?loc:loc -> ?attrs:attrs -> module_expr -> module_expr
+  (** [apply_unit m] is [m()], the application of a generative functor. *)
+
   val constraint_ :
     ?loc:loc -> ?attrs:attrs -> module_expr -> module_type -> module_expr
 

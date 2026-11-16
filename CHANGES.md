@@ -1,6 +1,9 @@
 unreleased
 ----------
 
+- Add `Ast_helper.Mod.apply_unit`, to build the application of a generative
+  functor, `F()`. (#658, @Lotion-3)
+
 0.39.0
 ------
 
