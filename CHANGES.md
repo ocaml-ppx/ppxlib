@@ -1,6 +1,10 @@
 unreleased
 ----------
 
+- Fix the locations check rejecting `let+`/`and+` bindings and opened
+  patterns such as `M.[]`, whose locations from the parser overlap.
+  (#657, @Lotion-3)
+
 0.39.0
 ------
 

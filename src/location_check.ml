@@ -614,6 +614,35 @@ let enforce_invariants fname =
           super#expression_desc
             (Pexp_open (opn, { e with pexp_loc = e_loc }))
             acc
+      | Pexp_letop { let_; ands; body } ->
+          (* The parser gives [let_] the location of the whole expression,
+             body included, and each [and_] a location starting at the first
+             binding. Check each binding operator as spanning from its
+             operator to the end of its expression instead. *)
+          let reloc bop =
+            let { pbop_op; pbop_exp; pbop_loc; _ } = bop in
+            if
+              pbop_op.loc.loc_ghost || pbop_exp.pexp_loc.loc_ghost
+              || Location.compare_pos pbop_loc.loc_start pbop_op.loc.loc_start
+                 > 0
+              || Location.compare_pos pbop_exp.pexp_loc.loc_end pbop_loc.loc_end
+                 > 0
+            then bop
+            else
+              {
+                bop with
+                pbop_loc =
+                  {
+                    pbop_loc with
+                    loc_start = pbop_op.loc.loc_start;
+                    loc_end = pbop_exp.pexp_loc.loc_end;
+                  };
+              }
+          in
+          super#expression_desc
+            (Pexp_letop
+               { let_ = reloc let_; ands = List.map ~f:reloc ands; body })
+            acc
       | Pexp_poly (e, Some { ptyp_desc = Ptyp_poly (_, ct); _ }) -> (
           match extract_constraint e with
           | Some (e, cte) when Location.compare cte.ptyp_loc ct.ptyp_loc = 0 ->
@@ -641,6 +670,7 @@ let enforce_invariants fname =
     (* - punning.                                          *)
     (* - record field with type constraint.                *)
     (* - unpack locations being incorrect when constrained *)
+    (* - opened patterns, as in [M.[]]                     *)
     (*******************************************************)
 
     method! pattern_desc x acc =
@@ -672,6 +702,14 @@ let enforce_invariants fname =
       | Ppat_constraint ({ ppat_desc = Ppat_unpack a; _ }, b) ->
           let acc = self#loc (self#option self#string) a acc in
           self#core_type b acc
+      | Ppat_open (lid, p)
+        when Location.compare_pos lid.loc.loc_start p.ppat_loc.loc_start = 0
+             && Location.compare_pos lid.loc.loc_end p.ppat_loc.loc_end <> 0 ->
+          (* In [M.[]], [M.[||]] and [M.{ ... }], the parser gives the opened
+             pattern the location of the whole pattern; relocate it as for
+             [Pexp_open]. *)
+          let p_loc = { p.ppat_loc with loc_start = lid.loc.loc_end } in
+          super#pattern_desc (Ppat_open (lid, { p with ppat_loc = p_loc })) acc
       | _ -> super#pattern_desc x acc
 
     (***********************************************************)
