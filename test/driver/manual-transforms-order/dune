@@ -1,0 +1,25 @@
+(library
+ (name exp_to_a)
+ (kind ppx_rewriter)
+ (modules exp_to_a)
+ (libraries ppxlib))
+
+(library
+ (name exp_to_b)
+ (kind ppx_rewriter)
+ (modules exp_to_b)
+ (libraries ppxlib))
+
+(executable
+ (name driver_a_first)
+ (modules driver_a_first)
+ (libraries ppxlib exp_to_a exp_to_b))
+
+(executable
+ (name driver_b_first)
+ (modules driver_b_first)
+ (libraries ppxlib exp_to_a exp_to_b))
+
+(cram
+ (package ppxlib)
+ (deps driver_a_first.exe driver_b_first.exe))

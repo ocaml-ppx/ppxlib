@@ -1604,3 +1604,8 @@ let () =
              Fn.id)
           (fun ~ctxt:_ items -> Utils.prettify_odoc_attributes#signature items);
       ]
+
+type transformation = Transform.t
+
+let transform_name transform = transform.Transform.name
+let all_transforms = Transform.all
