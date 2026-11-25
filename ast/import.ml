@@ -211,4 +211,6 @@ module Parse = struct
   let core_type lexbuf = core_type lexbuf |> Of_ocaml.copy_core_type
   let expression lexbuf = expression lexbuf |> Of_ocaml.copy_expression
   let pattern lexbuf = pattern lexbuf |> Of_ocaml.copy_pattern
+
+  let comments_in_last_parse = comments_in_last_parse
 end

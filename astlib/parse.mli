@@ -20,3 +20,6 @@ val expression : Lexing.lexbuf -> Parsetree.expression
 
 val pattern : Lexing.lexbuf -> Parsetree.pattern
 (** Parse a pattern *)
+
+val comments_in_last_parse : unit -> (string * Location.t) list
+(** Get the comments from the last parse *)
