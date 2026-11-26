@@ -15,24 +15,24 @@ open! Import
     instance to collect all the string constants in a structure:
 
     {[
-      let string_constants_of =
-        object
-          inherit [string list] Ast_traverse.fold as super
+    let string_constants_of =
+      object
+        inherit [string list] Ast_traverse.fold as super
 
-          method! expression e acc =
-            let acc = super#expression e acc in
-            match e.pexp_desc with
-            | Pexp_constant (Const_string (s, _)) -> s :: acc
-            | _ -> acc
+        method! expression e acc =
+          let acc = super#expression e acc in
+          match e.pexp_desc with
+          | Pexp_constant (Const_string (s, _)) -> s :: acc
+          | _ -> acc
 
-          method! pattern p acc =
-            let acc = super#pattern p acc in
-            match p.ppat_desc with
-            | Ppat_constant (Const_string (s, _)) -> s :: acc
-            | _ -> acc
-        end
+        method! pattern p acc =
+          let acc = super#pattern p acc in
+          match p.ppat_desc with
+          | Ppat_constant (Const_string (s, _)) -> s :: acc
+          | _ -> acc
+      end
 
-      let string_constants_of_structure = string_constants_of#structure
+    let string_constants_of_structure = string_constants_of#structure
     ]} *)
 
 class map : object

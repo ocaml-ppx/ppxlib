@@ -43,11 +43,11 @@ val get_type_param_name : core_type * (variance * injectivity) -> string Loc.t
     of modules.
 
     {[
-      module M = struct
-        type t = Foo
-      end
+    module M = struct
+      type t = Foo
+    end
 
-      type t = M.(t)
+    type t = M.(t)
     ]}
 
     The outer [t] will return [Recursive] even though it is not. *)

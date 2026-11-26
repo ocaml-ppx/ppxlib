@@ -153,7 +153,7 @@ val register_code_transformation :
 (** Same as:
 
     {[
-      register_transformation ~name ~impl ~intf ()
+    register_transformation ~name ~impl ~intf ()
     ]} *)
 
 val register_correction : loc:Location.t -> repl:string -> unit

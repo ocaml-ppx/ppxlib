@@ -510,11 +510,11 @@ and function_param_desc = Parsetree.function_param_desc =
           [Pparam_newtype] nodes, let's say:
 
           {[
-            [
-              { pparam_kind = Pparam_newtype a; pparam_loc = loc1 };
-              { pparam_kind = Pparam_newtype b; pparam_loc = loc2 };
-              { pparam_kind = Pparam_newtype c; pparam_loc = loc3 };
-            ]
+          [
+            { pparam_kind = Pparam_newtype a; pparam_loc = loc1 };
+            { pparam_kind = Pparam_newtype b; pparam_loc = loc2 };
+            { pparam_kind = Pparam_newtype c; pparam_loc = loc3 };
+          ]
           ]}
 
           Here, the first loc [loc1] is the location of [(type a b c)], and the
