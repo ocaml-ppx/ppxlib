@@ -8,21 +8,21 @@
     For example, calling [Pp_ast.expression Format.std_formatter [%expr x + 2]]
     will print:
     {v
-   Pexp_apply
-     ( Pexp_ident (Lident "+")
-     , [ ( Nolabel, Pexp_ident (Lident "x"))
-       ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
-       ]
-     )
+    Pexp_apply
+      ( Pexp_ident (Lident "+")
+      , [ ( Nolabel, Pexp_ident (Lident "x"))
+        ; ( Nolabel, Pexp_constant (Pconst_integer ( "2", None)))
+        ]
+      )
     v}
 
     There is also a way to customise the output format with the optional printer
     argument. For example, calling the following:
     {v
-  Pp_ast.expression 
-    Format.std_formatter 
-    ?printer:(fun fmt repr -> Yojson.Basic.pretty_print fmt (repr_to_yojson repr)) 
-    [%expr x + 2]
+    Pp_ast.expression
+      Format.std_formatter
+      ?printer:(fun fmt repr -> Yojson.Basic.pretty_print fmt (repr_to_yojson repr))
+      [%expr x + 2]
     v}
     Will print:
     {v

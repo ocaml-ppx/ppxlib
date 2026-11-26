@@ -59,13 +59,13 @@ val __' : ('a, 'a Loc.t -> 'b, 'b) t
     instance you can use it to capture a string constant:
 
     {[
-      estring __'
+    estring __'
     ]}
 
     but using it to capture an expression would not yield the expected result:
 
     {[
-      pair (eint (int 42)) __'
+    pair (eint (int 42)) __'
     ]}
 
     In the latter case you should use the [pexp_loc] field of the captured
@@ -161,15 +161,11 @@ include module type of Ast_pattern_generated
     instance for the [expression] type:
 
     {[
-      val pexp_loc :
-        (Location.t, 'a, 'b) t ->
-        (expression, 'b, 'c) t ->
-        (expression, 'a, 'c) t
+    val pexp_loc :
+      (Location.t, 'a, 'b) t -> (expression, 'b, 'c) t -> (expression, 'a, 'c) t
 
-      val pexp_attributes :
-        (attributes, 'a, 'b) t ->
-        (expression, 'b, 'c) t ->
-        (expression, 'a, 'c) t
+    val pexp_attributes :
+      (attributes, 'a, 'b) t -> (expression, 'b, 'c) t -> (expression, 'a, 'c) t
     ]} *)
 
 val true_ : (bool, 'a, 'a) t

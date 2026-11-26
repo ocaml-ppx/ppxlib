@@ -24,11 +24,11 @@ module Args : sig
       open both [Ast_pattern] and [Deriving.Args]:
 
       {[
-        Deriving.Args.(
-          empty
-          +> arg_option "foo" (estring __)
-          +> arg_option "bar" (pack2 (eint __ ** eint __))
-          +> flag "dotdotdot")
+      Deriving.Args.(
+        empty
+        +> arg_option "foo" (estring __)
+        +> arg_option "bar" (pack2 (eint __ ** eint __))
+        +> flag "dotdotdot")
       ]} *)
   include module type of struct
       include Ast_pattern

@@ -88,10 +88,10 @@ val declare :
     record field declaration with an expression as payload:
 
     {[
-      let default =
-        Attribute.declare "foo.default" Attribute.Context.label_declaration
-          Ast_pattern.(pstr (pstr_eval __ nil))
-          (fun x -> x)
+    let default =
+      Attribute.declare "foo.default" Attribute.Context.label_declaration
+        Ast_pattern.(pstr (pstr_eval __ nil))
+        (fun x -> x)
     ]}
 
     [fully_qualified_name] is expected to be a dot-separated list of names. When
@@ -110,7 +110,7 @@ val declare :
     the [@foo.default 0] attribute:
 
     {[
-      type t = { x : int [@default 42] [@foo.default 0] }
+    type t = { x : int [@default 42] [@foo.default 0] }
     ]}
 
     This is to allow the user to specify a [@default] attribute for all
